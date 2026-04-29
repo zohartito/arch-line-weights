@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "arch-line-weights"
+version = "0.1.0"
+description = "Apply architectural line-weight hierarchy to color-coded vector drawings (Rhino-exported .ai/.pdf)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "zohartito" }]
+keywords = ["architecture", "illustrator", "rhino", "pdf", "stroke-width", "drawing"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Multimedia :: Graphics :: Editors :: Vector-Based",
+]
+dependencies = [
+    "pikepdf>=8.0",
+    "pymupdf>=1.24",
+    "click>=8.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+arch-lw = "arch_line_weights.cli:cli"
+
+[project.urls]
+Repository = "https://github.com/zohartito/arch-line-weights"
+
+[tool.setuptools.packages.find]
+where = ["src"]
