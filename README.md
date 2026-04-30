@@ -64,20 +64,39 @@ The JSON contains every stroke RGB and how many strokes use it. The dominant
 colors (highest counts) are almost always **material hatch / texture** — they
 should land in the lightest tier.
 
-### Apply with auto-classification
+### Two apply modes — pick by what you need
 
-Auto-mode buckets every color into the preset's tier ladder by luminance
-(darker → heavier) with frequency as a tie-breaker (more common → lighter).
-Good first pass:
+| Mode | Speed | Layers | Use when |
+|---|---|---|---|
+| `apply-jsx` (default for `.ai`) | 3–15 min on 340K paths | **preserves all** original Rhino layers as Illustrator layers | You'll keep editing the file in Illustrator (almost always the right choice for studio work). |
+| `apply` | ~2 min on 340K paths | **flattens to 1 layer** (PieceInfo gets stripped) | You only need a final render and don't care about layer structure. |
 
 ```
+# Layer-preserving (recommended for Rhino-export .ai files):
+arch-lw apply-jsx drawing.ai
+
+# pikepdf-fast (loses layer structure):
 arch-lw apply drawing.ai --auto --preset section
-arch-lw apply drawing.ai --auto --preset plan
-arch-lw apply drawing.ai --auto --preset elevation
-arch-lw apply drawing.ai --auto --preset detail
 ```
 
-Add `--dry-run` to print the planned mapping without writing the file.
+`apply-jsx` uses a **semantic layer-name classifier**: anything in a
+`Visible::ClippingPlaneIntersections::*` OCG is the section cut (1.0 pt);
+`TEC_TIMBER_*`, `TEC_CLT_*`, `TEC_FOUNDATION` etc. are structure (0.5 pt);
+`SHS_*` are secondary steel (0.35 pt); `WINDOW_GLASS` is glazing (0.25 pt);
+cladding (`CU_*`) is material (0.18 pt); EPDM and `FLOOR_DATUMS` are
+reference (0.13 pt). See `docs/POSTMORTEM.md` for why this is better than
+color-based classification for Rhino files.
+
+`apply` (pikepdf mode) buckets colors into the preset's tier ladder by
+luminance. Good fallback for non-Rhino files where layer names don't
+encode semantics.
+
+```
+arch-lw apply drawing.ai --auto --preset section --dry-run    # preview
+arch-lw apply drawing.ai --auto --preset section              # commit
+```
+
+Add `--dry-run` to either to print the planned mapping without writing.
 
 ### Apply with a hand-edited mapping
 

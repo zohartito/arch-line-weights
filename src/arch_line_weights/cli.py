@@ -9,8 +9,10 @@ import click
 
 from . import __version__
 from .apply import apply_to_file
+from .apply_jsx import apply_via_jsx
 from .classify import auto_by_luminance, explain_mapping, from_user_mapping
 from .inspect import inspect_file, color_to_rgb255
+from .layer_classify import classify_layer
 from .presets import PRESETS, get_preset
 
 
@@ -142,6 +144,46 @@ def apply(
             click.echo(f"  RGB{rgb}: {n}", err=True)
     click.echo("", err=True)
     click.echo(f"wrote {output}  ({result.output_size:,} bytes)", err=True)
+
+
+@cli.command("apply-jsx")
+@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option(
+    "-o", "--output",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Output path. Defaults to '<src> HIERARCHY.<ext>'.",
+)
+def apply_jsx_cmd(src: Path, output: Path | None):
+    """Layer-preserving apply via Illustrator JSX (slower, but keeps every layer).
+
+    \b
+    Use this for .ai files where you want all original layers preserved as
+    Illustrator layers (so you can later click any layer's target circle and
+    refine the weight). Requires Adobe Illustrator 2024+ installed.
+
+    \b
+    The 'apply' command (pikepdf) is faster but flattens the file's layer
+    structure into 1 Illustrator layer. 'apply-jsx' is the right default for
+    Rhino-exported drawings with meaningful OCG layer names.
+    """
+    out = str(output) if output else None
+    click.echo(f"opening {src} in Illustrator and running layer-aware JSX...", err=True)
+    result = apply_via_jsx(str(src), out)
+    click.echo(result["report"])
+
+
+@cli.command("explain-layer")
+@click.argument("layer_name")
+def explain_layer(layer_name: str):
+    """Show what tier+weight the semantic classifier would assign to a layer name.
+
+    \b
+    Examples:
+        arch-lw explain-layer 'axon::Visible::ClippingPlaneIntersections::TEC_TIMBER_BEAMS'
+        arch-lw explain-layer 'axon::Visible::Curves::FLOOR_DATUMS'
+    """
+    a = classify_layer(layer_name)
+    click.echo(f"{a.weight_pt} pt — {a.tier} ({a.why})")
 
 
 if __name__ == "__main__":
