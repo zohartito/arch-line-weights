@@ -16,7 +16,7 @@ from arch_line_weights.presets import (
 # --------------------------------------------------------------------------- #
 
 def test_version():
-    assert __version__ == "0.4.0"
+    assert __version__ == "0.5.0"
 
 
 def test_color_parse():
@@ -161,3 +161,75 @@ def test_poche_user_override_skip():
     polys, result = polygonize_layer("test_layer", paths, override={"strategy": "skip"})
     assert result.polygon_count == 0
     assert result.strategy == "skipped"
+
+
+# --------------------------------------------------------------------------- #
+# v0.5 hatch
+# --------------------------------------------------------------------------- #
+
+def test_hatch_concrete_returns_lines():
+    from arch_line_weights.hatch import hatch_polygon
+    from shapely.geometry import Polygon
+    # 100×30 pt polygon at 1:1 — small + dense enough to be fast in test
+    wall = Polygon([(0, 0), (100, 0), (100, 30), (0, 30)])
+    lines = hatch_polygon(wall, "concrete", scale=1.0)
+    assert len(lines) > 0
+
+
+def test_hatch_solid_materials_return_empty():
+    from arch_line_weights.hatch import hatch_polygon
+    from shapely.geometry import Polygon
+    wall = Polygon([(0, 0), (100, 0), (100, 100), (0, 100)])
+    for solid in ("concrete_solid", "clt_solid", "steel_solid"):
+        assert hatch_polygon(wall, solid, scale=1.0) == []
+
+
+def test_hatch_unknown_material_raises():
+    from arch_line_weights.hatch import hatch_polygon
+    from shapely.geometry import Polygon
+    wall = Polygon([(0, 0), (100, 0), (100, 100), (0, 100)])
+    with pytest.raises(KeyError):
+        hatch_polygon(wall, "no_such_material", scale=1.0)
+
+
+def test_material_for_layer_picks_right_recipe():
+    from arch_line_weights.hatch import material_for_layer
+    assert material_for_layer("axon::Visible::Curves::TEC_CONCRETE_BASE") == "concrete_solid"
+    assert material_for_layer("axon::Visible::Curves::TEC_TIMBER_BEAMS") == "solid_timber"
+    assert material_for_layer("axon::Visible::Curves::03c_WINDOW_IGU_GLASS") == "glass"
+    assert material_for_layer("axon::Visible::Curves::INSUL_BATT") == "insulation_mineral_wool"
+    assert material_for_layer("axon::Visible::Curves::EARTH_GROUND") == "earth"
+
+
+def test_hatch_register_custom_material():
+    from arch_line_weights.hatch import (
+        MATERIALS, MaterialRecipe, hatch_polygon, parallel_hatch, mm_to_pt, register_material
+    )
+    from shapely.geometry import Polygon
+
+    def custom_fn(poly, scale, **kw):
+        return parallel_hatch(poly, mm_to_pt(0.5, scale), 30.0)
+
+    register_material(MaterialRecipe("test_custom", custom_fn))
+    assert "test_custom" in MATERIALS
+    wall = Polygon([(0, 0), (50, 0), (50, 50), (0, 50)])
+    assert len(hatch_polygon(wall, "test_custom", scale=1.0)) > 0
+
+
+def test_mm_to_pt_at_scale():
+    from arch_line_weights.hatch import mm_to_pt
+    # 2 mm at 1:50 = 2 * 0.02 * 2.8346 = 0.11338 pt
+    assert abs(mm_to_pt(2.0, 1 / 50) - 0.1134) < 0.0001
+    # 1 mm at 1:1 = 2.835 pt
+    assert abs(mm_to_pt(1.0, 1.0) - 2.835) < 0.001
+
+
+def test_poisson_disk_safety_cap():
+    """A huge polygon with tiny min_dist should NOT hang — cap kicks in."""
+    from arch_line_weights.hatch import poisson_disk
+    from shapely.geometry import Polygon
+    # 10,000 × 10,000 polygon with min_dist=0.01 would naively be 100M points
+    huge = Polygon([(0, 0), (10000, 0), (10000, 10000), (0, 10000)])
+    samples = poisson_disk(huge, min_dist=0.01, max_samples=1000)
+    # Cap holds and no hang
+    assert len(samples) <= 1000

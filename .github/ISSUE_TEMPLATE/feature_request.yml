@@ -1,0 +1,32 @@
+name: Feature request
+description: Suggest a new feature or improvement
+title: "[feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What's the friction or workflow gap you're trying to fix?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: What would you want the tool to do?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Roadmap phase
+      description: See `docs/ROADMAP.md` for phases
+      options:
+        - "Already planned (which?)"
+        - "New phase"
+        - "Not sure"

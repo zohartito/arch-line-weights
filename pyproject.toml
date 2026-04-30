@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "arch-line-weights"
-version = "0.4.0"
+version = "0.5.0"
 description = "Apply architectural line-weight hierarchy to color-coded vector drawings (Rhino-exported .ai/.pdf)."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -26,7 +26,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7"]
+dev  = ["pytest>=8", "ruff>=0.7"]
+test = ["pytest>=8"]
+lint = ["ruff>=0.7"]
 
 [project.scripts]
 arch-lw = "arch_line_weights.cli:cli"

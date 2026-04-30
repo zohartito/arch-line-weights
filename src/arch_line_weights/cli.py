@@ -200,7 +200,22 @@ def apply_jsx_cmd(src: Path, output: Path | None):
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     help='JSON of per-layer strategy overrides: {"TEC_FOUNDATION": {"strategy": "bbox"}, ...}',
 )
-def poche_cmd(src: Path, output: Path | None, overrides_path: Path | None):
+@click.option(
+    "--style",
+    type=click.Choice(["solid", "material"]),
+    default="solid",
+    show_default=True,
+    help="solid = black fill only; material = fill + per-material hatch (concrete diagonal, CLT cross-grain, etc.)",
+)
+@click.option(
+    "--scale",
+    "hatch_scale",
+    type=float,
+    default=0.02,
+    show_default=True,
+    help="Plot scale (1/N as decimal). 0.02 = 1:50, 0.01 = 1:100. Used only when --style material.",
+)
+def poche_cmd(src: Path, output: Path | None, overrides_path: Path | None, style: str, hatch_scale: float):
     """Generate solid-black poché on cut layers via shapely linemerge + polygonize.
 
     \b
@@ -227,8 +242,8 @@ def poche_cmd(src: Path, output: Path | None, overrides_path: Path | None):
     """
     out = str(output) if output else None
     over = str(overrides_path) if overrides_path else None
-    click.echo(f"applying poche to {src}...", err=True)
-    report = apply_poche(str(src), out, overrides_path=over)
+    click.echo(f"applying poche to {src} (style={style}, scale=1:{int(1/hatch_scale)})...", err=True)
+    report = apply_poche(str(src), out, overrides_path=over, style=style, scale=hatch_scale)
     click.echo("", err=True)
     click.echo(f"polygons created: {report.total_polygons}", err=True)
     click.echo(f"  clean (linemerge):     {report.working_layers} layers", err=True)
@@ -243,6 +258,57 @@ def poche_cmd(src: Path, output: Path | None, overrides_path: Path | None):
             f"  {marker} {short:50}  {fr.strategy:18}  polys={fr.polygon_count:>3}  conf={fr.confidence:.2f}",
             err=True,
         )
+
+
+@cli.command("preview")
+@click.argument("before", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument("after", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option(
+    "-o", "--output",
+    type=click.Path(dir_okay=False, path_type=Path),
+    required=True,
+    help="Output PNG path.",
+)
+@click.option(
+    "--mode",
+    type=click.Choice(["side-by-side", "tier-overlay", "diff"]),
+    default="side-by-side",
+    show_default=True,
+)
+@click.option(
+    "--dpi",
+    type=int,
+    default=96,
+    show_default=True,
+    help="Render DPI (effective resolution; supersample 4× then downsample).",
+)
+@click.option(
+    "--ghostscript",
+    is_flag=True,
+    help="Use Ghostscript fallback (-dNOMINLINEWIDTH) for sub-0.25pt hairline accuracy.",
+)
+def preview_cmd(before: Path, after: Path, output: Path, mode: str, dpi: int, ghostscript: bool):
+    """Generate a visual before/after preview PNG.
+
+    \b
+    Modes:
+      side-by-side  — both files rendered at multiple plot scales, stacked
+      tier-overlay  — `after` rendered with each tier in a unique color
+      diff          — pixel diff (red = added strokes, blue = removed)
+    """
+    from .preview import side_by_side, tier_overlay, diff_image, GhostscriptRenderer
+    renderer = GhostscriptRenderer() if ghostscript else None
+    if mode == "side-by-side":
+        click.echo(f"rendering before+after at multiple scales...", err=True)
+        side_by_side(str(before), str(after), str(output), renderer=renderer)
+    elif mode == "tier-overlay":
+        click.echo(f"rendering tier overlay of {after}...", err=True)
+        tier_colors = {1.0: "red", 0.5: "orange", 0.3: "yellow", 0.18: "green", 0.13: "cyan", 0.08: "blue"}
+        tier_overlay(str(after), str(output), tier_colors, dpi=dpi, renderer=renderer)
+    elif mode == "diff":
+        click.echo(f"rendering pixel diff...", err=True)
+        diff_image(str(before), str(after), str(output), dpi=dpi, renderer=renderer)
+    click.echo(f"wrote {output}", err=True)
 
 
 @cli.command("explain-layer")

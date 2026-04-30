@@ -38,7 +38,10 @@ from shapely import concave_hull, segmentize
 from shapely.geometry import LineString, MultiLineString, MultiPoint, Polygon, box
 from shapely.ops import linemerge, polygonize, snap, unary_union
 
+from shapely.geometry import Polygon as _ShPolygon
+
 from .apply_jsx import ILLUSTRATOR_APP
+from .hatch import hatch_polygon, material_for_layer
 
 POCHE_CLOSE_LAYER = "__POCHE_CLOSE__"
 TOLERANCE_SWEEP = (0.0, 0.1, 0.5, 1.0, 2.0, 5.0)  # 0 = bare linemerge, no snap
@@ -356,6 +359,7 @@ __POLYGONS_BAKED__
     for (var L = 0; L < doc.layers.length; L++) visit(doc.layers[L], "");
 
     var totalCreated = 0;
+    var totalHatch = 0;
     var perLayer = [];
     for (var name in POLYGONS) {
         var lyr = layerByName[name];
@@ -380,7 +384,27 @@ __POLYGONS_BAKED__
             } catch (e) {}
         }
         totalCreated += created;
-        perLayer.push(name.split("::").pop() + "  +" + created);
+        // hatch lines on top of fill
+        var hatchCount = 0;
+        if (typeof HATCH !== "undefined" && HATCH[name]) {
+            var hlines = HATCH[name];
+            for (var hi = 0; hi < hlines.length; hi++) {
+                try {
+                    var hpts = hlines[hi];
+                    if (hpts.length < 2) continue;
+                    var hpath = lyr.pathItems.add();
+                    hpath.setEntirePath(hpts);
+                    hpath.closed = false;
+                    hpath.filled = false;
+                    hpath.stroked = true;
+                    hpath.strokeColor = BLACK;
+                    hpath.strokeWidth = 0.13;
+                    hatchCount++;
+                } catch (e) {}
+            }
+            totalHatch += hatchCount;
+        }
+        perLayer.push(name.split("::").pop() + "  +" + created + " polys" + (hatchCount > 0 ? " +" + hatchCount + " hatch" : ""));
     }
 
     var saveFile = new File(OUTPUT);
@@ -388,7 +412,7 @@ __POLYGONS_BAKED__
     saveOpts.pdfCompatible = true;
     doc.saveAs(saveFile, saveOpts);
 
-    var rep = "POCHE DONE\nnew filled polys created: " + totalCreated + "\nper layer:\n";
+    var rep = "POCHE DONE\nnew filled polys created: " + totalCreated + "\nhatch lines created: " + totalHatch + "\nper layer:\n";
     for (var i = 0; i < perLayer.length; i++) rep += "  " + perLayer[i] + "\n";
     rep += "saved as: " + OUTPUT + "\n";
     writeFile(REPORT, rep);
@@ -419,13 +443,32 @@ def render_dump_jsx(target: str, out_json: str) -> str:
             .replace("__OUT__", out_json))
 
 
-def render_apply_jsx(target: str, output: str, report_path: str, polygons: dict) -> str:
+def _bake_hatch_jsx(hatch_geometry: dict) -> str:
+    """Convert hatch-line dict to a JSX-compatible JS object literal."""
+    def js_str(s: str) -> str:
+        return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
+    parts = ["var HATCH = {"]
+    items = list(hatch_geometry.items())
+    for i, (layer_name, lines) in enumerate(items):
+        sep = "," if i < len(items) - 1 else ""
+        line_strs = []
+        for pts in lines:
+            coord_strs = [f"[{x:g},{y:g}]" for x, y in pts]
+            line_strs.append("[" + ",".join(coord_strs) + "]")
+        parts.append(f"  {js_str(layer_name)}: [" + ",".join(line_strs) + f"]{sep}")
+    parts.append("};")
+    return "\n".join(parts)
+
+
+def render_apply_jsx(target: str, output: str, report_path: str, polygons: dict, hatch_geometry: dict | None = None) -> str:
     baked = textwrap.indent(_bake_polygons_jsx(polygons), "    ")
+    hatch_baked = textwrap.indent(_bake_hatch_jsx(hatch_geometry or {}), "    ")
+    full_baked = baked + "\n\n" + hatch_baked
     return (APPLY_JSX_TEMPLATE
             .replace("__TARGET__", target)
             .replace("__OUTPUT__", output)
             .replace("__REPORT__", report_path)
-            .replace("__POLYGONS_BAKED__", baked))
+            .replace("__POLYGONS_BAKED__", full_baked))
 
 
 def _osascript_run_jsx(jsx_path: str, timeout: int = 1800) -> None:
@@ -450,14 +493,48 @@ def _osascript_open(path: str, timeout: int = 1800) -> None:
     subprocess.run(["osascript", "-e", applescript], check=True, timeout=timeout + 60)
 
 
+def _hatch_lines_for_layer(layer_name: str, polygons: list[list[list[float]]], scale: float) -> list[list[list[float]]]:
+    """For each polygon in `polygons`, generate material-specific hatch lines.
+
+    Returns a list of polylines (each polyline = list of [x,y] pairs).
+    Used by `--style material` to add hatch geometry on top of the solid fill.
+    """
+    material = material_for_layer(layer_name)
+    out_lines: list[list[list[float]]] = []
+    for poly_coords in polygons:
+        if len(poly_coords) < 3:
+            continue
+        poly = _ShPolygon(poly_coords)
+        if not poly.is_valid or poly.is_empty:
+            continue
+        lines = hatch_polygon(poly, material, scale)
+        for ls in lines:
+            try:
+                out_lines.append([[round(x, 4), round(y, 4)] for x, y in ls.coords])
+            except Exception:
+                continue
+    return out_lines
+
+
 def apply_poche(
     src: str,
     dst: str | None = None,
     *,
     overrides_path: str | None = None,
+    style: str = "solid",
+    scale: float = 1 / 50,
     workdir: str = "/tmp",
 ) -> PocheReport:
-    """Run the full poché pipeline on `src`, save to `dst`."""
+    """Run the full poché pipeline on `src`, save to `dst`.
+
+    style:
+        "solid"    — every cut polygon filled solid black (default; v0.4 behavior)
+        "material" — also generate per-material hatch geometry (concrete diagonal,
+                     CLT cross-grain, etc.) layered on top of the solid fills.
+                     Uses `arch_line_weights.hatch.material_for_layer` to choose.
+    scale:
+        Plot scale as a fraction (1/50, 1/100). Used only when style="material".
+    """
     src = os.path.abspath(src)
     if dst is None:
         p = Path(src)
@@ -495,8 +572,16 @@ def apply_poche(
     # 3. Polygonize
     report = polygonize_dump(geom_json, overrides)
 
-    # 4. Build apply JSX
-    Path(apply_jsx).write_text(render_apply_jsx(src, dst, report_txt, report.polygons))
+    # 4a. Optional: generate per-material hatch geometry on top of the fills
+    hatch_geometry: dict[str, list[list[list[float]]]] = {}
+    if style == "material" and report.polygons:
+        for layer_name, polys in report.polygons.items():
+            hatch_lines = _hatch_lines_for_layer(layer_name, polys, scale)
+            if hatch_lines:
+                hatch_geometry[layer_name] = hatch_lines
+
+    # 4b. Build apply JSX
+    Path(apply_jsx).write_text(render_apply_jsx(src, dst, report_txt, report.polygons, hatch_geometry))
 
     # 5. Apply
     _osascript_run_jsx(apply_jsx)

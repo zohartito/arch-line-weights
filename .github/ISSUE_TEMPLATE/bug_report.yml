@@ -1,0 +1,48 @@
+name: Bug report
+description: Something isn't working
+title: "[bug]: "
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: arch-line-weights version
+      description: Output of `arch-lw --version`
+      placeholder: "0.5.0"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS / Python
+      placeholder: "macOS 14.5 / Python 3.12.7"
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: The exact `arch-lw …` command you ran
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include any stderr / report output. Paste a screenshot if visual.
+    validations:
+      required: true
+  - type: textarea
+    id: file
+    attributes:
+      label: Source file (optional)
+      description: |
+        If the bug is reproducible only on a specific .ai/.pdf file, please attach it
+        or describe its origin (Rhino export? AutoCAD? hand-drawn in IL?).
