@@ -177,9 +177,13 @@ def poisson_disk(
         for dx in range(-2, 3):
             for dy in range(-2, 3):
                 nx, ny = gx + dx, gy + dy
-                if 0 <= nx < grid_w and 0 <= ny < grid_h and grid[ny][nx] is not None:
-                    if p.distance(grid[ny][nx]) < min_dist:
-                        return False
+                if (
+                    0 <= nx < grid_w
+                    and 0 <= ny < grid_h
+                    and grid[ny][nx] is not None
+                    and p.distance(grid[ny][nx]) < min_dist
+                ):
+                    return False
         return True
 
     # Seed with a random point inside polygon (rejection sample)
