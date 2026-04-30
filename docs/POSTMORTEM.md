@@ -1,98 +1,181 @@
-# Postmortem — How v0.1 shipped a layer-flattening bug
+# Postmortem — every poché attempt and what we learned
 
-> Written 2026-04-29, the day v0.1 shipped, after the user opened the output
-> file in Illustrator and saw all 62 Rhino layers collapsed into a single
-> "Layer 1". This document exists so future contributors don't repeat the
-> same chain of reasoning.
+> Living document. Each entry: what we tried, what worked, what failed,
+> what to keep doing or stop doing. The point is to make sure no future
+> contributor (including future-us) repeats any of these.
 
-## What we set out to do
+## Context
 
-User had a 24 MB Rhino-exported `.ai` (USC ARCH 202B section drawing). Every
-stroke was 1.0 pt; the only differentiator between a "section cut" line and a
-"material hatch" line was the stroke RGB color. We needed to apply
-architectural line-weight hierarchy to it.
+Project: `arch-line-weights` — apply architectural line-weight hierarchy +
+poché to color-coded vector drawings (typically Rhino-exported `.ai`).
+Reference test file: USC ARCH 202B section drawing, 24 MB, 340,323 strokes,
+62 OCG layers, 21 of which are `Visible::ClippingPlaneIntersections::*` (the
+section cuts that should become poché).
 
-## What we tried, in order
+## Attempt 1 (v0.1) — pikepdf rewrite + strip PieceInfo
 
-| # | Approach | Outcome |
-|---|----------|---------|
-| 1 | ExtendScript `do javascript` over `app.documents[0].pathItems` setting `strokeWidth` per item | Exponential slowdown: first 10K paths in 79 s, second 10K in 132 s, third 10K in 280 s. ETA ~2 hours and rising. Killed Illustrator. |
-| 2 | Spawned three sub-agents in parallel: ExtendScript performance research, UXP-from-CLI viability, alternative vector tools | Findings: no `suspendHistory` in IL ExtendScript; UXP not exposed for Illustrator in 2026; pikepdf is the right Python tool for the job. |
-| 3 | pikepdf rewrites the PDF content stream — inject `<width> w` before every stroke operator, color-keyed via the most recent `RG`. Strip `/PieceInfo` so Illustrator re-parses from the modified PDF. | **Worked in 110 s. Shipped as v0.1.** |
-| 4 | User opens the result in Illustrator. **All 62 Rhino layers gone — file shows 1 layer.** | Bug filed against ourselves. |
+**What:** Rewrite the PDF content stream to inject `<width> w` before every
+stroke operator, color-keyed by the most recent `RG`. Strip `/PieceInfo` so
+Illustrator parses the modified stream instead of its private cache.
 
-## Root cause
+**Result:** Strokes worked perfectly. Speed was great (110 s on 340 K
+strokes). Shipped as v0.1.
 
-`.ai` files are PDF files with extras. The extra is `/PieceInfo /Illustrator
-/Private` — a per-page dictionary of `AIPrivateData###` streams that contain
-Illustrator's native representation of the artwork (layers, groups, swatches,
-appearances). When Illustrator opens an `.ai`, it reads PieceInfo and **ignores
-the PDF content stream** for everything except rendering preview.
+**Failure:** Stripping PieceInfo **flattened all 62 Rhino layers into a
+single Illustrator layer**. The user opened it, said "you turned it into one
+layer," and we rolled back the default.
 
-We stripped PieceInfo to force Illustrator to honor our PDF-stream stroke-width
-edits. That worked for stroke widths but destroyed layer metadata, because:
+**Root cause:** `.ai` files are dual-encoded: `/PieceInfo /Illustrator
+/Private` holds the canonical layer/group structure; the PDF content stream
+is a rendering fallback. Strip PieceInfo → Illustrator falls back to the PDF
+parser, which collapses OCGs to the default Layer 1 unless you open via
+`File > Open` with `pDFPreserveLayers` enabled (no equivalent for
+double-clicking the file).
 
-- The PDF *does* still have an `/OCProperties /OCGs` block listing all 62
-  Rhino layers (we never touched it). `pikepdf` confirms it's there in both
-  the BACKUP and the v0.1-output file.
-- But Illustrator's PDF parser (used when there's no PieceInfo) treats OCGs
-  as visibility groups *unless* the user opens via `File > Open` with
-  `pDFPreserveLayers` enabled. Without that, it flattens every OCG into the
-  default Layer 1.
+**Lesson kept:** Layer fidelity > raw speed for any tool whose users will
+iterate on the output. Default to layer-preserving even if slower.
 
-So our v0.1 file had:
-- The **right stroke widths** (in the PDF stream)
-- The **right OCG metadata** (in `/OCProperties`)
-- But no signal to Illustrator on `app.open()` to honor either
+**Lesson kept:** "Open in Illustrator and look at the Layers panel" is a
+required acceptance test — not just "fills look right in preview."
 
-## Why we missed it
+## Attempt 2 (v0.2) — Illustrator JSX with `maximumUndoDepth=1`
 
-The README's "Limitations" section did mention layer flattening as a trade-off
-of stripping PieceInfo. We just decided wrong on the default. Two anti-patterns
-in our reasoning:
+**What:** Hand a JSX to Illustrator that walks each leaf layer, derives a
+weight from the new semantic layer-name classifier (`layer_classify.py`),
+and applies it to every `pathItem` in that layer. Outline view + cap undo
+depth at 1 to keep ExtendScript linear-time.
 
-1. **We optimized for our test case, not the user's workflow.** Our test was
-   "does the file open and show new stroke widths in Illustrator?" — pass.
-   The user's test was "can I still click a layer to refine its weight?" —
-   fail. The user's mental model came from the Layers panel, not from a
-   visual diff.
+**Result:** Worked. 11 minutes for 340 K strokes, all 62 layers preserved,
+0 errors. Shipped as v0.2.
 
-2. **We dismissed the slow-but-correct path too quickly.** ExtendScript's
-   exponential slowdown looked unbounded in our first run because we hadn't
-   tried `maximumUndoDepth=1`. With that single pref change + Outline-view
-   toggle + per-layer iteration (62 chunks instead of 340K monolithic), the
-   JSX path completes in 11 min — entirely acceptable for a one-off render.
+**Lesson kept:** ExtendScript per-item iteration is **linear with
+`maximumUndoDepth=1`, exponential without**. The first naive try (no undo
+cap) showed exponential degradation — first 10 K paths in 79 s, second in
+132 s, third in 280 s. ETA was 2+ hours and rising.
 
-## The fix (v0.2)
+**Lesson kept:** Layer-name semantic classification beats color
+classification for any Rhino export. `Visible::ClippingPlaneIntersections::*`
+is **always** the cut tier regardless of trailing material code.
 
-Two-mode tool:
+## Attempt 3 (v0.3 try 1) — JSX `app.executeMenuCommand("join")` to chain endpoints + fill
 
-- **`arch-lw apply-jsx`** (now the recommended default for `.ai`): hands a JSX
-  to Illustrator, walks each layer, applies the semantic-classifier weight to
-  every `pathItem` in that layer, saves. Slow but **preserves every layer**.
-- **`arch-lw apply`** (still there): pikepdf path. Faster. Use when layer
-  fidelity doesn't matter (e.g., you're rendering a final PNG, not editing
-  further).
+**What:** For each cut layer, select all paths, repeatedly call
+`app.executeMenuCommand("join")` to chain coincident endpoints, then fill
+the resulting closed paths black.
 
-Plus a **semantic layer-name classifier** (`arch_line_weights.layer_classify`)
-that recognizes Rhino's `Visible::ClippingPlaneIntersections::*` as the cut
-tier regardless of material — this is much stronger signal than color.
+**Result:** Catastrophic. Each layer's 100s of paths joined into ONE giant
+self-intersecting tangled polygon, which then filled along its zigzag stroke
+order. The user's screenshot showed black bars criss-crossing the courtyard.
 
-## Lessons we want to keep
+**Failure:** Illustrator's Join is not topology-aware. Given N paths whose
+endpoints are all near-coincident in pairs, Join chains them in **arbitrary
+order**, not by the actual graph structure. So 100 segments that should form
+10 separate closed polygons collapse into 1 self-intersecting blob.
 
-1. **Layer fidelity > raw speed**, for any tool whose users will iterate on
-   the output. A 10-min run that preserves the user's mental model beats a
-   2-min run that destroys it.
-2. **The user's verification ritual matters.** "Open in Illustrator and look
-   at the Layers panel" should have been part of our acceptance test.
-3. **Sub-agents in parallel are how we move fast on unknowns.** The five
-   research agents this session (ExtendScript perf, UXP, alternative tools,
-   visual preview, Rhino integration, multi-format compatibility,
-   architectural standards, competitive landscape, poché conventions) gave
-   us in 90 minutes the kind of survey that takes a solo dev a week.
-4. **Document failed approaches in the repo.** This file exists so v0.3+
-   contributors don't try `pikepdf + strip PieceInfo` again, blame
-   themselves when it flattens layers, and burn another afternoon.
-5. **Two modes is fine; one default is required.** Tools with `--method`
-   options that have sharp foot-guns must pick a safe default. Layer-aware
-   is the safe default for arch students; pikepdf is opt-in.
+**Lesson kept:** Naive endpoint-chaining (Illustrator's Join, simple
+linemerge without graph structure) is a trap. Use shapely's
+`linemerge + polygonize` which **preserves topology** — it identifies
+*separate* connected components and only chains within each.
+
+**Kept in repo:** `scripts/poche/apply_join_NAIVE.jsx` as a warning marker.
+
+## Attempt 4 (v0.3 try 2) — pikepdf-only OCG-aware stream rewrite
+
+**What:** Walk the PDF content stream, track current OCG via `BDC/EMC` +
+`/Properties` lookup, collect line segments per OCG, run shapely linemerge +
+polygonize per OCG, append filled polygons to the content stream, save.
+
+**Result:** Buggy. My MC# matcher used `"/MC28"` in one place and `"MC28"`
+(no slash) in the other — collected 0 segments for every layer.
+
+**Failure:** Format mismatch in dict keys. Trivial bug, hours to find
+because PDF content-stream debugging is hard.
+
+**Lesson kept:** When walking PDF marked content, normalize names exactly
+once. `pikepdf.Name` objects can stringify with or without leading `/`
+depending on context.
+
+**Lesson kept:** When an extraction returns 0 results across the board,
+**dump the actual operator format first** before debugging the geometry.
+
+## Attempt 5 (v0.3 try 3) — JSX dump anchors + Python shapely + JSX apply
+
+**What:** Two-stage pipeline:
+1. JSX A walks every cut layer and dumps `pathItem.pathPoints[i].anchor` to
+   `/tmp/cut_geometry.json` (skips PDF stream entirely)
+2. Python loads the JSON, runs `shapely.ops.linemerge + polygonize` per
+   layer (with snap+linemerge fallback ladder)
+3. Python builds JSX B with the resulting polygon coordinates baked in as a
+   JS object literal (no I/O at runtime)
+4. JSX B opens the file in Illustrator, creates new closed `pathItem`s in
+   each layer with `filled = true; fillColor = black`, saves
+
+**Result:** Mostly works.
+
+| Outcome | Layers | Why |
+|---|---|---|
+| Clean polygons | 13 / 21 | Bare linemerge produced N separate closed loops |
+| Concave-hull fallback | 7 / 21 | linemerge gave 0 polys → fell back, produces 1 lumpy polygon instead of N |
+| Failed | 1 / 21 | `23_WINDOW_FRAMES` — too few points |
+
+**Sub-failures along the way:**
+- v3 added `snap()` pre-pass that **over-merged** the dense cladding layers.
+  TEC_STAIRS went from 29 polys (no snap) to 0 (snap at 0.5pt) → fell back
+  to bad concave_hull. Reverted snap → use bare linemerge first.
+- After `saveAs`, Illustrator's in-memory copy of the *source* doc still
+  contains all the JSX-added pathItems. If the user clicks back to that tab
+  thinking it's the clean source, they see "weird extra lines." Reproduced
+  by the user. Force-close and reopen from disk to recover.
+
+**Lessons kept:**
+- Two-stage pipeline (Illustrator dump → Python compute → Illustrator
+  apply) is the working pattern. Easier to debug than PDF content stream
+  hacking.
+- For per-layer geometry processing, **try a sweep of strategies and pick
+  the one that maximizes polygon count**, not the first that gives any
+  polygons. Some layers want 0.01pt tolerance, some want 2pt.
+- After `saveAs` with new pathItems added, the source doc is dirty. Either
+  close-without-saving programmatically before next iteration, or instruct
+  the user to manually close and reopen.
+
+## Attempt 6 (planned, v0.4) — Disconnected-loop rescue
+
+**What:** Per the disconnected-loops sub-agent report, layered fallback with
+confidence scoring:
+1. bare linemerge → conf 1.00
+2. snap+linemerge at 0.5/1/2/5 pt → conf 0.85–0.7 (whichever maxes polys)
+3. user-marked `__POCHE_CLOSE__` layer (Rhino-side fix) → conf 0.95
+4. concave_hull(densified) → conf 0.55
+5. axis-aligned bbox → conf 0.30
+
+Plus emit per-fill metadata so the UI can flag low-confidence with warnings.
+
+**Status:** Roadmapped. Not yet implemented.
+
+## Cross-cutting lessons (the durable ones)
+
+1. **Layer fidelity is non-negotiable.** Any change that destroys it must
+   be explicit opt-in, not the default.
+2. **Sub-agents in parallel** are how to move fast on unknowns. Eight
+   sub-agent reports across this 30-hour session each gave us in 2 minutes
+   what would have taken hours of solo research.
+3. **Two-stage pipelines** (Illustrator dump → Python compute → Illustrator
+   apply) are easier to debug than monolithic pikepdf or monolithic JSX.
+4. **Topology-aware geometry libraries** (shapely) > naive endpoint chaining
+   (Illustrator Join) every time.
+5. **Best-effort sweep over strategies + confidence scoring** > picking one
+   tolerance and hoping. Different layers need different tolerances within
+   the same file.
+6. **Document failed approaches in the repo**, not just successful ones.
+   This file is the contract.
+7. **The user's verification ritual matters.** "Does it look right in
+   Illustrator's Preview view at the layers panel?" is the ground truth, not
+   "does the JSON say success."
+8. **Save the source separately from the modification.** Use `saveAs` to a
+   new file every time. Never modify the user's source in place.
+9. **`maximumUndoDepth=1` + Outline view** turns ExtendScript from
+   exponential-time to linear-time on bulk edits.
+10. **Standards-compliant defaults trump aesthetics.** The current 0.1–1.0pt
+    range was chosen for screen review; for plotted print at 1/4"=1' the
+    section cut should be 0.7mm = 1.98pt per ISO 128. v0.4 will add scale-
+    aware presets (see `docs/research/standards.md`).
