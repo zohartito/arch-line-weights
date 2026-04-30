@@ -1,12 +1,13 @@
 # arch-line-weights
 
 [![CI](https://github.com/zohartito/arch-line-weights/actions/workflows/ci.yml/badge.svg)](https://github.com/zohartito/arch-line-weights/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-mkdocs--material-blue)](https://zohartito.github.io/arch-line-weights/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
 
-Apply architectural line-weight hierarchy AND solid-black poché to a
-Rhino-exported `.ai` or `.pdf`, in seconds, with all your original layers
-preserved.
+Apply architectural line-weight hierarchy AND solid-black poché AND
+material-specific hatching to a Rhino-exported `.ai` or `.pdf`, in seconds,
+with all your original layers preserved.
 
 If you've ever exported a section, plan, or elevation from Rhino and watched
 all 340,000 strokes come out at a uniform 1.0 pt — and then tried to fix it

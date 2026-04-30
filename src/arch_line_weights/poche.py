@@ -41,6 +41,7 @@ from shapely.ops import linemerge, polygonize, snap, unary_union
 from shapely.geometry import Polygon as _ShPolygon
 
 from .apply_jsx import ILLUSTRATOR_APP
+from .bridge import infer_bridges
 from .hatch import hatch_polygon, material_for_layer
 
 POCHE_CLOSE_LAYER = "__POCHE_CLOSE__"
@@ -198,6 +199,20 @@ def polygonize_layer(
             return polys, FillResult(layer_name, "linemerge_bare", 1.0, len(polys), n_segments, tol)
         conf = 0.95 if tol <= 0.5 else (0.85 if tol <= 1.0 else 0.7)
         return polys, FillResult(layer_name, "linemerge_snap", conf, len(polys), n_segments, tol)
+
+    # Auto-bridge: infer missing connecting segments via greedy nearest-neighbor
+    # endpoint pairing, then re-run linemerge+polygonize.
+    try:
+        augmented, bridge_conf = infer_bridges(lines, max_gap=50.0, min_gap=0.01)
+        if len(augmented) > len(lines):
+            polys_with_bridges = _polys_at_tolerance(augmented, 0.0)
+            if polys_with_bridges:
+                return polys_with_bridges, FillResult(
+                    layer_name, "auto_bridge", 0.75 * bridge_conf + 0.25,
+                    len(polys_with_bridges), n_segments,
+                )
+    except Exception:
+        pass
 
     # Concave hull fallback
     ch = _try_concave_hull(lines, ratio=0.3)

@@ -1,20 +1,30 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.27", "hatch-vcs>=0.4"]
+build-backend = "hatchling.build"
 
 [project]
 name = "arch-line-weights"
-version = "0.5.0"
-description = "Apply architectural line-weight hierarchy to color-coded vector drawings (Rhino-exported .ai/.pdf)."
+dynamic = ["version"]
+description = "Apply architectural line-weight hierarchy and poché to Rhino-exported .ai/.pdf drawings."
 readme = "README.md"
-requires-python = ">=3.10"
-license = { text = "MIT" }
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "zohartito" }]
-keywords = ["architecture", "illustrator", "rhino", "pdf", "stroke-width", "drawing"]
+keywords = ["architecture", "illustrator", "rhino", "pdf", "stroke-width", "drawing", "poche", "cad"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
     "Topic :: Multimedia :: Graphics :: Editors :: Vector-Based",
+    "Topic :: Scientific/Engineering",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Science/Research",
+    "Development Status :: 4 - Beta",
 ]
 dependencies = [
     "pikepdf>=8.0",
@@ -26,15 +36,62 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev  = ["pytest>=8", "ruff>=0.7"]
+dev  = ["pytest>=8", "ruff>=0.7", "mypy>=1.13"]
 test = ["pytest>=8"]
-lint = ["ruff>=0.7"]
+lint = ["ruff>=0.7", "mypy>=1.13"]
+docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.26"]
 
 [project.scripts]
 arch-lw = "arch_line_weights.cli:cli"
 
 [project.urls]
-Repository = "https://github.com/zohartito/arch-line-weights"
+Homepage      = "https://github.com/zohartito/arch-line-weights"
+Repository    = "https://github.com/zohartito/arch-line-weights"
+Documentation = "https://zohartito.github.io/arch-line-weights/"
+Issues        = "https://github.com/zohartito/arch-line-weights/issues"
+Changelog     = "https://github.com/zohartito/arch-line-weights/blob/main/CHANGELOG.md"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+# ---------------- Hatchling -----------------
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/arch_line_weights"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/",
+    "tests/",
+    "docs/",
+    "examples/",
+    "skills/",
+    "integrations/",
+    "scripts/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "SECURITY.md",
+    "pyproject.toml",
+]
+
+# ---------------- Tooling -----------------
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "RUF", "SIM"]
+ignore = ["E501"]  # line too long — handled by formatter
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.11"
+strict = false  # gradual typing for now
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"

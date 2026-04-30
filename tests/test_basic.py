@@ -16,7 +16,9 @@ from arch_line_weights.presets import (
 # --------------------------------------------------------------------------- #
 
 def test_version():
-    assert __version__ == "0.5.0"
+    # Version comes from hatch-vcs (git tag) at install time; just sanity-check format
+    assert isinstance(__version__, str)
+    assert len(__version__) > 0
 
 
 def test_color_parse():
@@ -139,10 +141,10 @@ def test_poche_polygonize_layer_returns_failed_for_empty():
     assert result.strategy == "failed"
 
 
-def test_poche_polygonize_layer_falls_back_to_concave_hull():
-    """Disconnected segments with no shared endpoints should fall back to concave_hull."""
+def test_poche_polygonize_layer_falls_back_for_disconnected():
+    """Disconnected segments should be rescued by snap, auto_bridge, concave_hull, or bbox."""
     from arch_line_weights.poche import polygonize_layer
-    # Three disconnected line segments forming a rough triangle
+    # Four disconnected line segments forming a rough rectangle
     paths = [
         [[0, 0], [5, 0.1]],
         [[10, 0], [10, 5.1]],
@@ -150,9 +152,60 @@ def test_poche_polygonize_layer_falls_back_to_concave_hull():
         [[0, 10], [0.1, 5]],
     ]
     polys, result = polygonize_layer("test_layer", paths)
-    # Either linemerge_snap rescued it, or concave_hull did
     assert result.polygon_count >= 1
-    assert result.strategy in ("linemerge_snap", "concave_hull", "bbox", "linemerge_bare")
+    # Any rescue strategy is acceptable
+    assert result.strategy in (
+        "linemerge_bare", "linemerge_snap", "auto_bridge",
+        "concave_hull", "bbox",
+    )
+
+
+def test_bridge_infer_for_almost_closed_square():
+    """Auto-bridge should close 4 segments with sub-1pt corner gaps into 1 polygon."""
+    from arch_line_weights.bridge import infer_bridges
+    from arch_line_weights.poche import _polys_at_tolerance
+    from shapely.geometry import LineString
+    # Square with 0.2pt gap at each corner
+    g = 0.2
+    segs = [
+        LineString([(0, 0), (10 - g, 0)]),
+        LineString([(10, g), (10, 10 - g)]),
+        LineString([(10 - g, 10), (g, 10)]),
+        LineString([(0, 10 - g), (0, g)]),
+    ]
+    augmented, conf = infer_bridges(segs, max_gap=2.0, min_gap=0.01)
+    assert len(augmented) > len(segs)  # bridges added
+    assert conf > 0  # some confidence
+    polys = _polys_at_tolerance(augmented, 0.0)
+    assert len(polys) >= 1
+
+
+def test_bridge_refuses_when_gap_too_big():
+    """Gap larger than max_gap should produce no bridges and 0 confidence."""
+    from arch_line_weights.bridge import infer_bridges
+    from shapely.geometry import LineString
+    segs = [
+        LineString([(0, 0), (10, 0)]),
+        LineString([(1000, 1000), (1010, 1000)]),  # far away
+    ]
+    augmented, conf = infer_bridges(segs, max_gap=50.0, min_gap=0.01)
+    assert len(augmented) == len(segs)  # no bridges added
+    assert conf == 0.0
+
+
+def test_bridge_already_closed_is_noop():
+    """Already-closed polygon should produce no bridges and high confidence."""
+    from arch_line_weights.bridge import infer_bridges
+    from shapely.geometry import LineString
+    segs = [
+        LineString([(0, 0), (10, 0)]),
+        LineString([(10, 0), (10, 10)]),
+        LineString([(10, 10), (0, 10)]),
+        LineString([(0, 10), (0, 0)]),
+    ]
+    augmented, conf = infer_bridges(segs)
+    assert len(augmented) == len(segs)  # no bridges needed
+    assert conf >= 0.5  # already valid topology
 
 
 def test_poche_user_override_skip():
