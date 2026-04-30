@@ -23,8 +23,10 @@ Per-layer strategy can be overridden via a JSON file:
       "23_WINDOW_FRAMES_REMAP_*": {"strategy": "skip"}
     }
 """
+
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import subprocess
@@ -32,15 +34,13 @@ import textwrap
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable, Literal
+from typing import Literal
 
 from shapely import concave_hull, segmentize
 from shapely.geometry import LineString, MultiLineString, MultiPoint, Polygon, box
+from shapely.geometry import Polygon as _ShPolygon
 from shapely.ops import linemerge, polygonize, snap, unary_union
 
-from shapely.geometry import Polygon as _ShPolygon
-
-from .apply_jsx import ILLUSTRATOR_APP
 from .bridge import infer_bridges
 from .hatch import hatch_polygon, material_for_layer
 
@@ -53,8 +53,13 @@ TOLERANCE_SWEEP = (0.0, 0.1, 0.5, 1.0, 2.0, 5.0)  # 0 = bare linemerge, no snap
 # ---------------------------------------------------------------------------- #
 
 Strategy = Literal[
-    "linemerge_bare", "linemerge_snap", "concave_hull", "bbox",
-    "user_override", "skipped", "failed",
+    "linemerge_bare",
+    "linemerge_snap",
+    "concave_hull",
+    "bbox",
+    "user_override",
+    "skipped",
+    "failed",
 ]
 
 
@@ -94,14 +99,13 @@ class PocheReport:
 # Polygonize
 # ---------------------------------------------------------------------------- #
 
+
 def _lines_from_anchors(paths: list[list[list[float]]]) -> list[LineString]:
     out = []
     for pts in paths:
         if len(pts) >= 2:
-            try:
+            with contextlib.suppress(Exception):
                 out.append(LineString([(p[0], p[1]) for p in pts]))
-            except Exception:
-                pass
     return out
 
 
@@ -208,8 +212,11 @@ def polygonize_layer(
             polys_with_bridges = _polys_at_tolerance(augmented, 0.0)
             if polys_with_bridges:
                 return polys_with_bridges, FillResult(
-                    layer_name, "auto_bridge", 0.75 * bridge_conf + 0.25,
-                    len(polys_with_bridges), n_segments,
+                    layer_name,
+                    "auto_bridge",
+                    0.75 * bridge_conf + 0.25,
+                    len(polys_with_bridges),
+                    n_segments,
                 )
     except Exception:
         pass
@@ -259,8 +266,7 @@ def polygonize_dump(
         report.fills.append(result)
         if polys:
             report.polygons[layer_name] = [
-                [[round(x, 4), round(y, 4)] for x, y in p.exterior.coords]
-                for p in polys
+                [[round(x, 4), round(y, 4)] for x, y in p.exterior.coords] for p in polys
             ]
     return report
 
@@ -269,7 +275,7 @@ def polygonize_dump(
 # JSX dump + apply
 # ---------------------------------------------------------------------------- #
 
-DUMP_JSX_TEMPLATE = r'''#target illustrator
+DUMP_JSX_TEMPLATE = r"""#target illustrator
 
 (function () {
     var TARGET = "__TARGET__";
@@ -340,10 +346,10 @@ DUMP_JSX_TEMPLATE = r'''#target illustrator
 
     var f = new File(OUT); f.encoding = "UTF-8"; f.open("w"); f.write(json); f.close();
 })();
-'''
+"""
 
 
-APPLY_JSX_TEMPLATE = r'''#target illustrator
+APPLY_JSX_TEMPLATE = r"""#target illustrator
 
 (function () {
     var TARGET = "__TARGET__";
@@ -432,13 +438,15 @@ __POLYGONS_BAKED__
     rep += "saved as: " + OUTPUT + "\n";
     writeFile(REPORT, rep);
 })();
-'''
+"""
 
 
 def _bake_polygons_jsx(polygons: dict) -> str:
     """Convert polygon dict to a JSX-compatible JS object literal."""
+
     def js_str(s: str) -> str:
         return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
     parts = ["var POLYGONS = {"]
     items = list(polygons.items())
     for i, (layer_name, polys) in enumerate(items):
@@ -453,15 +461,15 @@ def _bake_polygons_jsx(polygons: dict) -> str:
 
 
 def render_dump_jsx(target: str, out_json: str) -> str:
-    return (DUMP_JSX_TEMPLATE
-            .replace("__TARGET__", target)
-            .replace("__OUT__", out_json))
+    return DUMP_JSX_TEMPLATE.replace("__TARGET__", target).replace("__OUT__", out_json)
 
 
 def _bake_hatch_jsx(hatch_geometry: dict) -> str:
     """Convert hatch-line dict to a JSX-compatible JS object literal."""
+
     def js_str(s: str) -> str:
         return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
     parts = ["var HATCH = {"]
     items = list(hatch_geometry.items())
     for i, (layer_name, lines) in enumerate(items):
@@ -475,15 +483,18 @@ def _bake_hatch_jsx(hatch_geometry: dict) -> str:
     return "\n".join(parts)
 
 
-def render_apply_jsx(target: str, output: str, report_path: str, polygons: dict, hatch_geometry: dict | None = None) -> str:
+def render_apply_jsx(
+    target: str, output: str, report_path: str, polygons: dict, hatch_geometry: dict | None = None
+) -> str:
     baked = textwrap.indent(_bake_polygons_jsx(polygons), "    ")
     hatch_baked = textwrap.indent(_bake_hatch_jsx(hatch_geometry or {}), "    ")
     full_baked = baked + "\n\n" + hatch_baked
-    return (APPLY_JSX_TEMPLATE
-            .replace("__TARGET__", target)
-            .replace("__OUTPUT__", output)
-            .replace("__REPORT__", report_path)
-            .replace("__POLYGONS_BAKED__", full_baked))
+    return (
+        APPLY_JSX_TEMPLATE.replace("__TARGET__", target)
+        .replace("__OUTPUT__", output)
+        .replace("__REPORT__", report_path)
+        .replace("__POLYGONS_BAKED__", full_baked)
+    )
 
 
 def _osascript_run_jsx(jsx_path: str, timeout: int = 1800) -> None:
@@ -508,7 +519,9 @@ def _osascript_open(path: str, timeout: int = 1800) -> None:
     subprocess.run(["osascript", "-e", applescript], check=True, timeout=timeout + 60)
 
 
-def _hatch_lines_for_layer(layer_name: str, polygons: list[list[list[float]]], scale: float) -> list[list[list[float]]]:
+def _hatch_lines_for_layer(
+    layer_name: str, polygons: list[list[list[float]]], scale: float
+) -> list[list[list[float]]]:
     """For each polygon in `polygons`, generate material-specific hatch lines.
 
     Returns a list of polylines (each polyline = list of [x,y] pairs).
@@ -569,10 +582,8 @@ def apply_poche(
     report_txt = os.path.join(workdir, "arch_lw_poche_report.txt")
 
     for f in (geom_json, dump_jsx, apply_jsx, report_txt):
-        try:
+        with contextlib.suppress(FileNotFoundError):
             os.unlink(f)
-        except FileNotFoundError:
-            pass
 
     # 1. Open source clean
     _osascript_open(src)

@@ -7,15 +7,16 @@ Phase 1 supports two strategies:
 
 Phase 3 will add smarter classification (saturation, hue family, frequency).
 """
-from __future__ import annotations
 
-from typing import Iterable
+from __future__ import annotations
 
 from .inspect import InspectionReport, color_to_rgb255
 from .presets import Tier
 
 
-def from_user_mapping(mapping_rgb_to_weight: dict[tuple[int, int, int], float]) -> dict[tuple[int, int, int], float]:
+def from_user_mapping(
+    mapping_rgb_to_weight: dict[tuple[int, int, int], float],
+) -> dict[tuple[int, int, int], float]:
     """Pass-through; just here for API symmetry."""
     return dict(mapping_rgb_to_weight)
 

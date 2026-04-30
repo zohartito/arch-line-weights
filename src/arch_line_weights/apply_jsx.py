@@ -8,8 +8,10 @@ Trade-off vs the pikepdf path:
 Required: Adobe Illustrator 2024+ installed at the standard path on macOS.
 The file MUST already be open in Illustrator (or this function will open it).
 """
+
 from __future__ import annotations
 
+import contextlib
 import os
 import subprocess
 import textwrap
@@ -137,12 +139,13 @@ __CLASSIFIER__
 def render_jsx(target: str, output: str, progress_path: str, report_path: str) -> str:
     """Render the JSX template with all paths injected."""
     classifier = as_jsx_function()
-    return (JSX_TEMPLATE
-            .replace("__TARGET__", target)
-            .replace("__OUTPUT__", output)
-            .replace("__PROGRESS__", progress_path)
-            .replace("__REPORT__", report_path)
-            .replace("__CLASSIFIER__", textwrap.indent(classifier, "    ")))
+    return (
+        JSX_TEMPLATE.replace("__TARGET__", target)
+        .replace("__OUTPUT__", output)
+        .replace("__PROGRESS__", progress_path)
+        .replace("__REPORT__", report_path)
+        .replace("__CLASSIFIER__", textwrap.indent(classifier, "    "))
+    )
 
 
 def open_in_illustrator(path: str) -> None:
@@ -182,10 +185,8 @@ def apply_via_jsx(src: str, dst: str | None = None, *, jsx_path: str | None = No
     progress_path = "/tmp/arch_lw_progress.txt"
     report_path = "/tmp/arch_lw_report.txt"
     for f in (progress_path, report_path):
-        try:
+        with contextlib.suppress(FileNotFoundError):
             os.unlink(f)
-        except FileNotFoundError:
-            pass
 
     if jsx_path is None:
         jsx_path = "/tmp/arch_lw_apply.jsx"

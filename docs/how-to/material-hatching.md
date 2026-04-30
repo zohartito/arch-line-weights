@@ -53,4 +53,4 @@ Then add `TERRAZZO` to your Rhino layer name and re-run `arch-lw poche --style m
 ## Related
 
 - [Generate poché](generate-poche.md)
-- [API reference: `arch_line_weights.hatch`](../reference/python-api.md#hatch)
+- [API reference: `arch_line_weights.hatch`](../reference/python-api.md)

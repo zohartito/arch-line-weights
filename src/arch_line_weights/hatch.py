@@ -28,17 +28,19 @@ Add a custom material:
 
     register_material(MaterialRecipe("my_material", hatch_my_material, solid=False))
 """
+
 from __future__ import annotations
 
+import functools
 import math
+import operator
 import random
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import Callable, Iterable
 
 import numpy as np
-from shapely.affinity import rotate, translate
+from shapely.affinity import rotate
 from shapely.geometry import LineString, MultiLineString, MultiPolygon, Point, Polygon
-from shapely.ops import unary_union
 
 PT_PER_MM = 2.83464567
 
@@ -55,6 +57,7 @@ def mm_to_pt(mm: float, scale: float) -> float:
 # --------------------------------------------------------------------------- #
 # Geometry helpers
 # --------------------------------------------------------------------------- #
+
 
 def _principal_angle(polygon: Polygon) -> float:
     """Angle (degrees) of the polygon's longest side, for grain alignment."""
@@ -120,7 +123,9 @@ def parallel_hatch(
     return [rotate(ls, angle_deg, origin=(cx, cy)) for ls in lines]
 
 
-def crosshatch(polygon: Polygon, spacing: float, angle_deg: float, second_angle: float = None) -> list[LineString]:
+def crosshatch(
+    polygon: Polygon, spacing: float, angle_deg: float, second_angle: float | None = None
+) -> list[LineString]:
     """Two passes of parallel_hatch at perpendicular (or specified) angles."""
     if second_angle is None:
         second_angle = angle_deg + 90.0
@@ -131,7 +136,10 @@ def crosshatch(polygon: Polygon, spacing: float, angle_deg: float, second_angle:
 # Stipple & dots (Bridson Poisson-disk)
 # --------------------------------------------------------------------------- #
 
-def poisson_disk(polygon: Polygon, min_dist: float, k: int = 30, seed: int = 42, max_samples: int = 50_000) -> list[Point]:
+
+def poisson_disk(
+    polygon: Polygon, min_dist: float, k: int = 30, seed: int = 42, max_samples: int = 50_000
+) -> list[Point]:
     """Generate Poisson-disk samples inside `polygon` with min separation `min_dist`.
 
     `max_samples` caps the number of samples; if the polygon×min_dist would
@@ -142,13 +150,13 @@ def poisson_disk(polygon: Polygon, min_dist: float, k: int = 30, seed: int = 42,
     minx, miny, maxx, maxy = polygon.bounds
     area = (maxx - minx) * (maxy - miny)
     # Estimated count using packing density 0.6
-    est = int(0.6 * area / (min_dist ** 2))
+    est = int(0.6 * area / (min_dist**2))
     if est > max_samples:
         # Enlarge min_dist so that estimated count == max_samples
         min_dist = math.sqrt(0.6 * area / max_samples)
     cell_size = min_dist / math.sqrt(2)
-    grid_w = int(math.ceil((maxx - minx) / cell_size)) + 1
-    grid_h = int(math.ceil((maxy - miny) / cell_size)) + 1
+    grid_w = math.ceil((maxx - minx) / cell_size) + 1
+    grid_h = math.ceil((maxy - miny) / cell_size) + 1
     if grid_w * grid_h > 5_000_000:
         # Final guard: too many cells = grid takes too much memory
         return []
@@ -224,12 +232,16 @@ def stipple_triangles(polygon: Polygon, spacing: float, size: float = 0.5) -> li
     out = []
     s = size / 2
     for p in pts:
-        out.append(LineString([
-            (p.x - s, p.y - s),
-            (p.x + s, p.y - s),
-            (p.x, p.y + s),
-            (p.x - s, p.y - s),
-        ]))
+        out.append(
+            LineString(
+                [
+                    (p.x - s, p.y - s),
+                    (p.x + s, p.y - s),
+                    (p.x, p.y + s),
+                    (p.x - s, p.y - s),
+                ]
+            )
+        )
     return out
 
 
@@ -237,7 +249,10 @@ def stipple_triangles(polygon: Polygon, spacing: float, size: float = 0.5) -> li
 # Specialty patterns
 # --------------------------------------------------------------------------- #
 
-def sine_zigzag(polygon: Polygon, wavelength: float, amplitude: float, row_spacing: float | None = None) -> list[LineString]:
+
+def sine_zigzag(
+    polygon: Polygon, wavelength: float, amplitude: float, row_spacing: float | None = None
+) -> list[LineString]:
     """Stack of sine-wave lines (mineral-wool insulation symbol)."""
     if polygon.is_empty:
         return []
@@ -256,7 +271,7 @@ def sine_zigzag(polygon: Polygon, wavelength: float, amplitude: float, row_spaci
     for r in range(-1, n_rows):
         y_base = miny + r * row_spacing
         ys = y_base + amplitude * np.sin(2 * math.pi * xs / wavelength)
-        line = LineString(list(zip(xs, ys)))
+        line = LineString(list(zip(xs, ys, strict=False)))
         clipped = rotated.intersection(line)
         if clipped.is_empty:
             continue
@@ -321,10 +336,14 @@ def clt_layers(polygon: Polygon, lamella_thickness: float) -> list[LineString]:
     for i in range(n_lams):
         y_top = miny + (i + 1) * lamella_thickness
         y_bot = miny + i * lamella_thickness
-        strip = Polygon([
-            (minx, y_bot), (maxx, y_bot),
-            (maxx, y_top), (minx, y_top),
-        ]).intersection(rotated)
+        strip = Polygon(
+            [
+                (minx, y_bot),
+                (maxx, y_bot),
+                (maxx, y_top),
+                (minx, y_top),
+            ]
+        ).intersection(rotated)
         if strip.is_empty:
             continue
         for sub in _poly_iter(strip):
@@ -339,6 +358,7 @@ def clt_layers(polygon: Polygon, lamella_thickness: float) -> list[LineString]:
 # Material recipes
 # --------------------------------------------------------------------------- #
 
+
 @dataclass
 class MaterialRecipe:
     name: str
@@ -349,7 +369,7 @@ class MaterialRecipe:
 
 def hatch_concrete(polygon, scale, **kw):
     if isinstance(polygon, MultiPolygon):
-        return sum((hatch_concrete(p, scale, **kw) for p in polygon.geoms), [])
+        return functools.reduce(operator.iadd, (hatch_concrete(p, scale, **kw) for p in polygon.geoms), [])
     spacing = mm_to_pt(1.5, scale)
     dot_spacing = mm_to_pt(0.8, scale)
     dot_size = mm_to_pt(0.3, scale)
@@ -362,7 +382,11 @@ def hatch_concrete_solid(*a, **kw):
 
 def hatch_clt_cross_grain(polygon, scale, lamella_mm: float = 25.0, **kw):
     if isinstance(polygon, MultiPolygon):
-        return sum((hatch_clt_cross_grain(p, scale, lamella_mm=lamella_mm, **kw) for p in polygon.geoms), [])
+        return functools.reduce(
+            operator.iadd,
+            (hatch_clt_cross_grain(p, scale, lamella_mm=lamella_mm, **kw) for p in polygon.geoms),
+            [],
+        )
     return clt_layers(polygon, mm_to_pt(lamella_mm, scale))
 
 
@@ -372,7 +396,9 @@ def hatch_clt_solid(*a, **kw):
 
 def hatch_solid_timber(polygon, scale, **kw):
     if isinstance(polygon, MultiPolygon):
-        return sum((hatch_solid_timber(p, scale, **kw) for p in polygon.geoms), [])
+        return functools.reduce(
+            operator.iadd, (hatch_solid_timber(p, scale, **kw) for p in polygon.geoms), []
+        )
     angle = _principal_angle(polygon)
     spacing = mm_to_pt(0.9, scale)
 
@@ -388,37 +414,45 @@ def hatch_steel_solid(*a, **kw):
 
 def hatch_steel_hatch_45(polygon, scale, **kw):
     if isinstance(polygon, MultiPolygon):
-        return sum((hatch_steel_hatch_45(p, scale, **kw) for p in polygon.geoms), [])
+        return functools.reduce(
+            operator.iadd, (hatch_steel_hatch_45(p, scale, **kw) for p in polygon.geoms), []
+        )
     return parallel_hatch(polygon, mm_to_pt(0.8, scale), 45.0)
 
 
 def hatch_insulation_mineral_wool(polygon, scale, **kw):
     if isinstance(polygon, MultiPolygon):
-        return sum((hatch_insulation_mineral_wool(p, scale, **kw) for p in polygon.geoms), [])
+        return functools.reduce(
+            operator.iadd, (hatch_insulation_mineral_wool(p, scale, **kw) for p in polygon.geoms), []
+        )
     return sine_zigzag(polygon, wavelength=mm_to_pt(2.0, scale), amplitude=mm_to_pt(1.5, scale))
 
 
 def hatch_insulation_rigid(polygon, scale, **kw):
     if isinstance(polygon, MultiPolygon):
-        return sum((hatch_insulation_rigid(p, scale, **kw) for p in polygon.geoms), [])
+        return functools.reduce(
+            operator.iadd, (hatch_insulation_rigid(p, scale, **kw) for p in polygon.geoms), []
+        )
     return crosshatch(polygon, mm_to_pt(1.0, scale), 45.0, 135.0)
 
 
 def hatch_earth(polygon, scale, **kw):
     if isinstance(polygon, MultiPolygon):
-        return sum((hatch_earth(p, scale, **kw) for p in polygon.geoms), [])
+        return functools.reduce(operator.iadd, (hatch_earth(p, scale, **kw) for p in polygon.geoms), [])
     return stipple_dots(polygon, mm_to_pt(0.4, scale), dot_size=mm_to_pt(0.15, scale))
 
 
 def hatch_brick(polygon, scale, **kw):
     if isinstance(polygon, MultiPolygon):
-        return sum((hatch_brick(p, scale, **kw) for p in polygon.geoms), [])
+        return functools.reduce(operator.iadd, (hatch_brick(p, scale, **kw) for p in polygon.geoms), [])
     return brick_pattern(polygon, mm_to_pt(215.0, scale), mm_to_pt(65.0, scale))
 
 
 def hatch_glass(polygon, scale, n_lines: int = 3, **kw):
     if isinstance(polygon, MultiPolygon):
-        return sum((hatch_glass(p, scale, n_lines=n_lines, **kw) for p in polygon.geoms), [])
+        return functools.reduce(
+            operator.iadd, (hatch_glass(p, scale, n_lines=n_lines, **kw) for p in polygon.geoms), []
+        )
     angle = _principal_angle(polygon)
     spacing = mm_to_pt(1.0, scale)
     return parallel_hatch(polygon, spacing, angle)[:n_lines]
@@ -426,13 +460,13 @@ def hatch_glass(polygon, scale, n_lines: int = 3, **kw):
 
 def hatch_gypsum(polygon, scale, **kw):
     if isinstance(polygon, MultiPolygon):
-        return sum((hatch_gypsum(p, scale, **kw) for p in polygon.geoms), [])
+        return functools.reduce(operator.iadd, (hatch_gypsum(p, scale, **kw) for p in polygon.geoms), [])
     return stipple_dots(polygon, mm_to_pt(1.5, scale), dot_size=mm_to_pt(0.2, scale))
 
 
 def hatch_aluminum(polygon, scale, **kw):
     if isinstance(polygon, MultiPolygon):
-        return sum((hatch_aluminum(p, scale, **kw) for p in polygon.geoms), [])
+        return functools.reduce(operator.iadd, (hatch_aluminum(p, scale, **kw) for p in polygon.geoms), [])
     return parallel_hatch(polygon, mm_to_pt(0.8, scale), 45.0)
 
 
@@ -449,13 +483,17 @@ def register_material(recipe: MaterialRecipe) -> None:
 
 for recipe in [
     MaterialRecipe("concrete", hatch_concrete, description="Cast-in-place concrete: 45° hatch + stipple"),
-    MaterialRecipe("concrete_solid", hatch_concrete_solid, solid=True, description="Solid black concrete (small-scale)"),
+    MaterialRecipe(
+        "concrete_solid", hatch_concrete_solid, solid=True, description="Solid black concrete (small-scale)"
+    ),
     MaterialRecipe("clt_cross_grain", hatch_clt_cross_grain, description="CLT alternating grain per lamella"),
     MaterialRecipe("clt_solid", hatch_clt_solid, solid=True, description="Solid black CLT"),
     MaterialRecipe("solid_timber", hatch_solid_timber, description="Solid timber with grain lines"),
     MaterialRecipe("steel_solid", hatch_steel_solid, solid=True, description="Solid black steel section"),
     MaterialRecipe("steel_hatch_45", hatch_steel_hatch_45, description="Steel 45° diagonal hatch"),
-    MaterialRecipe("insulation_mineral_wool", hatch_insulation_mineral_wool, description="Mineral wool zigzag"),
+    MaterialRecipe(
+        "insulation_mineral_wool", hatch_insulation_mineral_wool, description="Mineral wool zigzag"
+    ),
     MaterialRecipe("insulation_rigid", hatch_insulation_rigid, description="Rigid XPS/PIR crosshatch"),
     MaterialRecipe("earth", hatch_earth, description="Dense stipple"),
     MaterialRecipe("brick", hatch_brick, description="Stretcher bond pattern"),
@@ -483,33 +521,33 @@ def hatch_polygon(polygon: Polygon | MultiPolygon, material: str, scale: float, 
 # Substring-based: first match wins. Keep in sync with Rhino layer naming
 # conventions documented in docs/research/poche-conventions.md.
 LAYER_TO_MATERIAL: list[tuple[str, str]] = [
-    ("CONCRETE",          "concrete_solid"),
-    ("FOUNDATION",        "concrete_solid"),
-    ("CLT",               "clt_solid"),
-    ("TIMBER",            "solid_timber"),
-    ("STEEL",             "steel_solid"),
-    ("SHS",               "steel_solid"),
-    ("RHS",               "steel_solid"),
-    ("BRACKET",           "steel_solid"),
-    ("CLEAT",             "steel_solid"),
-    ("STAIR",             "concrete_solid"),
-    ("WINDOW_FRAME",      "aluminum"),
-    ("ALUM",              "aluminum"),
-    ("CU_",               "concrete_solid"),  # copper cladding cut
-    ("CLADDING",          "concrete_solid"),
-    ("INSUL",             "insulation_mineral_wool"),
-    ("XPS",               "insulation_rigid"),
-    ("PIR",               "insulation_rigid"),
-    ("MINERAL",           "insulation_mineral_wool"),
-    ("EPDM",              "concrete_solid"),
-    ("MEMBRANE",          "concrete_solid"),
-    ("EARTH",             "earth"),
-    ("GROUND",            "earth"),
-    ("BRICK",             "brick"),
-    ("GLASS",             "glass"),
-    ("IGU",               "glass"),
-    ("GYP",               "gypsum"),
-    ("GWB",               "gypsum"),
+    ("CONCRETE", "concrete_solid"),
+    ("FOUNDATION", "concrete_solid"),
+    ("CLT", "clt_solid"),
+    ("TIMBER", "solid_timber"),
+    ("STEEL", "steel_solid"),
+    ("SHS", "steel_solid"),
+    ("RHS", "steel_solid"),
+    ("BRACKET", "steel_solid"),
+    ("CLEAT", "steel_solid"),
+    ("STAIR", "concrete_solid"),
+    ("WINDOW_FRAME", "aluminum"),
+    ("ALUM", "aluminum"),
+    ("CU_", "concrete_solid"),  # copper cladding cut
+    ("CLADDING", "concrete_solid"),
+    ("INSUL", "insulation_mineral_wool"),
+    ("XPS", "insulation_rigid"),
+    ("PIR", "insulation_rigid"),
+    ("MINERAL", "insulation_mineral_wool"),
+    ("EPDM", "concrete_solid"),
+    ("MEMBRANE", "concrete_solid"),
+    ("EARTH", "earth"),
+    ("GROUND", "earth"),
+    ("BRICK", "brick"),
+    ("GLASS", "glass"),
+    ("IGU", "glass"),
+    ("GYP", "gypsum"),
+    ("GWB", "gypsum"),
 ]
 
 

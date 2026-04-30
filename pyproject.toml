@@ -83,7 +83,12 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "RUF", "SIM"]
-ignore = ["E501"]  # line too long — handled by formatter
+ignore = [
+    "E501",   # line too long — handled by formatter
+    "RUF003", # × in comments (intentional, means "by"/"multiply")
+    "RUF001", # ambiguous unicode in strings (intentional, e.g. POCHE — French)
+    "RUF002", # ambiguous unicode in docstrings
+]
 
 [tool.ruff.format]
 quote-style = "double"

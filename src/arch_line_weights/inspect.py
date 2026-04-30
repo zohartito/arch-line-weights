@@ -1,9 +1,9 @@
 """Read a vector file (.ai or .pdf) and report its color/stroke distribution."""
+
 from __future__ import annotations
 
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
-from typing import Optional
 
 import fitz  # pymupdf
 
@@ -13,15 +13,15 @@ def _color_key(c) -> str:
         return "none"
     if isinstance(c, (list, tuple)):
         if len(c) == 1:
-            return f"Gray({round(c[0]*100)})"
+            return f"Gray({round(c[0] * 100)})"
         if len(c) == 3:
-            return f"RGB({round(c[0]*255)},{round(c[1]*255)},{round(c[2]*255)})"
+            return f"RGB({round(c[0] * 255)},{round(c[1] * 255)},{round(c[2] * 255)})"
         if len(c) == 4:
-            return f"CMYK({round(c[0]*100)},{round(c[1]*100)},{round(c[2]*100)},{round(c[3]*100)})"
+            return f"CMYK({round(c[0] * 100)},{round(c[1] * 100)},{round(c[2] * 100)},{round(c[3] * 100)})"
     return str(c)
 
 
-def color_to_rgb255(color_key: str) -> Optional[tuple[int, int, int]]:
+def color_to_rgb255(color_key: str) -> tuple[int, int, int] | None:
     """Parse 'RGB(r,g,b)' back into a tuple of ints, or return None."""
     if not color_key.startswith("RGB("):
         return None

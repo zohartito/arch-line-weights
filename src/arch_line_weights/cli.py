@@ -1,8 +1,8 @@
 """arch-lw CLI — inspect and apply line-weight hierarchy."""
+
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 import click
@@ -11,10 +11,10 @@ from . import __version__
 from .apply import apply_to_file
 from .apply_jsx import apply_via_jsx
 from .classify import auto_by_luminance, explain_mapping, from_user_mapping
-from .inspect import inspect_file, color_to_rgb255
+from .inspect import color_to_rgb255, inspect_file
 from .layer_classify import classify_layer
 from .poche import apply_poche
-from .presets import PRESETS, get_preset, select_preset
+from .presets import PRESETS, select_preset
 
 
 @click.group()
@@ -45,7 +45,8 @@ def inspect(src: Path, pretty: bool):
 @cli.command()
 @click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.option(
-    "-o", "--output",
+    "-o",
+    "--output",
     type=click.Path(dir_okay=False, path_type=Path),
     help="Output path. Defaults to '<src> HIERARCHY.<ext>'.",
 )
@@ -129,7 +130,9 @@ def apply(
         tiers = select_preset(preset, scale=scale, for_print=for_print)
         mapping = auto_by_luminance(rep, tiers)
 
-    click.echo(f"# {len(mapping)} colors mapped using {'user file' if mapping_file else f'auto:{preset}'}", err=True)
+    click.echo(
+        f"# {len(mapping)} colors mapped using {'user file' if mapping_file else f'auto:{preset}'}", err=True
+    )
     for line in explain_mapping(mapping, rep):
         click.echo(line, err=True)
 
@@ -149,7 +152,9 @@ def apply(
     )
 
     click.echo("", err=True)
-    click.echo(f"applied {result.strokes_processed:,} strokes across {result.rg_seen:,} color changes", err=True)
+    click.echo(
+        f"applied {result.strokes_processed:,} strokes across {result.rg_seen:,} color changes", err=True
+    )
     for w in sorted(result.weights_applied):
         click.echo(f"  {w:>5} pt  →  {result.weights_applied[w]:>7,} strokes", err=True)
     if result.unmatched_colors:
@@ -164,7 +169,8 @@ def apply(
 @cli.command("apply-jsx")
 @click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.option(
-    "-o", "--output",
+    "-o",
+    "--output",
     type=click.Path(dir_okay=False, path_type=Path),
     help="Output path. Defaults to '<src> HIERARCHY.<ext>'.",
 )
@@ -190,7 +196,8 @@ def apply_jsx_cmd(src: Path, output: Path | None):
 @cli.command("poche")
 @click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.option(
-    "-o", "--output",
+    "-o",
+    "--output",
     type=click.Path(dir_okay=False, path_type=Path),
     help="Output path. Defaults to '<src> POCHE.<ext>' (or '<src-without-HIERARCHY> POCHE.<ext>').",
 )
@@ -242,7 +249,7 @@ def poche_cmd(src: Path, output: Path | None, overrides_path: Path | None, style
     """
     out = str(output) if output else None
     over = str(overrides_path) if overrides_path else None
-    click.echo(f"applying poche to {src} (style={style}, scale=1:{int(1/hatch_scale)})...", err=True)
+    click.echo(f"applying poche to {src} (style={style}, scale=1:{int(1 / hatch_scale)})...", err=True)
     report = apply_poche(str(src), out, overrides_path=over, style=style, scale=hatch_scale)
     click.echo("", err=True)
     click.echo(f"polygons created: {report.total_polygons}", err=True)
@@ -264,7 +271,8 @@ def poche_cmd(src: Path, output: Path | None, overrides_path: Path | None, style
 @click.argument("before", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.argument("after", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.option(
-    "-o", "--output",
+    "-o",
+    "--output",
     type=click.Path(dir_okay=False, path_type=Path),
     required=True,
     help="Output PNG path.",
@@ -296,17 +304,18 @@ def preview_cmd(before: Path, after: Path, output: Path, mode: str, dpi: int, gh
       tier-overlay  — `after` rendered with each tier in a unique color
       diff          — pixel diff (red = added strokes, blue = removed)
     """
-    from .preview import side_by_side, tier_overlay, diff_image, GhostscriptRenderer
+    from .preview import GhostscriptRenderer, diff_image, side_by_side, tier_overlay
+
     renderer = GhostscriptRenderer() if ghostscript else None
     if mode == "side-by-side":
-        click.echo(f"rendering before+after at multiple scales...", err=True)
+        click.echo("rendering before+after at multiple scales...", err=True)
         side_by_side(str(before), str(after), str(output), renderer=renderer)
     elif mode == "tier-overlay":
         click.echo(f"rendering tier overlay of {after}...", err=True)
         tier_colors = {1.0: "red", 0.5: "orange", 0.3: "yellow", 0.18: "green", 0.13: "cyan", 0.08: "blue"}
         tier_overlay(str(after), str(output), tier_colors, dpi=dpi, renderer=renderer)
     elif mode == "diff":
-        click.echo(f"rendering pixel diff...", err=True)
+        click.echo("rendering pixel diff...", err=True)
         diff_image(str(before), str(after), str(output), dpi=dpi, renderer=renderer)
     click.echo(f"wrote {output}", err=True)
 

@@ -10,16 +10,16 @@ Strategy:
 Only RGB stroke colors are supported. CMYK / Gray strokes pass through with
 the default weight.
 """
+
 from __future__ import annotations
 
 import os
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Iterable
 
 import pikepdf
 from pikepdf import Operator
-
 
 STROKE_OPS = {"S", "s", "B", "B*", "b", "b*"}
 

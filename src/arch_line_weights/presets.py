@@ -6,6 +6,7 @@ human description of what belongs there.
 Presets do NOT auto-assign colors — they only define the weight ladder.
 The color → tier mapping is the job of `classify` (auto) or a user JSON file.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -19,46 +20,48 @@ class Tier:
 
 
 SECTION = [
-    Tier("cut",      1.0,  "Section cut line — what the section plane slices through (walls, floors, roof, ground)."),
-    Tier("profile",  0.5,  "Foreground object profiles in elevation behind the cut."),
-    Tier("edges",    0.3,  "Object edges, surface changes, structural members."),
+    Tier(
+        "cut", 1.0, "Section cut line — what the section plane slices through (walls, floors, roof, ground)."
+    ),
+    Tier("profile", 0.5, "Foreground object profiles in elevation behind the cut."),
+    Tier("edges", 0.3, "Object edges, surface changes, structural members."),
     Tier("material", 0.18, "Material indication, surface tone, dashed/dotted accents."),
-    Tier("texture",  0.08, "Hatch / pattern / wood grain / poché — densest line work."),
-    Tier("special",  0.25, "Glazing, water, sky — non-architectural elements."),
+    Tier("texture", 0.08, "Hatch / pattern / wood grain / poché — densest line work."),
+    Tier("special", 0.25, "Glazing, water, sky — non-architectural elements."),
 ]
 
 PLAN = [
-    Tier("walls_cut",  1.0,  "Walls cut by the plan slice (typically ~4' above floor)."),
-    Tier("walls_full", 0.5,  "Walls in full elevation behind the cut."),
-    Tier("furniture",  0.3,  "Furniture, fixtures, equipment outlines."),
-    Tier("texture",    0.18, "Floor pattern, tile, surface texture."),
+    Tier("walls_cut", 1.0, "Walls cut by the plan slice (typically ~4' above floor)."),
+    Tier("walls_full", 0.5, "Walls in full elevation behind the cut."),
+    Tier("furniture", 0.3, "Furniture, fixtures, equipment outlines."),
+    Tier("texture", 0.18, "Floor pattern, tile, surface texture."),
     Tier("background", 0.08, "Beyond — distant context."),
-    Tier("special",    0.25, "Glazing, water."),
+    Tier("special", 0.25, "Glazing, water."),
 ]
 
 ELEVATION = [
-    Tier("silhouette", 1.0,  "Outermost edge of the building."),
-    Tier("major",      0.5,  "Major surface breaks, building corners."),
-    Tier("openings",   0.3,  "Windows, doors, balconies."),
-    Tier("material",   0.18, "Material breaks, panel joints."),
-    Tier("texture",    0.08, "Surface texture, shadow lines."),
-    Tier("special",    0.25, "Glazing reflections."),
+    Tier("silhouette", 1.0, "Outermost edge of the building."),
+    Tier("major", 0.5, "Major surface breaks, building corners."),
+    Tier("openings", 0.3, "Windows, doors, balconies."),
+    Tier("material", 0.18, "Material breaks, panel joints."),
+    Tier("texture", 0.08, "Surface texture, shadow lines."),
+    Tier("special", 0.25, "Glazing reflections."),
 ]
 
 DETAIL = [
-    Tier("cut",      1.5,  "Section cut at detail scale — extra heavy."),
-    Tier("profile",  0.7,  "Profile of foreground objects."),
-    Tier("edges",    0.4,  "Edges and material breaks."),
+    Tier("cut", 1.5, "Section cut at detail scale — extra heavy."),
+    Tier("profile", 0.7, "Profile of foreground objects."),
+    Tier("edges", 0.4, "Edges and material breaks."),
     Tier("material", 0.25, "Material indication."),
-    Tier("texture",  0.13, "Hatching, fastener detail."),
-    Tier("special",  0.3,  "Special elements."),
+    Tier("texture", 0.13, "Hatching, fastener detail."),
+    Tier("special", 0.3, "Special elements."),
 ]
 
 PRESETS: dict[str, list[Tier]] = {
-    "section":   SECTION,
-    "plan":      PLAN,
+    "section": SECTION,
+    "plan": PLAN,
     "elevation": ELEVATION,
-    "detail":    DETAIL,
+    "detail": DETAIL,
 }
 
 
@@ -97,43 +100,52 @@ def mm(x: float) -> float:
 
 # Section preset following NCS / Ramsey-Sleeper at 1/4"=1'-0", PRINT
 SECTION_ISO_PRINT = [
-    Tier("cut",      mm(0.70), "Section cut at 1/4\"=1' — Ramsey/Sleeper"),
-    Tier("profile",  mm(0.50), "Profile / foreground silhouette"),
-    Tier("edges",    mm(0.35), "Object edges, plane intersections"),
-    Tier("hidden",   mm(0.25), "Hidden / centerline / dashed"),
+    Tier("cut", mm(0.70), "Section cut at 1/4\"=1' — Ramsey/Sleeper"),
+    Tier("profile", mm(0.50), "Profile / foreground silhouette"),
+    Tier("edges", mm(0.35), "Object edges, plane intersections"),
+    Tier("hidden", mm(0.25), "Hidden / centerline / dashed"),
     Tier("material", mm(0.18), "Material indication, hatching"),
-    Tier("texture",  mm(0.13), "Texture, very light poché, background"),
-    Tier("special",  mm(0.25), "Glazing, water, sky"),
+    Tier("texture", mm(0.13), "Texture, very light poché, background"),
+    Tier("special", mm(0.25), "Glazing, water, sky"),
 ]
 
 # Same set, screen-review (1.5× lighter so they don't dominate at 100% zoom)
 SECTION_ISO_SCREEN = [
-    Tier("cut",      1.0,  "Section cut, screen-review weight"),
-    Tier("profile",  0.5,  "Profile / foreground silhouette"),
-    Tier("edges",    0.3,  "Object edges"),
-    Tier("hidden",   0.18, "Hidden / centerline"),
+    Tier("cut", 1.0, "Section cut, screen-review weight"),
+    Tier("profile", 0.5, "Profile / foreground silhouette"),
+    Tier("edges", 0.3, "Object edges"),
+    Tier("hidden", 0.18, "Hidden / centerline"),
     Tier("material", 0.13, "Material indication"),
-    Tier("texture",  0.08, "Texture / hatch"),
-    Tier("special",  0.25, "Glazing"),
+    Tier("texture", 0.08, "Texture / hatch"),
+    Tier("special", 0.25, "Glazing"),
 ]
 
 DETAIL_ISO_PRINT = [
-    Tier("cut",      mm(1.00), "Section cut at detail scale"),
-    Tier("profile",  mm(0.70), "Profile / foreground"),
-    Tier("edges",    mm(0.50), "Edges"),
-    Tier("hidden",   mm(0.35), "Hidden"),
+    Tier("cut", mm(1.00), "Section cut at detail scale"),
+    Tier("profile", mm(0.70), "Profile / foreground"),
+    Tier("edges", mm(0.50), "Edges"),
+    Tier("hidden", mm(0.35), "Hidden"),
     Tier("material", mm(0.25), "Material hatch"),
-    Tier("texture",  mm(0.18), "Texture"),
-    Tier("special",  mm(0.30), "Glazing"),
+    Tier("texture", mm(0.18), "Texture"),
+    Tier("special", mm(0.30), "Glazing"),
 ]
 
 
 _SCALE_SHIFTS = {
-    "1/16": -1, "1/16\"=1'": -1, "1/16=1'": -1,
-    "1/8":   0, "1/8\"=1'":   0, "1/8=1'":   0,
-    "1/4":   1, "1/4\"=1'":   1, "1/4=1'":   1,
-    "1/2":   2, "1/2\"=1'":   2, "1/2=1'":   2,
-    "1\"=1'": 3, "1=1'": 3,
+    "1/16": -1,
+    "1/16\"=1'": -1,
+    "1/16=1'": -1,
+    "1/8": 0,
+    "1/8\"=1'": 0,
+    "1/8=1'": 0,
+    "1/4": 1,
+    "1/4\"=1'": 1,
+    "1/4=1'": 1,
+    "1/2": 2,
+    "1/2\"=1'": 2,
+    "1/2=1'": 2,
+    "1\"=1'": 3,
+    "1=1'": 3,
 }
 
 
@@ -151,7 +163,9 @@ def select_preset(
     """
     if not for_print:
         # Screen review uses the lighter end across scales
-        base = SECTION_ISO_SCREEN if drawing_type == "section" else PRESETS.get(drawing_type, SECTION_ISO_SCREEN)
+        base = (
+            SECTION_ISO_SCREEN if drawing_type == "section" else PRESETS.get(drawing_type, SECTION_ISO_SCREEN)
+        )
         return base
 
     base = SECTION_ISO_PRINT if drawing_type != "detail" else DETAIL_ISO_PRINT

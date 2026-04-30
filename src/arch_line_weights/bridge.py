@@ -33,27 +33,29 @@ Public API
 ``infer_bridges(segments, max_gap=50.0, min_gap=0.01)``
     -> ``(augmented_segments, confidence)``
 """
+
 from __future__ import annotations
 
+import itertools
 import math
 from dataclasses import dataclass
-from typing import Iterable
 
 import numpy as np
 from shapely import STRtree
-from shapely.geometry import LineString, Point, Polygon
+from shapely.geometry import LineString, Point
 from shapely.ops import linemerge, polygonize
-
 
 # ---------------------------------------------------------------------------
 # Internal data
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class _Endpoint:
     """One endpoint of one input segment."""
-    seg_idx: int      # index into the input segment list
-    end: int          # 0 = start vertex, 1 = end vertex
+
+    seg_idx: int  # index into the input segment list
+    end: int  # 0 = start vertex, 1 = end vertex
     xy: tuple[float, float]
 
 
@@ -71,6 +73,7 @@ def _collect_endpoints(segments: list[LineString]) -> list[_Endpoint]:
 # ---------------------------------------------------------------------------
 # Pairing
 # ---------------------------------------------------------------------------
+
 
 def _candidate_pairs(
     endpoints: list[_Endpoint],
@@ -101,8 +104,7 @@ def _candidate_pairs(
             if key in seen:
                 continue
             seen.add(key)
-            d = math.hypot(ep.xy[0] - endpoints[j].xy[0],
-                           ep.xy[1] - endpoints[j].xy[1])
+            d = math.hypot(ep.xy[0] - endpoints[j].xy[0], ep.xy[1] - endpoints[j].xy[1])
             pairs.append((d, key[0], key[1]))
     pairs.sort(key=lambda t: t[0])
     return pairs
@@ -137,7 +139,7 @@ def _self_intersects_after(
 ) -> bool:
     """A cheap heuristic: if linemerging ``segments + [bridge]`` produces a
     geometry whose unioned polygon is invalid, the bridge is suspect."""
-    merged = linemerge(segments + [bridge])
+    merged = linemerge([*segments, bridge])
     polys = list(polygonize([merged] if merged.geom_type == "LineString" else merged.geoms))
     return any(not p.is_valid for p in polys)
 
@@ -179,6 +181,7 @@ def _pair_endpoints(
 # ---------------------------------------------------------------------------
 # Iterative driver with linemerge feedback
 # ---------------------------------------------------------------------------
+
 
 def _polygon_count(segments: list[LineString]) -> int:
     if not segments:
@@ -256,7 +259,11 @@ def infer_bridges(
     if n_polys < expected:
         looser = max_gap * 2.0
         more, _ = _pair_endpoints(
-            endpoints, augmented, min_gap, looser, used=used,
+            endpoints,
+            augmented,
+            min_gap,
+            looser,
+            used=used,
         )
         if more:
             augmented = augmented + more
@@ -277,19 +284,25 @@ if __name__ == "__main__":
     rng = np.random.default_rng(0)
     corners = [(0, 0), (100, 0), (100, 50), (0, 50)]
     raw: list[LineString] = []
-    for a, b in zip(corners, corners[1:] + corners[:1]):
+    for a, b in zip(corners, corners[1:] + corners[:1], strict=False):
         # Split each side into 2-3 segments with tiny endpoint jitter.
         pieces = rng.integers(2, 4)
         ts = np.linspace(0, 1, pieces + 1)
-        for t0, t1 in zip(ts[:-1], ts[1:]):
-            p0 = (a[0] + (b[0] - a[0]) * t0 + rng.uniform(-0.3, 0.3),
-                  a[1] + (b[1] - a[1]) * t0 + rng.uniform(-0.3, 0.3))
-            p1 = (a[0] + (b[0] - a[0]) * t1 + rng.uniform(-0.3, 0.3),
-                  a[1] + (b[1] - a[1]) * t1 + rng.uniform(-0.3, 0.3))
+        for t0, t1 in itertools.pairwise(ts):
+            p0 = (
+                a[0] + (b[0] - a[0]) * t0 + rng.uniform(-0.3, 0.3),
+                a[1] + (b[1] - a[1]) * t0 + rng.uniform(-0.3, 0.3),
+            )
+            p1 = (
+                a[0] + (b[0] - a[0]) * t1 + rng.uniform(-0.3, 0.3),
+                a[1] + (b[1] - a[1]) * t1 + rng.uniform(-0.3, 0.3),
+            )
             raw.append(LineString([p0, p1]))
 
     before = _polygon_count(raw)
     aug, conf = infer_bridges(raw, max_gap=5.0)
     after = _polygon_count(aug)
-    print(f"segments={len(raw)} bridges={len(aug) - len(raw)} "
-          f"polys before={before} after={after} confidence={conf:.2f}")
+    print(
+        f"segments={len(raw)} bridges={len(aug) - len(raw)} "
+        f"polys before={before} after={after} confidence={conf:.2f}"
+    )

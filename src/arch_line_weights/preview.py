@@ -7,15 +7,17 @@ for QA on hairline strokes.
 Dependencies: pymupdf, pikepdf, pillow, numpy. Optional: Ghostscript binary
 on PATH for sub-0.25pt hairline accuracy via `-dNOMINLINEWIDTH`.
 """
+
 from __future__ import annotations
 
+import contextlib
 import io
 import shutil
 import subprocess
 import tempfile
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Mapping, Sequence
 
 import numpy as np
 import pikepdf
@@ -96,11 +98,18 @@ class GhostscriptRenderer:
         with tempfile.TemporaryDirectory() as tmp:
             out_path = Path(tmp) / f"page_{page_no}.png"
             cmd = [
-                self.binary, "-q", "-dNOPAUSE", "-dBATCH", "-dSAFER",
-                "-sDEVICE=png16m", "-dNOMINLINEWIDTH",
-                "-dGraphicsAlphaBits=4", "-dTextAlphaBits=4",
+                self.binary,
+                "-q",
+                "-dNOPAUSE",
+                "-dBATCH",
+                "-dSAFER",
+                "-sDEVICE=png16m",
+                "-dNOMINLINEWIDTH",
+                "-dGraphicsAlphaBits=4",
+                "-dTextAlphaBits=4",
                 f"-r{effective_dpi}",
-                f"-dFirstPage={page_no}", f"-dLastPage={page_no}",
+                f"-dFirstPage={page_no}",
+                f"-dLastPage={page_no}",
                 f"-sOutputFile={out_path}",
                 str(src),
             ]
@@ -130,8 +139,7 @@ def _label_panel(img: Image.Image, label: str, sublabel: str = "") -> Image.Imag
     draw.text((12, 6), label, fill=(0, 0, 0), font=title_font)
     if sublabel:
         draw.text((12, 28), sublabel, fill=(80, 80, 80), font=sub_font)
-    draw.line([(0, LABEL_HEIGHT_PX - 1), (img.width, LABEL_HEIGHT_PX - 1)],
-              fill=(180, 180, 180), width=1)
+    draw.line([(0, LABEL_HEIGHT_PX - 1), (img.width, LABEL_HEIGHT_PX - 1)], fill=(180, 180, 180), width=1)
     combined = Image.new("RGB", (img.width, img.height + LABEL_HEIGHT_PX), BG_COLOR)
     combined.paste(banner, (0, 0))
     combined.paste(img, (0, LABEL_HEIGHT_PX))
@@ -181,10 +189,12 @@ def side_by_side(
         for label, dpi in scales:
             b_img = renderer.render_page(before, pg, dpi)
             a_img = renderer.render_page(after, pg, dpi)
-            b_panel = _label_panel(b_img, f"BEFORE  {Path(before).name}",
-                                   f"page {pg + 1} @ {label} ({dpi} dpi)")
-            a_panel = _label_panel(a_img, f"AFTER  {Path(after).name}",
-                                   f"page {pg + 1} @ {label} ({dpi} dpi)")
+            b_panel = _label_panel(
+                b_img, f"BEFORE  {Path(before).name}", f"page {pg + 1} @ {label} ({dpi} dpi)"
+            )
+            a_panel = _label_panel(
+                a_img, f"AFTER  {Path(after).name}", f"page {pg + 1} @ {label} ({dpi} dpi)"
+            )
             rows.append(_hstack([b_panel, a_panel]))
     composite = _vstack(rows)
     composite.save(str(out), "PNG", optimize=True)
@@ -192,9 +202,15 @@ def side_by_side(
 
 
 _COLOR_TABLE: dict[str, tuple[int, int, int]] = {
-    "red": (220, 30, 30), "orange": (240, 140, 20), "yellow": (235, 200, 20),
-    "green": (20, 170, 60), "blue": (30, 90, 220), "purple": (140, 50, 180),
-    "magenta": (220, 40, 180), "cyan": (40, 180, 200), "black": (0, 0, 0),
+    "red": (220, 30, 30),
+    "orange": (240, 140, 20),
+    "yellow": (235, 200, 20),
+    "green": (20, 170, 60),
+    "blue": (30, 90, 220),
+    "purple": (140, 50, 180),
+    "magenta": (220, 40, 180),
+    "cyan": (40, 180, 200),
+    "black": (0, 0, 0),
 }
 
 
@@ -222,16 +238,16 @@ def _recolor_pdf_by_tier(
         for operands, operator in instructions:
             op = bytes(operator).decode("ascii", errors="ignore")
             if op == "w" and operands:
-                try:
+                with contextlib.suppress(TypeError, ValueError):
                     current_w = float(operands[0])
-                except (TypeError, ValueError):
-                    pass
                 new_instructions.append((operands, operator))
                 tier = _nearest_tier(current_w, tiers)
                 r, g, b = rgb_for_tier[tier]
-                rgb_ops = [pikepdf.Object.parse(f"{r/255:.4f}"),
-                           pikepdf.Object.parse(f"{g/255:.4f}"),
-                           pikepdf.Object.parse(f"{b/255:.4f}")]
+                rgb_ops = [
+                    pikepdf.Object.parse(f"{r / 255:.4f}"),
+                    pikepdf.Object.parse(f"{g / 255:.4f}"),
+                    pikepdf.Object.parse(f"{b / 255:.4f}"),
+                ]
                 new_instructions.append((rgb_ops, pikepdf.Operator("RG")))
             else:
                 new_instructions.append((operands, operator))
@@ -252,10 +268,8 @@ def _draw_legend(width: int, tier_colors: Mapping[float, str | tuple[int, int, i
     for i, tier in enumerate(rows):
         y = LEGEND_PAD_PX + i * row_h
         rgb = _resolve_color(tier_colors[tier])
-        draw.rectangle([(LEGEND_PAD_PX, y), (LEGEND_PAD_PX + 28, y + 16)],
-                       fill=rgb, outline=(0, 0, 0))
-        draw.text((LEGEND_PAD_PX + 38, y + 1),
-                  f"tier {tier:>4.2f} pt", fill=(0, 0, 0), font=font)
+        draw.rectangle([(LEGEND_PAD_PX, y), (LEGEND_PAD_PX + 28, y + 16)], fill=rgb, outline=(0, 0, 0))
+        draw.text((LEGEND_PAD_PX + 38, y + 1), f"tier {tier:>4.2f} pt", fill=(0, 0, 0), font=font)
     return legend
 
 
@@ -276,9 +290,10 @@ def tier_overlay(
         pages = renderer.render_all(tmp_path, dpi)
     finally:
         tmp_path.unlink(missing_ok=True)
-    labeled = [_label_panel(p, f"TIER OVERLAY  {Path(src).name}",
-                            f"page {i + 1} @ {dpi} dpi")
-               for i, p in enumerate(pages)]
+    labeled = [
+        _label_panel(p, f"TIER OVERLAY  {Path(src).name}", f"page {i + 1} @ {dpi} dpi")
+        for i, p in enumerate(pages)
+    ]
     body = _vstack(labeled)
     legend = _draw_legend(body.width, tier_colors)
     composite = _vstack([body, legend])
@@ -324,7 +339,7 @@ def diff_image(
     before_pages = renderer.render_all(before, dpi)
     after_pages = renderer.render_all(after, dpi)
     panels: list[Image.Image] = []
-    for i, (b_img, a_img) in enumerate(zip(before_pages, after_pages)):
+    for i, (b_img, a_img) in enumerate(zip(before_pages, after_pages, strict=False)):
         diff = _tinted_diff(b_img, a_img, threshold=threshold)
         labeled = _label_panel(
             diff,
@@ -338,6 +353,9 @@ def diff_image(
 
 
 __all__ = [
-    "PyMuPDFRenderer", "GhostscriptRenderer",
-    "side_by_side", "tier_overlay", "diff_image",
+    "GhostscriptRenderer",
+    "PyMuPDFRenderer",
+    "diff_image",
+    "side_by_side",
+    "tier_overlay",
 ]
