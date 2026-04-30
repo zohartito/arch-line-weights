@@ -31,16 +31,32 @@ the new widths. Original file is never modified — output is `<src> HIERARCHY.<
    ```
    Read the file and report top colors + counts to the user.
 
-2. **Apply** with one of:
-   - `--auto --preset section|plan|elevation|detail` (auto-bucket by luminance)
-   - `--mapping mapping.json` (user-defined, see `examples/sample-mapping.json`)
+2. **For Rhino-exported `.ai` files: use `apply-jsx` (preserves layers)**:
    ```bash
-   arch-lw apply "path/to/drawing.ai" --auto --preset section
+   arch-lw apply-jsx "path/to/drawing.ai"
+   ```
+   Uses semantic layer-name classifier (`Visible::ClippingPlaneIntersections::*`
+   = cut tier, etc.). Slow (3–15 min on 340K paths) but layer-fidelity-preserving.
+
+3. **For non-Rhino files or when layer fidelity doesn't matter: use `apply`**:
+   - `--auto --preset section|plan|elevation|detail` (auto-bucket by luminance)
+   - `--mapping mapping.json` (user-defined)
+   - `--scale 1/16|1/8|1/4|1/2 --for-print` for ISO 128 / Ramsey-Sleeper plotted weights
+   ```bash
+   arch-lw apply "drawing.ai" --auto --preset section --scale 1/4 --for-print
    ```
 
-3. **Always run with `--dry-run` first** if the file is more than a few MB or
-   has many unique colors — the dry run prints the planned mapping so the user
-   can sanity-check before committing.
+4. **For poché (solid black on cut elements)** — after applying line weights:
+   ```bash
+   arch-lw poche "path/to/drawing HIERARCHY.ai"
+   ```
+   Two-stage pipeline (Illustrator dump → shapely polygonize → Illustrator apply).
+   Reports per-layer confidence; concave_hull fallback for disconnected
+   geometry. Some layers may need `--overrides poche-overrides.json` for
+   foundations / concrete bases that don't auto-close.
+
+5. **Always run apply commands with `--dry-run` first** if the file has many
+   unique colors — the dry run prints the planned mapping.
 
 ## Rules of engagement
 

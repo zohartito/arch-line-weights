@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "arch-line-weights"
-version = "0.2.0"
+version = "0.4.0"
 description = "Apply architectural line-weight hierarchy to color-coded vector drawings (Rhino-exported .ai/.pdf)."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -20,6 +20,9 @@ dependencies = [
     "pikepdf>=8.0",
     "pymupdf>=1.24",
     "click>=8.1",
+    "shapely>=2.0",
+    "numpy>=1.26",
+    "Pillow>=10.0",
 ]
 
 [project.optional-dependencies]

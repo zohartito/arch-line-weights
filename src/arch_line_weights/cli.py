@@ -13,7 +13,8 @@ from .apply_jsx import apply_via_jsx
 from .classify import auto_by_luminance, explain_mapping, from_user_mapping
 from .inspect import inspect_file, color_to_rgb255
 from .layer_classify import classify_layer
-from .presets import PRESETS, get_preset
+from .poche import apply_poche
+from .presets import PRESETS, get_preset, select_preset
 
 
 @click.group()
@@ -62,6 +63,17 @@ def inspect(src: Path, pretty: bool):
     help="Tier ladder used by --auto.",
 )
 @click.option(
+    "--scale",
+    default="1/4",
+    show_default=True,
+    help="Plot scale for ISO 128 weight selection (1/16, 1/8, 1/4, 1/2). Used with --for-print.",
+)
+@click.option(
+    "--for-print",
+    is_flag=True,
+    help="Use ISO 128 standards-aligned weights at the chosen --scale (heavier than the default screen weights).",
+)
+@click.option(
     "--auto",
     is_flag=True,
     help="Auto-bucket colors into the preset's tiers by luminance + frequency.",
@@ -88,6 +100,8 @@ def apply(
     output: Path | None,
     mapping_file: Path | None,
     preset: str,
+    scale: str,
+    for_print: bool,
     auto: bool,
     default_width: float,
     keep_pieceinfo: bool,
@@ -112,7 +126,8 @@ def apply(
             mapping[rgb] = float(w)
         mapping = from_user_mapping(mapping)
     else:
-        mapping = auto_by_luminance(rep, get_preset(preset))
+        tiers = select_preset(preset, scale=scale, for_print=for_print)
+        mapping = auto_by_luminance(rep, tiers)
 
     click.echo(f"# {len(mapping)} colors mapped using {'user file' if mapping_file else f'auto:{preset}'}", err=True)
     for line in explain_mapping(mapping, rep):
@@ -170,6 +185,64 @@ def apply_jsx_cmd(src: Path, output: Path | None):
     click.echo(f"opening {src} in Illustrator and running layer-aware JSX...", err=True)
     result = apply_via_jsx(str(src), out)
     click.echo(result["report"])
+
+
+@cli.command("poche")
+@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option(
+    "-o", "--output",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Output path. Defaults to '<src> POCHE.<ext>' (or '<src-without-HIERARCHY> POCHE.<ext>').",
+)
+@click.option(
+    "--overrides",
+    "overrides_path",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help='JSON of per-layer strategy overrides: {"TEC_FOUNDATION": {"strategy": "bbox"}, ...}',
+)
+def poche_cmd(src: Path, output: Path | None, overrides_path: Path | None):
+    """Generate solid-black poché on cut layers via shapely linemerge + polygonize.
+
+    \b
+    The two-stage pipeline opens the file in Adobe Illustrator, dumps every
+    `Visible::ClippingPlaneIntersections::*` layer's path geometry to JSON,
+    runs shapely.ops.linemerge + polygonize per layer (with snap-tolerance
+    sweep + concave_hull/bbox fallback), then a second JSX writes new closed
+    pathItems with black fill into each cut layer and saves the result.
+
+    \b
+    Layers preserved. Original strokes preserved. New filled polygons sit
+    on top of the existing strokes for the classic "cut reads black" look.
+
+    \b
+    Per-layer override JSON example:
+      {
+        "axon::Visible::ClippingPlaneIntersections::TEC_FOUNDATION": {
+          "strategy": "bbox"
+        },
+        "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE": {
+          "strategy": "concave_hull", "ratio": 0.4
+        }
+      }
+    """
+    out = str(output) if output else None
+    over = str(overrides_path) if overrides_path else None
+    click.echo(f"applying poche to {src}...", err=True)
+    report = apply_poche(str(src), out, overrides_path=over)
+    click.echo("", err=True)
+    click.echo(f"polygons created: {report.total_polygons}", err=True)
+    click.echo(f"  clean (linemerge):     {report.working_layers} layers", err=True)
+    click.echo(f"  imperfect (concave):   {report.imperfect_layers} layers", err=True)
+    click.echo(f"  failed:                {report.failed_layers} layers", err=True)
+    click.echo("", err=True)
+    click.echo("per-layer:", err=True)
+    for fr in sorted(report.fills, key=lambda f: -f.confidence):
+        short = fr.layer.split("::")[-1]
+        marker = "✓" if fr.confidence >= 0.85 else ("~" if fr.confidence > 0 else "✗")
+        click.echo(
+            f"  {marker} {short:50}  {fr.strategy:18}  polys={fr.polygon_count:>3}  conf={fr.confidence:.2f}",
+            err=True,
+        )
 
 
 @cli.command("explain-layer")
