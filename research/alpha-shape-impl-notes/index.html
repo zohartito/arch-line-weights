@@ -1,0 +1,1525 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Apply architectural line-weight hierarchy to Rhino-exported vector drawings.">
+      
+      
+        <meta name="author" content="zohartito">
+      
+      
+        <link rel="canonical" href="https://zohartito.github.io/arch-line-weights/research/alpha-shape-impl-notes/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>α-shape rescue rung — implementation notes (v0.5.2, GitHub Issue #6) - arch-line-weights</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-orange">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#-shape-rescue-rung-implementation-notes-v052-github-issue-6" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="arch-line-weights" class="md-header__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            arch-line-weights
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              α-shape rescue rung — implementation notes (v0.5.2, GitHub Issue #6)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="deep-orange"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/zohartito/arch-line-weights" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zohartito/arch-line-weights
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tutorials/your-first-section-drawing/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../how-to/apply-line-weights/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  How-to
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../explanation/how-poche-works/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Explanation
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="arch-line-weights" class="md-nav__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    arch-line-weights
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/zohartito/arch-line-weights" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zohartito/arch-line-weights
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/your-first-section-drawing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your first section drawing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/apply-line-weights/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Apply line weights
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/generate-poche/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Generate poché
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/material-hatching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Material hatching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/use-with-rhino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use with Rhino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/troubleshoot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshoot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/how-poche-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How poché works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/why-this-tool-exists/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why this tool exists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/the-postmortem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postmortem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-landed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What landed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-choice-hand-rolled-not-the-alphashape-pypi-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation choice: hand-rolled, not the alphashape PyPI package
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adaptive-alpha-selection-the-tricky-part" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adaptive alpha selection — the tricky part
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#densification-matches-concave_hull-rung" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Densification matches concave_hull rung
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wiring-through-the-codebase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wiring through the codebase
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test coverage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#behavior-on-the-3-stubborn-cut-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Behavior on the 3 stubborn cut layers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-drawing-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Real-drawing verification
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Real-drawing verification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-none-of-the-3-stubborn-layers-actually-hit-the-shape-rung" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why none of the 3 stubborn layers actually hit the α-shape rung
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-shape-rung-does-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the α-shape rung does fix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implication
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future work
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#source-files-touched" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source files touched
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/zohartito/arch-line-weights/edit/main/docs/research/alpha-shape-impl-notes.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="-shape-rescue-rung-implementation-notes-v052-github-issue-6">α-shape rescue rung — implementation notes (v0.5.2, GitHub Issue #6)<a class="headerlink" href="#-shape-rescue-rung-implementation-notes-v052-github-issue-6" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Implementation log for the α-shape rung added to
+<code>polygonize_layer</code>'s rescue ladder. Companion to
+<code>docs/research/stubborn-layers-deep-dive.md</code> (which evaluated 8 approaches
+and recommended a stacked solution including this rung) and
+<code>docs/research/disconnected-loops.md</code> (the original v0.4 ladder).</p>
+</blockquote>
+<h2 id="what-landed">What landed<a class="headerlink" href="#what-landed" title="Permanent link">&para;</a></h2>
+<p>A new module <code>src/arch_line_weights/alpha_shape.py</code> exposes:</p>
+<ul>
+<li><code>alpha_shape(points, alpha)</code> — α-shape for a fixed alpha threshold.</li>
+<li><code>alpha_shape_best(points, alpha_grid)</code> — adaptive alpha sweep returning
+  the largest-area polygon component plus alpha + region count.</li>
+<li><code>alpha_shape_all_regions(points, alpha_grid)</code> — same sweep but returns
+  every region of the winning α-complex (used by the rescue ladder when
+  multi-component topology like 26_CLT_GAP_ROOF_CAP needs preserving).</li>
+</ul>
+<p>The rescue ladder in <code>poche.py:polygonize_layer</code> is now:</p>
+<div class="highlight"><pre><span></span><code>linemerge_bare → snap+linemerge → auto_bridge → alpha_shape → concave_hull → bbox
+</code></pre></div>
+<p>with confidence values 1.0 / 0.95–0.7 / 0.75-bridge / <strong>0.55</strong> / 0.55 / 0.30
+respectively. The α-shape rung is opt-in via <code>use_alpha_shape</code> (default
+True for v0.5.2) and the CLI flag <code>--alpha-shape / --no-alpha-shape</code>
+(also default True). <code>--no-alpha-shape</code> reverts the ladder to v0.5.1.</p>
+<h2 id="implementation-choice-hand-rolled-not-the-alphashape-pypi-package">Implementation choice: hand-rolled, not the <code>alphashape</code> PyPI package<a class="headerlink" href="#implementation-choice-hand-rolled-not-the-alphashape-pypi-package" title="Permanent link">&para;</a></h2>
+<p><code>alphashape</code> was <em>not</em> added as a dependency. The package is fine but:</p>
+<ul>
+<li><code>scipy.spatial.Delaunay</code> is already in the transitive dep tree (shapely
+  pulls scipy via wheels), so a ~120-line implementation is dependency-free.</li>
+<li>The package's default scoring criterion (perimeter-to-area ratio) is
+  not the right metric for our use case — we want "preserve multi-component
+  topology when present". Hand-rolling lets us implement the correct
+  scoring explicitly.</li>
+</ul>
+<p>The algorithm itself is textbook (Edelsbrunner &amp; Mücke, 1994): compute
+the Delaunay triangulation, keep triangles whose circumradius ≤ alpha,
+take the union of kept triangles. Recovery of multi-component topology
+comes for free from <code>shapely.ops.unary_union</code> returning a <code>MultiPolygon</code>
+when the kept triangles fall into disconnected clusters.</p>
+<h2 id="adaptive-alpha-selection-the-tricky-part">Adaptive alpha selection — the tricky part<a class="headerlink" href="#adaptive-alpha-selection-the-tricky-part" title="Permanent link">&para;</a></h2>
+<p>The naive criterion "maximize distinct closed regions" (per the task
+spec) breaks on perimeter-only point clouds: small alpha picks up only
+isolated corner triangles, which technically count as "more regions" but
+represent zero of the actual cut shape's interior.</p>
+<p>The implemented criterion has three layers:</p>
+<ol>
+<li><strong>Coverage floor.</strong> An alpha-shape qualifies only if its total area
+   is ≥ 40% of the convex-hull area of the input points. Below that,
+   the alpha is too tight (sliver corners only).</li>
+<li><strong>Sliver filter.</strong> Within a qualifying alpha-shape, only regions
+   whose absolute area ≥ 5% of the bounding-box area count toward the
+   region count. Tiny chunks — even at "well-covered" alpha — don't
+   count as real components.</li>
+<li><strong>Maximize qualifying regions, tie-break by total area.</strong> Among all
+   alphas that pass both filters, pick the one with the most regions;
+   if tied, pick the one with the largest total area.</li>
+</ol>
+<p>This gives the spec-intended behavior on real cut-layer geometry (which
+gets densified by <code>segmentize(max_segment_length=2.0)</code> before the rung
+runs, providing interior points for Delaunay), without false positives
+on degenerate perimeter-only inputs.</p>
+<h2 id="densification-matches-concave_hull-rung">Densification matches <code>concave_hull</code> rung<a class="headerlink" href="#densification-matches-concave_hull-rung" title="Permanent link">&para;</a></h2>
+<p><code>_try_alpha_shape</code> densifies inputs via <code>segmentize(max_segment_length=2.0)</code>
+before feeding points to scipy. This mirrors what <code>_try_concave_hull</code>
+already does. Without it, Delaunay on Make2D output (which is segments
+of polylines, often with only the corner anchor points) gets too few
+interior triangles to recover the cut shape.</p>
+<h2 id="wiring-through-the-codebase">Wiring through the codebase<a class="headerlink" href="#wiring-through-the-codebase" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>polygonize_layer(..., use_alpha_shape=True)</code> — new keyword-only argument.</li>
+<li><code>polygonize_dump(..., use_alpha_shape=True)</code> — threads through.</li>
+<li><code>apply_poche(..., use_alpha_shape=True)</code> — threads through to dump→ladder.</li>
+<li><code>compute_polygons_for_layers(..., use_alpha_shape=True)</code> (poche_saas).</li>
+<li><code>apply_saas_with_poche(..., use_alpha_shape=True)</code>.</li>
+<li><code>arch-lw apply-saas --alpha-shape / --no-alpha-shape</code> — CLI flag (default ON).</li>
+<li><code>arch-lw poche --alpha-shape / --no-alpha-shape</code> — CLI flag (default ON).</li>
+</ul>
+<p>Existing <code>concave_hull</code> and <code>bbox</code> rungs are untouched. The α-shape rung
+sits <em>between</em> <code>auto_bridge</code> (greedy bridger output) and <code>concave_hull</code>,
+so it only fires when bridging fails to produce any polygon — exactly
+where the lossy fallback used to fire.</p>
+<h2 id="test-coverage">Test coverage<a class="headerlink" href="#test-coverage" title="Permanent link">&para;</a></h2>
+<p><code>tests/test_alpha_shape.py</code> (28 tests):</p>
+<ul>
+<li>Algebraic helpers: <code>_circumradius</code> for known triangles + collinear edge.</li>
+<li>Basic <code>alpha_shape</code>: returns None for sparse/collinear/too-small inputs;
+  recovers a square at large alpha; produces a polygon for a U-shape.</li>
+<li>Adaptive selection: <code>alpha_shape_best</code> picks a sensible alpha for a
+  filled square; recovers ≥ 2 regions for a CLT-gap fixture (two
+  20×20 clusters separated by 50pt).</li>
+<li>Integration with <code>polygonize_layer</code>: the flag-off path matches v0.5.1
+  (no <code>alpha_shape</code> strategy used); the flag-on path produces ≥ as many
+  polygons as flag-off; clean layers still pick <code>linemerge_bare</code>;
+  α-shape rung confidence is 0.55.</li>
+<li>Edge cases: duplicate points, empty grid, scipy unavailability.</li>
+</ul>
+<p>Pre-existing 202 tests (poché, bridge, hatch, presets, layer-classify,
+etc.) all still pass — no regression.</p>
+<h2 id="behavior-on-the-3-stubborn-cut-layers">Behavior on the 3 stubborn cut layers<a class="headerlink" href="#behavior-on-the-3-stubborn-cut-layers" title="Permanent link">&para;</a></h2>
+<p>Per <code>stubborn-layers-deep-dive.md</code>'s analysis, expected α-shape impact:</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Pathology</th>
+<th>α-shape result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>26_CLT_GAP_ROOF_CAP</code></td>
+<td>Two disconnected sub-shapes with intentional gap</td>
+<td><strong>Likely fixes</strong> — α-shape preserves the two clusters; <code>_try_alpha_shape</code> returns both polygons. Verified on the synthetic two-cluster fixture (<code>test_alpha_shape_best_recovers_two_regions_for_clt_gap</code>).</td>
+</tr>
+<tr>
+<td><code>23_WINDOW_FRAMES_REMAP</code></td>
+<td>Too few endpoints per stub for any geometric method</td>
+<td><strong>Marginal</strong> — α-shape on too-sparse stubs is degenerate. May still fall to <code>bbox</code> for many windows. The original POSTMORTEM analysis flagged this as the layer needing LLM topology inference (rung 5, deferred to Issue #6's later phases).</td>
+</tr>
+<tr>
+<td><code>11_CU_CORR_SOLID_OPAQUE</code></td>
+<td>Greedy bridge picks wrong endpoint pair</td>
+<td><strong>No change</strong> — α-shape on densified corrugation endpoints inherits the same sawtooth problem; <code>auto_bridge_backtrack</code> (already wired via <code>infer_bridges_best</code>) is the right rung for this layer.</td>
+</tr>
+</tbody>
+</table>
+<p>The α-shape rung is specifically designed to win on <code>26_CLT_GAP_ROOF_CAP</code>,
+which the spec called out as the headline target for v0.5.2.</p>
+<h2 id="real-drawing-verification">Real-drawing verification<a class="headerlink" href="#real-drawing-verification" title="Permanent link">&para;</a></h2>
+<p>The CLI was tested via:</p>
+<div class="highlight"><pre><span></span><code>arch-lw apply-saas --auto --poche --alpha-shape /tmp/arch-lw-smoke/test.ai \
+    -o /tmp/test_alpha.ai 2&gt;&amp;1 | grep -E &quot;26_CLT_GAP|23_WINDOW|11_CU_CORR&quot;
+</code></pre></div>
+<p>Output (with <code>--alpha-shape</code>):</p>
+<div class="highlight"><pre><span></span><code>~ 11_CU_CORR_SOLID_OPAQUE          auto_bridge  polys=  4  conf=0.59
+~ 26_CLT_GAP_ROOF_CAP_REMAP_49FT_V68  bbox    polys=  1  conf=0.30
+✗ 23_WINDOW_FRAMES_REMAP_49FT_V68    failed   polys=  0  conf=0.00
+</code></pre></div>
+<p>Output with <code>--no-alpha-shape</code> is <strong>identical</strong>, which surfaced an
+important finding documented below.</p>
+<h3 id="why-none-of-the-3-stubborn-layers-actually-hit-the-shape-rung">Why none of the 3 stubborn layers actually hit the α-shape rung<a class="headerlink" href="#why-none-of-the-3-stubborn-layers-actually-hit-the-shape-rung" title="Permanent link">&para;</a></h3>
+<p>Inspecting the raw geometry of each stubborn layer in <code>test.ai</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Anchor count</th>
+<th>Geometry</th>
+<th>Why α-shape doesn't help</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>26_CLT_GAP_ROOF_CAP_REMAP_49FT_V68</code></td>
+<td>4 anchors across 2 paths (one shared)</td>
+<td>A single near-straight polyline of 3 distinct points spanning ~150×85 source units</td>
+<td>Points are nearly collinear; Delaunay produces only sliver triangles with circumradii &gt; 100. Even at α=100, the recovered polygon has area ~0.05 — far below the coverage threshold. The "two roof caps with a gap" assumption from the research doc doesn't match the actual file. The current <code>bbox</code> outcome is correct given the data.</td>
+</tr>
+<tr>
+<td><code>23_WINDOW_FRAMES_REMAP_49FT_V68</code></td>
+<td>28 anchors, 14 paths</td>
+<td>All 28 points lie at x=480.3 (zero-width bbox) — perfectly collinear</td>
+<td>Delaunay can't triangulate collinear points; α-shape returns None for any α. Per the deep-dive, this layer needs LLM topology inference (rung 5, deferred).</td>
+</tr>
+<tr>
+<td><code>11_CU_CORR_SOLID_OPAQUE</code></td>
+<td>288 anchors, 144 paths</td>
+<td>A long thin corrugated ribbon (2pt wide × 213pt tall)</td>
+<td><code>auto_bridge</code> already produces 4 polygons at confidence 0.59 — the α-shape rung never gets a chance to run because bridge succeeds first.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="what-the-shape-rung-does-fix">What the α-shape rung <em>does</em> fix<a class="headerlink" href="#what-the-shape-rung-does-fix" title="Permanent link">&para;</a></h3>
+<p>A synthetic fixture with two short-stub clusters &gt;300pt apart (too far
+for <code>auto_bridge</code>, with each cluster only 4 stubs of 5pt each) is the
+canonical "α-shape wins" case:</p>
+<div class="highlight"><pre><span></span><code>paths = [4 corner stubs around (0..100, 0..100), 4 around (400..500, 0..100)]
+
+With --alpha-shape:    strategy=alpha_shape, conf=0.55, polys=2
+Without --alpha-shape: strategy=concave_hull, conf=0.55, polys=1
+</code></pre></div>
+<p>The α-shape preserves the two-cluster topology (2 polys); concave_hull
+collapses both into a single blob spanning the gap (1 poly). This is
+the 26_CLT_GAP_ROOF_CAP-style win condition the rung was designed for —
+just not realized in the current reference drawing.</p>
+<h3 id="implication">Implication<a class="headerlink" href="#implication" title="Permanent link">&para;</a></h3>
+<p>The α-shape rung is correctly implemented and validated against
+synthetic fixtures matching the design intent. On the actual reference
+drawing the rung never fires because:</p>
+<ol>
+<li><code>26_CLT_GAP_ROOF_CAP</code> doesn't have the "two clusters with gap"
+   topology in this file (it's effectively a single polyline).</li>
+<li><code>23_WINDOW_FRAMES_REMAP</code> is collinear, defeating any 2-D rescue.</li>
+<li><code>11_CU_CORR_SOLID_OPAQUE</code> is solved by an earlier rung (auto_bridge).</li>
+</ol>
+<p>This is a useful finding — it tells us:</p>
+<ul>
+<li>The "two roof caps" mental model from the research doc may have been
+  inferred from the layer name (<code>26_CLT_GAP_ROOF_CAP</code>) rather than from
+  the actual geometry. The geometry shows it's a single thin polyline
+  representing the cap profile, not two separate caps.</li>
+<li>For the WINDOW_FRAMES layer, no geometric rescue (α-shape, DBSCAN,
+  Voronoi, …) can recover collinear stub data. Only LLM inference using
+  the layer name as a prior or <code>__POCHE_CLOSE__</code> user-marked closing
+  segments will help here.</li>
+</ul>
+<p>The α-shape rung remains the right tool for layers with the canonical
+"two clusters separated by an intentional gap" pattern. Future drawings
+exhibiting that pattern will use it instead of falling to bbox.</p>
+<h2 id="future-work">Future work<a class="headerlink" href="#future-work" title="Permanent link">&para;</a></h2>
+<ul>
+<li>LLM topology inference (rung 5 in the deep-dive) for
+  <code>23_WINDOW_FRAMES_REMAP</code> — deferred to a separate phase per the task
+  constraints.</li>
+<li>Adaptive <code>alpha_grid</code> sizing based on the input bounding box. Current
+  grid <code>(1.0, 2.5, 5.0, 10.0, 20.0, 35.0, 50.0, 75.0, 100.0)</code> is in
+  source units (typically points) and tuned for plot-scale architectural
+  geometry. A future spike could auto-scale the grid to the layer's
+  intrinsic spacing (similar to <code>_adaptive_eps</code> in <code>bridge.py</code>).</li>
+<li>Multi-region polygon list flowing through <code>poche_saas.inject_poche_polygons</code>.
+  The injection path already accepts <code>list[Polygon]</code> per layer, so the
+  α-shape rung's multi-component output round-trips through unmodified —
+  no further wiring needed.</li>
+</ul>
+<h2 id="source-files-touched">Source files touched<a class="headerlink" href="#source-files-touched" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>src/arch_line_weights/alpha_shape.py</code></td>
+<td><strong>New.</strong> ~370 lines. Hand-rolled α-complex over scipy Delaunay; adaptive sweep with coverage floor + sliver filter.</td>
+</tr>
+<tr>
+<td><code>src/arch_line_weights/poche.py</code></td>
+<td>Added <code>_try_alpha_shape</code> helper; inserted <code>alpha_shape</code> rung between <code>auto_bridge</code> and <code>concave_hull</code> in <code>polygonize_layer</code>; threaded <code>use_alpha_shape</code> flag through <code>polygonize_layer</code>, <code>polygonize_dump</code>, <code>apply_poche</code>. New strategy literal <code>"alpha_shape"</code> added.</td>
+</tr>
+<tr>
+<td><code>src/arch_line_weights/poche_saas.py</code></td>
+<td>Threaded <code>use_alpha_shape</code> flag through <code>compute_polygons_for_layers</code> and <code>apply_saas_with_poche</code>.</td>
+</tr>
+<tr>
+<td><code>src/arch_line_weights/cli.py</code></td>
+<td>Added <code>--alpha-shape / --no-alpha-shape</code> flag to <code>apply-saas</code> and <code>poche</code> commands. Default ON for both.</td>
+</tr>
+<tr>
+<td><code>tests/test_alpha_shape.py</code></td>
+<td><strong>New.</strong> 28 tests covering the helpers, adaptive selection, edge cases, and <code>polygonize_layer</code> integration.</td>
+</tr>
+<tr>
+<td><code>docs/research/alpha-shape-impl-notes.md</code></td>
+<td><strong>New.</strong> This file.</td>
+</tr>
+</tbody>
+</table>
+<p>Time budget for the implementation: under the 75-minute box stated in the
+task brief.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 zohartito — MIT License
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/zohartito/arch-line-weights" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.action.edit", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

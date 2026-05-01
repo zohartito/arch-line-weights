@@ -1,0 +1,75 @@
+{
+  "started_at": "2026-05-01T07:45:46.804158+00:00",
+  "platform": "macOS-26.4.1-arm64-arm-64bit",
+  "python": "3.11.7",
+  "runs": 3,
+  "benchmarks": [
+    {
+      "source": "/tmp/arch-lw-smoke/test.ai",
+      "input_bytes": 24468895,
+      "layer_count": 62,
+      "cut_layer_count": 23,
+      "runs": 3,
+      "apply_saas": {
+        "stage": "apply-saas",
+        "times_seconds": [
+          22.659596790999785,
+          25.00967854100054,
+          24.032964292000543
+        ],
+        "output_bytes": 18629771,
+        "weights_applied": {
+          "0.25": 1,
+          "0.08": 8,
+          "0.13": 14,
+          "0.18": 11,
+          "0.3": 13,
+          "1.0": 4,
+          "0.5": 12
+        },
+        "polygons_injected": 0,
+        "layers_injected": 0,
+        "layers_targeted": 0,
+        "skipped": false,
+        "skip_reason": null,
+        "error": null
+      },
+      "apply_saas_poche": {
+        "stage": "apply-saas --poche",
+        "times_seconds": [
+          25.22703937500046,
+          26.34966387499935,
+          26.699164207999274
+        ],
+        "output_bytes": 18634633,
+        "weights_applied": {
+          "0.25": 1,
+          "0.08": 8,
+          "0.13": 14,
+          "0.18": 11,
+          "0.3": 13,
+          "1.0": 4,
+          "0.5": 12
+        },
+        "polygons_injected": 287,
+        "layers_injected": 20,
+        "layers_targeted": 20,
+        "skipped": false,
+        "skip_reason": null,
+        "error": null
+      },
+      "apply_jsx": {
+        "stage": "apply-jsx",
+        "times_seconds": [],
+        "output_bytes": 0,
+        "weights_applied": {},
+        "polygons_injected": 0,
+        "layers_injected": 0,
+        "layers_targeted": 0,
+        "skipped": true,
+        "skip_reason": "apply-jsx exceeded 180s \u2014 Illustrator may be unresponsive",
+        "error": null
+      }
+    }
+  ]
+}
