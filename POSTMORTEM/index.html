@@ -1083,6 +1083,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#attempt-7-2026-04-30-open-source-publish-then-yank" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attempt 7 (2026-04-30) — Open-source publish, then yank
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#cross-cutting-lessons-the-durable-ones" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1257,6 +1268,34 @@ confidence scoring:
 5. axis-aligned bbox → conf 0.30</p>
 <p>Plus emit per-fill metadata so the UI can flag low-confidence with warnings.</p>
 <p><strong>Status:</strong> Roadmapped. Not yet implemented.</p>
+<h2 id="attempt-7-2026-04-30-open-source-publish-then-yank">Attempt 7 (2026-04-30) — Open-source publish, then yank<a class="headerlink" href="#attempt-7-2026-04-30-open-source-publish-then-yank" title="Permanent link">&para;</a></h2>
+<p><strong>What:</strong> Published v1.0.0 to PyPI under MIT license via OIDC Trusted
+Publishing. Build verified; clean-venv install confirmed; CLI returned
+"arch-lw, version 1.0.0".</p>
+<p><strong>Result:</strong> Working publish. Anyone could <code>pip install arch-line-weights</code>
+for ~15 minutes.</p>
+<p><strong>Failure:</strong> I had committed to MIT before deciding the business model.
+The user wanted to monetize. MIT distribution is irrevocable for
+distributed copies. We yanked v1.0.0 (hides from <code>pip install</code>,
+preserves project name, still legally MIT for anyone who downloaded it).
+Removed the Trusted Publisher to cut the OIDC pipeline. Disabled the
+release workflow. Made the repo private.</p>
+<p><strong>Side effects:</strong>
+- GitHub Pages site went 404 (private repos need GH Pro for Pages)
+- Marketing drafts in <code>docs/announce/</code> are now stale (they pitch open-source)
+- v1.0.0 still installable via explicit <code>pip install arch-line-weights==1.0.0</code>
+  (yank semantics, not deletion)</p>
+<p><strong>Lesson kept:</strong> <strong>Pick the license BEFORE you publish to a public
+registry.</strong> Once a version is on PyPI under any license, that exact
+version's license is fixed in perpetuity. Future versions can be any
+license, but the MIT cat is partially out of the bag for v1.0.0.</p>
+<p><strong>Lesson kept:</strong> Yank is a one-way door for <code>pip install</code> discovery
+but not for legal rights. Treat "what license is on the wheel I'm
+about to upload" as the gate, not "what license is in my README right
+now."</p>
+<p><strong>Lesson kept:</strong> Going private and enabling docs auto-deploy on the
+same day is a foot-gun. Pages 404'd within 5 minutes of the visibility
+flip. Always check what depends on the visibility before changing it.</p>
 <h2 id="cross-cutting-lessons-the-durable-ones">Cross-cutting lessons (the durable ones)<a class="headerlink" href="#cross-cutting-lessons-the-durable-ones" title="Permanent link">&para;</a></h2>
 <ol>
 <li><strong>Layer fidelity is non-negotiable.</strong> Any change that destroys it must
