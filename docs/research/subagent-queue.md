@@ -15,6 +15,26 @@
 When dispatching, prefer **batches of 3–5 in parallel** — they don't
 share state, results consolidate cleanly into `docs/research/*.md` files.
 
+## Status (2026-04-30, after Wave 1 + Wave 2)
+
+| Wave | Status | Notes |
+|---|---|---|
+| Wave 1 (P0) | ✅ Complete | All 4 agents returned. SaaS feasibility resolved (B1 wins). |
+| Wave 2 (P1, 4 agents) | ✅ Complete | Stripe vs LS, web stack, privacy, 3 stubborn layers all delivered. |
+| Wave 3 (P1, 3 agents) | ✅ Complete | Hatch expansion, preset families, layer-name patterns delivered (run early in parallel with Wave 2). |
+| Wave 4 (P2, partial) | ⚠️ Partial | Competitive landscape ✅ done. Marketing channels (#14), support tooling (#15), distribution-platform reanalysis (#13) still pending — see "Remaining" below. |
+| Wave 5 (P2 long horizon) | ☐ Not yet run | AI-augmented mode (#16) — defer to post-launch. |
+| **Engineering: B6 (apply.py port)** | ✅ Complete | `src/arch_line_weights/apply_saas.py` — 35/35 tests pass, CLI works on synthetic fixture. |
+| **Engineering: B7 (poche.py port)** | ☐ Pending | Inject filled paths into AI native PostScript directly. Estimated 1–2 days. |
+| **Engineering: B8 (end-to-end SaaS prototype)** | ☐ Pending | Wire B6+B7 into a single `arch-lw apply-saas --poche` command. |
+
+### Remaining items in queue
+
+- ☐ #13 — distribution-platform reanalysis at SaaS pricing (LS vs Stripe). **Partly addressed** by `saas-payments-comparison.md`; original Wave 2 prompt covered the same scope. Can mark closed.
+- ☐ #14 — marketing channel research
+- ☐ #15 — customer-support tooling
+- ☐ #16 — AI-augmented mode feasibility (long horizon, defer to post-launch)
+
 ## P0 — gates Phase B (do this week)
 
 ### 1. Illustrator-less `.ai` output spike

@@ -190,15 +190,16 @@ Key findings (full report: [`docs/research/saas-architecture.md`](research/saas-
 
 **Phase B remaining work:**
 
-- [ ] B6. **Port `apply.py` line-weight logic to operate on decompressed
-  AI native PostScript** — regex-replace per-color stroke widths inside
-  the AI24 zstd payload. Estimated 4-8 hours.
+- [x] B6. **Port `apply.py` line-weight logic to operate on decompressed
+  AI native PostScript** — DONE 2026-04-30. New module `src/arch_line_weights/apply_saas.py`
+  + `arch-lw apply-saas` CLI command. 9 new tests pass; 35/35 total. See
+  `docs/research/apply-saas-port-notes.md` for implementation notes.
 - [ ] B7. **Port poché pipeline (`poche.py`)** to inject filled `pathItem`
   blocks directly into cut-layer `BeginLayer..LB` envelopes via
   pikepdf+zstd. Estimated 1-2 days.
-- [ ] B8. **End-to-end SaaS prototype**: input .ai → pure-Python pipeline →
-  modified .ai output, no JSX, no Illustrator. Verify in Illustrator on
-  user's machine.
+- [ ] B8. **End-to-end SaaS prototype**: combine B6 + B7 into a single
+  `arch-lw apply-saas --poche` command. Verify in Illustrator on user's
+  machine that output matches `apply-jsx --poche` baseline.
 - [ ] B9. **License swap** (deferred until product is ready to publish).
   When prototype works, replace LICENSE with PolyForm Free Trial 1.0.0
   + add commercial EULA. See `docs/research/licensing.md` for the 5-step

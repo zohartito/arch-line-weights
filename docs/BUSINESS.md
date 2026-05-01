@@ -64,28 +64,33 @@ After validation, year 2 numbers:
 
 ## Competitive positioning
 
-(Detailed competitive landscape: `docs/research/competitive-landscape.md` from earlier sub-agent.)
+Detailed competitive landscape: [`docs/research/competitive-landscape.md`](research/competitive-landscape.md).
 
-**Direct competitors:** None known. The market gap is real.
+**Top direct competitors (revised 2026-04-30):**
+
+1. **Manual Illustrator workflow** (the actual baseline) — threat 5/5. Every prospect compares us to "free, plus 30 min of my time." Phase C interviews must price-anchor against this honestly.
+2. **AutoLineWeight** (Chenzhi Xu, MIT, free, Food4Rhino) — threat 4/5. The only direct architecture-aware competitor. Runs *inside* Rhino, assigns weights by edge geometry. Sparsely maintained but free and already on Food4Rhino. Highest-likelihood disruptor if anyone takes it on.
+3. **McNeel shipping "Print Style PDF" that survives round-trip** (existential, 18–36 mo) — if they ship, the export problem disappears. Mitigation is to lean into the layer-name semantic classifier, the part McNeel won't ship.
 
 **Adjacent threats:**
 - Show It Better — cultural competitor (Photoshop actions, brushes). Could expand into automation.
 - Astute Graphics — Adobe Illustrator extension publisher. Has the distribution.
 - AutoCAD CTB / Revit View Templates / ArchiCAD Pen Sets — solve it inside-app, locked in.
-- McNeel themselves — if they ship a "Print Style" PDF export that survives the round-trip, our problem disappears.
 
-**Defensibility:**
-- Layer-name semantic classifier → pattern library that gets better with more customer drawings
-- POSTMORTEM-driven engineering → speed of iterating on edge cases
-- Direct customer relationships → rare for a $19 tool
+**Defensibility (top 3 differentiation claims for messaging):**
+1. **Fixes Rhino-exported PDFs that already lost their line weights** — no Rhino plugin install needed. AutoLineWeight requires running inside Rhino *before* export.
+2. **Architecture-specific line-weight intelligence** — `WALL_SECTION_CUT` becomes 0.7 mm without you teaching it. Layer-name semantic classifier is the moat; AutoLineWeight assigns by edge geometry only.
+3. **$19–79 one-time / $9–19 per month**, not $149/yr Astute, not $347 lifetime Show It Better, not $1,300+/yr BIM tools. Founder-100 lifetime tier locks in price perception.
 
 ## Distribution thoughts (pre-validation)
 
-(Detailed distribution comparison: `docs/research/distribution-platforms.md` from sub-agent.)
+Detailed distribution comparison: [`docs/research/distribution-platforms.md`](research/distribution-platforms.md) and [`docs/research/saas-payments-comparison.md`](research/saas-payments-comparison.md).
 
-**v1 (month 2):** Gumroad single-binary download. $19 / $79 / $499 tiers.
+**v1 SaaS (Phase D, month 2):** Lemon Squeezy as Merchant of Record at monthly subscription pricing. Founder 100 tier $19 lifetime, then $9–19 personal / $49 small studio / $149 large studio per month.
 
-**v2 (month 5+):** archlineweights.com SaaS. Stripe subscriptions.
+**v2 scale (Phase F, year 2+):** Migrate to Stripe + Stripe Tax once MRR clears ~$8–12k. Lemon Squeezy customers stay grandfathered.
+
+**Optional Pro Desktop tier (Phase F4):** signed binary at $79 one-time / $149 lifetime — for the ~30% of small-studio customers who refuse cloud upload (per `pdf-only-acceptance.md`).
 
 **v3 (year 2+):** Adobe Exchange listing (when UXP ships) + Food4Rhino plugin.
 

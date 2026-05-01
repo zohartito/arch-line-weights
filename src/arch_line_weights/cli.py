@@ -10,6 +10,7 @@ import click
 from . import __version__
 from .apply import apply_to_file
 from .apply_jsx import apply_via_jsx
+from .apply_saas import apply_to_file as apply_to_file_saas
 from .classify import auto_by_luminance, explain_mapping, from_user_mapping
 from .inspect import color_to_rgb255, inspect_file
 from .layer_classify import classify_layer
@@ -191,6 +192,142 @@ def apply_jsx_cmd(src: Path, output: Path | None):
     click.echo(f"opening {src} in Illustrator and running layer-aware JSX...", err=True)
     result = apply_via_jsx(str(src), out)
     click.echo(result["report"])
+
+
+@cli.command("apply-saas")
+@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option(
+    "-o",
+    "--output",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Output path. Defaults to '<src> HIERARCHY.<ext>'.",
+)
+@click.option(
+    "--mapping",
+    "mapping_file",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help='JSON file: {"RGB(r,g,b)": weight_pt, ...}',
+)
+@click.option(
+    "--preset",
+    type=click.Choice(sorted(PRESETS)),
+    default="section",
+    show_default=True,
+    help="Tier ladder used by --auto.",
+)
+@click.option(
+    "--scale",
+    default="1/4",
+    show_default=True,
+    help="Plot scale for ISO 128 weight selection (1/16, 1/8, 1/4, 1/2). Used with --for-print.",
+)
+@click.option(
+    "--for-print",
+    is_flag=True,
+    help="Use ISO 128 standards-aligned weights at the chosen --scale.",
+)
+@click.option(
+    "--auto",
+    is_flag=True,
+    help="Auto-bucket colors into the preset's tiers by luminance + frequency.",
+)
+@click.option(
+    "--default-width",
+    type=float,
+    default=0.25,
+    show_default=True,
+    help="Width applied to colors not in the mapping.",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Compute and explain the mapping; don't write any file.",
+)
+def apply_saas_cmd(
+    src: Path,
+    output: Path | None,
+    mapping_file: Path | None,
+    preset: str,
+    scale: str,
+    for_print: bool,
+    auto: bool,
+    default_width: float,
+    dry_run: bool,
+):
+    """Headless apply: modify the AI native payload directly (preserves layers).
+
+    \b
+    Like `apply` but operates on Illustrator's authoritative
+    `/PieceInfo /Illustrator /Private` payload rather than the PDF content
+    stream. The OCG layer hierarchy (and PieceInfo cache) is preserved, so
+    the result opens in Illustrator with every original layer intact and
+    no Illustrator install is required server-side.
+
+    \b
+    Best for SaaS / batch workflows on Rhino-exported `.ai` files. For
+    plain `.pdf` files (no PieceInfo), use `apply` instead.
+    """
+    if not (auto or mapping_file):
+        raise click.UsageError("provide --mapping FILE or --auto (with optional --preset)")
+    if auto and mapping_file:
+        raise click.UsageError("--auto and --mapping are mutually exclusive")
+
+    rep = inspect_file(str(src))
+
+    if mapping_file:
+        raw = json.loads(mapping_file.read_text())
+        mapping: dict[tuple[int, int, int], float] = {}
+        for ckey, w in raw.items():
+            rgb = color_to_rgb255(ckey)
+            if rgb is None:
+                click.echo(f"warning: skipping unparseable color {ckey!r}", err=True)
+                continue
+            mapping[rgb] = float(w)
+        mapping = from_user_mapping(mapping)
+    else:
+        tiers = select_preset(preset, scale=scale, for_print=for_print)
+        mapping = auto_by_luminance(rep, tiers)
+
+    click.echo(
+        f"# {len(mapping)} colors mapped using {'user file' if mapping_file else f'auto:{preset}'}", err=True
+    )
+    for line in explain_mapping(mapping, rep):
+        click.echo(line, err=True)
+
+    if dry_run:
+        click.echo("--dry-run: no file written.", err=True)
+        return
+
+    if output is None:
+        output = src.with_name(f"{src.stem} HIERARCHY{src.suffix}")
+
+    result = apply_to_file_saas(
+        str(src),
+        str(output),
+        mapping,
+        default_width=default_width,
+    )
+
+    click.echo("", err=True)
+    click.echo(
+        f"rewrote {result.widths_rewritten:,} stroke-width ops across "
+        f"{result.xa_seen:,} stroke-color sets",
+        err=True,
+    )
+    click.echo(
+        f"payload: {result.payload_size_in:,} → {result.payload_size_out:,} bytes "
+        f"({result.chunks_in} → {result.chunks_out} chunks)",
+        err=True,
+    )
+    for w in sorted(result.weights_applied):
+        click.echo(f"  {w:>5} pt  →  {result.weights_applied[w]:>7,} ops", err=True)
+    if result.unmatched_colors:
+        click.echo("", err=True)
+        click.echo(f"unmatched (defaulted to {default_width} pt):", err=True)
+        for rgb, n in sorted(result.unmatched_colors.items(), key=lambda kv: -kv[1])[:10]:
+            click.echo(f"  RGB{rgb}: {n}", err=True)
+    click.echo("", err=True)
+    click.echo(f"wrote {output}  ({result.output_size:,} bytes)", err=True)
 
 
 @cli.command("poche")

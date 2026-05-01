@@ -205,9 +205,44 @@ Lemon Squeezy is cheaper net-of-compliance until ~$30k+/yr. Easy call.
 - [South Dakota v. Wayfair (2018) — sales tax thresholds](https://www.salestaxinstitute.com/resources/wayfair-decision)
 - [EU VAT MOSS — Commission overview](https://taxation-customs.ec.europa.eu/taxation/vat/vat-e-commerce_en)
 
+## Subscription pricing reanalysis (2026-04-30)
+
+**Status:** This document was written assuming **one-time tiers** ($29 /
+$79 / $249). The roadmap has since pivoted to **monthly subscription**
+pricing ($9 / $19 / $49 / $149/mo). The fee math, operational burden,
+and Stripe-migration trigger are all different under SaaS.
+
+**For the SaaS-pricing analysis, see**
+[`saas-payments-comparison.md`](saas-payments-comparison.md).
+
+**Headline findings from the SaaS reanalysis:**
+
+1. **Lemon Squeezy still wins for Phase D.** No change. Compliance cost
+   alone (~$2–5k/yr to self-MoR via Stripe + CPA + tax software)
+   exceeds gross fee savings until ~500 subscribers blended-$19 ARPU.
+2. **The $9-tier is brutal everywhere.** Effective fee at $9 charge:
+   LS/Paddle 10.6%, Stripe+Tax 6.7%, FastSpring 16.5%, Gumroad 15.6%.
+   The flat 50¢ component dominates at SaaS prices.
+3. **Stripe migration trigger shifted later.** Old recommendation:
+   migrate to Stripe at ~$2–3k MRR. Under SaaS pricing:
+   **migrate at $8–12k MRR** (depending on ARPU mix and compliance
+   assumptions). Math, sources, and migration plan in
+   `saas-payments-comparison.md`.
+4. **Recurring billing primitives matter more than under one-time.**
+   Dunning, customer portal, smart retries — all of which LS provides
+   free — are operational savings worth more than the fee delta until
+   you reach the migration threshold.
+
+The Phase D plan in this document (one-time tiers, Founder 100 at $19
+one-time, Student $29, Personal $79, Studio $249/yr) is **superseded**
+by the subscription plan in `saas-payments-comparison.md` §5. The
+license-key-server architecture in this document is still valid; it
+just sits behind subscription webhooks instead of order webhooks.
+
 ## Related
 
+- `docs/research/saas-payments-comparison.md` — **read this first for SaaS pricing**; supersedes Phase D plan in §149-167 above
 - `docs/ROADMAP.md` Phase D — uses this directly
-- `docs/research/binary-distribution.md` — what gets sold via the platform
+- `docs/research/binary-distribution.md` — what gets sold via the platform (still relevant for optional Phase F4 paid-CLI tier)
 - `docs/research/licensing.md` — the EULA shipped with each license key
 - `docs/research/pricing-research.md` — the prices the platform charges
