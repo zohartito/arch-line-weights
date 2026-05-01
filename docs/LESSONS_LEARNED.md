@@ -56,3 +56,11 @@
 31. **Open core / dual license is a trap for solo devs.** Either fully OSS or fully commercial. Splitting the brain is too much work.
 32. **Architecture-school tools have a small but real market.** Don't expect Stripe-style growth; expect 100s of paying users, not millions.
 33. **The hard problem is reaching customers**, not building product. From v1.0 onward, every hour of feature work needs a matching hour of distribution work.
+
+## Strategy / pricing
+
+34. **"Flawless" is not the bar; ≥95% on real edge-case-heavy inputs is.** Software with 100% coverage doesn't ship. Define the "amazing" bar in concrete terms (% layer success, library size, scale coverage) so perfectionism doesn't delay launch indefinitely.
+35. **Subscription on a desktop CLI binary is hard to sell;** subscription on a web app is natural. The pricing model and the architecture choice are coupled — decide them together, not separately.
+36. **License-swap deadlines aren't real until you publish.** v1.0.0 is yanked, repo is private; the LICENSE file doesn't *have* to change today. Don't burn a Saturday on PolyForm + EULA in advance of needing it. Do it ~3 days before v1.0.1 ships.
+37. **Snapshot research before pivoting.** A SaaS-first pivot makes the v2 binary-distribution research (`docs/research/binary-distribution.md`, `distribution-platforms.md`) look obsolete — it's not. Keep it for the eventual paid-CLI complementary tier (Phase F4 / G).
+38. **Web-app SaaS for a desktop-tool problem requires solving the headless-output question first.** For us, that's: can pikepdf write `.ai` files Illustrator opens with layer fidelity, without an Illustrator install on the server? This is the single biggest unknown gating SaaS, and it's a feasibility spike — not an architecture choice you can defer.
