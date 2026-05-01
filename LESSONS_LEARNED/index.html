@@ -1093,6 +1093,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#format-reverse-engineering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Format reverse-engineering
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1184,6 +1195,12 @@ this page is the durable lessons distilled.</p>
 <li><strong>License-swap deadlines aren't real until you publish.</strong> v1.0.0 is yanked, repo is private; the LICENSE file doesn't <em>have</em> to change today. Don't burn a Saturday on PolyForm + EULA in advance of needing it. Do it ~3 days before v1.0.1 ships.</li>
 <li><strong>Snapshot research before pivoting.</strong> A SaaS-first pivot makes the v2 binary-distribution research (<code>docs/research/binary-distribution.md</code>, <code>distribution-platforms.md</code>) look obsolete — it's not. Keep it for the eventual paid-CLI complementary tier (Phase F4 / G).</li>
 <li><strong>Web-app SaaS for a desktop-tool problem requires solving the headless-output question first.</strong> For us, that's: can pikepdf write <code>.ai</code> files Illustrator opens with layer fidelity, without an Illustrator install on the server? This is the single biggest unknown gating SaaS, and it's a feasibility spike — not an architecture choice you can defer.</li>
+</ol>
+<h2 id="format-reverse-engineering">Format reverse-engineering<a class="headerlink" href="#format-reverse-engineering" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>A "proprietary" format may just be an old format wearing modern compression.</strong> The Adobe Illustrator <code>/PieceInfo /Illustrator /Private</code> payload looked closed. It's actually 305 PDF streams that concatenate into <code>%AI24_ZStandard_Data</code> + zstd-compressed plain-text AI3-AI8 PostScript — the same syntax we'd been generating from JSX for months. Always check the magic bytes before assuming a format is locked.</li>
+<li><strong>Time-boxed feasibility spikes beat trying to design around an unknown.</strong> Attempt 1 tried to dodge <code>/PieceInfo</code> by stripping it (flattened 62 layers to 1). A 60-minute scripted investigation resolved the question Attempt 1 was avoiding. When something is "the make-or-break unknown," spike it directly — don't architect around it.</li>
+<li><strong>Working spike scripts &gt; research summaries.</strong> The 8 pikepdf scripts in <code>scripts/spike/saas-feasibility/</code> are the proof. They demonstrate inspect / decompress / round-trip / modify operations, verified in Illustrator. A 1000-word "I think this should work" report would have been worth less than 8 small Python files that actually do work.</li>
 </ol>
 
 

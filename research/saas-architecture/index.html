@@ -12,7 +12,7 @@
         <meta name="author" content="zohartito">
       
       
-        <link rel="canonical" href="https://zohartito.github.io/arch-line-weights/POSTMORTEM/">
+        <link rel="canonical" href="https://zohartito.github.io/arch-line-weights/research/saas-architecture/">
       
       
       
@@ -20,19 +20,19 @@
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Postmortem — every poché attempt and what we learned - arch-line-weights</title>
+        <title>SaaS architecture feasibility — can pikepdf write a layered .ai file? - arch-line-weights</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -51,9 +51,9 @@
       
     
     
-      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#postmortem-every-poche-attempt-and-what-we-learned" class="md-skip">
+        <a href="#saas-architecture-feasibility-can-pikepdf-write-a-layered-ai-file" class="md-skip">
           Skip to content
         </a>
       
@@ -94,7 +94,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="arch-line-weights" class="md-header__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
+    <a href="../.." title="arch-line-weights" class="md-header__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Postmortem — every poché attempt and what we learned
+              SaaS architecture feasibility — can pikepdf write a layered .ai file?
             
           </span>
         </div>
@@ -226,7 +226,7 @@
   
   
     <li class="md-tabs__item">
-      <a href=".." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -247,7 +247,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../tutorials/your-first-section-drawing/" class="md-tabs__link">
+        <a href="../../tutorials/your-first-section-drawing/" class="md-tabs__link">
           
   
   
@@ -269,7 +269,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../how-to/apply-line-weights/" class="md-tabs__link">
+        <a href="../../how-to/apply-line-weights/" class="md-tabs__link">
           
   
   
@@ -291,7 +291,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../reference/cli/" class="md-tabs__link">
+        <a href="../../reference/cli/" class="md-tabs__link">
           
   
   
@@ -313,7 +313,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../explanation/how-poche-works/" class="md-tabs__link">
+        <a href="../../explanation/how-poche-works/" class="md-tabs__link">
           
   
   
@@ -355,7 +355,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="arch-line-weights" class="md-nav__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
+    <a href="../.." title="arch-line-weights" class="md-nav__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -385,7 +385,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -468,7 +468,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/your-first-section-drawing/" class="md-nav__link">
+      <a href="../../tutorials/your-first-section-drawing/" class="md-nav__link">
         
   
   
@@ -567,7 +567,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/apply-line-weights/" class="md-nav__link">
+      <a href="../../how-to/apply-line-weights/" class="md-nav__link">
         
   
   
@@ -595,7 +595,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/generate-poche/" class="md-nav__link">
+      <a href="../../how-to/generate-poche/" class="md-nav__link">
         
   
   
@@ -623,7 +623,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/material-hatching/" class="md-nav__link">
+      <a href="../../how-to/material-hatching/" class="md-nav__link">
         
   
   
@@ -651,7 +651,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/use-with-rhino/" class="md-nav__link">
+      <a href="../../how-to/use-with-rhino/" class="md-nav__link">
         
   
   
@@ -679,7 +679,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/troubleshoot/" class="md-nav__link">
+      <a href="../../how-to/troubleshoot/" class="md-nav__link">
         
   
   
@@ -772,7 +772,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/cli/" class="md-nav__link">
+      <a href="../../reference/cli/" class="md-nav__link">
         
   
   
@@ -800,7 +800,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/python-api/" class="md-nav__link">
+      <a href="../../reference/python-api/" class="md-nav__link">
         
   
   
@@ -895,7 +895,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../explanation/how-poche-works/" class="md-nav__link">
+      <a href="../../explanation/how-poche-works/" class="md-nav__link">
         
   
   
@@ -923,7 +923,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../explanation/why-this-tool-exists/" class="md-nav__link">
+      <a href="../../explanation/why-this-tool-exists/" class="md-nav__link">
         
   
   
@@ -951,7 +951,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../explanation/the-postmortem/" class="md-nav__link">
+      <a href="../../explanation/the-postmortem/" class="md-nav__link">
         
   
   
@@ -1006,10 +1006,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#context" class="md-nav__link">
+  <a href="#tldr" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Context
+        TL;DR
       
     </span>
   </a>
@@ -1017,10 +1017,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#attempt-1-v01-pikepdf-rewrite-strip-pieceinfo" class="md-nav__link">
+  <a href="#whats-inside-pieceinfo-illustrator-private" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Attempt 1 (v0.1) — pikepdf rewrite + strip PieceInfo
+        What's inside /PieceInfo /Illustrator /Private?
       
     </span>
   </a>
@@ -1028,10 +1028,60 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#attempt-2-v02-illustrator-jsx-with-maximumundodepth1" class="md-nav__link">
+  <a href="#three-things-we-tested" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Attempt 2 (v0.2) — Illustrator JSX with maximumUndoDepth=1
+        Three things we tested
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Three things we tested">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-inspect-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Inspect — DONE
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-modify-done-round-trips-through-illustrator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Modify — DONE, ROUND-TRIPS THROUGH ILLUSTRATOR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-synthesize-not-proven-but-not-blocking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Synthesize — NOT PROVEN, but not blocking
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-one-caveat-layer-names-come-from-somewhere-we-havent-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The one caveat: layer NAMES come from somewhere we haven't found
       
     </span>
   </a>
@@ -1039,10 +1089,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#attempt-3-v03-try-1-jsx-appexecutemenucommandjoin-to-chain-endpoints-fill" class="md-nav__link">
+  <a href="#public-knowledge-third-party-efforts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Attempt 3 (v0.3 try 1) — JSX app.executeMenuCommand("join") to chain endpoints + fill
+        Public knowledge / third-party efforts
       
     </span>
   </a>
@@ -1050,10 +1100,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#attempt-4-v03-try-2-pikepdf-only-ocg-aware-stream-rewrite" class="md-nav__link">
+  <a href="#concrete-blocker-list" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Attempt 4 (v0.3 try 2) — pikepdf-only OCG-aware stream rewrite
+        Concrete blocker list
       
     </span>
   </a>
@@ -1061,10 +1111,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#attempt-5-v03-try-3-jsx-dump-anchors-python-shapely-jsx-apply" class="md-nav__link">
+  <a href="#recommended-saas-architecture" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Attempt 5 (v0.3 try 3) — JSX dump anchors + Python shapely + JSX apply
+        Recommended SaaS architecture
       
     </span>
   </a>
@@ -1072,10 +1122,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#attempt-6-planned-v04-disconnected-loop-rescue" class="md-nav__link">
+  <a href="#recommended-next-step" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Attempt 6 (planned, v0.4) — Disconnected-loop rescue
+        Recommended next step
       
     </span>
   </a>
@@ -1083,32 +1133,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#attempt-7-2026-04-30-open-source-publish-then-yank" class="md-nav__link">
+  <a href="#files-produced-by-this-spike" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Attempt 7 (2026-04-30) — Open-source publish, then yank
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#attempt-8-2026-04-30-pikepdf-only-ai-modification-the-saas-unlock" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Attempt 8 (2026-04-30) — pikepdf-only .ai modification (the SaaS unlock)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cross-cutting-lessons-the-durable-ones" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cross-cutting lessons (the durable ones)
+        Files produced by this spike
       
     </span>
   </a>
@@ -1132,7 +1160,7 @@
 
 
   
-    <a href="https://github.com/zohartito/arch-line-weights/edit/main/docs/POSTMORTEM.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/zohartito/arch-line-weights/edit/main/docs/research/saas-architecture.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
     </a>
@@ -1140,240 +1168,275 @@
   
 
 
-<h1 id="postmortem-every-poche-attempt-and-what-we-learned">Postmortem — every poché attempt and what we learned<a class="headerlink" href="#postmortem-every-poche-attempt-and-what-we-learned" title="Permanent link">&para;</a></h1>
+<h1 id="saas-architecture-feasibility-can-pikepdf-write-a-layered-ai-file">SaaS architecture feasibility — can pikepdf write a layered .ai file?<a class="headerlink" href="#saas-architecture-feasibility-can-pikepdf-write-a-layered-ai-file" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Living document. Each entry: what we tried, what worked, what failed,
-what to keep doing or stop doing. The point is to make sure no future
-contributor (including future-us) repeats any of these.</p>
+<p>Research spike, 2026-04-30. Time-boxed ~60 min of agent work.
+Authoritative answer to the gating question for the SaaS pivot.</p>
 </blockquote>
-<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
-<p>Project: <code>arch-line-weights</code> — apply architectural line-weight hierarchy +
-poché to color-coded vector drawings (typically Rhino-exported <code>.ai</code>).
-Reference test file: USC ARCH 202B section drawing, 24 MB, 340,323 strokes,
-62 OCG layers, 21 of which are <code>Visible::ClippingPlaneIntersections::*</code> (the
-section cuts that should become poché).</p>
-<h2 id="attempt-1-v01-pikepdf-rewrite-strip-pieceinfo">Attempt 1 (v0.1) — pikepdf rewrite + strip PieceInfo<a class="headerlink" href="#attempt-1-v01-pikepdf-rewrite-strip-pieceinfo" title="Permanent link">&para;</a></h2>
-<p><strong>What:</strong> Rewrite the PDF content stream to inject <code>&lt;width&gt; w</code> before every
-stroke operator, color-keyed by the most recent <code>RG</code>. Strip <code>/PieceInfo</code> so
-Illustrator parses the modified stream instead of its private cache.</p>
-<p><strong>Result:</strong> Strokes worked perfectly. Speed was great (110 s on 340 K
-strokes). Shipped as v0.1.</p>
-<p><strong>Failure:</strong> Stripping PieceInfo <strong>flattened all 62 Rhino layers into a
-single Illustrator layer</strong>. The user opened it, said "you turned it into one
-layer," and we rolled back the default.</p>
-<p><strong>Root cause:</strong> <code>.ai</code> files are dual-encoded: <code>/PieceInfo /Illustrator
-/Private</code> holds the canonical layer/group structure; the PDF content stream
-is a rendering fallback. Strip PieceInfo → Illustrator falls back to the PDF
-parser, which collapses OCGs to the default Layer 1 unless you open via
-<code>File &gt; Open</code> with <code>pDFPreserveLayers</code> enabled (no equivalent for
-double-clicking the file).</p>
-<p><strong>Lesson kept:</strong> Layer fidelity &gt; raw speed for any tool whose users will
-iterate on the output. Default to layer-preserving even if slower.</p>
-<p><strong>Lesson kept:</strong> "Open in Illustrator and look at the Layers panel" is a
-required acceptance test — not just "fills look right in preview."</p>
-<h2 id="attempt-2-v02-illustrator-jsx-with-maximumundodepth1">Attempt 2 (v0.2) — Illustrator JSX with <code>maximumUndoDepth=1</code><a class="headerlink" href="#attempt-2-v02-illustrator-jsx-with-maximumundodepth1" title="Permanent link">&para;</a></h2>
-<p><strong>What:</strong> Hand a JSX to Illustrator that walks each leaf layer, derives a
-weight from the new semantic layer-name classifier (<code>layer_classify.py</code>),
-and applies it to every <code>pathItem</code> in that layer. Outline view + cap undo
-depth at 1 to keep ExtendScript linear-time.</p>
-<p><strong>Result:</strong> Worked. 11 minutes for 340 K strokes, all 62 layers preserved,
-0 errors. Shipped as v0.2.</p>
-<p><strong>Lesson kept:</strong> ExtendScript per-item iteration is <strong>linear with
-<code>maximumUndoDepth=1</code>, exponential without</strong>. The first naive try (no undo
-cap) showed exponential degradation — first 10 K paths in 79 s, second in
-132 s, third in 280 s. ETA was 2+ hours and rising.</p>
-<p><strong>Lesson kept:</strong> Layer-name semantic classification beats color
-classification for any Rhino export. <code>Visible::ClippingPlaneIntersections::*</code>
-is <strong>always</strong> the cut tier regardless of trailing material code.</p>
-<h2 id="attempt-3-v03-try-1-jsx-appexecutemenucommandjoin-to-chain-endpoints-fill">Attempt 3 (v0.3 try 1) — JSX <code>app.executeMenuCommand("join")</code> to chain endpoints + fill<a class="headerlink" href="#attempt-3-v03-try-1-jsx-appexecutemenucommandjoin-to-chain-endpoints-fill" title="Permanent link">&para;</a></h2>
-<p><strong>What:</strong> For each cut layer, select all paths, repeatedly call
-<code>app.executeMenuCommand("join")</code> to chain coincident endpoints, then fill
-the resulting closed paths black.</p>
-<p><strong>Result:</strong> Catastrophic. Each layer's 100s of paths joined into ONE giant
-self-intersecting tangled polygon, which then filled along its zigzag stroke
-order. The user's screenshot showed black bars criss-crossing the courtyard.</p>
-<p><strong>Failure:</strong> Illustrator's Join is not topology-aware. Given N paths whose
-endpoints are all near-coincident in pairs, Join chains them in <strong>arbitrary
-order</strong>, not by the actual graph structure. So 100 segments that should form
-10 separate closed polygons collapse into 1 self-intersecting blob.</p>
-<p><strong>Lesson kept:</strong> Naive endpoint-chaining (Illustrator's Join, simple
-linemerge without graph structure) is a trap. Use shapely's
-<code>linemerge + polygonize</code> which <strong>preserves topology</strong> — it identifies
-<em>separate</em> connected components and only chains within each.</p>
-<p><strong>Kept in repo:</strong> <code>scripts/poche/apply_join_NAIVE.jsx</code> as a warning marker.</p>
-<h2 id="attempt-4-v03-try-2-pikepdf-only-ocg-aware-stream-rewrite">Attempt 4 (v0.3 try 2) — pikepdf-only OCG-aware stream rewrite<a class="headerlink" href="#attempt-4-v03-try-2-pikepdf-only-ocg-aware-stream-rewrite" title="Permanent link">&para;</a></h2>
-<p><strong>What:</strong> Walk the PDF content stream, track current OCG via <code>BDC/EMC</code> +
-<code>/Properties</code> lookup, collect line segments per OCG, run shapely linemerge +
-polygonize per OCG, append filled polygons to the content stream, save.</p>
-<p><strong>Result:</strong> Buggy. My MC# matcher used <code>"/MC28"</code> in one place and <code>"MC28"</code>
-(no slash) in the other — collected 0 segments for every layer.</p>
-<p><strong>Failure:</strong> Format mismatch in dict keys. Trivial bug, hours to find
-because PDF content-stream debugging is hard.</p>
-<p><strong>Lesson kept:</strong> When walking PDF marked content, normalize names exactly
-once. <code>pikepdf.Name</code> objects can stringify with or without leading <code>/</code>
-depending on context.</p>
-<p><strong>Lesson kept:</strong> When an extraction returns 0 results across the board,
-<strong>dump the actual operator format first</strong> before debugging the geometry.</p>
-<h2 id="attempt-5-v03-try-3-jsx-dump-anchors-python-shapely-jsx-apply">Attempt 5 (v0.3 try 3) — JSX dump anchors + Python shapely + JSX apply<a class="headerlink" href="#attempt-5-v03-try-3-jsx-dump-anchors-python-shapely-jsx-apply" title="Permanent link">&para;</a></h2>
-<p><strong>What:</strong> Two-stage pipeline:
-1. JSX A walks every cut layer and dumps <code>pathItem.pathPoints[i].anchor</code> to
-   <code>/tmp/cut_geometry.json</code> (skips PDF stream entirely)
-2. Python loads the JSON, runs <code>shapely.ops.linemerge + polygonize</code> per
-   layer (with snap+linemerge fallback ladder)
-3. Python builds JSX B with the resulting polygon coordinates baked in as a
-   JS object literal (no I/O at runtime)
-4. JSX B opens the file in Illustrator, creates new closed <code>pathItem</code>s in
-   each layer with <code>filled = true; fillColor = black</code>, saves</p>
-<p><strong>Result:</strong> Mostly works.</p>
+<h2 id="tldr">TL;DR<a class="headerlink" href="#tldr" title="Permanent link">&para;</a></h2>
+<p><strong>VERDICT: YES (with one small caveat).</strong> Pure-pikepdf modification of an
+existing <code>.ai</code> file's <code>/PieceInfo /Illustrator /Private</code> payload is feasible
+on a server without an Illustrator install. We can change stroke widths,
+stroke colors, and layer-block contents; Illustrator opens the modified
+file and renders the changes correctly with all OCG layers intact.</p>
+<p>The caveat: synthesizing a <code>PieceInfo</code> payload <strong>from scratch</strong> (e.g., from
+an SVG or DXF input) is harder and not proven here. The recommended SaaS
+architecture is <strong>template-based</strong>: ship a Rhino-export <code>.ai</code> file from the
+user, modify its PieceInfo, return it.</p>
+<p>This means the SaaS path is <strong>open</strong> for the project's actual use case
+(applying line-weight hierarchy / poché to user-uploaded Rhino-exported
+<code>.ai</code> files) — which is everything we already do.</p>
+<h2 id="whats-inside-pieceinfo-illustrator-private">What's inside <code>/PieceInfo /Illustrator /Private</code>?<a class="headerlink" href="#whats-inside-pieceinfo-illustrator-private" title="Permanent link">&para;</a></h2>
+<p>Concrete shape, per the reference drawing
+(<code>USC/Spring 2026/ARCH 202B/DRAWING 4 SECTION [Converted].ai</code>, 24 MB,
+62 OCGs):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>page.obj[&quot;/PieceInfo&quot;][&quot;/Illustrator&quot;][&quot;/Private&quot;] = Dictionary(311 keys):
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    /AIMetaData         Stream(1540 bytes)  — plain-text PostScript header
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    /ContainerVersion   12
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    /CreatorVersion     30
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    /NumBlock           305
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    /RoundtripStreamType 2
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    /RoundtripVersion   24
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    /AIPrivateData1     Stream(65536 bytes)  — first chunk
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    /AIPrivateData2     Stream(65536 bytes)
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    ...
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    /AIPrivateData305   Stream(62724 bytes)  — last chunk
+</code></pre></div>
+<p>Total raw blob across the 305 streams: <strong>19,985,668 bytes</strong>.</p>
+<p>Concatenating them (in order 1..N) gives a single byte stream that
+<strong>starts with the 20-byte ASCII prefix <code>%AI24_ZStandard_Data</code></strong> followed by
+the Zstandard magic <code>28 b5 2f fd</code>.</p>
+<p>After stripping the prefix and Zstandard-decompressing, you get
+<strong>55,350,315 bytes of plain-text Adobe Illustrator native PostScript</strong>
+(line endings are bare <code>\r</code>, classic Mac-style). Tokens you'll recognize
+from the AI3-AI8 file format spec:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>%!PS-Adobe-3.0
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>%%Creator: Adobe Illustrator(R) 24.0
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>%%AI8_CreatorVersion: 30.1.0
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>...
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>%AI5_NumLayers: 62
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>%%EndComments
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>%AI5_BeginLayer
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>1 1 1 1 0 0 1 -1 240 190 130 0 100 0 Lb
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>(axon precedent 1::Visible::Curves::14_CU_CORR_PERF_SCREEN) Ln
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>0 AE
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>... path data using m, L, S, As operators ...
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>LB
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>%AI5_EndLayer--
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>%AI5_BeginLayer
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>... next layer ...
+</code></pre></div>
+<p>All 62 layers appear as a sequence of <code>%AI5_BeginLayer ... %AI5_EndLayer--</code>
+blocks with the layer name string, RGB color triplet, visibility/locked
+flags, and embedded path geometry. <strong>This is the canonical layer source
+that Illustrator reads when opening an <code>.ai</code> file.</strong></p>
+<h2 id="three-things-we-tested">Three things we tested<a class="headerlink" href="#three-things-we-tested" title="Permanent link">&para;</a></h2>
+<h3 id="1-inspect-done">1. Inspect — DONE<a class="headerlink" href="#1-inspect-done" title="Permanent link">&para;</a></h3>
+<p><code>scripts/spike/saas-feasibility/01_inspect_pieceinfo.py</code> walks the dict
+tree. <code>02_examine_blobs.py</code> confirms the chunked-Zstandard encoding by
+reading raw bytes and finding the magic at offset 20.
+<code>03_decompress_blobs.py</code> decompresses to 55 MB of plain PostScript and
+locates 62 <code>%AI5_BeginLayer</code> markers and all layer name strings as ASCII.</p>
+<h3 id="2-modify-done-round-trips-through-illustrator">2. Modify — DONE, ROUND-TRIPS THROUGH ILLUSTRATOR<a class="headerlink" href="#2-modify-done-round-trips-through-illustrator" title="Permanent link">&para;</a></h3>
+<p><code>scripts/spike/saas-feasibility/04_roundtrip_modify.py</code> builds a complete
+read → decompress → edit → recompress (Zstandard level 19) → re-slice
+into 64 KB chunks → write streams pipeline.</p>
+<p><code>05_verify_roundtrip.py</code> confirms byte-perfect null round-trip: the
+decompressed payload from the saved file equals the source payload exactly,
+and OCG count remains 62 in both.</p>
+<p><code>07_modify_stroke_color.py</code> changed the stroke RGB of every path in the
+<code>ClippingPlaneIntersections::TEC_STAIRS</code> cut layer to magenta <code>(1 0 1) XA</code>.
+Opened the saved file in Illustrator, dumped pathItem stroke color via
+JSX: <strong>all 172 path strokes returned <code>RGBColor: rgb(255, 0, 255)</code></strong> —
+exactly our magenta. Confirmed.</p>
+<p><code>08_modify_stroke_width.py</code> changed every <code>1 w</code> (1 pt stroke) in the
+<code>ClippingPlaneIntersections::TEC_STAIRS</code> block to <code>5 w</code> (5 pt). Opened
+in Illustrator, dumped pathItem strokeWidth: <strong>all 172 paths returned
+<code>width=5</code></strong>. Confirmed.</p>
+<p>This is exactly the project's core operation — apply per-layer / per-color
+stroke widths. <strong>It works without Illustrator on the server.</strong></p>
+<h3 id="3-synthesize-not-proven-but-not-blocking">3. Synthesize — NOT PROVEN, but not blocking<a class="headerlink" href="#3-synthesize-not-proven-but-not-blocking" title="Permanent link">&para;</a></h3>
+<p>We did not construct a valid <code>.ai</code> file's PieceInfo from scratch. The AI24
+native PostScript syntax is partially-documented (the AI8 spec from
+<code>http://justsolve.archiveteam.org/wiki/Adobe_Illustrator_Artwork</code> covers
+the legacy operators; later additions for OCG / SVG-effect / variable
+fonts are not). For the project's use cases we don't need to synthesize —
+we always start with a user-uploaded Rhino <code>.ai</code> and modify it.</p>
+<h2 id="the-one-caveat-layer-names-come-from-somewhere-we-havent-found">The one caveat: layer NAMES come from somewhere we haven't found<a class="headerlink" href="#the-one-caveat-layer-names-come-from-somewhere-we-havent-found" title="Permanent link">&para;</a></h2>
+<p>When we modify the <code>(layer-name) Ln</code> directive inside the Private payload
+<strong>and</strong> the OCG <code>/Name</code> in <code>Root.OCProperties.OCGs[i]</code> <strong>and</strong> the
+<code>/Resources /Properties /MC&lt;i&gt; /Name</code> on the page, <strong>Illustrator's Layers
+panel still displays the original name.</strong> The geometry, stroke color, and
+stroke width all reflect our edits — but the panel name does not.</p>
+<p>This means there's a <strong>fourth</strong> copy of the layer name we haven't found,
+likely in another part of the AIPrivateData payload (XMLUID-keyed map?
+binary art-tree section we haven't decoded?). For the project's purposes
+this is irrelevant — we never need to rename a layer. But it's a known
+unknown if we ever do want to rename.</p>
+<p>Not blocking. Worth noting.</p>
+<h2 id="public-knowledge-third-party-efforts">Public knowledge / third-party efforts<a class="headerlink" href="#public-knowledge-third-party-efforts" title="Permanent link">&para;</a></h2>
+<p>What's documented:
+- AI3-AI8 file format spec (legacy plain-text PostScript syntax) is
+  publicly available — see archive.org and <code>justsolve.archiveteam.org</code>.
+  Covers <code>%AI5_BeginLayer</code>, <code>Lb</code>, <code>Ln</code>, <code>LB</code>, path operators, color
+  setting via <code>XA</code>. This is the format inside our Zstandard payload.
+- The Zstandard wrapping with the <code>%AI24_ZStandard_Data</code> prefix and
+  64 KB chunking into <code>AIPrivateData&lt;N&gt;</code> is <strong>NOT publicly documented</strong>
+  by Adobe but is now empirically proven (this spike).</p>
+<p>Third-party parsers:
+- <code>opendesigndev/illustrator-parser-pdfcpu</code> (Node.js + WASM) is the most
+  active recent project. It parses the PDF + PieceInfo. Does not appear
+  to publicly document Zstandard handling — would need to check source.
+- <code>sk1-project/sk1-wx</code> has historical AI import support, but the project
+  is largely unmaintained vs the active CC2024+ format.
+- Inkscape has its own AI parser, scope unclear for AI24.</p>
+<p>Adobe SDK:
+- Adobe's official AI plug-in SDK is C/C++ and requires their NDA
+  + signing. Not viable for a solo dev SaaS at any reasonable cost.</p>
+<h2 id="concrete-blocker-list">Concrete blocker list<a class="headerlink" href="#concrete-blocker-list" title="Permanent link">&para;</a></h2>
+<p>For the SaaS path to work as designed (apply line-weight hierarchy and
+poché to user-uploaded Rhino <code>.ai</code> files in a headless server):</p>
 <table>
 <thead>
 <tr>
-<th>Outcome</th>
-<th>Layers</th>
-<th>Why</th>
+<th>#</th>
+<th>Concern</th>
+<th>Status</th>
+<th>Notes</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Clean polygons</td>
-<td>13 / 21</td>
-<td>Bare linemerge produced N separate closed loops</td>
+<td>1</td>
+<td>Decompress Private payload</td>
+<td>RESOLVED</td>
+<td><code>zstandard</code> Python package, ~75 ms on 20 MB</td>
 </tr>
 <tr>
-<td>Concave-hull fallback</td>
-<td>7 / 21</td>
-<td>linemerge gave 0 polys → fell back, produces 1 lumpy polygon instead of N</td>
+<td>2</td>
+<td>Modify PostScript-style stroke ops</td>
+<td>RESOLVED</td>
+<td>regex replace inside the decompressed payload</td>
 </tr>
 <tr>
-<td>Failed</td>
-<td>1 / 21</td>
-<td><code>23_WINDOW_FRAMES</code> — too few points</td>
+<td>3</td>
+<td>Recompress + chunk + write back</td>
+<td>RESOLVED</td>
+<td><code>zstandard.ZstdCompressor(level=19)</code> + 64 KB slicing</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Illustrator opens result, renders edits</td>
+<td>RESOLVED</td>
+<td>confirmed via JSX <code>pathItem.strokeWidth/strokeColor</code> dump</td>
+</tr>
+<tr>
+<td>5</td>
+<td>OCG layer count preserved</td>
+<td>RESOLVED</td>
+<td>62 → 62, panel shows the same hierarchy</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Apply poché (filled black polygons in cut layers)</td>
+<td>NOT TESTED HERE</td>
+<td>Requires creating new <code>pathItem</code> blocks inside an existing layer's <code>%AI5_BeginLayer .. LB</code> envelope. Should work — same syntax our spike already manipulates.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Layer renaming</td>
+<td>OPEN</td>
+<td>Not needed for the project. If ever needed, must locate the 4<sup>th</sup> name reference.</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Synthesize PieceInfo from SVG / DXF input (no template)</td>
+<td>NOT NEEDED</td>
+<td>We always start from a Rhino-exported <code>.ai</code>. If a future user wants to upload an SVG instead, would need either ship a "generic" template <code>.ai</code> and bake the SVG into it, or fall back to PDF-only output.</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Sub-failures along the way:</strong>
-- v3 added <code>snap()</code> pre-pass that <strong>over-merged</strong> the dense cladding layers.
-  TEC_STAIRS went from 29 polys (no snap) to 0 (snap at 0.5pt) → fell back
-  to bad concave_hull. Reverted snap → use bare linemerge first.
-- After <code>saveAs</code>, Illustrator's in-memory copy of the <em>source</em> doc still
-  contains all the JSX-added pathItems. If the user clicks back to that tab
-  thinking it's the clean source, they see "weird extra lines." Reproduced
-  by the user. Force-close and reopen from disk to recover.</p>
-<p><strong>Lessons kept:</strong>
-- Two-stage pipeline (Illustrator dump → Python compute → Illustrator
-  apply) is the working pattern. Easier to debug than PDF content stream
-  hacking.
-- For per-layer geometry processing, <strong>try a sweep of strategies and pick
-  the one that maximizes polygon count</strong>, not the first that gives any
-  polygons. Some layers want 0.01pt tolerance, some want 2pt.
-- After <code>saveAs</code> with new pathItems added, the source doc is dirty. Either
-  close-without-saving programmatically before next iteration, or instruct
-  the user to manually close and reopen.</p>
-<h2 id="attempt-6-planned-v04-disconnected-loop-rescue">Attempt 6 (planned, v0.4) — Disconnected-loop rescue<a class="headerlink" href="#attempt-6-planned-v04-disconnected-loop-rescue" title="Permanent link">&para;</a></h2>
-<p><strong>What:</strong> Per the disconnected-loops sub-agent report, layered fallback with
-confidence scoring:
-1. bare linemerge → conf 1.00
-2. snap+linemerge at 0.5/&frac12;/5 pt → conf 0.85–0.7 (whichever maxes polys)
-3. user-marked <code>__POCHE_CLOSE__</code> layer (Rhino-side fix) → conf 0.95
-4. concave_hull(densified) → conf 0.55
-5. axis-aligned bbox → conf 0.30</p>
-<p>Plus emit per-fill metadata so the UI can flag low-confidence with warnings.</p>
-<p><strong>Status:</strong> Roadmapped. Not yet implemented.</p>
-<h2 id="attempt-7-2026-04-30-open-source-publish-then-yank">Attempt 7 (2026-04-30) — Open-source publish, then yank<a class="headerlink" href="#attempt-7-2026-04-30-open-source-publish-then-yank" title="Permanent link">&para;</a></h2>
-<p><strong>What:</strong> Published v1.0.0 to PyPI under MIT license via OIDC Trusted
-Publishing. Build verified; clean-venv install confirmed; CLI returned
-"arch-lw, version 1.0.0".</p>
-<p><strong>Result:</strong> Working publish. Anyone could <code>pip install arch-line-weights</code>
-for ~15 minutes.</p>
-<p><strong>Failure:</strong> I had committed to MIT before deciding the business model.
-The user wanted to monetize. MIT distribution is irrevocable for
-distributed copies. We yanked v1.0.0 (hides from <code>pip install</code>,
-preserves project name, still legally MIT for anyone who downloaded it).
-Removed the Trusted Publisher to cut the OIDC pipeline. Disabled the
-release workflow. Made the repo private.</p>
-<p><strong>Side effects:</strong>
-- GitHub Pages site went 404 (private repos need GH Pro for Pages)
-- Marketing drafts in <code>docs/announce/</code> are now stale (they pitch open-source)
-- v1.0.0 still installable via explicit <code>pip install arch-line-weights==1.0.0</code>
-  (yank semantics, not deletion)</p>
-<p><strong>Lesson kept:</strong> <strong>Pick the license BEFORE you publish to a public
-registry.</strong> Once a version is on PyPI under any license, that exact
-version's license is fixed in perpetuity. Future versions can be any
-license, but the MIT cat is partially out of the bag for v1.0.0.</p>
-<p><strong>Lesson kept:</strong> Yank is a one-way door for <code>pip install</code> discovery
-but not for legal rights. Treat "what license is on the wheel I'm
-about to upload" as the gate, not "what license is in my README right
-now."</p>
-<p><strong>Lesson kept:</strong> Going private and enabling docs auto-deploy on the
-same day is a foot-gun. Pages 404'd within 5 minutes of the visibility
-flip. Always check what depends on the visibility before changing it.</p>
-<h2 id="attempt-8-2026-04-30-pikepdf-only-ai-modification-the-saas-unlock">Attempt 8 (2026-04-30) — pikepdf-only .ai modification (the SaaS unlock)<a class="headerlink" href="#attempt-8-2026-04-30-pikepdf-only-ai-modification-the-saas-unlock" title="Permanent link">&para;</a></h2>
-<p><strong>What:</strong> Investigate whether pikepdf alone can modify a Rhino-exported
-<code>.ai</code> file's <code>/PieceInfo /Illustrator /Private</code> payload such that
-Illustrator opens the result with all 62 OCG layers intact and the
-modifications applied. This was the make-or-break question for the SaaS
-pivot.</p>
-<p><strong>Result:</strong> <strong>Worked, end-to-end.</strong> Eight spike scripts in
-<code>scripts/spike/saas-feasibility/</code> demonstrate inspect / decompress /
-round-trip / stroke-color modify / stroke-width modify, all verified in
-Illustrator.</p>
-<p><strong>Discovery:</strong> The 305 <code>/AIPrivateData</code> streams concatenate into a
-20-byte ASCII prefix <code>%AI24_ZStandard_Data</code> + Zstandard-compressed
-payload. Decompressed: ~55 MB of plain-text Adobe Illustrator native
-PostScript — the same publicly-documented AI3-AI8 syntax we'd been
-writing JSX against for months, just zstd-wrapped + chunked across PDF
-streams.</p>
-<p><strong>Verified operations:</strong>
-- Round-trip null edit → byte-perfect, OCG count 62→62
-- Stroke color: <code>(1 0 1) XA</code> → 172 paths now magenta
-- Stroke width: <code>1 w</code> → <code>5 w</code> → 172 paths now 5pt</p>
-<p><strong>Implications for the project:</strong>
-- <strong>The "no Illustrator on Linux server" blocker is gone.</strong> We can run
-  the entire pipeline server-side in pure Python.
-- The existing JSX-based <code>apply_jsx.py</code> and <code>poche.py</code> can be ported to
-  operate directly on the decompressed AI native PostScript instead of
-  via Illustrator's scripting bridge. Estimated 1-2 days.
-- The hybrid local-helper path (Attempt-3-style) is no longer needed as
-  primary architecture; reserved for "Pro Privacy" upsells.</p>
-<p><strong>Lesson kept:</strong> The format we'd been treating as proprietary all along
-<strong>was actually a documented PostScript dialect wrapped in modern
-compression</strong>. Future-us: when a format looks closed, check if it's
-just an old format wearing modern packaging before assuming it's
-proprietary.</p>
-<p><strong>Lesson kept:</strong> A 60-minute time-boxed feasibility spike resolved a
-question that v0.1 (Attempt 1, "strip PieceInfo") tried to dodge by
-flattening layers. Spikes &gt; workarounds.</p>
-<p><strong>Kept in repo:</strong> Eight scripts in <code>scripts/spike/saas-feasibility/</code>
-demonstrating the operations. These become the foundation of the v0.7
-prototype that ports the apply / poché pipelines to pure Python.</p>
-<h2 id="cross-cutting-lessons-the-durable-ones">Cross-cutting lessons (the durable ones)<a class="headerlink" href="#cross-cutting-lessons-the-durable-ones" title="Permanent link">&para;</a></h2>
+<h2 id="recommended-saas-architecture">Recommended SaaS architecture<a class="headerlink" href="#recommended-saas-architecture" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>[user uploads .ai (Rhino export, has 62 OCGs + PieceInfo)]
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>        |
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>        v
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>[server: pikepdf.open(); decompress AIPrivateData via zstd]
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        |
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        v
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>[arch-lw applies regex / per-layer stroke-width substitution
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a> inside the AI native PostScript payload]
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        |
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>        v
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>[poche pipeline: parse cut-layer paths from payload, run shapely
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a> polygonize, inject new closed pathItems inside the cut layer&#39;s
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a> BeginLayer..LB block as black-filled paths]
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>        |
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>        v
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>[recompress with zstd level 19, slice to 64 KB chunks, replace
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a> AIPrivateData streams, save]
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>        |
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>        v
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>[user downloads .ai; opens locally in Illustrator; sees correct
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a> weights, correct poché fills, all 62 layers in the panel]
+</code></pre></div>
+<p>Estimated server-side cost per file:
+- Memory: ~110 MB peak (20 MB compressed + 55 MB decompressed +
+  a duplicate copy during edit; well under any reasonable AWS Lambda /
+  container limit)
+- CPU: ~5–10 s per 24 MB file (decompression + regex + recompression,
+  dominated by zstd level-19 compression). Acceptable for a per-request
+  workflow with progress UI.</p>
+<p>This is dramatically better than the current architecture, which requires
+an Illustrator app running on the user's local Mac and a 12-minute JSX
+walk per file.</p>
+<h2 id="recommended-next-step">Recommended next step<a class="headerlink" href="#recommended-next-step" title="Permanent link">&para;</a></h2>
+<p>Before committing to the SaaS pivot:</p>
 <ol>
-<li><strong>Layer fidelity is non-negotiable.</strong> Any change that destroys it must
-   be explicit opt-in, not the default.</li>
-<li><strong>Sub-agents in parallel</strong> are how to move fast on unknowns. Eight
-   sub-agent reports across this 30-hour session each gave us in 2 minutes
-   what would have taken hours of solo research.</li>
-<li><strong>Two-stage pipelines</strong> (Illustrator dump → Python compute → Illustrator
-   apply) are easier to debug than monolithic pikepdf or monolithic JSX.</li>
-<li><strong>Topology-aware geometry libraries</strong> (shapely) &gt; naive endpoint chaining
-   (Illustrator Join) every time.</li>
-<li><strong>Best-effort sweep over strategies + confidence scoring</strong> &gt; picking one
-   tolerance and hoping. Different layers need different tolerances within
-   the same file.</li>
-<li><strong>Document failed approaches in the repo</strong>, not just successful ones.
-   This file is the contract.</li>
-<li><strong>The user's verification ritual matters.</strong> "Does it look right in
-   Illustrator's Preview view at the layers panel?" is the ground truth, not
-   "does the JSON say success."</li>
-<li><strong>Save the source separately from the modification.</strong> Use <code>saveAs</code> to a
-   new file every time. Never modify the user's source in place.</li>
-<li><strong><code>maximumUndoDepth=1</code> + Outline view</strong> turns ExtendScript from
-   exponential-time to linear-time on bulk edits.</li>
-<li><strong>Standards-compliant defaults trump aesthetics.</strong> The current 0.1–1.0pt
-    range was chosen for screen review; for plotted print at &frac14;"=1' the
-    section cut should be 0.7mm = 1.98pt per ISO 128. v0.4 will add scale-
-    aware presets (see <code>docs/research/standards.md</code>).</li>
+<li><strong>Build the v0.5 prototype</strong> — port the existing <code>apply.py</code> line-weight
+   logic to operate on the decompressed AI native payload instead of (or
+   in parallel with) the PDF content stream. Stop stripping PieceInfo;
+   modify it instead. Targets:</li>
+<li>Match every <code>&lt;r&gt; &lt;g&gt; &lt;b&gt; XA</code> color set with the current per-layer
+     RGB-to-weight map and inject a stroke width via <code>&lt;w&gt; w</code>.</li>
+<li>
+<p>Keep the existing PDF-stream rewrite as a fallback for files where
+     PieceInfo isn't present (e.g. PDFs from non-Illustrator pipelines).</p>
+</li>
+<li>
+<p><strong>Port the poché pipeline</strong> to write polygon <code>pathItem</code> blocks
+   directly into the AI native payload (instead of via JSX). The
+   per-cut-layer block already has the syntax pattern — we just need a
+   small builder. Estimate: 1 day of work.</p>
+</li>
+<li>
+<p><strong>Validate against ≥3 user files</strong> of varying complexity to confirm
+   nothing in the AI24 format breaks our approach (e.g. CMYK strokes,
+   pattern fills, embedded raster images, gradient meshes — none of which
+   appear in this Rhino-export reference but may appear in user uploads).</p>
+</li>
+<li>
+<p><strong>Then</strong> start on web-app shell (FastAPI + S3 upload + per-tenant
+   billing). The headless-output question that gated the pivot is now
+   answered: yes, it's feasible.</p>
+</li>
 </ol>
+<h2 id="files-produced-by-this-spike">Files produced by this spike<a class="headerlink" href="#files-produced-by-this-spike" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>scripts/spike/saas-feasibility/01_inspect_pieceinfo.py</code> — dumps Private dict shape</li>
+<li><code>scripts/spike/saas-feasibility/02_examine_blobs.py</code> — confirms ZStandard chunking</li>
+<li><code>scripts/spike/saas-feasibility/03_decompress_blobs.py</code> — decompresses to plain text</li>
+<li><code>scripts/spike/saas-feasibility/04_roundtrip_modify.py</code> — full read/decode/edit/recode/write pipeline</li>
+<li><code>scripts/spike/saas-feasibility/05_verify_roundtrip.py</code> — byte-perfect verification</li>
+<li><code>scripts/spike/saas-feasibility/06_modify_ocg_and_payload.py</code> — dual layer-name modification (revealed the layer-name caveat)</li>
+<li><code>scripts/spike/saas-feasibility/07_modify_stroke_color.py</code> — stroke color round-trip (proven)</li>
+<li><code>scripts/spike/saas-feasibility/08_modify_stroke_width.py</code> — stroke width round-trip (proven, project's core use case)</li>
+</ul>
+<p>Generated artifacts (in <code>/tmp</code>):
+- <code>/tmp/spike_roundtrip_null.ai</code> — null round-trip output
+- <code>/tmp/spike_roundtrip_modify.ai</code> — layer-name-rename test
+- <code>/tmp/spike_roundtrip_color.ai</code> — stroke color modification (172 strokes turned magenta)
+- <code>/tmp/spike_roundtrip_width.ai</code> — stroke width modification (172 strokes set to 5pt)
+- <code>/tmp/ai_private_decompressed.bin</code> — the full 55 MB decompressed AI native payload</p>
 
 
 
@@ -1448,10 +1511,10 @@ prototype that ports the apply / poché pipelines to pure Python.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.action.edit", "content.tabs.link"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.action.edit", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

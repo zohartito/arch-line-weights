@@ -1112,10 +1112,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-b-saas-feasibility-this-week-2-weeks" class="md-nav__link">
+  <a href="#phase-b-saas-feasibility-resolved-2026-04-30" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase B — SaaS feasibility (this week → 2 weeks)
+        Phase B — SaaS feasibility ✅ RESOLVED 2026-04-30
       
     </span>
   </a>
@@ -1485,34 +1485,88 @@ generate portfolio assets, build organic demand signals.</strong></p>
 </ul>
 <p><strong>Decision gate:</strong> is the tool good enough that <em>Zohar</em> prefers it to
 manual work? If no, fix the tool. If yes → advance to Phase B.</p>
-<h3 id="phase-b-saas-feasibility-this-week-2-weeks">Phase B — SaaS feasibility (this week → 2 weeks)<a class="headerlink" href="#phase-b-saas-feasibility-this-week-2-weeks" title="Permanent link">&para;</a></h3>
+<h3 id="phase-b-saas-feasibility-resolved-2026-04-30">Phase B — SaaS feasibility ✅ RESOLVED 2026-04-30<a class="headerlink" href="#phase-b-saas-feasibility-resolved-2026-04-30" title="Permanent link">&para;</a></h3>
 <p><strong>Goal: answer the make-or-break question. Can we produce
 shippable-quality output without Illustrator on the user's machine?</strong></p>
+<p><strong>ANSWER: YES.</strong> Wave 1 sub-agent spike proved pure-pikepdf modification
+of <code>/PieceInfo /Illustrator /Private</code> works end-to-end on the reference
+drawing.</p>
+<p>Key findings (full report: <a href="../research/saas-architecture/"><code>docs/research/saas-architecture.md</code></a>):</p>
 <ul>
-<li>[ ] B1. <strong>Spike: pikepdf-only <code>.ai</code> output with layer fidelity</strong> —
-  can we write <code>/PieceInfo /Illustrator /Private</code> directly so a
-  resulting <code>.ai</code> opens in Illustrator with all 62 OCG layers intact?
-  Documented as Attempt 4 in POSTMORTEM, but never fully resolved.
-  Resolves the "no headless Illustrator on Linux" blocker.</li>
-<li>[ ] B2. <strong>Spike: PDF-only output</strong> — what if the SaaS output is a
-  finished PDF (poché baked, weights baked, layers preserved as OCGs)
-  with <strong>no .ai round-trip</strong>? Acceptable to a paying segment? Run past
-  3 Phase C interviewees as part of demo.</li>
-<li>[ ] B3. <strong>Spike: hybrid local-helper</strong> — web app does compute,
-  user runs a tiny bundled local helper that drives their Illustrator
-  via JSX/AppleScript. UX is clunky; security model is friendly
-  (drawings never leave the user's machine).</li>
-<li>[ ] B4. Pick one of B1 / B2 / B3 as the SaaS architecture. Write
-  decision in <code>docs/research/saas-architecture.md</code> (new).</li>
-<li>[ ] B5. <strong>License swap</strong> (deferred from v2 Phase B until product is
-  ready to publish). When B4 is decided, replace LICENSE with PolyForm
-  Free Trial 1.0.0 + add commercial EULA. See <code>docs/research/licensing.md</code>
-  for the 5-step checklist.</li>
+<li>The 305 <code>/AIPrivateData</code> streams concatenate into a 20-byte ASCII
+  prefix <code>%AI24_ZStandard_Data</code> + Zstandard-compressed payload.</li>
+<li>Decompressed payload is ~55 MB of <strong>plain-text Adobe Illustrator native
+  PostScript</strong> — same publicly-documented AI3-AI8 syntax, just zstd-wrapped.</li>
+<li>Round-trip null edit: byte-perfect, OCG count 62→62, opens cleanly.</li>
+<li>Stroke color modification: <code>(1 0 1) XA</code> → magenta — Illustrator confirmed.</li>
+<li><strong>Stroke width modification (the project's actual use case)</strong>: <code>1 w → 5 w</code>
+  in the cut layer — Illustrator confirmed all 172 paths now <code>width=5</code>.</li>
+<li>8 working spike scripts in <code>scripts/spike/saas-feasibility/</code>.</li>
 </ul>
-<p><strong>Decision gate:</strong> Is there a buildable architecture that produces
-"amazing"-grade output without Illustrator on the user's server? If no,
-SaaS is impossible — <strong>fall back to v2 plan</strong> (CLI binary at one-time
-pricing + eventual companion web app for "lite" use). If yes → advance.</p>
+<p><strong>What's open vs closed:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Modify existing stroke widths in user-uploaded .ai</td>
+<td>✅ Works</td>
+</tr>
+<tr>
+<td>Modify existing stroke colors</td>
+<td>✅ Works</td>
+</tr>
+<tr>
+<td>Inject new filled paths (poché) into existing layer blocks</td>
+<td>✅ Path is clear (1-2 days port from <code>apply_jsx.py</code>)</td>
+</tr>
+<tr>
+<td>Preserve all 62 OCG layers intact</td>
+<td>✅ Works</td>
+</tr>
+<tr>
+<td>Synthesize a PieceInfo from scratch (greenfield SVG/DXF input)</td>
+<td>❌ Not proven, <strong>not needed</strong> — input is always Rhino-exported .ai</td>
+</tr>
+<tr>
+<td>Rename layers in panel</td>
+<td>⚠️ Unknown 4<sup>th</sup> layer-name copy somewhere — <strong>not blocking</strong>, we never rename layers</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Architectural implications:</strong></p>
+<ul>
+<li><strong>B1 (pure pikepdf .ai output) is the SaaS compute path.</strong> No Illustrator
+  on server required. Pure Python pipeline, scales horizontally.</li>
+<li><strong>B2 (PDF-only output) becomes a tier feature, not an architecture
+  choice.</strong> Cheap student tier can ship PDF; paid tiers ship editable .ai.</li>
+<li><strong>B3 (hybrid local-helper) is unnecessary as primary path.</strong> Reserved
+  for paranoid-privacy users who want drawings to never leave their
+  machine — likely a "Pro Privacy" tier upcharge later, not v1.</li>
+</ul>
+<p><strong>Phase B remaining work:</strong></p>
+<ul>
+<li>[ ] B6. <strong>Port <code>apply.py</code> line-weight logic to operate on decompressed
+  AI native PostScript</strong> — regex-replace per-color stroke widths inside
+  the AI24 zstd payload. Estimated 4-8 hours.</li>
+<li>[ ] B7. <strong>Port poché pipeline (<code>poche.py</code>)</strong> to inject filled <code>pathItem</code>
+  blocks directly into cut-layer <code>BeginLayer..LB</code> envelopes via
+  pikepdf+zstd. Estimated 1-2 days.</li>
+<li>[ ] B8. <strong>End-to-end SaaS prototype</strong>: input .ai → pure-Python pipeline →
+  modified .ai output, no JSX, no Illustrator. Verify in Illustrator on
+  user's machine.</li>
+<li>[ ] B9. <strong>License swap</strong> (deferred until product is ready to publish).
+  When prototype works, replace LICENSE with PolyForm Free Trial 1.0.0</li>
+<li>add commercial EULA. See <code>docs/research/licensing.md</code> for the 5-step
+  checklist.</li>
+</ul>
+<p><strong>Phase B exit criterion</strong>: B6+B7 prototype produces a modified .ai
+that's visually indistinguishable from the current JSX-driven output,
+on the reference drawing. Once that's true, advance to Phase D.</p>
 <h3 id="phase-c-demand-validation-parallel-with-b-2-weeks">Phase C — Demand validation (parallel with B; 2 weeks)<a class="headerlink" href="#phase-c-demand-validation-parallel-with-b-2-weeks" title="Permanent link">&para;</a></h3>
 <p><strong>Goal: know if the market exists at the SaaS price points before
 investing in web infrastructure.</strong></p>
