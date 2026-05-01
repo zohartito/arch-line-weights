@@ -1,0 +1,22 @@
+/* Global stylesheet — kept minimal. All visual styling is Tailwind utility
+   classes inside components; this file only carries the directives that
+   PostCSS expands into the actual utility table, plus a couple of
+   fine-grained resets that make file-input drop zones behave consistently
+   across browsers. */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* SvelteKit hot-reloads styles by reordering them; making the body fill
+   the viewport up-front avoids a flicker between SSR and hydration. */
+html,
+body {
+  min-height: 100%;
+}
+
+/* Browsers add a focus outline that fights the warm-gray ink palette;
+   the rounded ring is the Tailwind-canonical replacement. */
+*:focus-visible {
+  @apply outline-none ring-2 ring-ink-500 ring-offset-2 ring-offset-ink-100;
+}

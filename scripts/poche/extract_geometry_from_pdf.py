@@ -9,9 +9,10 @@ Extract polygons for poché:
 """
 import json
 import sys
+
 import pikepdf
 from pikepdf import parse_content_stream
-from shapely.geometry import LineString, MultiLineString, GeometryCollection
+from shapely.geometry import LineString, MultiLineString
 from shapely.ops import linemerge, polygonize
 
 SRC = "/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/DRAWING 4 SECTION [Converted] BACKUP.ai"
@@ -150,7 +151,7 @@ for operands, op in ops:
             segments[target_mc].append((current_pos[0], current_pos[1], subpath_start[0], subpath_start[1]))
         current_pos = subpath_start
 
-print(f"\nsegments per target OCG:", file=sys.stderr)
+print("\nsegments per target OCG:", file=sys.stderr)
 for mc, segs in segments.items():
     print(f"  {mc}  {target_layer_by_mc[mc].split('::')[-1]:50}  {len(segs):>6} segs", file=sys.stderr)
 

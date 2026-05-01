@@ -296,6 +296,9 @@ def inject_poche_polygons(
 def compute_polygons_for_layers(
     paths_by_layer: dict[str, list[list[list[float]]]],
     overrides: dict[str, dict] | None = None,
+    *,
+    use_alpha_shape: bool = True,
+    bridge_strategy: str | None = None,
 ) -> tuple[dict[str, list[Polygon]], PocheReport]:
     """Run :func:`poche.polygonize_layer` over every layer in ``paths_by_layer``.
 
@@ -330,7 +333,14 @@ def compute_polygons_for_layers(
                     ov = val
                     break
 
-        polys, fr = polygonize_layer(layer_name, paths, closing_lines, ov)
+        polys, fr = polygonize_layer(
+            layer_name,
+            paths,
+            closing_lines,
+            ov,
+            use_alpha_shape=use_alpha_shape,
+            bridge_strategy=bridge_strategy,
+        )
         report.fills.append(fr)
         if polys:
             polygons_by_layer[layer_name] = polys
@@ -452,6 +462,8 @@ def apply_saas_with_poche(
     default_width: float = 0.25,
     overrides: dict[str, dict] | None = None,
     zstd_level: int = 19,
+    use_alpha_shape: bool = True,
+    bridge_strategy: str | None = None,
 ) -> tuple[object, PocheSaasResult, PocheReport]:
     """Apply both stroke-width rewrite (B6) AND poché injection in one pass.
 
@@ -492,7 +504,10 @@ def apply_saas_with_poche(
         cut_paths = enumerate_layer_paths_from_payload(payload, layer_filter=_CUT_LAYER_FILTER)
         cut_paths = {k: v for k, v in cut_paths.items() if _is_cut_layer(k)}
         polygons_by_layer, poche_report = compute_polygons_for_layers(
-            cut_paths, overrides
+            cut_paths,
+            overrides,
+            use_alpha_shape=use_alpha_shape,
+            bridge_strategy=bridge_strategy,
         )
 
         # Step 1: rewrite stroke widths (existing B6 functionality).

@@ -46,6 +46,7 @@ Public API
 from __future__ import annotations
 
 import itertools
+import logging
 import math
 from dataclasses import dataclass
 
@@ -53,6 +54,8 @@ import numpy as np
 from shapely import STRtree
 from shapely.geometry import LineString, Point
 from shapely.ops import linemerge, polygonize
+
+_log = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Internal data
@@ -711,8 +714,12 @@ def infer_bridges_best(
         # on the common case (most layers polygonize cleanly with greedy).
         if n_g >= expected and conf_g >= 1.0 - 1e-9:
             return aug_g, conf_g, "greedy"
-    except Exception:
-        pass
+    except Exception as e:
+        _log.warning(
+            "infer_bridges_best: strategy=greedy raised %s: %s; falling back to next strategy",
+            type(e).__name__,
+            e,
+        )
 
     # 2. Backtracking.
     try:
@@ -721,8 +728,12 @@ def infer_bridges_best(
         )
         n_b = _polygon_count(aug_b)
         results.append((_strategy_score(n_b, conf_b, expected), aug_b, conf_b, "backtrack"))
-    except Exception:
-        pass
+    except Exception as e:
+        _log.warning(
+            "infer_bridges_best: strategy=backtrack raised %s: %s; falling back to next strategy",
+            type(e).__name__,
+            e,
+        )
 
     # 3. DBSCAN-collapsed → bare linemerge.
     try:
@@ -737,7 +748,12 @@ def infer_bridges_best(
         else:
             conf_d = 0.0
         results.append((_strategy_score(n_d, conf_d, expected), collapsed, conf_d, "dbscan_collapse"))
-    except Exception:
+    except Exception as e:
+        _log.warning(
+            "infer_bridges_best: strategy=dbscan_collapse raised %s: %s; falling back to next strategy",
+            type(e).__name__,
+            e,
+        )
         collapsed = list(segments)
 
     # 4. DBSCAN-collapsed → backtracking bridger.
@@ -753,8 +769,12 @@ def infer_bridges_best(
                 conf_db,
                 "dbscan_collapse+backtrack",
             ))
-    except Exception:
-        pass
+    except Exception as e:
+        _log.warning(
+            "infer_bridges_best: strategy=dbscan_collapse+backtrack raised %s: %s; falling back to next strategy",
+            type(e).__name__,
+            e,
+        )
 
     if not results:
         return list(segments), 0.0, "none"

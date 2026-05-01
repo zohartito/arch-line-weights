@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "arch-line-weights-webapp"
+version = "0.0.1"
+description = "FastAPI + SvelteKit web app for arch-line-weights (Phase D scaffold)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "zohartito" }]
+
+# Webapp-only deps. The core compute lives in the parent `arch-line-weights`
+# package (installed editable). We deliberately keep this list short — anything
+# truly belonging to the pipeline should land in the main package, not here.
+dependencies = [
+    "arch-line-weights",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "python-multipart>=0.0.9",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "httpx>=0.27",
+    "ruff>=0.7",
+]
+test = [
+    "pytest>=8",
+    "httpx>=0.27",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.uv.sources]
+# When working in this repo without internet, point at the parent package on disk.
+arch-line-weights = { path = "..", editable = true }

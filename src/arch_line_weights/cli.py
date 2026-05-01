@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import click
@@ -24,6 +25,13 @@ from .presets import PRESETS, select_preset
 
 # CLI-facing source choices. Keep AUTO first so it's the default.
 _SOURCE_CHOICES = [Source.AUTO.value, Source.RHINO.value, Source.AUTOCAD.value]
+
+# Bridge-strategy CLI vocabulary, mirrored from poche.BridgeStrategy.
+# "greedy" preserves v0.4 behaviour (the legacy nearest-neighbour bridger);
+# "best" routes through bridge.infer_bridges_best, which picks the highest-
+# yield among 4 strategies — meant for the 3 stubborn cut layers identified
+# in the v0.5 review.
+_BRIDGE_STRATEGY_CHOICES = ["greedy", "best"]
 
 
 def _resolve_source(
@@ -251,7 +259,18 @@ def apply(
     show_default=True,
     help="Layer-name convention used by the embedded JSX classifier.",
 )
-def apply_jsx_cmd(src: Path, output: Path | None, source: str):
+@click.option(
+    "--bridge-strategy",
+    type=click.Choice(_BRIDGE_STRATEGY_CHOICES),
+    default="greedy",
+    show_default=True,
+    help="Bridge selector for the auto_bridge rung. 'greedy' = v0.4 nearest-"
+    "neighbour bridger (default). 'best' = run all 4 strategies (greedy, "
+    "backtrack, DBSCAN, DBSCAN+backtrack) and pick the highest-yield. "
+    "Only the apply-jsx command's poché step (if invoked downstream) "
+    "consumes this; otherwise it's surfaced for symmetry with `apply-saas`.",
+)
+def apply_jsx_cmd(src: Path, output: Path | None, source: str, bridge_strategy: str):
     """Layer-preserving apply via Illustrator JSX (slower, but keeps every layer).
 
     \b
@@ -267,6 +286,12 @@ def apply_jsx_cmd(src: Path, output: Path | None, source: str):
     out = str(output) if output else None
     if source != Source.AUTO.value:
         click.echo(f"# layer-source: {source} (forced)", err=True)
+    if bridge_strategy != "greedy":
+        click.echo(f"# bridge-strategy: {bridge_strategy} (forced via --bridge-strategy)", err=True)
+        # Surface to downstream consumers via env var; the JSX path itself
+        # doesn't currently call the polygonize_layer ladder, but if a future
+        # poché-via-JSX step does, it'll inherit the selection.
+        os.environ["ARCH_LW_BRIDGE_STRATEGY"] = bridge_strategy
     click.echo(f"opening {src} in Illustrator and running layer-aware JSX...", err=True)
     result = apply_via_jsx(str(src), out)
     click.echo(result["report"])
@@ -329,6 +354,26 @@ def apply_jsx_cmd(src: Path, output: Path | None, source: str):
     help='JSON of per-layer poché strategy overrides; same schema as `arch-lw poche --overrides`.',
 )
 @click.option(
+    "--alpha-shape/--no-alpha-shape",
+    default=True,
+    show_default=True,
+    help="Enable the α-shape rescue rung between auto_bridge and concave_hull. "
+    "v0.5.2 default ON: improves fidelity for layers with multi-component "
+    "topology (e.g. 26_CLT_GAP_ROOF_CAP). Pass --no-alpha-shape to revert "
+    "to the v0.5.1 ladder.",
+)
+@click.option(
+    "--bridge-strategy",
+    type=click.Choice(_BRIDGE_STRATEGY_CHOICES),
+    default="greedy",
+    show_default=True,
+    help="Bridge selector for the auto_bridge rung when --poche is set. "
+    "'greedy' = v0.4 nearest-neighbour bridger (default). 'best' = run all "
+    "4 strategies (greedy, backtrack, DBSCAN, DBSCAN+backtrack) and pick "
+    "the highest-yield — meant for the 3 stubborn cut layers identified "
+    "in the v0.5 review. Also reads the ARCH_LW_BRIDGE_STRATEGY env var.",
+)
+@click.option(
     "--dry-run",
     is_flag=True,
     help="Compute and explain the mapping; don't write any file.",
@@ -352,6 +397,8 @@ def apply_saas_cmd(
     default_width: float,
     poche: bool,
     poche_overrides_path: Path | None,
+    alpha_shape: bool,
+    bridge_strategy: str,
     dry_run: bool,
     source: str,
 ):
@@ -426,11 +473,23 @@ def apply_saas_cmd(
             mapping,
             default_width=default_width,
             overrides=overrides,
+            use_alpha_shape=alpha_shape,
+            bridge_strategy=bridge_strategy,
         )
     else:
         if poche_overrides_path:
             click.echo(
                 "warning: --poche-overrides has no effect without --poche",
+                err=True,
+            )
+        if not alpha_shape:
+            click.echo(
+                "warning: --no-alpha-shape has no effect without --poche",
+                err=True,
+            )
+        if bridge_strategy != "greedy":
+            click.echo(
+                "warning: --bridge-strategy has no effect without --poche",
                 err=True,
             )
         result = apply_to_file_saas(
@@ -520,6 +579,26 @@ def apply_saas_cmd(
     help="Plot scale (1/N as decimal). 0.02 = 1:50, 0.01 = 1:100. Used only when --style material.",
 )
 @click.option(
+    "--alpha-shape/--no-alpha-shape",
+    default=True,
+    show_default=True,
+    help="Enable the α-shape rescue rung between auto_bridge and concave_hull. "
+    "v0.5.2 default ON: improves fidelity for layers with multi-component "
+    "topology (e.g. 26_CLT_GAP_ROOF_CAP). Pass --no-alpha-shape to revert "
+    "to the v0.5.1 ladder.",
+)
+@click.option(
+    "--bridge-strategy",
+    type=click.Choice(_BRIDGE_STRATEGY_CHOICES),
+    default="greedy",
+    show_default=True,
+    help="Bridge selector for the auto_bridge rung. 'greedy' = v0.4 nearest-"
+    "neighbour bridger (default; preserves v0.5.1 behaviour). 'best' = run "
+    "all 4 strategies (greedy, backtrack, DBSCAN, DBSCAN+backtrack) and "
+    "pick the highest-yield — meant for the 3 stubborn cut layers "
+    "identified in the v0.5 review. Also reads ARCH_LW_BRIDGE_STRATEGY env var.",
+)
+@click.option(
     "--source",
     type=click.Choice(_SOURCE_CHOICES),
     default=Source.AUTO.value,
@@ -533,6 +612,8 @@ def poche_cmd(
     overrides_path: Path | None,
     style: str,
     hatch_scale: float,
+    alpha_shape: bool,
+    bridge_strategy: str,
     source: str,
 ):
     """Generate solid-black poché on cut layers via shapely linemerge + polygonize.
@@ -563,8 +644,18 @@ def poche_cmd(
     over = str(overrides_path) if overrides_path else None
     if source != Source.AUTO.value:
         click.echo(f"# layer-source: {source} (forced)", err=True)
+    if bridge_strategy != "greedy":
+        click.echo(f"# bridge-strategy: {bridge_strategy} (forced via --bridge-strategy)", err=True)
     click.echo(f"applying poche to {src} (style={style}, scale=1:{int(1 / hatch_scale)})...", err=True)
-    report = apply_poche(str(src), out, overrides_path=over, style=style, scale=hatch_scale)
+    report = apply_poche(
+        str(src),
+        out,
+        overrides_path=over,
+        style=style,
+        scale=hatch_scale,
+        use_alpha_shape=alpha_shape,
+        bridge_strategy=bridge_strategy,
+    )
     click.echo("", err=True)
     click.echo(f"polygons created: {report.total_polygons}", err=True)
     click.echo(f"  clean (linemerge):     {report.working_layers} layers", err=True)
@@ -575,8 +666,14 @@ def poche_cmd(
     for fr in sorted(report.fills, key=lambda f: -f.confidence):
         short = fr.layer.split("::")[-1]
         marker = "✓" if fr.confidence >= 0.85 else ("~" if fr.confidence > 0 else "✗")
+        # Surface bridge_strategy_name when set (only the auto_bridge rung
+        # populates it, and only when bridge_strategy="best" was selected).
+        bridge_suffix = (
+            f"  bridge={fr.bridge_strategy_name}" if fr.bridge_strategy_name else ""
+        )
         click.echo(
-            f"  {marker} {short:50}  {fr.strategy:18}  polys={fr.polygon_count:>3}  conf={fr.confidence:.2f}",
+            f"  {marker} {short:50}  {fr.strategy:18}  polys={fr.polygon_count:>3}  "
+            f"conf={fr.confidence:.2f}{bridge_suffix}",
             err=True,
         )
 

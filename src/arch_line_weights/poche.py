@@ -41,11 +41,40 @@ from shapely.geometry import LineString, MultiLineString, MultiPoint, Polygon, b
 from shapely.geometry import Polygon as _ShPolygon
 from shapely.ops import linemerge, polygonize, snap, unary_union
 
-from .bridge import infer_bridges
+from .bridge import infer_bridges, infer_bridges_best
 from .hatch import hatch_polygon, material_for_layer
 
 POCHE_CLOSE_LAYER = "__POCHE_CLOSE__"
 TOLERANCE_SWEEP = (0.0, 0.1, 0.5, 1.0, 2.0, 5.0)  # 0 = bare linemerge, no snap
+
+# Bridge strategy selector — opt-in via the ``bridge_strategy`` argument or
+# the ``ARCH_LW_BRIDGE_STRATEGY`` environment variable. Default is
+# ``"greedy"`` (the v0.4 nearest-neighbour bridger) for backwards
+# compatibility with v0.5.x. ``"best"`` routes through
+# :func:`bridge.infer_bridges_best` which picks the best of 4 strategies
+# (greedy, backtracking, DBSCAN endpoint collapse, DBSCAN+backtrack); see
+# ``docs/research/bridge-strategy-wire-notes.md`` for the wiring rationale
+# and ``docs/research/stubborn-layers-deep-dive.md`` for the strategy ladder.
+BridgeStrategy = Literal["greedy", "best"]
+_VALID_BRIDGE_STRATEGIES: tuple[str, ...] = ("greedy", "best")
+_DEFAULT_BRIDGE_STRATEGY: BridgeStrategy = "greedy"
+_BRIDGE_STRATEGY_ENV = "ARCH_LW_BRIDGE_STRATEGY"
+
+
+def _resolve_bridge_strategy(explicit: str | None) -> BridgeStrategy:
+    """Resolve the bridge strategy from an explicit argument or env var.
+
+    Order of precedence: explicit argument > ``ARCH_LW_BRIDGE_STRATEGY`` env
+    var > default (``"greedy"``). Unknown values silently fall back to the
+    default — this is a runtime tuning knob and a typo shouldn't break the
+    pipeline.
+    """
+    candidate = explicit or os.environ.get(_BRIDGE_STRATEGY_ENV)
+    if candidate is None:
+        return _DEFAULT_BRIDGE_STRATEGY
+    if candidate not in _VALID_BRIDGE_STRATEGIES:
+        return _DEFAULT_BRIDGE_STRATEGY
+    return candidate  # type: ignore[return-value]
 
 
 # ---------------------------------------------------------------------------- #
@@ -55,6 +84,8 @@ TOLERANCE_SWEEP = (0.0, 0.1, 0.5, 1.0, 2.0, 5.0)  # 0 = bare linemerge, no snap
 Strategy = Literal[
     "linemerge_bare",
     "linemerge_snap",
+    "auto_bridge",
+    "alpha_shape",
     "concave_hull",
     "bbox",
     "user_override",
@@ -71,6 +102,12 @@ class FillResult:
     polygon_count: int
     segment_count: int
     tolerance: float | None = None
+    # Set by the auto_bridge rung when ``bridge_strategy="best"`` is in
+    # effect — names the inner strategy that ``infer_bridges_best`` picked
+    # ("greedy", "backtrack", "dbscan_collapse", "dbscan_collapse+backtrack",
+    # or "none"). ``None`` for the default greedy path so reports for
+    # pre-existing runs are unchanged.
+    bridge_strategy_name: str | None = None
 
 
 @dataclass
@@ -160,13 +197,61 @@ def _bbox(lines: list[LineString]) -> Polygon | None:
     return box(minx, miny, maxx, maxy)
 
 
+def _try_alpha_shape(lines: list[LineString]) -> list[Polygon]:
+    """Run the alpha-shape rescue over the densified endpoint cloud.
+
+    Returns ``[]`` on any failure. Densification matches what the concave
+    hull rung does — sparse Make2D output points produce a degenerate
+    α-shape just like they produce a degenerate concave hull, so we
+    segmentize first to feed enough vertices to scipy's Delaunay.
+    """
+    from .alpha_shape import alpha_shape_all_regions
+
+    densified = []
+    for ls in lines:
+        try:
+            densified.append(segmentize(ls, max_segment_length=2.0))
+        except Exception:
+            densified.append(ls)
+    pts: list[tuple[float, float]] = []
+    for ls in densified:
+        pts.extend((float(x), float(y)) for x, y in ls.coords)
+    if len(pts) < 3:
+        return []
+    polys, _alpha, _n = alpha_shape_all_regions(pts)
+    return [p for p in polys if p.is_valid and p.area > 1.0]
+
+
 def polygonize_layer(
     layer_name: str,
     paths: list[list[list[float]]],
     closing_lines: list[LineString] | None = None,
     override: dict | None = None,
+    *,
+    use_alpha_shape: bool = True,
+    bridge_strategy: str | None = None,
 ) -> tuple[list[Polygon], FillResult]:
-    """Best-effort polygonization of one layer's segments."""
+    """Best-effort polygonization of one layer's segments.
+
+    Parameters
+    ----------
+    layer_name, paths, closing_lines, override
+        See module docstring.
+    use_alpha_shape : bool, default True
+        When True, the alpha-shape rung runs between auto_bridge and
+        concave_hull (v0.5.2 behavior). When False, that rung is skipped
+        and the rescue ladder matches v0.5.1 exactly.
+    bridge_strategy : str | None, default None
+        Selector for the auto-bridge rung. ``"greedy"`` (the default if
+        unset) calls :func:`bridge.infer_bridges` (the v0.4 nearest-neighbour
+        bridger). ``"best"`` calls :func:`bridge.infer_bridges_best` which
+        picks the highest-yield among 4 strategies (greedy, backtrack,
+        DBSCAN endpoint collapse, DBSCAN+backtrack). When ``None``, the env
+        var ``ARCH_LW_BRIDGE_STRATEGY`` is consulted; if that is also unset,
+        the default ``"greedy"`` applies. Unknown values silently fall back
+        to ``"greedy"``.
+    """
+    strategy = _resolve_bridge_strategy(bridge_strategy)
     lines = _lines_from_anchors(paths)
     if closing_lines:
         lines = lines + closing_lines
@@ -204,10 +289,19 @@ def polygonize_layer(
         conf = 0.95 if tol <= 0.5 else (0.85 if tol <= 1.0 else 0.7)
         return polys, FillResult(layer_name, "linemerge_snap", conf, len(polys), n_segments, tol)
 
-    # Auto-bridge: infer missing connecting segments via greedy nearest-neighbor
-    # endpoint pairing, then re-run linemerge+polygonize.
+    # Auto-bridge: infer missing connecting segments and re-run
+    # linemerge+polygonize. Default strategy is the v0.4 greedy nearest-
+    # neighbour bridger; when ``bridge_strategy="best"``, dispatch to the
+    # 4-way strategy selector instead.
     try:
-        augmented, bridge_conf = infer_bridges(lines, max_gap=50.0, min_gap=0.01)
+        if strategy == "best":
+            aug_best, bridge_conf, strategy_name = infer_bridges_best(
+                lines, max_gap=50.0, min_gap=0.01
+            )
+            augmented = aug_best
+        else:
+            augmented, bridge_conf = infer_bridges(lines, max_gap=50.0, min_gap=0.01)
+            strategy_name = None
         if len(augmented) > len(lines):
             polys_with_bridges = _polys_at_tolerance(augmented, 0.0)
             if polys_with_bridges:
@@ -217,9 +311,23 @@ def polygonize_layer(
                     0.75 * bridge_conf + 0.25,
                     len(polys_with_bridges),
                     n_segments,
+                    bridge_strategy_name=strategy_name,
                 )
     except Exception:
         pass
+
+    # Alpha-shape: better-than-concave_hull fallback that preserves multi-
+    # component topology (e.g. two roof caps with an intentional gap).
+    # Opt-out via use_alpha_shape=False to match v0.5.1 behavior.
+    if use_alpha_shape:
+        try:
+            alpha_polys = _try_alpha_shape(lines)
+            if alpha_polys:
+                return alpha_polys, FillResult(
+                    layer_name, "alpha_shape", 0.55, len(alpha_polys), n_segments
+                )
+        except Exception:
+            pass
 
     # Concave hull fallback
     ch = _try_concave_hull(lines, ratio=0.3)
@@ -237,6 +345,9 @@ def polygonize_layer(
 def polygonize_dump(
     geometry_json_path: str,
     overrides: dict[str, dict] | None = None,
+    *,
+    use_alpha_shape: bool = True,
+    bridge_strategy: str | None = None,
 ) -> PocheReport:
     """Load a JSON dump from `dump_cut_geometry.jsx`, polygonize each layer."""
     with open(geometry_json_path) as f:
@@ -262,7 +373,14 @@ def polygonize_dump(
                     ov = val
                     break
 
-        polys, result = polygonize_layer(layer_name, paths, closing_lines, ov)
+        polys, result = polygonize_layer(
+            layer_name,
+            paths,
+            closing_lines,
+            ov,
+            use_alpha_shape=use_alpha_shape,
+            bridge_strategy=bridge_strategy,
+        )
         report.fills.append(result)
         if polys:
             report.polygons[layer_name] = [
@@ -552,6 +670,8 @@ def apply_poche(
     style: str = "solid",
     scale: float = 1 / 50,
     workdir: str = "/tmp",
+    use_alpha_shape: bool = True,
+    bridge_strategy: str | None = None,
 ) -> PocheReport:
     """Run the full poché pipeline on `src`, save to `dst`.
 
@@ -562,6 +682,15 @@ def apply_poche(
                      Uses `arch_line_weights.hatch.material_for_layer` to choose.
     scale:
         Plot scale as a fraction (1/50, 1/100). Used only when style="material".
+    use_alpha_shape:
+        When True (v0.5.2 default), the alpha-shape rung sits between
+        auto_bridge and concave_hull in the rescue ladder. When False,
+        the ladder reverts to v0.5.1 behavior.
+    bridge_strategy:
+        ``"greedy"`` (default if unset) | ``"best"``. Controls which bridger
+        the auto_bridge rung uses; ``"best"`` enables the 4-way strategy
+        selector for the 3 stubborn cut layers identified in v0.5.
+        ``None`` consults ``ARCH_LW_BRIDGE_STRATEGY`` env var, then defaults.
     """
     src = os.path.abspath(src)
     if dst is None:
@@ -596,7 +725,12 @@ def apply_poche(
         raise RuntimeError(f"dump JSX produced no geometry at {geom_json}")
 
     # 3. Polygonize
-    report = polygonize_dump(geom_json, overrides)
+    report = polygonize_dump(
+        geom_json,
+        overrides,
+        use_alpha_shape=use_alpha_shape,
+        bridge_strategy=bridge_strategy,
+    )
 
     # 4a. Optional: generate per-material hatch geometry on top of the fills
     hatch_geometry: dict[str, list[list[list[float]]]] = {}

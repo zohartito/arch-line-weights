@@ -80,6 +80,10 @@ include = [
 [tool.ruff]
 line-length = 110
 target-version = "py311"
+exclude = [
+    "scripts/poche",                  # legacy v0.3 prototype scripts (kept for reference)
+    "scripts/spike/saas-feasibility", # one-shot AI24 zstd discovery scripts (kept as proof)
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "RUF", "SIM"]

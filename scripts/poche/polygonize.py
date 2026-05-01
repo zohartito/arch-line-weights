@@ -9,9 +9,10 @@ For each layer, pick the strategy that maximizes polygon count.
 """
 import json
 import sys
+
+from shapely import concave_hull, segmentize
 from shapely.geometry import LineString, MultiLineString, MultiPoint, Polygon, box
 from shapely.ops import linemerge, polygonize, snap, unary_union
-from shapely import concave_hull, segmentize
 
 SRC = "/tmp/cut_geometry.json"
 DST = "/tmp/poche_polygons.json"
