@@ -1017,6 +1017,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#status-2026-04-30-after-wave-1-wave-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status (2026-04-30, after Wave 1 + Wave 2)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Status (2026-04-30, after Wave 1 + Wave 2)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#remaining-items-in-queue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remaining items in queue
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#p0-gates-phase-b-do-this-week" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1401,6 +1429,65 @@ output format. Updated 2026-04-30 after the SaaS-first pivot.</p>
 </ul>
 <p>When dispatching, prefer <strong>batches of 3–5 in parallel</strong> — they don't
 share state, results consolidate cleanly into <code>docs/research/*.md</code> files.</p>
+<h2 id="status-2026-04-30-after-wave-1-wave-2">Status (2026-04-30, after Wave 1 + Wave 2)<a class="headerlink" href="#status-2026-04-30-after-wave-1-wave-2" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Wave</th>
+<th>Status</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Wave 1 (P0)</td>
+<td>✅ Complete</td>
+<td>All 4 agents returned. SaaS feasibility resolved (B1 wins).</td>
+</tr>
+<tr>
+<td>Wave 2 (P1, 4 agents)</td>
+<td>✅ Complete</td>
+<td>Stripe vs LS, web stack, privacy, 3 stubborn layers all delivered.</td>
+</tr>
+<tr>
+<td>Wave 3 (P1, 3 agents)</td>
+<td>✅ Complete</td>
+<td>Hatch expansion, preset families, layer-name patterns delivered (run early in parallel with Wave 2).</td>
+</tr>
+<tr>
+<td>Wave 4 (P2, partial)</td>
+<td>⚠️ Partial</td>
+<td>Competitive landscape ✅ done. Marketing channels (#14), support tooling (#15), distribution-platform reanalysis (#13) still pending — see "Remaining" below.</td>
+</tr>
+<tr>
+<td>Wave 5 (P2 long horizon)</td>
+<td>☐ Not yet run</td>
+<td>AI-augmented mode (#16) — defer to post-launch.</td>
+</tr>
+<tr>
+<td><strong>Engineering: B6 (apply.py port)</strong></td>
+<td>✅ Complete</td>
+<td><code>src/arch_line_weights/apply_saas.py</code> — 35/35 tests pass, CLI works on synthetic fixture.</td>
+</tr>
+<tr>
+<td><strong>Engineering: B7 (poche.py port)</strong></td>
+<td>☐ Pending</td>
+<td>Inject filled paths into AI native PostScript directly. Estimated 1–2 days.</td>
+</tr>
+<tr>
+<td><strong>Engineering: B8 (end-to-end SaaS prototype)</strong></td>
+<td>☐ Pending</td>
+<td>Wire B6+B7 into a single <code>arch-lw apply-saas --poche</code> command.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="remaining-items-in-queue">Remaining items in queue<a class="headerlink" href="#remaining-items-in-queue" title="Permanent link">&para;</a></h3>
+<ul>
+<li>☐ #13 — distribution-platform reanalysis at SaaS pricing (LS vs Stripe). <strong>Partly addressed</strong> by <code>saas-payments-comparison.md</code>; original Wave 2 prompt covered the same scope. Can mark closed.</li>
+<li>☐ #14 — marketing channel research</li>
+<li>☐ #15 — customer-support tooling</li>
+<li>☐ #16 — AI-augmented mode feasibility (long horizon, defer to post-launch)</li>
+</ul>
 <h2 id="p0-gates-phase-b-do-this-week">P0 — gates Phase B (do this week)<a class="headerlink" href="#p0-gates-phase-b-do-this-week" title="Permanent link">&para;</a></h2>
 <h3 id="1-illustrator-less-ai-output-spike">1. Illustrator-less <code>.ai</code> output spike<a class="headerlink" href="#1-illustrator-less-ai-output-spike" title="Permanent link">&para;</a></h3>
 <ul>

@@ -1,0 +1,1850 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Apply architectural line-weight hierarchy to Rhino-exported vector drawings.">
+      
+      
+        <meta name="author" content="zohartito">
+      
+      
+        <link rel="canonical" href="https://zohartito.github.io/arch-line-weights/research/competitive-landscape/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Competitive landscape — arch-line-weights - arch-line-weights</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-orange">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#competitive-landscape-arch-line-weights" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="arch-line-weights" class="md-header__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            arch-line-weights
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Competitive landscape — arch-line-weights
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="deep-orange"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/zohartito/arch-line-weights" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zohartito/arch-line-weights
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tutorials/your-first-section-drawing/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../how-to/apply-line-weights/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  How-to
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../explanation/how-poche-works/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Explanation
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="arch-line-weights" class="md-nav__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    arch-line-weights
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/zohartito/arch-line-weights" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zohartito/arch-line-weights
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/your-first-section-drawing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your first section drawing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/apply-line-weights/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Apply line weights
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/generate-poche/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Generate poché
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/material-hatching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Material hatching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/use-with-rhino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use with Rhino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/troubleshoot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshoot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/how-poche-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How poché works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/why-this-tool-exists/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why this tool exists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/the-postmortem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postmortem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#scope-and-method" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scope and method
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#per-competitor-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-competitor matrix
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Per-competitor matrix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ring-1-direct-competitors-architects-line-weight-automation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ring 1 — Direct competitors (architects' line-weight automation)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ring-2-adjacent-threats-inside-app-line-weight-systems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ring 2 — Adjacent threats (inside-app line-weight systems)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ring-3-inside-app-alternatives-within-our-users-existing-toolchain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ring 3 — Inside-app alternatives within our user's existing toolchain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ring-4-future-entrants-1224-month-horizon" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ring 4 — Future entrants (12–24 month horizon)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#positioning-canvas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positioning canvas
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#threat-assessment-with-timelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Threat assessment with timelines
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#differentiation-strategy-claims-arch-line-weights-can-defensibly-make" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Differentiation strategy — claims arch-line-weights can defensibly make
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Differentiation strategy — claims arch-line-weights can defensibly make">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-fixes-rhino-exported-pdfs-that-already-lost-their-line-weights-no-plugin-install-in-rhino-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. "Fixes Rhino-exported PDFs that already lost their line weights — no plugin install in Rhino needed."
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-architecture-specific-line-weight-intelligence-wall_section_cut-becomes-07mm-without-you-teaching-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. "Architecture-specific line-weight intelligence — 'WALL_SECTION_CUT' becomes 0.7mm without you teaching it."
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-1979-one-time-the-price-of-a-coffee-shop-afternoon-not-149year-and-not-a-347-lifetime-bundle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. "$19–79 one-time, the price of a coffee shop afternoon — not $149/year and not a $347 lifetime bundle."
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-built-on-edge-cases-by-an-architecture-student-in-studio-not-a-generic-adobe-plugin-tuned-for-illustrators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. "Built on edge-cases by an architecture student in studio — not a generic Adobe plugin tuned for illustrators."
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-postmortem-driven-every-edge-case-fixed-becomes-a-regression-test-the-next-user-inherits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. "POSTMORTEM-driven — every edge case fixed becomes a regression test the next user inherits."
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#update-recommendations-for-docsbusinessmd-competitive-positioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update recommendations for docs/BUSINESS.md §"Competitive positioning"
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Update recommendations for docs/BUSINESS.md §&#34;Competitive positioning&#34;">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#suggested-revision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Suggested revision
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#honest-acknowledgements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Honest acknowledgements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sources
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/zohartito/arch-line-weights/edit/main/docs/research/competitive-landscape.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="competitive-landscape-arch-line-weights">Competitive landscape — arch-line-weights<a class="headerlink" href="#competitive-landscape-arch-line-weights" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Sub-agent research, 2026-04-30. Closes the dangling reference at
+<code>docs/BUSINESS.md</code> line 67. Inputs to Phase C demand validation
+(<code>docs/ROADMAP.md</code>). Pre-launch; refresh quarterly per
+<code>BUSINESS.md</code> "existential risks" section, item #2.</p>
+</blockquote>
+<h2 id="scope-and-method">Scope and method<a class="headerlink" href="#scope-and-method" title="Permanent link">&para;</a></h2>
+<p>Surveyed three rings of competition:</p>
+<ol>
+<li><strong>Direct competitors</strong> — tools that automate line-weight assignment
+   on Rhino-derived vector output (Make2D post-processing, Illustrator
+   stroke automation, Photoshop architectural workflow packs).</li>
+<li><strong>Adjacent threats</strong> — inside-app line-weight systems in BIM tools
+   (Revit, ArchiCAD, VectorWorks, AutoCAD) and free open-source vector
+   editors (Inkscape).</li>
+<li><strong>Future entrants</strong> — McNeel themselves, Adobe UXP marketplace
+   opening, AI-first sketch-to-render tools, YC-backed automation
+   startups.</li>
+</ol>
+<p>For each, captured: positioning, pricing, audience overlap with our
+three segments (<code>BUSINESS.md</code> §"Target customer segments"),
+distribution, what they do better, what they don't do, threat level
+(1–5), defensive move.</p>
+<p>Quotes from cited sources are kept under 15 words per
+copyright-compliance rules.</p>
+<h2 id="per-competitor-matrix">Per-competitor matrix<a class="headerlink" href="#per-competitor-matrix" title="Permanent link">&para;</a></h2>
+<h3 id="ring-1-direct-competitors-architects-line-weight-automation">Ring 1 — Direct competitors (architects' line-weight automation)<a class="headerlink" href="#ring-1-direct-competitors-architects-line-weight-automation" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Competitor</th>
+<th>Positioning (1-line)</th>
+<th>Pricing</th>
+<th>Audience overlap</th>
+<th>Distribution</th>
+<th>Better than us</th>
+<th>Doesn't do</th>
+<th>Threat (1–5)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D1</td>
+<td><strong>AutoLineWeight</strong> (Chenzhi Xu, MIT-licensed Rhino plugin)</td>
+<td>Free Make2D variant that assigns weights by edge type (outline / convex / concave)</td>
+<td>Free, MIT</td>
+<td>Segments 1, 2, 3 — same target</td>
+<td>Food4Rhino + GitHub</td>
+<td>Runs <em>inside</em> Rhino (no Illustrator round-trip needed); free; MIT-licensed; intersection + silhouette options</td>
+<td>No layer-name semantics; no PDF post-processing; no Illustrator-side fix-up; not actively maintained (1 GitHub star, no recent releases); SubD broken in Rhino 7 per README</td>
+<td><strong>4</strong></td>
+</tr>
+<tr>
+<td>D2</td>
+<td><strong>Show It Better</strong></td>
+<td>"Master architectural representation" — PSD packs, brushes, courses for presentation drawings</td>
+<td>Packs $19–39; "Everything Pack" $347 lifetime; Section course (3 hrs, 34 lessons)</td>
+<td>Segment 1 heavy (students); Segment 2 medium</td>
+<td>Own site + Gumroad; 600k+ followers; YouTube + Instagram cultural presence</td>
+<td>Brand recognition; tutorial library; presentation polish (colors, textures, entourage); culture-of-architecture credibility</td>
+<td>Not automation — they sell <em>teaching</em> and <em>brushes</em>, not a tool that fixes a file. They don't touch Rhino exports. They presume you've already done line weights right.</td>
+<td><strong>3</strong></td>
+</tr>
+<tr>
+<td>D3</td>
+<td><strong>Astute Graphics</strong> (WidthScribe + 20+ Illustrator plugins)</td>
+<td>Pro-grade Illustrator power tools — variable widths, vector geometry ops</td>
+<td>$149/yr individual subscription (no perpetual since 2019); Teams tier higher</td>
+<td>Segment 2, 3 (pros); rare in Segment 1</td>
+<td>Own site; ZXP/UXP installer; Adobe ecosystem</td>
+<td>Stable Adobe plugin distribution; signed/notarized; deep IP in vector ops; Width Brush is genuinely best-in-class for <em>artistic</em> variable strokes</td>
+<td>Generic vector tooling — no architectural semantics; doesn't read Rhino layer names; doesn't know "section cut" from "ground line"; expensive subscription is wrong frame for $19 student impulse buy</td>
+<td><strong>2</strong></td>
+</tr>
+<tr>
+<td>D4</td>
+<td><strong>Doodlebug</strong> (Andrew Heumann / Deisher Studio)</td>
+<td>Live link Rhino+Grasshopper → Illustrator, bypasses Make2D round-trip</td>
+<td>Free, donationware</td>
+<td>Segment 2, 3</td>
+<td>Grasshopper community + Deisher blog</td>
+<td>Live link is genuinely great when it works — solves the export problem at the source rather than the post-export problem</td>
+<td>Compatibility-fragile (per author: "an Illustrator update broke it entirely"); requires Grasshopper expertise; no line-weight intelligence of its own — still leaves you in Illustrator manually fixing strokes</td>
+<td><strong>2</strong></td>
+</tr>
+<tr>
+<td>D5</td>
+<td><strong>HowToRhino-style YouTube tutorials</strong> (manual workflow)</td>
+<td>"Here's how to do it yourself in 30 minutes per drawing"</td>
+<td>Free; some courses $30–80</td>
+<td>Segment 1 dominant</td>
+<td>YouTube + course platforms</td>
+<td>Free; teach the <em>why</em> not just the <em>how</em>; reinforce brand of architects who teach (cultural moat)</td>
+<td>Not a tool. Doesn't scale. Every drawing still costs 30 min of human time.</td>
+<td><strong>1</strong> (validates demand more than competes)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ring-2-adjacent-threats-inside-app-line-weight-systems">Ring 2 — Adjacent threats (inside-app line-weight systems)<a class="headerlink" href="#ring-2-adjacent-threats-inside-app-line-weight-systems" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Competitor</th>
+<th>Positioning</th>
+<th>Pricing</th>
+<th>Audience overlap</th>
+<th>What they do better</th>
+<th>What they don't do</th>
+<th>Threat (1–5)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A1</td>
+<td><strong>AutoCAD CTB / STB plot styles</strong></td>
+<td>Color-to-pen lookup baked into 30+ years of practice</td>
+<td>AutoCAD LT $545/yr; AutoCAD full $2,030/yr</td>
+<td>Segment 3 — but mostly the <em>non-Rhino</em> firms we're not targeting</td>
+<td>Industry-default mental model; mature templates; print server integration; mature CTB libraries downloadable</td>
+<td>AutoCAD users aren't Rhino users — orthogonal market. Doesn't help Rhino exports at all</td>
+<td><strong>1</strong></td>
+</tr>
+<tr>
+<td>A2</td>
+<td><strong>Revit View Templates</strong></td>
+<td>1–16 numbered pen weights, scale-aware via View Templates</td>
+<td>Revit $3,055/yr (or Architecture, Engineering &amp; Construction Collection)</td>
+<td>Segment 3 — firms that have <em>abandoned</em> the Rhino+Illustrator workflow we serve</td>
+<td>Scale-aware (line gets thinner at smaller scale automatically); locked to View Template; office-wide standardization</td>
+<td>Requires fully committing to Revit — opposite of our user. If they're on Revit, our problem doesn't exist. Not a switching threat in either direction.</td>
+<td><strong>1</strong></td>
+</tr>
+<tr>
+<td>A3</td>
+<td><strong>ArchiCAD Pen Sets</strong></td>
+<td>200+ pens organized by element function, switchable per-output</td>
+<td>ArchiCAD ~$3,000/yr</td>
+<td>Segment 3, niche (mostly EU practice)</td>
+<td>Per-output pen-set switching ("plans" vs "electrical") is genuinely elegant; deep BIM integration</td>
+<td>Same as Revit — orthogonal; you don't use Rhino+Illustrator if you're on ArchiCAD</td>
+<td><strong>1</strong></td>
+</tr>
+<tr>
+<td>A4</td>
+<td><strong>VectorWorks Classes + Depth Cueing</strong></td>
+<td>2026 added auto-distance-based line weight in viewports</td>
+<td>VectorWorks Architect $3,180 perpetual or ~$1,300/yr</td>
+<td>Segment 3, niche</td>
+<td>New (2026) Depth Cueing actually attacks our value prop conceptually — auto-weight by depth, no manual work</td>
+<td>Inside VectorWorks only; you don't get there from Rhino. Limited to live viewports, not exported PDFs that need post-processing</td>
+<td><strong>2</strong></td>
+</tr>
+<tr>
+<td>A5</td>
+<td><strong>Inkscape PowerStroke (LPE)</strong></td>
+<td>Free open-source vector editor with per-node variable stroke</td>
+<td>Free, GPL</td>
+<td>Segment 1 (broke students)</td>
+<td>Free; runs on Linux; PowerStroke for variable widths</td>
+<td>Inkscape SVG model fights architectural conventions — no "stroke alignment" per Inkscape forum, no proportional weights, weak PDF round-trip. Manual workflow even worse than Illustrator.</td>
+<td><strong>1</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="ring-3-inside-app-alternatives-within-our-users-existing-toolchain">Ring 3 — Inside-app alternatives within our user's existing toolchain<a class="headerlink" href="#ring-3-inside-app-alternatives-within-our-users-existing-toolchain" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Competitor</th>
+<th>Positioning</th>
+<th>Cost</th>
+<th>What they do better</th>
+<th>What they don't do</th>
+<th>Threat (1–5)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>I1</td>
+<td><strong>Manual Illustrator</strong> (select-by-color + Appearance panel)</td>
+<td>"Just do it yourself" — what every architecture student does today</td>
+<td>$24.99/mo Illustrator (already paid for)</td>
+<td>Already in their workflow; no install; no learning curve beyond Illustrator itself; full creative control</td>
+<td>Slow (30–90 min per drawing); error-prone; not repeatable; no semantic awareness of "section cut" vs "elevation line"</td>
+<td><strong>5</strong> — this is our actual baseline competitor. Every prospect is comparing us to "free, plus my time."</td>
+</tr>
+<tr>
+<td>I2</td>
+<td><strong>Illustrator Actions</strong> (pre-recorded macro)</td>
+<td>Record once, replay forever</td>
+<td>Free with Illustrator</td>
+<td>Replays exact steps; works offline; no third party</td>
+<td>Brittle to layer-name changes; user has to author the action themselves (most don't); no intelligence about which strokes get which weight</td>
+<td><strong>3</strong></td>
+</tr>
+<tr>
+<td>I3</td>
+<td><strong>Rhino PrintWidth display mode + direct PDF print</strong></td>
+<td>"Skip Illustrator entirely"</td>
+<td>Already paid for Rhino</td>
+<td>Lossless if it works; one tool less in pipeline; print colors + widths live in Rhino properties</td>
+<td>Doesn't survive vector PDF→Illustrator round-trip (the original problem). PrintDisplay is for <em>display</em>, not interchange. Forum threads (e.g. "Make2D line weights not changing") confirm this is unsolved.</td>
+<td><strong>2</strong> — but their failure is <em>why our tool exists</em>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ring-4-future-entrants-1224-month-horizon">Ring 4 — Future entrants (12–24 month horizon)<a class="headerlink" href="#ring-4-future-entrants-1224-month-horizon" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Threat</th>
+<th>Likelihood</th>
+<th>Timeline</th>
+<th>Impact if it lands</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F1</td>
+<td><strong>McNeel ships "Print Style PDF" that survives round-trip</strong></td>
+<td>Medium. McNeel is conservative on PDF features — Rhino 9 docs (<code>docs.mcneel.com/rhino/9</code>) still describe the same vector-export model. But forum demand is loud (multiple multi-year threads).</td>
+<td>18–36 mo</td>
+<td><strong>Kills the problem entirely.</strong> Mitigation: pivot to layer-name semantic library (the part McNeel won't ship — they don't know "WALL_SECTION_CUT" should be 0.7mm). Per <code>BUSINESS.md</code> §Defensibility, the classifier <em>is</em> the moat.</td>
+</tr>
+<tr>
+<td>F2</td>
+<td><strong>Adobe opens UXP for third-party Illustrator plugins</strong></td>
+<td>High <em>eventually</em>, low this year. Per Adobe community thread (March 2026): UXP "is just not opened for third-parties" but stock plugins already use it.</td>
+<td>12–18 mo for public SDK; 18–24 mo for stable marketplace</td>
+<td>Mixed. Good: Adobe Exchange listing becomes our distribution unlock (Phase F+). Bad: any competitor (incl. Astute) ships a "select-by-architectural-semantic" plugin in UXP and out-distributes us.</td>
+</tr>
+<tr>
+<td>F3</td>
+<td><strong>AI-first sketch-to-render tools</strong> (ArchiVinci, mnml.ai, ArchSynth, Vizcom)</td>
+<td>Already happening. Per Chaos blog "Best AI tools for architects 2026" and ArchSynth: "sketch to render in 14 seconds."</td>
+<td>Now → 24 mo</td>
+<td>Lateral, not direct. They render <em>images</em>, we deliver <em>editable line vectors</em>. But if architecture students stop drawing line drawings entirely (presentation pivots fully to AI render), our market shrinks. Per <code>BUSINESS.md</code> §Existential risks #3.</td>
+</tr>
+<tr>
+<td>F4</td>
+<td><strong>YC-backed startup in arch automation</strong></td>
+<td>Confirmed entrants: ArchiLabs ("AI CAD for architects/engineers"), Structured AI ("AI agents for QC on technical documents").</td>
+<td>Now → 18 mo</td>
+<td>Different problem space (BIM/QC vs presentation drawings). Low overlap with Segments 1, 2. Watch quarterly.</td>
+</tr>
+<tr>
+<td>F5</td>
+<td><strong>Open-source MIT alternative</strong></td>
+<td><strong>Already exists</strong> (D1: AutoLineWeight). Could see a v2 with layer-name parsing if a motivated grad student takes it on.</td>
+<td>Now</td>
+<td>This is the highest-likelihood disruptor. Defense: ship faster on edge cases, build the pattern library, build customer relationships (<code>BUSINESS.md</code> §Defensibility).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="positioning-canvas">Positioning canvas<a class="headerlink" href="#positioning-canvas" title="Permanent link">&para;</a></h2>
+<p>Two-axis: <strong>automation level</strong> (manual ↔ fully automated) ×
+<strong>architecture-specificity</strong> (general design tool ↔ purpose-built for
+arch line weights).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>                   automation level (high)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                              ▲
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>                              │
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  F1 (hypothetical Rhino     │     F3 AI sketch-to-render
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  Print Style PDF)            │       (ArchiVinci, ArchSynth)
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                              │
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                              │
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  D1 AutoLineWeight  ─────────┼─────────────  ★ arch-line-weights
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  (free, basic, MIT)          │               (paid, semantic, MIT
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                              │                tier closed)
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>                              │
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>                              │
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>  A4 VectorWorks 2026         │     A2 Revit View Templates
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>  Depth Cueing                │     A3 ArchiCAD Pen Sets
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>                              │
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>   general design ◄───────────┼──────────────► arch-specific
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>                              │
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>                              │
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>  D3 Astute Graphics          │     D4 Doodlebug
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>  ($149/yr, generic vector)   │     (free, fragile)
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>                              │
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>                              │
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>  I2 Illustrator Actions      │     D2 Show It Better
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>  (manual macro)              │     (PSD packs, courses)
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>                              │
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>                              │
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>  I1 Manual Illustrator       │     D5 YouTube tutorials
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>  (default baseline)          │     (the meta-competitor)
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>                              ▼
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>                   automation level (low)
+</code></pre></div>
+<p><strong>Key whitespace:</strong> the upper-right quadrant — <em>automated</em> AND
+<em>arch-specific</em> — has only one occupant today (AutoLineWeight, free,
+unmaintained). That is precisely where arch-line-weights sits, with
+two advantages D1 doesn't: PDF post-processing (works on already-
+exported drawings, not just inside Rhino) and the layer-name semantic
+classifier (<code>BUSINESS.md</code> §Defensibility).</p>
+<h2 id="threat-assessment-with-timelines">Threat assessment with timelines<a class="headerlink" href="#threat-assessment-with-timelines" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Threat</th>
+<th>Window</th>
+<th>Severity</th>
+<th>Mitigation status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Now (0–6 mo)</strong></td>
+<td>I1 Manual Illustrator workflow</td>
+<td>Always-on. Every prospect will compare $X to "free, plus 30 min of my time."</td>
+<td>High</td>
+<td>Validation question: ask interviewees "what would you do if this didn't exist?" Per <code>BUSINESS.md</code> §Customer-interview log.</td>
+</tr>
+<tr>
+<td><strong>Now (0–6 mo)</strong></td>
+<td>D1 AutoLineWeight free MIT plugin</td>
+<td>Already in Food4Rhino. Discoverable.</td>
+<td>High</td>
+<td>Differentiate on PDF-post-processing axis (it doesn't); ship layer-name classifier; Food4Rhino listing of our own (<code>BUSINESS.md</code> §Distribution v3).</td>
+</tr>
+<tr>
+<td><strong>Now (0–6 mo)</strong></td>
+<td>D2 Show It Better cultural dominance</td>
+<td>Always-on. They own the architecture-student attention market.</td>
+<td>Medium</td>
+<td>Partnership angle (<code>BUSINESS.md</code> §Partnership ideas item #1). Don't compete; complement.</td>
+</tr>
+<tr>
+<td><strong>6 mo</strong></td>
+<td>A4 VectorWorks 2026 Depth Cueing precedent</td>
+<td>Already shipping. Concept validation for "auto-weight by 3D context" — could inspire McNeel.</td>
+<td>Low (today)</td>
+<td>Watch McNeel changelogs quarterly.</td>
+</tr>
+<tr>
+<td><strong>6–12 mo</strong></td>
+<td>F4 YC-backed arch automation startup</td>
+<td>Adjacent (BIM QC, not presentation drawings) but well-funded.</td>
+<td>Medium</td>
+<td>Stay in our narrow lane; Segments 1+2 are too small to attract VC.</td>
+</tr>
+<tr>
+<td><strong>12–18 mo</strong></td>
+<td>F2 Adobe opens UXP for third parties</td>
+<td>High likelihood.</td>
+<td>Mixed (distribution unlock + competitor entry)</td>
+<td>Be among first 100 listings on Adobe Exchange when it opens (<code>BUSINESS.md</code> §Distribution v3).</td>
+</tr>
+<tr>
+<td><strong>18–24 mo</strong></td>
+<td>D3 Astute Graphics adds an arch-aware tool</td>
+<td>Possible — they have the platform and the audience to extend into architecture if our segment proves out.</td>
+<td>Medium</td>
+<td>Move fast on customer relationships; their $149/yr ≠ our $19 impulse buy.</td>
+</tr>
+<tr>
+<td><strong>18–36 mo</strong></td>
+<td>F1 McNeel ships "Print Style PDF" that survives</td>
+<td>Existential.</td>
+<td>High</td>
+<td>Pivot to semantic classifier as the moat. The problem changes from "fix what Rhino broke" to "label what Rhino now preserves."</td>
+</tr>
+<tr>
+<td><strong>24+ mo</strong></td>
+<td>F3 Architecture pivots fully to AI rendering</td>
+<td>Existential, but slow-moving</td>
+<td>Low–Medium today</td>
+<td>Pivot to "AI-augmented line weights" — feed classifier as training data (<code>BUSINESS.md</code> §Existential risks #3).</td>
+</tr>
+<tr>
+<td><strong>24+ mo</strong></td>
+<td>F5 Better open-source MIT alternative</td>
+<td>Likely if D1 attracts a motivated grad-student maintainer</td>
+<td>High</td>
+<td>The pattern library is the moat. Customer-drawing corpus compounds.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="differentiation-strategy-claims-arch-line-weights-can-defensibly-make">Differentiation strategy — claims arch-line-weights can defensibly make<a class="headerlink" href="#differentiation-strategy-claims-arch-line-weights-can-defensibly-make" title="Permanent link">&para;</a></h2>
+<p>These are 5 claims our messaging can lead with that no competitor in
+any ring above can credibly make. Tested for defensibility against
+every competitor in the matrix.</p>
+<h3 id="1-fixes-rhino-exported-pdfs-that-already-lost-their-line-weights-no-plugin-install-in-rhino-needed">1. "Fixes Rhino-exported PDFs that already lost their line weights — no plugin install in Rhino needed."<a class="headerlink" href="#1-fixes-rhino-exported-pdfs-that-already-lost-their-line-weights-no-plugin-install-in-rhino-needed" title="Permanent link">&para;</a></h3>
+<ul>
+<li>D1 AutoLineWeight: requires running inside Rhino, before export. Doesn't help the file that's already on your hard drive.</li>
+<li>D3 Astute Graphics: doesn't read Rhino layer names; not architecture-aware.</li>
+<li>D4 Doodlebug: live-link only, fragile, requires Grasshopper.</li>
+<li>McNeel native: forum threads confirm this is broken.</li>
+<li><strong>Defense:</strong> the PDF stream rewrite <em>is</em> our distinctive engineering — see <code>docs/research/pdf-only-acceptance.md</code>.</li>
+</ul>
+<h3 id="2-architecture-specific-line-weight-intelligence-wall_section_cut-becomes-07mm-without-you-teaching-it">2. "Architecture-specific line-weight intelligence — 'WALL_SECTION_CUT' becomes 0.7mm without you teaching it."<a class="headerlink" href="#2-architecture-specific-line-weight-intelligence-wall_section_cut-becomes-07mm-without-you-teaching-it" title="Permanent link">&para;</a></h3>
+<ul>
+<li>D1 AutoLineWeight assigns by edge geometry (outline/convex/concave), not by layer semantics. Wall-section vs ground-line is invisible to it.</li>
+<li>All BIM tools (A1–A4): inside their own ecosystem; you'd have to leave Rhino to get this.</li>
+<li>D2 Show It Better: teaches you to do it manually; doesn't automate.</li>
+<li><strong>Defense:</strong> the layer-name classifier improves with every customer drawing — <code>BUSINESS.md</code> §Defensibility item #1.</li>
+</ul>
+<h3 id="3-1979-one-time-the-price-of-a-coffee-shop-afternoon-not-149year-and-not-a-347-lifetime-bundle">3. "$19–79 one-time, the price of a coffee shop afternoon — not $149/year and not a $347 lifetime bundle."<a class="headerlink" href="#3-1979-one-time-the-price-of-a-coffee-shop-afternoon-not-149year-and-not-a-347-lifetime-bundle" title="Permanent link">&para;</a></h3>
+<ul>
+<li>D3 Astute Graphics: $149/yr subscription is the wrong mental model for an impulse-buy student tool (<code>pricing-research.md</code> §"Why one-time over subscription").</li>
+<li>D2 Show It Better Everything Pack: $347 lifetime, but for <em>brushes and courses</em>, not automation.</li>
+<li>A1–A4 (Revit, ArchiCAD, VectorWorks, AutoCAD): $1,300–$3,000/yr; absurd for our segments.</li>
+<li><strong>Defense:</strong> founder-100 launch tier ($15–29 lifetime) locks in price perception before competitors notice us (<code>pricing-research.md</code> §Headline recommendation).</li>
+</ul>
+<h3 id="4-built-on-edge-cases-by-an-architecture-student-in-studio-not-a-generic-adobe-plugin-tuned-for-illustrators">4. "Built on edge-cases by an architecture student in studio — not a generic Adobe plugin tuned for illustrators."<a class="headerlink" href="#4-built-on-edge-cases-by-an-architecture-student-in-studio-not-a-generic-adobe-plugin-tuned-for-illustrators" title="Permanent link">&para;</a></h3>
+<ul>
+<li>D3 Astute Graphics: WidthScribe is best-in-class for <em>artistic</em> variable strokes — but it's tuned for illustration, calligraphy, signage. Not section drawings.</li>
+<li>D2 Show It Better: not a tool company; a media company with a side hustle in PSD packs.</li>
+<li>F4 YC-backed startups: BIM/QC focused; not for presentation drawings.</li>
+<li><strong>Defense:</strong> demo asset (<code>BUSINESS.md</code> §Marketing — "user's ARCH 202B section drawing, before/after") is credibility no competitor has.</li>
+</ul>
+<h3 id="5-postmortem-driven-every-edge-case-fixed-becomes-a-regression-test-the-next-user-inherits">5. "POSTMORTEM-driven — every edge case fixed becomes a regression test the next user inherits."<a class="headerlink" href="#5-postmortem-driven-every-edge-case-fixed-becomes-a-regression-test-the-next-user-inherits" title="Permanent link">&para;</a></h3>
+<ul>
+<li>All competitors except D1 are closed-source, so customers can't see what's been fixed.</li>
+<li>D1 AutoLineWeight: 1 GitHub star, sparse maintenance per README.</li>
+<li><strong>Defense:</strong> <code>docs/POSTMORTEM.md</code> is a <em>marketing asset</em>, not just internal — it's evidence of how seriously we treat the long tail of bad Rhino exports. Per <code>BUSINESS.md</code> §Defensibility item #2.</li>
+</ul>
+<h2 id="update-recommendations-for-docsbusinessmd-competitive-positioning">Update recommendations for <code>docs/BUSINESS.md</code> §"Competitive positioning"<a class="headerlink" href="#update-recommendations-for-docsbusinessmd-competitive-positioning" title="Permanent link">&para;</a></h2>
+<p>Current text (line 69) says <strong>"Direct competitors: None known. The
+market gap is real."</strong> This research updates that:</p>
+<h3 id="suggested-revision">Suggested revision<a class="headerlink" href="#suggested-revision" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gu">## Competitive positioning</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>(Detailed competitive landscape: <span class="sb">`docs/research/competitive-landscape.md`</span>.)
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="gs">**Direct competitors:**</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="k">-</span><span class="w"> </span><span class="gs">**AutoLineWeight**</span> (Chenzhi Xu, MIT, free, Food4Rhino) — the closest direct
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  competitor. Runs inside Rhino, assigns weights by edge geometry. No layer
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  semantics, no PDF post-processing, sparsely maintained. Threat 4/5.
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Show It Better**</span> — cultural competitor, not feature competitor.
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  Sells PSD packs ($19–39) and a $347 Everything Pack. Doesn&#39;t automate.
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>  Threat 3/5; partnership-eligible.
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Astute Graphics**</span> — generic Illustrator power tools, $149/yr. No
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  architectural awareness. Threat 2/5 today, watch for arch-specific
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  pivot at 18–24 mo if our segment proves out.
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Doodlebug**</span> (Andrew Heumann) — Rhino↔Illustrator live link, free,
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  fragile across Illustrator updates. Threat 2/5.
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="gs">**The actual baseline competitor:**</span> manual Illustrator workflow.
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>Threat 5/5. Every prospect compares us to &quot;free, plus my time.&quot; Phase C
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>interviews must surface time-cost honestly (<span class="sb">`docs/research/customer-interviews.md`</span>).
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="gs">**Adjacent threats:**</span> AutoCAD CTB, Revit View Templates, ArchiCAD Pen Sets,
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>VectorWorks 2026 Depth Cueing — all inside-app, all orthogonal to our
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>Rhino+Illustrator user. Low threat (1–2/5) unless a user fully migrates
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>toolchain.
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="gs">**Future entrants (watch quarterly):**</span>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="k">-</span><span class="w"> </span>McNeel &quot;Print Style PDF&quot; survives round-trip (18–36 mo) — kills the
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>  problem; pivot to semantic classifier as moat.
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span class="k">-</span><span class="w"> </span>Adobe UXP opens to third parties (12–18 mo) — distribution unlock +
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>  competitor entry; aim for early Adobe Exchange listing.
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="k">-</span><span class="w"> </span>Open-source v2 of AutoLineWeight with layer-name parsing — most
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>  likely disruptor; defend with pattern-library compounding.
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="gs">**Defensibility (refined):**</span>
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span class="k">1.</span> Layer-name semantic classifier — pattern library compounds with every
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>   customer drawing.
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a><span class="k">2.</span> PDF post-processing — uniquely fixes already-exported files; no
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>   competitor in any ring does this.
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a><span class="k">3.</span> POSTMORTEM-driven engineering — visible in repo, marketing asset.
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a><span class="k">4.</span> Direct customer relationships at $19 impulse-buy price — rare.
+</code></pre></div>
+<h2 id="honest-acknowledgements">Honest acknowledgements<a class="headerlink" href="#honest-acknowledgements" title="Permanent link">&para;</a></h2>
+<p>Things competitors do better than us today:</p>
+<ul>
+<li><strong>D1 AutoLineWeight:</strong> runs inside Rhino with intersection + silhouette
+  options we don't have. If your problem is <em>before</em> export, they win.</li>
+<li><strong>D2 Show It Better:</strong> brand. 600k followers. We have zero.</li>
+<li><strong>D3 Astute Graphics:</strong> distribution. Adobe ecosystem trust. Notarized,
+  signed, mature billing. We're on Gumroad.</li>
+<li><strong>D4 Doodlebug:</strong> when it works, the live-link UX is better than our
+  CLI round-trip.</li>
+<li><strong>A4 VectorWorks 2026 Depth Cueing:</strong> the <em>concept</em> (auto-weight from
+  3D context) is more ambitious than ours. We weight by layer name; they
+  weight by viewport depth. If McNeel ports this idea to Rhino, we lose
+  the conceptual high ground.</li>
+<li><strong>I1 Manual Illustrator:</strong> zero install, zero learning curve, zero
+  trust gap, $0 marginal cost.</li>
+</ul>
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<p>Cited per copyright rules: ≤15 words quoted per source.</p>
+<ul>
+<li><a href="https://www.food4rhino.com/en/app/auto-line-weight">Auto Line Weight — Food4Rhino listing</a></li>
+<li><a href="https://github.com/CXu0630/AutoLineWeight">AutoLineWeight — GitHub repo (CXu0630)</a></li>
+<li><a href="https://www.showitbetter.co/">Show It Better — home</a></li>
+<li><a href="https://showitbetter.gumroad.com/l/QQhBJ">Show It Better — Gumroad bundle</a></li>
+<li><a href="https://astutegraphics.com/pricing">Astute Graphics — pricing</a></li>
+<li><a href="https://astutegraphics.com/plugins/widthscribe">Astute Graphics — WidthScribe plugin</a></li>
+<li><a href="https://docs.astutegraphics.com/support/is-your-software-compatible-with-illustrator-2026">Astute Graphics — Illustrator 2026 compatibility</a></li>
+<li><a href="http://www.deisherstudio.com/blog/2017/5/4/plugin-doodlebug">Doodlebug — Deisher Studio blog</a></li>
+<li><a href="https://discourse.mcneel.com/t/is-there-a-direct-rhino7-illustrator-live-link-scenario-that-works/142057">Doodlebug — McNeel forum compatibility thread</a></li>
+<li><a href="https://www.firstinarchitecture.co.uk/architectural-line-weights-and-plotstyles/">AutoCAD CTB plot styles guide — First In Architecture</a></li>
+<li><a href="https://static1.squarespace.com/static/5605a932e4b0055d57211846/t/5c92e1c8b208fc0cdfa22bf4/1553129929112/RP-Pamphlet12-Line-Weights.pdf">Revit Pure — line-weight pamphlet</a></li>
+<li><a href="https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Revit-How-to-modify-line-weight.html">Revit line-weight modification — Autodesk</a></li>
+<li><a href="https://help.graphisoft.com/AC/19/INT/AC19Help/01_Configuration/01_Configuration-38.htm">ArchiCAD predefined Pen Sets — Graphisoft</a></li>
+<li><a href="https://www.vectorworks.net/en-US/2026">VectorWorks 2026 — Depth Cueing</a></li>
+<li><a href="https://wiki.inkscape.org/wiki/index.php/PowerStroke">Inkscape PowerStroke — wiki</a></li>
+<li><a href="https://inkscape.org/forums/beyond/how-can-i-work-effectively-on-11-architectural-drawings-in-inkscape-scale-dimension-lines/">Inkscape architectural-drawing limitations — forum</a></li>
+<li><a href="https://community.adobe.com/questions-652/clarification-needed-is-uxp-publicly-available-for-illustrator-in-2026-1548811">Adobe UXP for Illustrator — community status thread, March 2026</a></li>
+<li><a href="https://developer.adobe.com/premiere-pro/uxp/plugins/distribution/adobe-marketplace/">Adobe Creative Cloud Marketplace distribution</a></li>
+<li><a href="http://docs.mcneel.com/rhino/5/help/en-us/commands/printdisplay.htm">Rhino PrintDisplay command</a></li>
+<li><a href="https://docs.mcneel.com/rhino/9/help/en-us/fileio/portable_document_format_pdf_import_export.htm">Rhino 9 PDF Import/Export</a></li>
+<li><a href="https://discourse.mcneel.com/t/make2d-line-weights-not-changing/69089">Make2D line weights forum thread — McNeel</a></li>
+<li><a href="https://helpx.adobe.com/illustrator/using/tool-techniques/width-tool.html">Illustrator Width tool — Adobe help</a></li>
+<li><a href="https://helpx.adobe.com/illustrator/using/stroke-object.html">Illustrator Stroke + Appearance panel — Adobe help</a></li>
+<li><a href="https://blog.chaos.com/best-ai-rendering-tools-for-architects-compared">Best AI rendering tools for architects 2026 — Chaos blog</a></li>
+<li><a href="https://www.archivinci.com/">ArchiVinci — AI architecture renderer</a></li>
+<li><a href="https://www.archsynth.com/">ArchSynth — sketch-to-render in 14s</a></li>
+<li><a href="https://mnml.ai/">mnml.ai — sketch-to-render</a></li>
+<li><a href="https://www.ycombinator.com/companies/industry/Workflow%20Automation">Y Combinator — workflow automation startups 2026</a></li>
+<li><a href="https://thirtybyforty.com/architecture-video-tutorials/">30X40 Design Workshop — tutorials</a></li>
+<li><a href="https://howtorhino.com/rhino-grasshopper-tutorials/rhino-to-illustrator-section/">HowToRhino — Rhino-to-Illustrator section workflow tutorial</a></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 zohartito — MIT License
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/zohartito/arch-line-weights" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.action.edit", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

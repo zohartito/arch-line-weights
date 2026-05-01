@@ -1,0 +1,2909 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Apply architectural line-weight hierarchy to Rhino-exported vector drawings.">
+      
+      
+        <meta name="author" content="zohartito">
+      
+      
+        <link rel="canonical" href="https://zohartito.github.io/arch-line-weights/research/saas-privacy/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>SaaS privacy + security posture — research - arch-line-weights</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-orange">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#saas-privacy-security-posture-research" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="arch-line-weights" class="md-header__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            arch-line-weights
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              SaaS privacy + security posture — research
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="deep-orange"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/zohartito/arch-line-weights" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zohartito/arch-line-weights
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tutorials/your-first-section-drawing/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../how-to/apply-line-weights/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  How-to
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../explanation/how-poche-works/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Explanation
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="arch-line-weights" class="md-nav__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    arch-line-weights
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/zohartito/arch-line-weights" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zohartito/arch-line-weights
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/your-first-section-drawing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your first section drawing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/apply-line-weights/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Apply line weights
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/generate-poche/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Generate poché
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/material-hatching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Material hatching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/use-with-rhino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use with Rhino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/troubleshoot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshoot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/how-poche-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How poché works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/why-this-tool-exists/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why this tool exists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/the-postmortem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postmortem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tldr-recommended-posture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TL;DR — recommended posture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-encryption-at-rest-server-side-vs-client-side-e2e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Encryption at rest — server-side vs client-side (E2E)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Encryption at rest — server-side vs client-side (E2E)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#server-side-provider-managed-kms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server-side (provider-managed KMS)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#client-side-e2e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Client-side (E2E)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-middle-ground-per-file-ephemeral-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional middle ground: per-file ephemeral key
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-retention-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Retention policy
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Retention policy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#defaults" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Defaults
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tier-override-sales-driven" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tier override (sales-driven)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-data-residency-eu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Data residency — EU?
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Data residency — EU?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#v1-us-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v1: US-only
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#v2-eu-residency-option" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v2: EU residency option
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cn-in-za-etc-residency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CN, IN, ZA, etc. residency
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-privacy-policy-plain-english-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Privacy Policy — plain-English template
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Privacy Policy — plain-English template">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recommended-structure-use-as-is-run-past-lawyer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended structure (use as-is, run past lawyer)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes-on-what-must-be-in-a-privacy-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes on what must be in a Privacy Policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-data-processing-agreement-dpa-minimal-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Data Processing Agreement (DPA) — minimal template
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Data Processing Agreement (DPA) — minimal template">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trigger-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trigger conditions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pre-signed-dpa-what-to-put-on-dpa-page" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pre-signed DPA — what to put on /dpa page
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cost-to-produce" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cost to produce
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-gdpr-ccpa-uk-dpa-compliance-baseline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. GDPR / CCPA / UK DPA compliance baseline
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. GDPR / CCPA / UK DPA compliance baseline">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#floor-must-hit-before-any-paid-customer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Floor (must hit before any paid customer)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#smart-but-not-paranoid-level-target-before-founders-100-launch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Smart-but-not-paranoid level (target before Founders 100 launch)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#paranoid-level-phase-g-when-going-after-enterprise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Paranoid level (Phase G, when going after enterprise)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ccpa-specific-must-haves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CCPA-specific must-haves
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#uk-gdpr-dpa-2018" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UK GDPR / DPA 2018
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-state-laws-us" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other state laws (US)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-soc-2-readiness-when-does-it-become-a-sales-blocker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. SOC 2 readiness — when does it become a sales blocker?
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. SOC 2 readiness — when does it become a sales blocker?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-studios-actually-demand-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When studios actually demand it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timeline-cost-2026-numbers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timeline + cost (2026 numbers)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommendation-for-arch-line-weights" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommendation for arch-line-weights
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-subprocessor-disclosure-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Subprocessor disclosure list
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Subprocessor disclosure list">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#template" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Template
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-to-disclose-every-entry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What to disclose (every entry)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vendors-not-to-use-without-thinking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vendors NOT to use without thinking
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-incident-response-runbook-minimum-viable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Incident response runbook — minimum viable
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. Incident response runbook — minimum viable">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-page-runbook-paste-at-securityincident-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One-page runbook (paste at /security/incident-response)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pre-launch-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pre-launch checklist
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-architects-expect-to-see-post-breach-from-gendovisoid-practice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What architects expect to see post-breach (from Gendo/Visoid practice)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-cookie-consent-banner-posture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Cookie / consent banner posture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Cookie / consent banner posture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recommendation-skip-the-banner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommendation: skip the banner
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stack
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#where-a-banner-becomes-mandatory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where a banner becomes mandatory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-to-put-on-the-site-instead-of-a-banner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What to put on the site instead of a banner
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-comparison-what-architecture-cloud-services-promise-publicly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Comparison: what architecture-cloud services promise publicly
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. Comparison: what architecture-cloud services promise publicly">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#where-we-can-credibly-differentiate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where we can credibly differentiate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#posture-quotes-to-lift-mirror" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Posture quotes to lift / mirror
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-recommended-decision-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Recommended decision summary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="12. Recommended decision summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#v1-launch-phase-d-month-4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v1 launch (Phase D, month 4)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-launch-milestones" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Post-launch milestones
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-single-decision-that-drives-everything" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The single decision that drives everything
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caveats-and-uncertainty" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Caveats and uncertainty
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/zohartito/arch-line-weights/edit/main/docs/research/saas-privacy.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="saas-privacy-security-posture-research">SaaS privacy + security posture — research<a class="headerlink" href="#saas-privacy-security-posture-research" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Question:</strong> What is the minimum-viable privacy + security posture for
+arch-line-weights' SaaS web app, where architects upload confidential
+drawings, get processed output, and download the result?</p>
+<p><strong>Methodology:</strong> ~60-min sub-agent pass over Gendo / MyArchitectAI /
+Visoid public privacy pages, GDPR Article 28 + CCPA primers, SOC 2
+pricing comparisons (Drata vs Vanta 2026 figures), Cloudflare R2
+data-security docs, Plausible/Fathom cookie posture, and SaaS DPA
+templates. Direct quotes capped at 15 words.</p>
+<p><strong>Disclaimer:</strong> Author is not a lawyer. Every clause below should be
+reviewed by a licensed attorney before launch — recommended budget
+$1.5–4k for a one-pass review of Privacy Policy + Terms + DPA before
+Phase D9 (Founders 100 beta).</p>
+</blockquote>
+<hr />
+<h2 id="tldr-recommended-posture">TL;DR — recommended posture<a class="headerlink" href="#tldr-recommended-posture" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Recommendation</th>
+<th>Cost / complexity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Encryption at rest</td>
+<td>Server-side, provider-managed (R2 SSE / S3 SSE-S3, AES-256)</td>
+<td>Free, default-on</td>
+</tr>
+<tr>
+<td>Encryption in transit</td>
+<td>TLS 1.2+ everywhere (Cloudflare auto)</td>
+<td>Free</td>
+</tr>
+<tr>
+<td>Retention default</td>
+<td>Free tier: 7 days post-last-access. Paid tier: 30 days post-last-access. Hard delete = 24 h grace then purge from object store + DB</td>
+<td>Cron job, ~1 day to build</td>
+</tr>
+<tr>
+<td>Data residency</td>
+<td>US-only at v1 (Cloudflare R2 <code>auto</code>). EU jurisdiction (<code>eu</code> hint) at v2 — gate behind a <code>EU Data Residency</code> paid add-on or a Studio tier feature</td>
+<td>EU adds ~1 day of work; pricing-tier gating is the lift</td>
+</tr>
+<tr>
+<td>Subprocessors</td>
+<td>Public list on <code>/subprocessors</code> page, version-pinned, email-on-change</td>
+<td>Half-day</td>
+</tr>
+<tr>
+<td>Privacy Policy</td>
+<td>Plain-English, ~1500 words, GDPR + CCPA + UK DPA in one doc</td>
+<td>Use Termly/TermsFeed generator + lawyer pass</td>
+</tr>
+<tr>
+<td>DPA</td>
+<td>Pre-signed PDF auto-emailable to studio customers; SCCs annexed; subprocessor list referenced</td>
+<td>$500–1.5k lawyer pass once</td>
+</tr>
+<tr>
+<td>SOC 2</td>
+<td>Defer until first studio asks (likely month 6–12 post-launch). Vanta Core ~$10k/yr + auditor $5–15k</td>
+<td>Defer</td>
+</tr>
+<tr>
+<td>Cookie banner</td>
+<td>Skip — use Plausible/Fathom analytics; cookieless</td>
+<td>Free, faster page</td>
+</tr>
+<tr>
+<td>Incident response</td>
+<td>One-page runbook, 72-h GDPR clock, status.archlineweights.com page</td>
+<td>Half-day</td>
+</tr>
+<tr>
+<td>Marketing posture</td>
+<td>Lead with: "Your drawings are deleted in 7/30 days. Encrypted at rest. Never used to train AI."</td>
+<td>Copy work</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The one decision that drives engineering complexity:</strong> server-side vs
+client-side (E2E) encryption. Server-side is buildable in an afternoon
+and is what every architecture-cloud competitor markets as "encrypted".
+Client-side E2E adds weeks of work, breaks server-side compute (we
+<strong>must</strong> decrypt to run pikepdf+zstd), and would force a desktop
+companion architecture (Phase B3) instead of the cleaner pure-server B1
+path. <strong>Recommendation: server-side at v1.</strong> Defer client-side to a
+"Pro Privacy" tier in Phase G if studio segment demands it.</p>
+<hr />
+<h2 id="1-encryption-at-rest-server-side-vs-client-side-e2e">1. Encryption at rest — server-side vs client-side (E2E)<a class="headerlink" href="#1-encryption-at-rest-server-side-vs-client-side-e2e" title="Permanent link">&para;</a></h2>
+<h3 id="server-side-provider-managed-kms">Server-side (provider-managed KMS)<a class="headerlink" href="#server-side-provider-managed-kms" title="Permanent link">&para;</a></h3>
+<p><strong>What it means:</strong> files arrive over TLS, the storage layer (R2 / S3)
+encrypts at rest with provider-managed AES-256 keys. The server (us)
+can decrypt to compute. Customer trusts us not to peek; the cloud
+provider can't see content.</p>
+<p><strong>Cloudflare R2 default:</strong> AES-256-GCM at rest, TLS in transit
+(<a href="https://developers.cloudflare.com/r2/reference/data-security/">Cloudflare R2 docs</a>). Free. SSE-C (customer-supplied
+keys) is also offered for one extra step of key isolation.</p>
+<p><strong>This is what competitors actually ship.</strong> Despite marketing language
+implying stronger guarantees, every architecture-cloud service we
+checked uses server-side encryption — none ship E2E.</p>
+<p><strong>Marketing claim discipline:</strong> if we say "encrypted at rest" without
+qualification, that's accurate at server-side level. Do <strong>not</strong> claim
+"end-to-end encrypted" or "zero-knowledge" — those terms have specific
+meanings.</p>
+<h3 id="client-side-e2e">Client-side (E2E)<a class="headerlink" href="#client-side-e2e" title="Permanent link">&para;</a></h3>
+<p><strong>What it means:</strong> browser encrypts the .ai file with a key derived
+from user passphrase before upload. Server stores ciphertext only.
+Server cannot decrypt — therefore <strong>server cannot run pikepdf+zstd
+processing</strong>.</p>
+<p><strong>Why this kills our pipeline:</strong> the entire SaaS value prop (Phase B1)
+is server-side compute on the .ai. If the server can't decrypt, we
+either (a) move compute to the browser (WASM port of pikepdf — months
+of work, slow per-user) or (b) push to a desktop helper (Phase B3 —
+defeats the SaaS UX). E2E is fundamentally incompatible with the v1
+architecture.</p>
+<p><strong>Verdict:</strong> server-side at v1. Add a "Pro Desktop" tier (Phase F4)
+where the user runs the binary locally and never uploads — that's the
+true zero-knowledge offering for the paranoid-studio segment, and it
+reuses <code>docs/research/binary-distribution.md</code> work.</p>
+<h3 id="optional-middle-ground-per-file-ephemeral-key">Optional middle ground: per-file ephemeral key<a class="headerlink" href="#optional-middle-ground-per-file-ephemeral-key" title="Permanent link">&para;</a></h3>
+<p>For paranoid users, generate a per-upload AES key on the server,
+encrypt-decrypt only in RAM during compute, then destroy the key
+post-processing. Files at rest are encrypted. <strong>This is a marketing
+upgrade, not a real cryptographic upgrade</strong> — the server still has key
+custody during compute. Worth implementing for "we minimize key
+exposure" copy in the privacy page; ~half-day of engineering.</p>
+<hr />
+<h2 id="2-retention-policy">2. Retention policy<a class="headerlink" href="#2-retention-policy" title="Permanent link">&para;</a></h2>
+<h3 id="defaults">Defaults<a class="headerlink" href="#defaults" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Auto-delete trigger</th>
+<th>Grace period</th>
+<th>User-initiated delete</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Free</td>
+<td>7 days after last access OR 30 days after upload, whichever sooner</td>
+<td>24 h soft-delete (recoverable)</td>
+<td>Immediate from UI; 24 h purge from object store</td>
+</tr>
+<tr>
+<td>Personal ($9/mo)</td>
+<td>30 days after last access</td>
+<td>24 h</td>
+<td>Immediate</td>
+</tr>
+<tr>
+<td>Studio ($49/mo+)</td>
+<td>90 days after last access, configurable down to 24 h</td>
+<td>24 h</td>
+<td>Immediate</td>
+</tr>
+<tr>
+<td>Pro Desktop</td>
+<td>Never uploaded — N/A</td>
+<td>N/A</td>
+<td>N/A</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why 7 days for free:</strong> matches the
+"upload-process-download-and-leave" pattern we see in cloud rendering
+services (Gendo, MyArchitectAI). Long enough for a student to redownload
+during studio review week; short enough that we don't accumulate a
+liability surface.</p>
+<p><strong>Why 30 days as paid baseline:</strong> lets a sole-practitioner come back to
+re-process after a print test without re-uploading. Studio tier adds
+the configurability they'll demand from IT-policy reviews.</p>
+<p><strong>What "delete" means technically:</strong></p>
+<ol>
+<li>Object marked tombstoned in DB (soft delete) — invisible in UI</li>
+<li>24-h grace window — user can email support to recover</li>
+<li>After grace, R2 <code>DeleteObject</code> issued — gone from primary storage</li>
+<li>R2 deletes ripples through CDN cache eventually (no public URL on
+   our objects so this is moot)</li>
+<li>DB row anonymized (file hash kept as a usage counter; PII fields
+   nulled)</li>
+<li>Backups: Neon free tier auto-snapshots — see backup-purge cadence
+   below</li>
+</ol>
+<p><strong>Backup-purge cadence:</strong> Neon point-in-time recovery defaults to 7
+days on free, 30 days on paid. To honor a deletion request fully, we
+must commit to "deletion takes up to N days to propagate through
+backups." 30 days is industry-standard. Mention this in Privacy Policy.</p>
+<h3 id="tier-override-sales-driven">Tier override (sales-driven)<a class="headerlink" href="#tier-override-sales-driven" title="Permanent link">&para;</a></h3>
+<p>Studio customers will sometimes ask for "files auto-delete in 24 hours"
+as an IT requirement. Build the toggle in Studio tier. Don't let
+admins set retention longer than 90 days without an Enterprise
+agreement (caps our liability surface).</p>
+<hr />
+<h2 id="3-data-residency-eu">3. Data residency — EU?<a class="headerlink" href="#3-data-residency-eu" title="Permanent link">&para;</a></h2>
+<h3 id="v1-us-only">v1: US-only<a class="headerlink" href="#v1-us-only" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Cloudflare R2 <code>auto</code> jurisdiction (lets CF route to nearest region —
+  cheapest, fastest)</li>
+<li>Stripe US-based merchant of record</li>
+<li>Neon Postgres in <code>aws-us-east-2</code> (Ohio) — cheapest tier</li>
+<li>Resend US-based for magic-link email</li>
+</ul>
+<p><strong>Privacy Policy disclosure:</strong> "We process data in the United States.
+EU and UK customers, by using the Service, consent to transfer; we use
+Standard Contractual Clauses (SCCs) for cross-border processing per
+GDPR Articles 44–49."</p>
+<p><strong>Why this is OK at v1:</strong> SCCs + EU-US Data Privacy Framework (DPF) is
+the legally accepted bridge as of 2024+. Schrems II requires
+"supplementary measures" — for us those are: encryption at rest,
+limited retention, no government data-sharing on volunteer basis.
+Document these in the DPA appendix.</p>
+<h3 id="v2-eu-residency-option">v2: EU residency option<a class="headerlink" href="#v2-eu-residency-option" title="Permanent link">&para;</a></h3>
+<p>Once any single Studio prospect demands EU data residency in writing
+(probable within first 5 studios, near-certain within first 20):</p>
+<ul>
+<li>Switch R2 buckets to <code>eu</code> jurisdictional hint
+  (<a href="https://developers.cloudflare.com/r2/reference/data-location/">Cloudflare R2 data location</a>)</li>
+<li>Add Neon EU region (Frankfurt) — costs ~$20–40/mo extra at low
+  scale</li>
+<li>Resend has EU-region option</li>
+<li>Stripe Tax handles VAT for EU sales</li>
+</ul>
+<p>Pricing-gate this as <code>EU Data Residency</code> add-on at $20–50/mo per
+seat, or bundle into a Studio EU tier. <strong>Caveat:</strong> R2's <code>eu</code> hint is
+not a pin to a named DC — for procurement-grade audits the studio
+will eventually want a named DC, which is when we look at AWS S3
+EU-region or Hetzner-backed S3-compatible storage. That's Phase G1.</p>
+<h3 id="cn-in-za-etc-residency">CN, IN, ZA, etc. residency<a class="headerlink" href="#cn-in-za-etc-residency" title="Permanent link">&para;</a></h3>
+<p>Skip. Not a v1 concern. If a customer asks, escalate to Enterprise
+custom contract or politely decline.</p>
+<hr />
+<h2 id="4-privacy-policy-plain-english-template">4. Privacy Policy — plain-English template<a class="headerlink" href="#4-privacy-policy-plain-english-template" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Reading-level target:</strong> 10<sup>th</sup> grade, ~1500 words, scannable
+headings. Architects skim documents before they sign — the policy
+needs to be one they actually read.</p>
+</blockquote>
+<h3 id="recommended-structure-use-as-is-run-past-lawyer">Recommended structure (use as-is, run past lawyer)<a class="headerlink" href="#recommended-structure-use-as-is-run-past-lawyer" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gh"># Privacy Policy</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gs">**Last updated:**</span> [DATE]
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>We&#39;re arch-line-weights, a small SaaS that processes architectural
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>drawings. This page explains what data we collect, how we use it, and
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>how we protect it. It&#39;s written in plain English because that&#39;s the
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>respectful thing to do.
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>If you&#39;d rather read the legalese version, ask us — but the meaning is
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>the same.
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="gu">## What we collect</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="gs">**Your drawings.**</span> When you upload a <span class="sb">`.ai`</span> or <span class="sb">`.pdf`</span>, we store the
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>file in our object storage (Cloudflare R2) so we can process it. We
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>need the full file content to do the work. We do <span class="gs">**not**</span>:
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="k">-</span><span class="w"> </span>read your drawings ourselves
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="k">-</span><span class="w"> </span>look at the contents
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="k">-</span><span class="w"> </span>use your drawings to train AI models — ours or anyone else&#39;s
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="k">-</span><span class="w"> </span>share your drawings with anyone outside the subprocessors listed below
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="gs">**Account info.**</span> Email address (for login via magic link), name (if
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>you give us one), payment info (handled by Stripe — we never see your
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>card number).
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="gs">**Usage data.**</span> What features you used, when, from what country, file
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>sizes processed. We don&#39;t track you across other websites; we don&#39;t
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>use cookies for analytics (we use Plausible, which is cookieless).
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span class="gs">**Support tickets.**</span> If you email support, we keep that thread until
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>you ask us to delete it.
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a><span class="gu">## How long we keep your drawings</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>
+<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>| Plan | Auto-deleted |
+<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>|---|---|
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>| Free | 7 days after your last access |
+<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>| Personal | 30 days after your last access |
+<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>| Studio | 90 days after your last access (configurable down to 24 hours) |
+<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>
+<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>You can delete any drawing immediately from your dashboard. After
+<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>deletion: 24-hour soft-delete grace period (email us to recover), then
+<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>hard delete from primary storage. Backups roll off within 30 days.
+<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>
+<a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a><span class="gu">## How we secure it</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a>
+<a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a><span class="k">-</span><span class="w"> </span><span class="gs">**In transit:**</span> TLS 1.2+ everywhere (HTTPS).
+<a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a><span class="k">-</span><span class="w"> </span><span class="gs">**At rest:**</span> AES-256 encryption (Cloudflare R2 server-side
+<a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a>  encryption).
+<a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Access:**</span> only the founder and named contractors with NDAs can
+<a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a>  access the production environment. Access is logged.
+<a id="__codelineno-0-54" name="__codelineno-0-54" href="#__codelineno-0-54"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Sub-processors:**</span> see [<span class="nt">/subprocessors</span>](<span class="na">/subprocessors</span>) for the
+<a id="__codelineno-0-55" name="__codelineno-0-55" href="#__codelineno-0-55"></a>  full list of vendors who can technically access infrastructure (none
+<a id="__codelineno-0-56" name="__codelineno-0-56" href="#__codelineno-0-56"></a>  routinely access content).
+<a id="__codelineno-0-57" name="__codelineno-0-57" href="#__codelineno-0-57"></a>
+<a id="__codelineno-0-58" name="__codelineno-0-58" href="#__codelineno-0-58"></a>If you want stronger guarantees — drawings that <span class="gs">**never**</span> leave your
+<a id="__codelineno-0-59" name="__codelineno-0-59" href="#__codelineno-0-59"></a>machine — we offer the <span class="gs">**Pro Desktop**</span> tier, where processing happens
+<a id="__codelineno-0-60" name="__codelineno-0-60" href="#__codelineno-0-60"></a>locally on your computer. No upload, no cloud.
+<a id="__codelineno-0-61" name="__codelineno-0-61" href="#__codelineno-0-61"></a>
+<a id="__codelineno-0-62" name="__codelineno-0-62" href="#__codelineno-0-62"></a><span class="gu">## Where your data is stored</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63" href="#__codelineno-0-63"></a>
+<a id="__codelineno-0-64" name="__codelineno-0-64" href="#__codelineno-0-64"></a>By default: United States (Cloudflare R2 <span class="sb">`auto`</span> region, AWS US
+<a id="__codelineno-0-65" name="__codelineno-0-65" href="#__codelineno-0-65"></a>East). EU-based customers: by using the Service you consent to
+<a id="__codelineno-0-66" name="__codelineno-0-66" href="#__codelineno-0-66"></a>this transfer; we rely on Standard Contractual Clauses (SCCs) per
+<a id="__codelineno-0-67" name="__codelineno-0-67" href="#__codelineno-0-67"></a>GDPR Articles 44–49 with the U.S. Data Privacy Framework as a
+<a id="__codelineno-0-68" name="__codelineno-0-68" href="#__codelineno-0-68"></a>supplementary measure.
+<a id="__codelineno-0-69" name="__codelineno-0-69" href="#__codelineno-0-69"></a>
+<a id="__codelineno-0-70" name="__codelineno-0-70" href="#__codelineno-0-70"></a>EU-resident hosting is available on the Studio EU plan ([upgrade →](/pricing)).
+<a id="__codelineno-0-71" name="__codelineno-0-71" href="#__codelineno-0-71"></a>
+<a id="__codelineno-0-72" name="__codelineno-0-72" href="#__codelineno-0-72"></a><span class="gu">## Your rights</span>
+<a id="__codelineno-0-73" name="__codelineno-0-73" href="#__codelineno-0-73"></a>
+<a id="__codelineno-0-74" name="__codelineno-0-74" href="#__codelineno-0-74"></a>You have rights under GDPR (EU/UK), CCPA (California), and other
+<a id="__codelineno-0-75" name="__codelineno-0-75" href="#__codelineno-0-75"></a>privacy laws. Specifically:
+<a id="__codelineno-0-76" name="__codelineno-0-76" href="#__codelineno-0-76"></a>
+<a id="__codelineno-0-77" name="__codelineno-0-77" href="#__codelineno-0-77"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Access**</span> — what data we have on you ([dashboard → Export](/dash/export))
+<a id="__codelineno-0-78" name="__codelineno-0-78" href="#__codelineno-0-78"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Correction**</span> — we&#39;ll fix anything wrong, just email us
+<a id="__codelineno-0-79" name="__codelineno-0-79" href="#__codelineno-0-79"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Deletion**</span> — delete your account at any time; we&#39;ll wipe within 30
+<a id="__codelineno-0-80" name="__codelineno-0-80" href="#__codelineno-0-80"></a>  days
+<a id="__codelineno-0-81" name="__codelineno-0-81" href="#__codelineno-0-81"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Portability**</span> — export everything as a ZIP
+<a id="__codelineno-0-82" name="__codelineno-0-82" href="#__codelineno-0-82"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Opt out of processing**</span> — for marketing emails, unsubscribe link
+<a id="__codelineno-0-83" name="__codelineno-0-83" href="#__codelineno-0-83"></a>  in every email; for processing required to deliver the service,
+<a id="__codelineno-0-84" name="__codelineno-0-84" href="#__codelineno-0-84"></a>  this means closing your account
+<a id="__codelineno-0-85" name="__codelineno-0-85" href="#__codelineno-0-85"></a><span class="k">-</span><span class="w"> </span><span class="gs">**No discrimination**</span> — we won&#39;t degrade your service or charge you
+<a id="__codelineno-0-86" name="__codelineno-0-86" href="#__codelineno-0-86"></a>  more for exercising any of these rights (CCPA §1798.125)
+<a id="__codelineno-0-87" name="__codelineno-0-87" href="#__codelineno-0-87"></a>
+<a id="__codelineno-0-88" name="__codelineno-0-88" href="#__codelineno-0-88"></a>To exercise any right, email <span class="gs">**privacy@archlineweights.com**</span>. We
+<a id="__codelineno-0-89" name="__codelineno-0-89" href="#__codelineno-0-89"></a>respond within 30 days (often within 24 hours — we&#39;re a small
+<a id="__codelineno-0-90" name="__codelineno-0-90" href="#__codelineno-0-90"></a>team).
+<a id="__codelineno-0-91" name="__codelineno-0-91" href="#__codelineno-0-91"></a>
+<a id="__codelineno-0-92" name="__codelineno-0-92" href="#__codelineno-0-92"></a><span class="gu">## Children</span>
+<a id="__codelineno-0-93" name="__codelineno-0-93" href="#__codelineno-0-93"></a>
+<a id="__codelineno-0-94" name="__codelineno-0-94" href="#__codelineno-0-94"></a>Service is for adults. We don&#39;t knowingly collect data on anyone
+<a id="__codelineno-0-95" name="__codelineno-0-95" href="#__codelineno-0-95"></a>under 16. If you&#39;re a student under 16, please ask a parent or
+<a id="__codelineno-0-96" name="__codelineno-0-96" href="#__codelineno-0-96"></a>teacher before using us.
+<a id="__codelineno-0-97" name="__codelineno-0-97" href="#__codelineno-0-97"></a>
+<a id="__codelineno-0-98" name="__codelineno-0-98" href="#__codelineno-0-98"></a><span class="gu">## Cookies</span>
+<a id="__codelineno-0-99" name="__codelineno-0-99" href="#__codelineno-0-99"></a>
+<a id="__codelineno-0-100" name="__codelineno-0-100" href="#__codelineno-0-100"></a>We use one strictly-necessary cookie: a session token to keep you
+<a id="__codelineno-0-101" name="__codelineno-0-101" href="#__codelineno-0-101"></a>logged in. That&#39;s it. No analytics cookies, no advertising cookies,
+<a id="__codelineno-0-102" name="__codelineno-0-102" href="#__codelineno-0-102"></a>no cross-site tracking. We use Plausible Analytics which is
+<a id="__codelineno-0-103" name="__codelineno-0-103" href="#__codelineno-0-103"></a>cookieless.
+<a id="__codelineno-0-104" name="__codelineno-0-104" href="#__codelineno-0-104"></a>
+<a id="__codelineno-0-105" name="__codelineno-0-105" href="#__codelineno-0-105"></a><span class="gu">## AI training</span>
+<a id="__codelineno-0-106" name="__codelineno-0-106" href="#__codelineno-0-106"></a>
+<a id="__codelineno-0-107" name="__codelineno-0-107" href="#__codelineno-0-107"></a>Your drawings are <span class="gs">**not**</span> used to train any AI model. Not ours, not
+<a id="__codelineno-0-108" name="__codelineno-0-108" href="#__codelineno-0-108"></a>a third party&#39;s. We don&#39;t have an AI model — the processing is
+<a id="__codelineno-0-109" name="__codelineno-0-109" href="#__codelineno-0-109"></a>deterministic Python code (pikepdf + Zstandard) that operates on
+<a id="__codelineno-0-110" name="__codelineno-0-110" href="#__codelineno-0-110"></a>the file&#39;s stream layer and returns a modified copy. There is no
+<a id="__codelineno-0-111" name="__codelineno-0-111" href="#__codelineno-0-111"></a>&quot;data science&quot; use of your work.
+<a id="__codelineno-0-112" name="__codelineno-0-112" href="#__codelineno-0-112"></a>
+<a id="__codelineno-0-113" name="__codelineno-0-113" href="#__codelineno-0-113"></a><span class="gu">## Changes to this policy</span>
+<a id="__codelineno-0-114" name="__codelineno-0-114" href="#__codelineno-0-114"></a>
+<a id="__codelineno-0-115" name="__codelineno-0-115" href="#__codelineno-0-115"></a>If we change anything substantive, we email you 30 days before it
+<a id="__codelineno-0-116" name="__codelineno-0-116" href="#__codelineno-0-116"></a>takes effect. The &quot;Last updated&quot; date at the top tracks all
+<a id="__codelineno-0-117" name="__codelineno-0-117" href="#__codelineno-0-117"></a>changes. Past versions: [<span class="nt">/privacy/history</span>](<span class="na">/privacy/history</span>).
+<a id="__codelineno-0-118" name="__codelineno-0-118" href="#__codelineno-0-118"></a>
+<a id="__codelineno-0-119" name="__codelineno-0-119" href="#__codelineno-0-119"></a><span class="gu">## Contact</span>
+<a id="__codelineno-0-120" name="__codelineno-0-120" href="#__codelineno-0-120"></a>
+<a id="__codelineno-0-121" name="__codelineno-0-121" href="#__codelineno-0-121"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Privacy &amp; deletion requests:**</span> privacy@archlineweights.com
+<a id="__codelineno-0-122" name="__codelineno-0-122" href="#__codelineno-0-122"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Security disclosures:**</span> security@archlineweights.com (PGP key
+<a id="__codelineno-0-123" name="__codelineno-0-123" href="#__codelineno-0-123"></a>  on the page)
+<a id="__codelineno-0-124" name="__codelineno-0-124" href="#__codelineno-0-124"></a><span class="k">-</span><span class="w"> </span><span class="gs">**EU representative (when we have one):**</span> [TBD — required for
+<a id="__codelineno-0-125" name="__codelineno-0-125" href="#__codelineno-0-125"></a>  GDPR if we have a substantial EU userbase, ~Phase G]
+<a id="__codelineno-0-126" name="__codelineno-0-126" href="#__codelineno-0-126"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Postal:**</span> [studio address — required for CCPA disclosure]
+</code></pre></div>
+<h3 id="notes-on-what-must-be-in-a-privacy-policy">Notes on what <em>must</em> be in a Privacy Policy<a class="headerlink" href="#notes-on-what-must-be-in-a-privacy-policy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Source</th>
+<th>Where in template</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Categories of data collected</td>
+<td>GDPR Art. 13(1)&copy;; CCPA §1798.100(a)</td>
+<td>"What we collect"</td>
+</tr>
+<tr>
+<td>Purpose of processing</td>
+<td>GDPR Art. 13(1)&copy;</td>
+<td>Implicit per-section ("so we can process it")</td>
+</tr>
+<tr>
+<td>Legal basis</td>
+<td>GDPR Art. 13(1)&copy;</td>
+<td>Should explicitly add: "Contract (Art. 6(1)(b)) for processing; Legitimate interest for security logs"</td>
+</tr>
+<tr>
+<td>Recipients / sub-processors</td>
+<td>GDPR Art. 13(1)(e)</td>
+<td>"Subprocessors" link</td>
+</tr>
+<tr>
+<td>Cross-border transfer mechanism</td>
+<td>GDPR Ch. V (44–49)</td>
+<td>"Where your data is stored"</td>
+</tr>
+<tr>
+<td>Retention period</td>
+<td>GDPR Art. 13(2)(a)</td>
+<td>"How long we keep your drawings"</td>
+</tr>
+<tr>
+<td>Data subject rights</td>
+<td>GDPR Art. 13(2)(b); CCPA §1798.105</td>
+<td>"Your rights"</td>
+</tr>
+<tr>
+<td>Right to lodge a complaint</td>
+<td>GDPR Art. 13(2)(d)</td>
+<td>Add explicit: "EU/UK users can complain to their data protection authority"</td>
+</tr>
+<tr>
+<td>Source of data (if not collected from subject)</td>
+<td>GDPR Art. 14</td>
+<td>N/A — we collect from subject</td>
+</tr>
+<tr>
+<td>Sale/share opt-out (CCPA)</td>
+<td>CCPA §1798.135</td>
+<td>Cover with explicit "We don't sell or share your data"</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Lawyer pass adds:</strong> governing-law clause, arbitration / class-action
+waiver (or not — depends on Terms strategy), specific California
+"Shine the Light" disclosure (§1798.83), Virginia/Colorado/Connecticut
+state-specific addenda for VCDPA/CPA/CTDPA.</p>
+<hr />
+<h2 id="5-data-processing-agreement-dpa-minimal-template">5. Data Processing Agreement (DPA) — minimal template<a class="headerlink" href="#5-data-processing-agreement-dpa-minimal-template" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>When does a customer ask?</strong> Studio tier customers will ask
+~50–80% of the time before they sign. A pre-signed PDF on the
+pricing page accelerates Studio close-rate dramatically. Sole
+practitioners almost never ask. Students never ask.</p>
+</blockquote>
+<h3 id="trigger-conditions">Trigger conditions<a class="headerlink" href="#trigger-conditions" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Studio prospect mentions "we have an IT review" / "compliance
+   review" / "data protection officer" / "we need a DPA"</li>
+<li>Customer is in EU and has GDPR-conscious legal counsel</li>
+<li>Studio is doing healthcare, government, or finance project
+   work (rare, but high-value when it appears)</li>
+</ol>
+<h3 id="pre-signed-dpa-what-to-put-on-dpa-page">Pre-signed DPA — what to put on <code>/dpa</code> page<a class="headerlink" href="#pre-signed-dpa-what-to-put-on-dpa-page" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gh"># Data Processing Agreement (DPA)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>This DPA forms part of the [<span class="nt">Terms of Service</span>](<span class="na">/terms</span>) between
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>arch-line-weights (&quot;Processor&quot;) and the Customer (&quot;Controller&quot;) who
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>uploads personal data through the Service.
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="gu">## 1. Subject matter, duration, nature, purpose</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Subject matter:**</span> processing of architectural drawing files
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  uploaded by Controller
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Duration:**</span> for the term of the Service subscription
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Nature:**</span> automated processing (pikepdf-based stream rewrite)
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Purpose:**</span> delivery of the line-weight hierarchy and poché
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  pipeline output back to Controller
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="gu">## 2. Categories of data subjects, data</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Subjects:**</span> Controller&#39;s employees, clients, end users (none
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  routinely processed — drawings rarely contain personal data, but
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>  could contain client names in title blocks)
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Categories:**</span> business contact info incidentally embedded in
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>  drawing metadata; no special-category data per GDPR Art. 9
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>  expected
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="gu">## 3. Processing on documented instructions</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>Processor processes Personal Data only on documented instructions
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>from the Controller, including transfers, except where required by
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>EU/Member State law.
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="gu">## 4. Confidentiality</span>
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>Processor ensures persons authorized to process Personal Data are
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>under contractual confidentiality. Founder and contractors sign NDAs.
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span class="gu">## 5. Security (Article 32)</span>
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>Processor implements:
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a><span class="k">-</span><span class="w"> </span>AES-256 encryption at rest (provider-managed)
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a><span class="k">-</span><span class="w"> </span>TLS 1.2+ in transit
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a><span class="k">-</span><span class="w"> </span>Access logging on production
+<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a><span class="k">-</span><span class="w"> </span>Regular dependency audits (Renovate, Dependabot)
+<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a><span class="k">-</span><span class="w"> </span>Backup tested quarterly
+<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a><span class="k">-</span><span class="w"> </span>Incident response plan ([linked](/security/incident-response))
+<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a>
+<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a><span class="gu">## 6. Sub-processors</span>
+<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a>
+<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a>Controller authorizes Processor to engage sub-processors listed at
+<a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a>[<span class="nt">/subprocessors</span>](<span class="na">/subprocessors</span>). Processor will give Controller
+<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a>30 days&#39; notice (via email) before adding a new sub-processor;
+<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a>Controller may object in writing, in which case parties will discuss
+<a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a>in good faith. Processor remains liable for sub-processor acts.
+<a id="__codelineno-1-53" name="__codelineno-1-53" href="#__codelineno-1-53"></a>
+<a id="__codelineno-1-54" name="__codelineno-1-54" href="#__codelineno-1-54"></a><span class="gu">## 7. Data subject rights</span>
+<a id="__codelineno-1-55" name="__codelineno-1-55" href="#__codelineno-1-55"></a>
+<a id="__codelineno-1-56" name="__codelineno-1-56" href="#__codelineno-1-56"></a>Processor will assist Controller in fulfilling Data Subject rights
+<a id="__codelineno-1-57" name="__codelineno-1-57" href="#__codelineno-1-57"></a>requests (access, correction, deletion, portability, restriction,
+<a id="__codelineno-1-58" name="__codelineno-1-58" href="#__codelineno-1-58"></a>objection) within 7 business days of request.
+<a id="__codelineno-1-59" name="__codelineno-1-59" href="#__codelineno-1-59"></a>
+<a id="__codelineno-1-60" name="__codelineno-1-60" href="#__codelineno-1-60"></a><span class="gu">## 8. Personal data breach notification</span>
+<a id="__codelineno-1-61" name="__codelineno-1-61" href="#__codelineno-1-61"></a>
+<a id="__codelineno-1-62" name="__codelineno-1-62" href="#__codelineno-1-62"></a>Processor will notify Controller within 48 hours of becoming aware
+<a id="__codelineno-1-63" name="__codelineno-1-63" href="#__codelineno-1-63"></a>of a Personal Data breach, providing all information reasonably
+<a id="__codelineno-1-64" name="__codelineno-1-64" href="#__codelineno-1-64"></a>necessary for Controller&#39;s GDPR Art. 33 notification within the
+<a id="__codelineno-1-65" name="__codelineno-1-65" href="#__codelineno-1-65"></a>72-hour window.
+<a id="__codelineno-1-66" name="__codelineno-1-66" href="#__codelineno-1-66"></a>
+<a id="__codelineno-1-67" name="__codelineno-1-67" href="#__codelineno-1-67"></a><span class="gu">## 9. Assistance with DPIA / Article 36</span>
+<a id="__codelineno-1-68" name="__codelineno-1-68" href="#__codelineno-1-68"></a>
+<a id="__codelineno-1-69" name="__codelineno-1-69" href="#__codelineno-1-69"></a>Processor provides reasonable assistance with Controller&#39;s
+<a id="__codelineno-1-70" name="__codelineno-1-70" href="#__codelineno-1-70"></a>Data Protection Impact Assessments and prior consultations.
+<a id="__codelineno-1-71" name="__codelineno-1-71" href="#__codelineno-1-71"></a>
+<a id="__codelineno-1-72" name="__codelineno-1-72" href="#__codelineno-1-72"></a><span class="gu">## 10. End of contract</span>
+<a id="__codelineno-1-73" name="__codelineno-1-73" href="#__codelineno-1-73"></a>
+<a id="__codelineno-1-74" name="__codelineno-1-74" href="#__codelineno-1-74"></a>Upon termination, Processor will, at Controller&#39;s choice, return or
+<a id="__codelineno-1-75" name="__codelineno-1-75" href="#__codelineno-1-75"></a>delete all Personal Data within 30 days, unless EU/Member State law
+<a id="__codelineno-1-76" name="__codelineno-1-76" href="#__codelineno-1-76"></a>requires retention.
+<a id="__codelineno-1-77" name="__codelineno-1-77" href="#__codelineno-1-77"></a>
+<a id="__codelineno-1-78" name="__codelineno-1-78" href="#__codelineno-1-78"></a><span class="gu">## 11. Audits</span>
+<a id="__codelineno-1-79" name="__codelineno-1-79" href="#__codelineno-1-79"></a>
+<a id="__codelineno-1-80" name="__codelineno-1-80" href="#__codelineno-1-80"></a>Processor will make available all information necessary to
+<a id="__codelineno-1-81" name="__codelineno-1-81" href="#__codelineno-1-81"></a>demonstrate compliance and allow audits. Audits may be in the form
+<a id="__codelineno-1-82" name="__codelineno-1-82" href="#__codelineno-1-82"></a>of (a) Processor&#39;s most recent SOC 2 report (when available), or
+<a id="__codelineno-1-83" name="__codelineno-1-83" href="#__codelineno-1-83"></a>(b) a self-completed security questionnaire, or (c) on-site audit
+<a id="__codelineno-1-84" name="__codelineno-1-84" href="#__codelineno-1-84"></a>at Controller&#39;s expense with 30 days&#39; notice (max once per year).
+<a id="__codelineno-1-85" name="__codelineno-1-85" href="#__codelineno-1-85"></a>
+<a id="__codelineno-1-86" name="__codelineno-1-86" href="#__codelineno-1-86"></a><span class="gu">## 12. International transfers</span>
+<a id="__codelineno-1-87" name="__codelineno-1-87" href="#__codelineno-1-87"></a>
+<a id="__codelineno-1-88" name="__codelineno-1-88" href="#__codelineno-1-88"></a>Where Personal Data of EU/UK data subjects is transferred outside
+<a id="__codelineno-1-89" name="__codelineno-1-89" href="#__codelineno-1-89"></a>the EU/UK, Processor relies on:
+<a id="__codelineno-1-90" name="__codelineno-1-90" href="#__codelineno-1-90"></a><span class="k">-</span><span class="w"> </span>EU Standard Contractual Clauses (Module 2: Controller to
+<a id="__codelineno-1-91" name="__codelineno-1-91" href="#__codelineno-1-91"></a>  Processor) — incorporated by reference, <span class="gs">**Annex I**</span>
+<a id="__codelineno-1-92" name="__codelineno-1-92" href="#__codelineno-1-92"></a><span class="k">-</span><span class="w"> </span>UK International Data Transfer Addendum
+<a id="__codelineno-1-93" name="__codelineno-1-93" href="#__codelineno-1-93"></a><span class="k">-</span><span class="w"> </span>Supplementary measures: encryption at rest + in transit,
+<a id="__codelineno-1-94" name="__codelineno-1-94" href="#__codelineno-1-94"></a>  retention limits, no voluntary government access
+<a id="__codelineno-1-95" name="__codelineno-1-95" href="#__codelineno-1-95"></a>
+<a id="__codelineno-1-96" name="__codelineno-1-96" href="#__codelineno-1-96"></a><span class="gu">## 13. Annexes</span>
+<a id="__codelineno-1-97" name="__codelineno-1-97" href="#__codelineno-1-97"></a>
+<a id="__codelineno-1-98" name="__codelineno-1-98" href="#__codelineno-1-98"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Annex I**</span> — Description of processing, list of sub-processors,
+<a id="__codelineno-1-99" name="__codelineno-1-99" href="#__codelineno-1-99"></a>  technical and organizational measures
+<a id="__codelineno-1-100" name="__codelineno-1-100" href="#__codelineno-1-100"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Annex II**</span> — SCCs Module 2
+<a id="__codelineno-1-101" name="__codelineno-1-101" href="#__codelineno-1-101"></a>
+<a id="__codelineno-1-102" name="__codelineno-1-102" href="#__codelineno-1-102"></a><span class="gu">## 14. Liability</span>
+<a id="__codelineno-1-103" name="__codelineno-1-103" href="#__codelineno-1-103"></a>
+<a id="__codelineno-1-104" name="__codelineno-1-104" href="#__codelineno-1-104"></a>DPA liability is capped per the [<span class="nt">main Service Agreement</span>](<span class="na">/terms</span>).
+<a id="__codelineno-1-105" name="__codelineno-1-105" href="#__codelineno-1-105"></a>Nothing in this DPA limits liability for fraud, willful misconduct,
+<a id="__codelineno-1-106" name="__codelineno-1-106" href="#__codelineno-1-106"></a>or matters that cannot be excluded under applicable law.
+<a id="__codelineno-1-107" name="__codelineno-1-107" href="#__codelineno-1-107"></a>
+<a id="__codelineno-1-108" name="__codelineno-1-108" href="#__codelineno-1-108"></a>---
+<a id="__codelineno-1-109" name="__codelineno-1-109" href="#__codelineno-1-109"></a>
+<a id="__codelineno-1-110" name="__codelineno-1-110" href="#__codelineno-1-110"></a><span class="gs">**Signed:**</span>
+<a id="__codelineno-1-111" name="__codelineno-1-111" href="#__codelineno-1-111"></a>
+<a id="__codelineno-1-112" name="__codelineno-1-112" href="#__codelineno-1-112"></a>Processor: arch-line-weights, [legal entity, jurisdiction]
+<a id="__codelineno-1-113" name="__codelineno-1-113" href="#__codelineno-1-113"></a>Controller: [Customer name + address — fillable]
+<a id="__codelineno-1-114" name="__codelineno-1-114" href="#__codelineno-1-114"></a>Effective date: [Subscription start date]
+</code></pre></div>
+<h3 id="cost-to-produce">Cost to produce<a class="headerlink" href="#cost-to-produce" title="Permanent link">&para;</a></h3>
+<ul>
+<li>DIY using TermsFeed/Promise.legal templates: $0 + 4 h research</li>
+<li>Lawyer-reviewed: $1.5–3k one-time for the bundle (Privacy + Terms +
+  DPA). Recommend USA SaaS attorney with GDPR familiarity.</li>
+<li>Per-customer: $0 — the same PDF is signed by every Studio customer</li>
+</ul>
+<hr />
+<h2 id="6-gdpr-ccpa-uk-dpa-compliance-baseline">6. GDPR / CCPA / UK DPA compliance baseline<a class="headerlink" href="#6-gdpr-ccpa-uk-dpa-compliance-baseline" title="Permanent link">&para;</a></h2>
+<h3 id="floor-must-hit-before-any-paid-customer">Floor (must hit before any paid customer)<a class="headerlink" href="#floor-must-hit-before-any-paid-customer" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] Privacy Policy live, plain-English, covers GDPR Art. 13/14 +
+      CCPA §1798.100 disclosures</li>
+<li>[ ] Terms of Service live with limitation-of-liability clause</li>
+<li>[ ] Cookie posture: cookieless analytics OR cookie banner with
+      genuine opt-in (we recommend cookieless)</li>
+<li>[ ] Email-based deletion request mechanism (<code>privacy@</code>)</li>
+<li>[ ] Data export functionality (or at least manual on email request,
+      automated by Phase E)</li>
+<li>[ ] Subprocessor list public</li>
+<li>[ ] TLS everywhere (Cloudflare provides for free)</li>
+<li>[ ] AES-256 at rest (R2 provides for free)</li>
+<li>[ ] Some retention auto-deletion (or "we delete after subscription
+      ends")</li>
+<li>[ ] No selling/sharing data (CCPA right to opt-out of "sale" /
+      "share" — our default is no)</li>
+<li>[ ] Magic-link auth (no password leaks possible)</li>
+</ul>
+<h3 id="smart-but-not-paranoid-level-target-before-founders-100-launch">Smart-but-not-paranoid level (target before Founders 100 launch)<a class="headerlink" href="#smart-but-not-paranoid-level-target-before-founders-100-launch" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] Pre-signed DPA available on <code>/dpa</code></li>
+<li>[ ] Subprocessor change notification (mailing list, 30 days
+      before adding new ones)</li>
+<li>[ ] User self-service delete-account button (not just email
+      request)</li>
+<li>[ ] User self-service download-my-data button (ZIP export)</li>
+<li>[ ] Status page (<code>status.archlineweights.com</code>) with uptime + past
+      incidents</li>
+<li>[ ] One-page security overview at <code>/security</code> covering encryption,
+      access controls, retention, incident response</li>
+<li>[ ] Quarterly dependency audit + documented patch cadence</li>
+<li>[ ] Backup tested at least once before launch + documented</li>
+<li>[ ] EU representative designated under GDPR Art. 27 (only when
+      EU userbase grows; can be a paid service like ePrivacy.eu for
+      ~$300/yr)</li>
+<li>[ ] CCPA "Notice at Collection" linked from upload screen for CA
+      users (one-line link: "California residents — see our notice
+      at collection")</li>
+</ul>
+<h3 id="paranoid-level-phase-g-when-going-after-enterprise">Paranoid level (Phase G, when going after enterprise)<a class="headerlink" href="#paranoid-level-phase-g-when-going-after-enterprise" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] SOC 2 Type 1 report (then Type 2 after 6 months)</li>
+<li>[ ] Penetration test (annually, ~$5–15k)</li>
+<li>[ ] ISO 27001 (probably not — SOC 2 is the US default, ISO is
+      EU/global)</li>
+<li>[ ] HIPAA BAA (only if any architect ever does healthcare with
+      personal health info — extremely unlikely for line weights)</li>
+<li>[ ] Bug bounty (HackerOne / Bugcrowd, ~$5k/yr minimum)</li>
+<li>[ ] Dedicated CISO contractor (~$2–5k/mo)</li>
+</ul>
+<h3 id="ccpa-specific-must-haves">CCPA-specific must-haves<a class="headerlink" href="#ccpa-specific-must-haves" title="Permanent link">&para;</a></h3>
+<ul>
+<li>"Do Not Sell or Share My Personal Information" link in footer (or
+  the new "California Privacy Rights" link covering DNS, share,
+  limit sensitive PI, opt-out of automated decision-making)</li>
+<li>Even though we <em>don't</em> sell or share, the link must be present
+  and lead to a page saying so. CCPA §1798.135.</li>
+<li>Verifiable consumer requests (we can verify via "logged-in user</li>
+<li>magic-link confirmation")</li>
+<li>12-month look-back disclosure (CCPA §1798.130)</li>
+</ul>
+<h3 id="uk-gdpr-dpa-2018">UK GDPR / DPA 2018<a class="headerlink" href="#uk-gdpr-dpa-2018" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Largely identical to EU GDPR; ICO is the regulator</li>
+<li>Use UK Addendum to SCCs for UK transfers</li>
+<li>ICO fee tier: pay £40/yr (Tier 1 — "small organization") once
+  you have UK customers (<a href="https://ico.org.uk/for-organisations/data-protection-fee/">ICO fee</a>)</li>
+</ul>
+<h3 id="other-state-laws-us">Other state laws (US)<a class="headerlink" href="#other-state-laws-us" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Law</th>
+<th>Trigger</th>
+<th>Effort</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Virginia</td>
+<td>VCDPA</td>
+<td>100k VA residents OR 25k + 50% revenue from data</td>
+<td>Skip until material</td>
+</tr>
+<tr>
+<td>Colorado</td>
+<td>CPA</td>
+<td>Same threshold</td>
+<td>Skip</td>
+</tr>
+<tr>
+<td>Connecticut</td>
+<td>CTDPA</td>
+<td>Same threshold</td>
+<td>Skip</td>
+</tr>
+<tr>
+<td>Texas</td>
+<td>TDPSA</td>
+<td>Lower threshold but B2B-friendly carve-outs</td>
+<td>Skip</td>
+</tr>
+<tr>
+<td>Delaware, Iowa, etc.</td>
+<td>Various</td>
+<td>All similar to CCPA</td>
+<td>Generic CCPA-style policy covers most</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Pragmatic call:</strong> a single well-written CCPA-compliant policy +
+explicit GDPR coverage is sufficient floor. Add state-specific
+language when revenue from a state crosses material thresholds.</p>
+<hr />
+<h2 id="7-soc-2-readiness-when-does-it-become-a-sales-blocker">7. SOC 2 readiness — when does it become a sales blocker?<a class="headerlink" href="#7-soc-2-readiness-when-does-it-become-a-sales-blocker" title="Permanent link">&para;</a></h2>
+<h3 id="when-studios-actually-demand-it">When studios actually demand it<a class="headerlink" href="#when-studios-actually-demand-it" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Sole practitioners:</strong> never</li>
+<li><strong>2–4 person studios:</strong> never</li>
+<li><strong>5–20 person studios (Segment 3):</strong> rarely; will accept "we'll
+  have it by [N] months" with a security questionnaire as a stopgap</li>
+<li><strong>20+ person studios (Phase G target):</strong> sometimes; Tier-A firms
+  almost always</li>
+<li><strong>Government work (NCARB / federal architect contracts):</strong>
+  basically yes</li>
+</ul>
+<p><strong>Heuristic: SOC 2 becomes a sales blocker around the time we have
+$5–10k MRR from studios specifically.</strong> Below that threshold, send a
+security questionnaire response (1-page PDF) and the DPA — usually
+sufficient.</p>
+<h3 id="timeline-cost-2026-numbers">Timeline + cost (2026 numbers)<a class="headerlink" href="#timeline-cost-2026-numbers" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Timeline</th>
+<th>Cost (low estimate)</th>
+<th>Cost (realistic)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Choose platform (Vanta / Drata / Comp.ai / Secureframe / Drata)</td>
+<td>Week 1</td>
+<td>$7,500 / yr (Drata Foundation)</td>
+<td>$10–15k / yr (Vanta Core)</td>
+</tr>
+<tr>
+<td>Run readiness phase (policies, evidence collection)</td>
+<td>Months 1–3</td>
+<td>DIY 200 h founder time</td>
+<td>+ $5–10k consultant if needed</td>
+</tr>
+<tr>
+<td>Type 1 audit (point-in-time)</td>
+<td>Months 3–4</td>
+<td>$3–8k auditor</td>
+<td>$5–15k</td>
+</tr>
+<tr>
+<td>Operate controls for 6 mo</td>
+<td>Months 4–10</td>
+<td>(ongoing platform fee)</td>
+<td>(ongoing)</td>
+</tr>
+<tr>
+<td>Type 2 audit (covers 6-mo period)</td>
+<td>Months 10–12</td>
+<td>$5–15k</td>
+<td>$10–25k</td>
+</tr>
+<tr>
+<td><strong>Year-1 total</strong></td>
+<td><strong>9–12 months</strong></td>
+<td><strong>~$20k</strong></td>
+<td><strong>$45–70k</strong></td>
+</tr>
+</tbody>
+</table>
+<p><a href="https://trycomp.ai/soc-2-cost-breakdown">SOC 2 cost breakdown 2026</a>, <a href="https://soc2auditors.org/insights/drata-pricing/">Drata pricing</a>,
+<a href="https://www.secureleap.tech/blog/vanta-review-pricing-top-alternatives-for-compliance-automation">Vanta pricing</a>.</p>
+<p><strong>Solo-founder reality check:</strong> SOC 2 readiness consumes 200–400 h of
+founder time plus 6 months of calendar time. At an opportunity-cost
+hourly rate of $80–150 (roughly Phase E engineering value), that's
+$32k–60k of "disguised" cost on top of cash outlay.</p>
+<h3 id="recommendation-for-arch-line-weights">Recommendation for arch-line-weights<a class="headerlink" href="#recommendation-for-arch-line-weights" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Posture</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D9 (Founders 100, month 4)</td>
+<td>No SOC 2. Security questionnaire + DPA covers Studio onboarding.</td>
+</tr>
+<tr>
+<td>F (public launch, month 6–8)</td>
+<td>Still no SOC 2. Add <code>/security</code> page with detailed posture.</td>
+</tr>
+<tr>
+<td>F + first 3 enterprise asks (month 8–14)</td>
+<td>Start SOC 2 Type 1 readiness — Vanta Core or Drata Foundation. Budget $20–30k cash.</td>
+</tr>
+<tr>
+<td>G1 (year 2)</td>
+<td>Type 2 + annual renewal, ~$15–25k/yr ongoing</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Trap to avoid:</strong> doing SOC 2 too early. It's a security-theater tax
+that doesn't help anything except enterprise sales. Don't pay it until
+the deal-flow demands it.</p>
+<hr />
+<h2 id="8-subprocessor-disclosure-list">8. Subprocessor disclosure list<a class="headerlink" href="#8-subprocessor-disclosure-list" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Public page at <code>/subprocessors</code>, version-pinned (e.g.
+<code>v2026-04-30</code>), with mailing list signup for change notifications.</p>
+</blockquote>
+<h3 id="template">Template<a class="headerlink" href="#template" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gh"># Subprocessors</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>We use the following third parties to run the Service. They have
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>contractually limited access to data, scoped to their function.
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="gs">**Last updated:**</span> 2026-MM-DD. Subscribe to changes:
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>[<span class="nt">subprocessors@archlineweights.com</span>](<span class="na">mailto:subprocessors-subscribe@archlineweights.com</span>).
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>We give 30 days&#39; notice before adding a new subprocessor.
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>| # | Provider | Service | Data accessed | Region | DPA |
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>|---|---|---|---|---|---|
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>| 1 | Cloudflare, Inc. | CDN, DNS, R2 object storage | All uploaded files at rest, all HTTP traffic | US (R2 <span class="sb">`auto`</span>) or EU (R2 <span class="sb">`eu`</span>) | [<span class="nt">link</span>][<span class="nl">cf-dpa</span>] |
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>| 2 | Fly.io | Application compute (FastAPI) | Files in-flight during processing only; ephemeral | US (<span class="sb">`iad`</span>) | [<span class="nt">link</span>][<span class="nl">fly-dpa</span>] |
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>| 3 | Neon | Postgres database | Account info (email, name), file metadata, processing logs | US East / EU Frankfurt | [<span class="nt">link</span>][<span class="nl">neon-dpa</span>] |
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>| 4 | Stripe, Inc. | Payment processing | Payment info, billing email | US | [<span class="nt">link</span>][<span class="nl">stripe-dpa</span>] |
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>| 5 | Stripe Tax | Sales tax / VAT compliance | Billing address, tax ID | US | (per Stripe DPA) |
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>| 6 | Resend | Transactional email (magic links, receipts) | Email address, message body | US | [<span class="nt">link</span>][<span class="nl">resend-dpa</span>] |
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>| 7 | Sentry | Error tracking (no file content sent) | Stack traces, user ID, request metadata | US (with EU option) | [<span class="nt">link</span>][<span class="nl">sentry-dpa</span>] |
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>| 8 | Plausible Analytics | Product analytics (cookieless) | Anonymized page views, no PII | EU (Germany) | [<span class="nt">link</span>][<span class="nl">plausible-dpa</span>] |
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>| 9 | GitHub | Source code, CI/CD | No customer data; internal source only | US | (no DPA needed — no customer data) |
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>| 10 | Cloudflare Registrar | Domain registration | Public WHOIS only | US | (per Cloudflare DPA) |
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>[<span class="nl">cf-dpa</span>]: <span class="na">https://www.cloudflare.com/legal/customer-dpa/</span>
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>[<span class="nl">fly-dpa</span>]: <span class="na">https://fly.io/legal/data-processing-agreement/</span>
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>[<span class="nl">neon-dpa</span>]: <span class="na">https://neon.tech/legal/dpa</span>
+<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>[<span class="nl">stripe-dpa</span>]: <span class="na">https://stripe.com/legal/dpa</span>
+<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a>[<span class="nl">resend-dpa</span>]: <span class="na">https://resend.com/legal/dpa</span>
+<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a>[<span class="nl">sentry-dpa</span>]: <span class="na">https://sentry.io/legal/dpa/</span>
+<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a>[<span class="nl">plausible-dpa</span>]: <span class="na">https://plausible.io/dpa</span>
+</code></pre></div>
+<h3 id="what-to-disclose-every-entry">What to disclose (every entry)<a class="headerlink" href="#what-to-disclose-every-entry" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Vendor legal name</li>
+<li>Service category</li>
+<li>Data types touched</li>
+<li>Hosting region</li>
+<li>Link to vendor DPA (we sub-incorporate)</li>
+<li>(Optional) sub-sub-processors if vendor lists them</li>
+</ol>
+<h3 id="vendors-not-to-use-without-thinking">Vendors NOT to use without thinking<a class="headerlink" href="#vendors-not-to-use-without-thinking" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Discord / Slack for support</strong> — message contents become a
+  subprocessor situation if customer data flows</li>
+<li><strong>Google Workspace for support email</strong> — fine, but disclose</li>
+<li><strong>Any AI training-on-by-default tool</strong> (early ChatGPT API was — now
+  defaults to off for API but still worth re-checking) — never paste
+  customer file contents into AI tools</li>
+</ul>
+<hr />
+<h2 id="9-incident-response-runbook-minimum-viable">9. Incident response runbook — minimum viable<a class="headerlink" href="#9-incident-response-runbook-minimum-viable" title="Permanent link">&para;</a></h2>
+<h3 id="one-page-runbook-paste-at-securityincident-response">One-page runbook (paste at <code>/security/incident-response</code>)<a class="headerlink" href="#one-page-runbook-paste-at-securityincident-response" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gh"># Incident Response</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>When we detect a security incident affecting customer data, we follow
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>this process:
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="gu">## Severity levels</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>| Level | Definition | Notification |
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>|---|---|---|
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>| SEV-1 | Confirmed unauthorized access to customer files OR PII | All affected users + DPAs (controllers) within 24 h; supervisory authority within 72 h (GDPR Art. 33) |
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>| SEV-2 | Suspected access; investigation in progress | All affected users within 72 h or upon confirmation |
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>| SEV-3 | Vulnerability disclosed but no evidence of exploitation | Public security advisory within 7 days |
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>| SEV-4 | Bug or misconfiguration with no data exposure | Private postmortem; no customer notification required |
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="gu">## Process (T+0 = detection)</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="k">-</span><span class="w"> </span><span class="gs">**T+0 to T+1h:**</span> Triage. Isolate affected services. Page founder.
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="k">-</span><span class="w"> </span><span class="gs">**T+1h to T+4h:**</span> Scope assessment. Identify affected users + data
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>  types. Document everything in incident channel.
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="k">-</span><span class="w"> </span><span class="gs">**T+4h to T+24h:**</span> Begin notifications. SEV-1: legal counsel
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>  contacted. Draft user communication.
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="k">-</span><span class="w"> </span><span class="gs">**T+24h to T+72h:**</span> Supervisory authority notification (ICO / EU
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>  DPAs) for SEV-1. User notification email sent. Public status-page
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>  update.
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="k">-</span><span class="w"> </span><span class="gs">**T+7d:**</span> Public postmortem at <span class="sb">`/incidents/[date]-[slug]`</span>.
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="k">-</span><span class="w"> </span><span class="gs">**T+30d:**</span> Closing report to affected users + controllers.
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a>
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a><span class="gu">## What we tell affected users (template)</span>
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a>
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a><span class="k">-</span><span class="w"> </span>What happened (plain English, no marketing-speak)
+<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a><span class="k">-</span><span class="w"> </span>What data was affected
+<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a><span class="k">-</span><span class="w"> </span>What we know was NOT affected
+<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a><span class="k">-</span><span class="w"> </span>What we&#39;ve done to contain
+<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a><span class="k">-</span><span class="w"> </span>What you should do (rotate API keys if any, watch for phishing)
+<a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a><span class="k">-</span><span class="w"> </span>How to ask questions (security@)
+<a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a>
+<a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a><span class="gu">## Our public commitments</span>
+<a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a>
+<a id="__codelineno-3-39" name="__codelineno-3-39" href="#__codelineno-3-39"></a><span class="k">-</span><span class="w"> </span>Initial customer notification within 72 hours of awareness
+<a id="__codelineno-3-40" name="__codelineno-3-40" href="#__codelineno-3-40"></a><span class="k">-</span><span class="w"> </span>Postmortem published within 7 days
+<a id="__codelineno-3-41" name="__codelineno-3-41" href="#__codelineno-3-41"></a><span class="k">-</span><span class="w"> </span>Closing report within 30 days
+<a id="__codelineno-3-42" name="__codelineno-3-42" href="#__codelineno-3-42"></a><span class="k">-</span><span class="w"> </span>We do not gag affected users or require NDAs for breach details
+</code></pre></div>
+<h3 id="pre-launch-checklist">Pre-launch checklist<a class="headerlink" href="#pre-launch-checklist" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] <code>security@archlineweights.com</code> mailbox + PGP key published</li>
+<li>[ ] Status page deployed (status.archlineweights.com on Atlassian
+      Statuspage free tier or <a href="https://betterstack.com">betterstack.com</a>
+      free)</li>
+<li>[ ] Founder has ICO contact noted (UK supervisory authority for
+      UK customers — <code>casework@ico.org.uk</code>)</li>
+<li>[ ] DPA vendor list noted with their breach-notification email</li>
+<li>[ ] Snapshot/backup recovery process tested</li>
+</ul>
+<h3 id="what-architects-expect-to-see-post-breach-from-gendovisoid-practice">What architects expect to see post-breach (from Gendo/Visoid practice)<a class="headerlink" href="#what-architects-expect-to-see-post-breach-from-gendovisoid-practice" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Email from a real person, not a "no-reply" address</li>
+<li>Specific data types affected (don't say "personal info" — say
+  "name, email, file names, never file content")</li>
+<li>Concrete remediation steps for the user</li>
+<li>Postmortem published on a public URL</li>
+<li>Honesty about root cause (don't claim "sophisticated nation-state
+  actor" if it was a misconfigured S3 bucket)</li>
+</ul>
+<hr />
+<h2 id="10-cookie-consent-banner-posture">10. Cookie / consent banner posture<a class="headerlink" href="#10-cookie-consent-banner-posture" title="Permanent link">&para;</a></h2>
+<h3 id="recommendation-skip-the-banner">Recommendation: <strong>skip the banner</strong><a class="headerlink" href="#recommendation-skip-the-banner" title="Permanent link">&para;</a></h3>
+<p>Use cookieless analytics. We don't need user-tracking cookies for
+business reasons — line-weight processing is a deterministic Python
+job, not an ad-funded behavioral platform. Only cookie set is the
+session token (strictly necessary, exempted from consent under
+ePrivacy Directive Art. 5(3)).</p>
+<h3 id="stack">Stack<a class="headerlink" href="#stack" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Need</th>
+<th>Tool</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Product analytics</td>
+<td>Plausible OR Fathom</td>
+<td>Cookieless, GDPR-compliant by default, no consent banner needed (<a href="https://plausible.io/privacy-focused-web-analytics">Plausible privacy-focused</a>)</td>
+</tr>
+<tr>
+<td>Error tracking</td>
+<td>Sentry</td>
+<td>Disable session-replay; use server-side error capture only</td>
+</tr>
+<tr>
+<td>Auth</td>
+<td>Magic link (Resend)</td>
+<td>No password cookies, just session JWT (strictly-necessary)</td>
+</tr>
+<tr>
+<td>Marketing email</td>
+<td>Resend + plain unsubscribe link</td>
+<td>No tracking pixels</td>
+</tr>
+</tbody>
+</table>
+<h3 id="where-a-banner-becomes-mandatory">Where a banner becomes mandatory<a class="headerlink" href="#where-a-banner-becomes-mandatory" title="Permanent link">&para;</a></h3>
+<ul>
+<li>If we ever add Google Analytics, Hotjar, FullStory, or Meta Pixel:
+  yes, banner needed</li>
+<li>If we ever embed YouTube videos that set cookies: yes, or use
+  privacy-enhanced mode (<code>youtube-nocookie.com</code>)</li>
+<li>If a customer's marketing team insists: usually their problem</li>
+</ul>
+<h3 id="what-to-put-on-the-site-instead-of-a-banner">What to put on the site instead of a banner<a class="headerlink" href="#what-to-put-on-the-site-instead-of-a-banner" title="Permanent link">&para;</a></h3>
+<p>A small footer link: "Privacy" → policy. A <code>/privacy/cookies</code>
+sub-page that explains:</p>
+<blockquote>
+<p>We use one strictly-necessary cookie (your session). We do not
+use analytics cookies or tracking pixels. If you want to clear
+the session cookie, log out.</p>
+</blockquote>
+<p>That's the whole disclosure.</p>
+<hr />
+<h2 id="11-comparison-what-architecture-cloud-services-promise-publicly">11. Comparison: what architecture-cloud services promise publicly<a class="headerlink" href="#11-comparison-what-architecture-cloud-services-promise-publicly" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Encryption claim</th>
+<th>Retention</th>
+<th>Region</th>
+<th>Training-data clause</th>
+<th>DPA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Gendo</strong> (<a href="https://www.gendo.ai/privacy-policy">gendo.ai/privacy-policy</a>)</td>
+<td>"no method of transmission is 100% secure"; no specific algo named</td>
+<td>"as long as is necessary"; no auto-delete published</td>
+<td>UK / EU offices; SCCs for transfers</td>
+<td>Policy mentions "data collected through training" but does not specify whether <strong>user-submitted files</strong> are used</td>
+<td>Custom DPA on request (per <a href="https://tech.eu/2024/07/03/gendo-secures-1-1m-for-generative-ai-for-architects/">tech.eu coverage</a>)</td>
+</tr>
+<tr>
+<td><strong>MyArchitectAI</strong> (<a href="https://www.myarchitectai.com/privacy-policy">myarchitectai.com/privacy-policy</a>)</td>
+<td>Not specified in policy</td>
+<td>"as long as necessary to provide Services"</td>
+<td>Not specified</td>
+<td>Not addressed — silence</td>
+<td>Available on request</td>
+</tr>
+<tr>
+<td><strong>Visoid</strong></td>
+<td>(Privacy page returned 404 at time of research; rendering details cite cloud processing without retention specifics)</td>
+<td>Unknown</td>
+<td>EU (Norway-based company)</td>
+<td>Unknown</td>
+<td>Likely available — enterprise sales</td>
+</tr>
+<tr>
+<td><strong>Buildhaus / Architectures of Disbelief</strong></td>
+<td>Not architecture-cloud SaaS in the relevant sense (Buildhaus = various unrelated companies; Architectures of Disbelief = Cornell symposium 2008)</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>N/A</td>
+</tr>
+</tbody>
+</table>
+<h3 id="where-we-can-credibly-differentiate">Where we can credibly differentiate<a class="headerlink" href="#where-we-can-credibly-differentiate" title="Permanent link">&para;</a></h3>
+<p>The above competitors mostly say nothing specific. <strong>A clear,
+plain-English Privacy Policy is itself a marketing differentiator.</strong>
+Specific commitments to make on the public marketing page:</p>
+<ol>
+<li><strong>"Your drawings are deleted after 7/30/90 days. Automatically."</strong>
+   (specific number &gt; vague "as needed")</li>
+<li><strong>"Your drawings are never used to train AI."</strong> (most competitors
+   don't say this; saying it loudly is rare)</li>
+<li><strong>"AES-256 at rest. TLS in transit. Both turned on by default."</strong>
+   (specifics &gt; "industry-standard security")</li>
+<li><strong>"Pre-signed DPA available — download from the pricing page."</strong>
+   (most competitors require sales conversation)</li>
+<li><strong>"Subprocessors disclosed publicly with 30-day change
+   notification."</strong> (rare in this segment)</li>
+<li><strong>"Pro Desktop tier — your drawings never leave your computer."</strong>
+   (the actual zero-knowledge offering for paranoid studios)</li>
+</ol>
+<h3 id="posture-quotes-to-lift-mirror">Posture quotes to lift / mirror<a class="headerlink" href="#posture-quotes-to-lift-mirror" title="Permanent link">&para;</a></h3>
+<p>From Gendo's posture:</p>
+<blockquote>
+<p>"Standard Contractual Clauses" or "UK Addendum" for cross-border
+transfers (we should mirror this language)</p>
+</blockquote>
+<p>From MyArchitectAI's posture (privacy page):</p>
+<blockquote>
+<p>"We will not sell or share your Personal Data" — short, declarative,
+good model</p>
+</blockquote>
+<p>From Plausible's stance:</p>
+<blockquote>
+<p>"no cookies, no personal data, no consent banner" — we should adapt
+this energy for our analytics page</p>
+</blockquote>
+<hr />
+<h2 id="12-recommended-decision-summary">12. Recommended decision summary<a class="headerlink" href="#12-recommended-decision-summary" title="Permanent link">&para;</a></h2>
+<h3 id="v1-launch-phase-d-month-4">v1 launch (Phase D, month 4)<a class="headerlink" href="#v1-launch-phase-d-month-4" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Encryption:</strong> server-side AES-256 at rest (R2 default), TLS 1.2+
+  in transit. Marketing language: "encrypted at rest, encrypted in
+  transit." No "E2E" claim.</li>
+<li><strong>Retention:</strong> 7 / 30 / 90 day tiers. Implement deletion as
+  soft-delete + 24-h grace + R2 hard-delete + DB anonymize +
+  acknowledge backup propagation up to 30 d.</li>
+<li><strong>Region:</strong> US-only, R2 <code>auto</code>, SCCs for EU customers. Plan EU
+  region as Phase G1 paid feature.</li>
+<li><strong>Privacy Policy:</strong> publish the plain-English version above + 30 d
+  before launch get a $1.5–3k lawyer pass on Privacy + Terms + DPA
+  bundle.</li>
+<li><strong>DPA:</strong> publish pre-signed PDF on <code>/dpa</code>. Studio customers can
+  countersign in DocuSign or just by accepting via email.</li>
+<li><strong>GDPR/CCPA floor:</strong> all bullets in §6 floor list complete.</li>
+<li><strong>SOC 2:</strong> defer.</li>
+<li><strong>Subprocessors:</strong> publish list in §8.</li>
+<li><strong>IR plan:</strong> publish one-pager from §9. Wire up <code>security@</code>,
+  status page, PGP key.</li>
+<li><strong>Cookies:</strong> none beyond session. Plausible analytics. No banner.</li>
+</ul>
+<h3 id="post-launch-milestones">Post-launch milestones<a class="headerlink" href="#post-launch-milestones" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Month 5:</strong> First enterprise security questionnaire arrives. Have
+  the response template ready. Don't start SOC 2.</li>
+<li><strong>Month 6–8:</strong> Public launch (Phase F). Update Privacy Policy with
+  any learnings.</li>
+<li><strong>Month 8–12:</strong> First $10k+ studio MRR. Begin SOC 2 Type 1
+  readiness. Budget $20–30k cash + 200 h founder time.</li>
+<li><strong>Year 2:</strong> SOC 2 Type 2 + EU residency tier + EU representative
+  designation under GDPR Art. 27.</li>
+</ul>
+<h3 id="the-single-decision-that-drives-everything">The single decision that drives everything<a class="headerlink" href="#the-single-decision-that-drives-everything" title="Permanent link">&para;</a></h3>
+<p><strong>Server-side encryption with provider-managed keys is the bet that
+makes the SaaS architecture feasible.</strong> Going E2E client-side would
+add weeks of crypto engineering, force a desktop-helper architecture
+(B3 from Phase B), and break the pure-server compute path (B1) that
+the spike already proved out. The trade-off is the marketing-honest
+admission that "we technically have access while processing" — which
+we mitigate via short retention, clear policy, and the offer of a
+<strong>Pro Desktop tier</strong> for studios that cannot accept any upload.</p>
+<hr />
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Cloudflare R2 data security: https://developers.cloudflare.com/r2/reference/data-security/</li>
+<li>Cloudflare R2 data location: https://developers.cloudflare.com/r2/reference/data-location/</li>
+<li>Gendo Privacy Policy: https://www.gendo.ai/privacy-policy</li>
+<li>MyArchitectAI Privacy Policy: https://www.myarchitectai.com/privacy-policy</li>
+<li>Plausible cookieless analytics: https://plausible.io/privacy-focused-web-analytics</li>
+<li>Plausible cookie banner discussion: https://plausible.io/blog/cookie-consent-banners</li>
+<li>SOC 2 cost breakdown 2026 (Comp.ai): https://trycomp.ai/soc-2-cost-breakdown</li>
+<li>Drata pricing 2026: https://soc2auditors.org/insights/drata-pricing/</li>
+<li>Vanta pricing 2026: https://www.secureleap.tech/blog/vanta-review-pricing-top-alternatives-for-compliance-automation</li>
+<li>Drata SOC 2 Type 1 vs Type 2: https://drata.com/learn/soc-2/type-1-vs-type-2</li>
+<li>Promise.legal DPA template: https://promise.legal/templates/dpa</li>
+<li>TermsFeed DPA template: https://www.termsfeed.com/blog/gdpr-data-processing-agreement-template/</li>
+<li>ICO Article 28 contracts: https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/accountability-and-governance/contracts-and-liabilities-between-controllers-and-processors-multi/what-needs-to-be-included-in-the-contract/</li>
+<li>Reform: GDPR breach checklist for SaaS: https://www.reform.app/blog/gdpr-breach-notification-checklist-saas</li>
+<li>Promise.legal breach response template: https://promise.legal/templates/breach-response-plan</li>
+<li>ICO data protection fee: https://ico.org.uk/for-organisations/data-protection-fee/</li>
+<li>Tech.eu Gendo coverage: https://tech.eu/2024/07/03/gendo-secures-1-1m-for-generative-ai-for-architects/</li>
+</ul>
+<h2 id="caveats-and-uncertainty">Caveats and uncertainty<a class="headerlink" href="#caveats-and-uncertainty" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Visoid privacy page returned 404</strong> at time of research — couldn't
+  capture their specific posture. Re-check before launch.</li>
+<li><strong>Buildhaus and "Architectures of Disbelief" are not relevant
+  competitors</strong> — Buildhaus matches multiple unrelated companies;
+  "Architecture of Disbelief" is a 2008 Cornell symposium, not a
+  SaaS. Likely a list error in the original research brief. The real
+  competitive set for privacy posture is Gendo + MyArchitectAI +
+  Visoid, plus broader cloud-rendering peers (Krea, Magnific,
+  Veras) which have generic AI-startup privacy postures.</li>
+<li><strong>Gendo training-data language is ambiguous</strong> — their policy
+  references "training" generically without saying user uploads are
+  off-limits. We should clarify ours explicitly: "your drawings are
+  not used to train AI."</li>
+<li><strong>Author is not a lawyer.</strong> The Privacy Policy + DPA templates above
+  are research artifacts, not legal advice. Run past licensed
+  counsel before going live, especially:</li>
+<li>state-specific addenda (VCDPA, CPA, CTDPA, TDPSA) when revenue
+    crosses thresholds</li>
+<li>California "Shine the Light" disclosure</li>
+<li>arbitration vs class-action posture in Terms</li>
+<li>merchant-of-record vs direct-Stripe choice (Stripe Tax handles
+    most VAT, but liability allocation is a lawyer call)</li>
+<li><strong>Reading-level metric (10<sup>th</sup> grade) was not verified</strong> — recommend
+  passing draft through Hemingway Editor before publication.</li>
+<li><strong>EU representative cost (~$300/yr)</strong> is a 2026 ballpark from
+  ePrivacy.eu and InstantGDPR; verify current rates.</li>
+<li><strong>SOC 2 numbers</strong> are 2026 figures; treat as ±20% accurate.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 zohartito — MIT License
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/zohartito/arch-line-weights" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.action.edit", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

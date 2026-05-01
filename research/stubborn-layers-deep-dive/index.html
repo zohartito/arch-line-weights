@@ -1,0 +1,1846 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Apply architectural line-weight hierarchy to Rhino-exported vector drawings.">
+      
+      
+        <meta name="author" content="zohartito">
+      
+      
+        <link rel="canonical" href="https://zohartito.github.io/arch-line-weights/research/stubborn-layers-deep-dive/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Stubborn cut layers — deep dive - arch-line-weights</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-orange">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#stubborn-cut-layers-deep-dive" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="arch-line-weights" class="md-header__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            arch-line-weights
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Stubborn cut layers — deep dive
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="deep-orange"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/zohartito/arch-line-weights" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zohartito/arch-line-weights
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tutorials/your-first-section-drawing/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../how-to/apply-line-weights/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  How-to
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../explanation/how-poche-works/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Explanation
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="arch-line-weights" class="md-nav__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    arch-line-weights
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/zohartito/arch-line-weights" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zohartito/arch-line-weights
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/your-first-section-drawing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your first section drawing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/apply-line-weights/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Apply line weights
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/generate-poche/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Generate poché
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/material-hatching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Material hatching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/use-with-rhino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use with Rhino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/troubleshoot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshoot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/how-poche-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How poché works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/why-this-tool-exists/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why this tool exists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/the-postmortem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postmortem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-three-problem-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The three problem layers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#approach-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Approach analysis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Approach analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-dbscan-with-adaptive-on-endpoint-clusters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. DBSCAN with adaptive ε on endpoint clusters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-spectral-clustering-on-the-polyline-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Spectral clustering on the polyline graph
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-voronoi-based-gap-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Voronoi-based gap detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-alpha-shape-complex-instead-of-concave_hull" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Alpha-shape / α-complex (instead of concave_hull)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-small-llm-topology-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Small-LLM topology inference
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-rhino-source-3dm-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Rhino source .3dm query
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-iterative-bridging-with-backtracking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Iterative bridging with backtracking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-endpoint-snapping-to-a-coarse-grid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Endpoint snapping to a coarse grid
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary table
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommendation-stacked-approach-1-7-5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommendation: stacked approach (1 + 7 + 5)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recommendation: stacked approach (1 + 7 + 5)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#estimated-success-rate-on-the-three-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Estimated success rate on the three layers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#working-pseudo-code-for-the-stacked-rescue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Working pseudo-code for the stacked rescue
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-plan-for-e1-next-milestone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation plan for E1 (next milestone)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-report-does-not-prove" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this report does NOT prove
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sources
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/zohartito/arch-line-weights/edit/main/docs/research/stubborn-layers-deep-dive.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="stubborn-cut-layers-deep-dive">Stubborn cut layers — deep dive<a class="headerlink" href="#stubborn-cut-layers-deep-dive" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Sub-agent research, 2026-04-30. Three layers in the USC ARCH 202B reference
+drawing resist the v0.4 rescue ladder (<code>linemerge → snap-sweep → auto-bridge
+→ concave_hull → bbox</code>). Each requires a user-side <code>__POCHE_CLOSE__</code>
+workaround today. This doc evaluates eight algorithmic approaches, makes a
+recommendation, and sketches the implementation.</p>
+</blockquote>
+<h2 id="the-three-problem-layers">The three problem layers<a class="headerlink" href="#the-three-problem-layers" title="Permanent link">&para;</a></h2>
+<p>Reconstructed from <code>docs/POSTMORTEM.md</code>, <code>docs/research/disconnected-loops.md</code>,
+and the v0.4 rescue ladder in <code>src/arch_line_weights/poche.py</code> /
+<code>src/arch_line_weights/bridge.py</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Why bare <code>linemerge</code> fails</th>
+<th>Why <code>snap</code>-sweep fails</th>
+<th>Why <code>auto_bridge</code> fails</th>
+<th>Why <code>concave_hull</code> fails</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>23_WINDOW_FRAMES_REMAP</code></td>
+<td>Too few anchor points (frames are short stubs, ~2-vertex polylines, scattered)</td>
+<td>Endpoints are far apart — snap at 5 pt over-merges adjacent frame stubs</td>
+<td>&lt; 3 distinct endpoints inside any <code>max_gap=50pt</code> neighborhood per stub; bridge inference yields nothing</td>
+<td><code>concave_hull(MultiPoint, ratio=0.3)</code> over sparse stubs returns a degenerate hull or a single huge blob spanning all windows</td>
+</tr>
+<tr>
+<td><code>26_CLT_GAP_ROOF_CAP</code></td>
+<td>2+ disconnected sub-shapes (cap is genuinely two roof slabs with a gap in between)</td>
+<td>Same — snapping doesn't help when the gap is intentional</td>
+<td>Greedy nearest-neighbor in <code>bridge._candidate_pairs</code> finds no pair under <code>max_gap</code> because the two clumps are far apart and intra-clump endpoints already share</td>
+<td>Hull merges the two roof caps into one blob that covers the gap</td>
+</tr>
+<tr>
+<td><code>11_CU_CORR_SOLID_OPAQUE</code></td>
+<td>Endpoint clusters: many short corrugation segments share endpoints in tight pinches; <code>linemerge</code> chains the wrong pair</td>
+<td>Snap collapses corrugation peaks → linemerge produces self-intersecting blob (Attempt 3-style failure)</td>
+<td>Greedy bridger picks shortest neighbor regardless of context — picks an endpoint inside a cluster instead of across the actual gap</td>
+<td>Hull treats every corrugation valley as a concavity; produces a sawtooth that doesn't match the cut</td>
+</tr>
+</tbody>
+</table>
+<p>The shared diagnosis: <strong>three different topology pathologies, one rescue
+ladder.</strong> Per-pathology rescue is what's missing.</p>
+<hr />
+<h2 id="approach-analysis">Approach analysis<a class="headerlink" href="#approach-analysis" title="Permanent link">&para;</a></h2>
+<p>For each: algorithm sketch, implementation effort, expected success on the
+three layers, and pros/cons. "Effort" is a solo-engineer estimate that
+includes tests but not productionization (logging, overrides, JSON schema).</p>
+<h3 id="1-dbscan-with-adaptive-on-endpoint-clusters">1. DBSCAN with adaptive ε on endpoint clusters<a class="headerlink" href="#1-dbscan-with-adaptive-on-endpoint-clusters" title="Permanent link">&para;</a></h3>
+<p><strong>Algorithm.</strong> Collect every endpoint of every input segment. Run DBSCAN
+(<code>sklearn.cluster.DBSCAN</code>) with <code>eps = adaptive</code> (e.g. median nearest-neighbor
+distance × 1.5, capped at 5pt) and <code>min_samples=2</code>. Each resulting cluster is
+a "join point" — collapse all endpoints in one cluster to their centroid (or
+to the most-central existing endpoint). Then run <code>linemerge + polygonize</code>.</p>
+<p>The adaptive ε matters. Static thresholds collapse corrugation peaks
+(<code>11_CU_CORR_SOLID_OPAQUE</code> failure mode); ε derived from the local
+nearest-neighbor distribution scales with the layer's intrinsic spacing. See
+<a href="https://scikit-learn.org/stable/modules/generated/sklearn.cluster.DBSCAN.html">scikit-learn DBSCAN docs</a>.</p>
+<p><strong>Effort.</strong> ~4-6 hours. ~80 lines (k-d tree of endpoints, DBSCAN call,
+collapse step, re-merge). Adds <code>scikit-learn</code> as a dependency (or a hand-rolled
+DBSCAN, ~40 lines).</p>
+<p><strong>Expected success on the three:</strong>
+- <code>11_CU_CORR_SOLID_OPAQUE</code>: <strong>likely fixes</strong> — adaptive ε will pick a value
+  smaller than the corrugation peak spacing, so peaks survive while
+  cluster-pinches collapse.
+- <code>26_CLT_GAP_ROOF_CAP</code>: <strong>does not fix</strong> — the two roof caps are <em>separately</em>
+  nearly-closed; DBSCAN won't bridge across the intentional gap. (This is
+  actually correct behavior — the gap should produce two polygons, not one,
+  if <code>polygonize</code> succeeds.)
+- <code>23_WINDOW_FRAMES_REMAP</code>: <strong>does not fix</strong> — too few endpoints per cluster;
+  DBSCAN labels them all as noise.</p>
+<p><strong>Pros.</strong> Robust to varying point density; widely-implemented; explainable.
+<strong>Cons.</strong> Requires picking ε; doesn't do bridging, only snapping.</p>
+<h3 id="2-spectral-clustering-on-the-polyline-graph">2. Spectral clustering on the polyline graph<a class="headerlink" href="#2-spectral-clustering-on-the-polyline-graph" title="Permanent link">&para;</a></h3>
+<p><strong>Algorithm.</strong> Build a graph: each segment is a node, edges connect segments
+whose endpoints fall within a tolerance. Run spectral clustering
+(<code>sklearn.cluster.SpectralClustering</code>) on the graph Laplacian, using the
+eigengap heuristic to pick <code>k</code>. Each cluster = one connected component =
+polygonize separately.</p>
+<p><strong>Effort.</strong> ~6-8 hours. Graph construction is fiddly; eigengap selection on
+small graphs is unstable.</p>
+<p><strong>Expected success on the three:</strong>
+- <code>26_CLT_GAP_ROOF_CAP</code>: <strong>likely fixes</strong> — the two roof caps are exactly
+  what spectral clustering is designed to separate. After splitting,
+  <code>linemerge + polygonize</code> runs on each cluster independently.
+- <code>11_CU_CORR_SOLID_OPAQUE</code>: <strong>partial</strong> — corrugations form one large
+  connected component already, so clustering wouldn't split anything.
+- <code>23_WINDOW_FRAMES_REMAP</code>: <strong>does not fix</strong> — each window frame is its own
+  tiny cluster, but clusters of 2-3 segments still polygonize to nothing.</p>
+<p><strong>Pros.</strong> Handles "intentionally disconnected" cases (gaps that the user
+<em>wants</em> to keep open). <strong>Cons.</strong> Heavy dependency, eigengap unstable on small
+graphs, doesn't help the actual closing problem.</p>
+<h3 id="3-voronoi-based-gap-detection">3. Voronoi-based gap detection<a class="headerlink" href="#3-voronoi-based-gap-detection" title="Permanent link">&para;</a></h3>
+<p><strong>Algorithm.</strong> Compute a Voronoi diagram of the endpoint set. Edges of the
+Voronoi diagram correspond to "channels" between endpoint clusters. Long
+Voronoi edges = wide gaps (likely intentional); short edges = narrow gaps
+(likely accidental disconnections). Bridge across short Voronoi edges only.</p>
+<p><strong>Effort.</strong> ~8-10 hours. <code>scipy.spatial.Voronoi</code> gives the diagram; the
+threshold tuning and the "bridge across an edge" geometry is non-trivial.</p>
+<p><strong>Expected success on the three:</strong>
+- All three: <strong>uncertain.</strong> Theoretically elegant, practically brittle. The
+  Voronoi diagram of corrugation endpoints is dense and noisy; the diagram of
+  WINDOW_FRAMES is degenerate (collinear points → unbounded cells).</p>
+<p><strong>Pros.</strong> Principled "intentional vs. accidental gap" distinction.
+<strong>Cons.</strong> Voronoi is fragile under near-collinear inputs; doesn't compose
+well with the existing strategy ladder.</p>
+<h3 id="4-alpha-shape-complex-instead-of-concave_hull">4. Alpha-shape / α-complex (instead of <code>concave_hull</code>)<a class="headerlink" href="#4-alpha-shape-complex-instead-of-concave_hull" title="Permanent link">&para;</a></h3>
+<p><strong>Algorithm.</strong> Replace shapely's <code>concave_hull</code> (which is a heuristic
+ratio-based concave envelope) with a true α-complex from
+<a href="https://pypi.org/project/alphashape/"><code>alphashape</code></a>. Sweep <code>α ∈ [0.01, 0.5]</code>
+and pick the value whose resulting shape's vertex count best matches the
+input vertex count.</p>
+<p><strong>Effort.</strong> ~3-4 hours. Drop-in replacement plus an α-sweep.</p>
+<p><strong>Expected success on the three:</strong>
+- <code>23_WINDOW_FRAMES_REMAP</code>: <strong>partial</strong> — α-shape on a too-sparse point
+  cloud is still degenerate. Better than <code>concave_hull</code> but only marginally.
+- <code>26_CLT_GAP_ROOF_CAP</code>: <strong>likely fixes</strong> — for the right α, an α-shape can
+  preserve the gap as a hole or as two separate components. Better than the
+  current "lumpy single polygon" fallback.
+- <code>11_CU_CORR_SOLID_OPAQUE</code>: <strong>does not fix</strong> — α-shape on corrugation
+  endpoints inherits the same sawtooth problem. (Densifying first helps but
+  doesn't solve.)</p>
+<p><strong>Pros.</strong> Mathematically principled; preserves holes; cheap dependency.
+<strong>Cons.</strong> α tuning is per-layer; doesn't address bridging.</p>
+<h3 id="5-small-llm-topology-inference">5. Small-LLM topology inference<a class="headerlink" href="#5-small-llm-topology-inference" title="Permanent link">&para;</a></h3>
+<p><strong>Algorithm.</strong> When all geometric methods fail, package the layer name + the
+N polyline endpoints as a JSON prompt to a small LLM (Claude Haiku 3.5 or
+GPT-4o-mini), and ask it to return a list of <code>(segment_a_endpoint,
+segment_b_endpoint)</code> bridges that close the topology. The LLM uses two
+priors:</p>
+<ol>
+<li><strong>Architectural domain knowledge.</strong> A layer named <code>WINDOW_FRAMES_REMAP</code>
+   is small repeating frames — the LLM should output 4-bridge "close each
+   stub into a small rectangle" hints. A layer named <code>CLT_GAP_ROOF_CAP</code>
+   suggests two separate caps with a gap. A layer named
+   <code>CU_CORR_SOLID_OPAQUE</code> (copper corrugated solid opaque) is one large
+   undulating profile.</li>
+<li><strong>Spatial reasoning over endpoints.</strong> Given a list of <code>(seg_idx, end_idx,
+   x, y)</code> tuples, the LLM can spot symmetric pairs, nearest neighbors,
+   visually-implied closure even without running geometric algorithms.</li>
+</ol>
+<p><strong>Prompt template</strong> (Haiku):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>You are an architectural-drawing topology expert. A vector cut-layer has
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>disconnected polyline segments that should form one or more closed
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>polygons. The layer is named {layer_name}. Architectural context:
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>{layer_classify_hint}.
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>Endpoints (each line: segment_index end_index x y):
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>{endpoints_listing}
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>Polylines (each: segment_index : (x1,y1) (x2,y2) ...):
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>{polylines_listing}
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>Return a JSON object:
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>{
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>  &quot;topology&quot;: &quot;one_polygon&quot; | &quot;multiple_polygons&quot; | &quot;open_chain&quot;,
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>  &quot;expected_polygon_count&quot;: &lt;int&gt;,
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>  &quot;bridges&quot;: [
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    [seg_a_idx, end_a_idx, seg_b_idx, end_b_idx],  // closes a-end to b-start
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    ...
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>  ],
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>  &quot;reasoning&quot;: &quot;&lt;one-sentence&gt;&quot;
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>}
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>Constraints: each bridge connects an endpoint of one segment to an endpoint
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>of a different segment; never start-to-start (that would invert winding);
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>the resulting graph should produce {expected_polygon_count} closed loops.
+</code></pre></div>
+<p><strong>Cost estimate.</strong> Haiku 3.5: $0.80 / 1M input tokens, $4.00 / 1M output.</p>
+<p>A typical call: ~2,000 input tokens (layer name + 30 endpoints + prompt
+boilerplate) + ~300 output tokens. Per-call cost ≈ <code>2000 × 0.8e-6 + 300 ×
+4e-6</code> = <code>0.0016 + 0.0012</code> ≈ <strong>$0.003 per stubborn layer</strong>. With 3 stubborn
+layers per drawing → <strong>~$0.01 per drawing</strong> of LLM cost. (Well under
+the user's mental price ceiling.)</p>
+<p><strong>Effort.</strong> ~6-10 hours. Anthropic SDK call, prompt-template assembly,
+JSON-schema validation of the response, integration as a fallback after
+auto-bridge fails. Plus prompt caching (the prompt boilerplate is identical
+across calls — see <code>claude-api</code> skill for ergonomic caching).</p>
+<p><strong>Expected success on the three:</strong>
+- <code>23_WINDOW_FRAMES_REMAP</code>: <strong>likely fixes</strong> — the LLM sees "WINDOW_FRAMES"
+  and a list of stub endpoints, infers each stub should close into a small
+  frame rectangle. A small-LLM strength.
+- <code>26_CLT_GAP_ROOF_CAP</code>: <strong>likely fixes</strong> — "GAP_ROOF_CAP" plus two
+  spatially-clustered endpoint groups → infers two-polygon topology.
+- <code>11_CU_CORR_SOLID_OPAQUE</code>: <strong>likely fixes</strong> — "CORR" (corrugated) plus a
+  long zigzag of endpoints → infers single-polygon topology with bridges
+  along the bottom edge connecting alternating corrugation troughs.</p>
+<p><strong>Pros.</strong> Generalizes to layers we haven't seen; uses information our
+geometric methods don't have access to (the layer <em>name</em>); cheap.
+<strong>Cons.</strong> Adds an external API dependency (offline mode regresses); LLM
+hallucinations possible; failure modes are non-deterministic.</p>
+<h3 id="6-rhino-source-3dm-query">6. Rhino source <code>.3dm</code> query<a class="headerlink" href="#6-rhino-source-3dm-query" title="Permanent link">&para;</a></h3>
+<p><strong>Algorithm.</strong> If the user uploads the source <code>.3dm</code> alongside the <code>.ai</code>,
+query the underlying NURBS curves directly via <code>rhino3dm</code> and trace the
+intended cut polylines without going through Make2D's lossy projection.</p>
+<p><strong>Effort.</strong> ~16-24 hours. Adds a whole new file-format input path, plus
+ClippingPlaneIntersection emulation in Python (Rhino does this with C++; the
+Python rhino3dm bindings only read geometry, they don't run section ops).</p>
+<p><strong>Expected success on the three:</strong> <strong>almost certainly all 3</strong> — but only when
+the user uploads <code>.3dm</code>. Doesn't help the .ai-only case (which is the v0.4
+ICP for paying customers per <code>docs/research/saas-architecture.md</code>).</p>
+<p><strong>Pros.</strong> Highest fidelity. <strong>Cons.</strong> Massive scope creep; rhino3dm can't run
+ClippingPlane operations server-side. Park as a future feature.</p>
+<h3 id="7-iterative-bridging-with-backtracking">7. Iterative bridging with backtracking<a class="headerlink" href="#7-iterative-bridging-with-backtracking" title="Permanent link">&para;</a></h3>
+<p><strong>Algorithm.</strong> The current bridger (<code>bridge.py:_pair_endpoints</code>) is
+greedy: it sorts candidate pairs by distance and commits to the shortest
+non-crossing one. Replace with a backtracking search: pick a candidate
+bridge, recursively try to close the topology, and if <code>polygonize</code> yields
+fewer polygons than expected, undo the bridge and try the next candidate.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>def bridge_with_backtrack(segments, max_depth=8):
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    candidates = sorted_candidate_pairs(segments)
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    def search(used, bridges, depth):
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>        if depth &gt; max_depth: return None
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        polys = polygonize(linemerge(segments + bridges))
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        if matches_expected(polys, segments): return bridges
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        for cand in candidates:
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>            if cand.endpoints_in(used): continue
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>            new_used = used | cand.endpoints
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>            result = search(new_used, bridges + [cand.bridge], depth+1)
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>            if result: return result
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>        return None
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    return search(set(), [], 0)
+</code></pre></div>
+<p><strong>Effort.</strong> ~6-8 hours. The recursion is straightforward; the pruning
+heuristics (so we don't explore exponentially) are the work.</p>
+<p><strong>Expected success on the three:</strong>
+- <code>11_CU_CORR_SOLID_OPAQUE</code>: <strong>likely fixes</strong> — the failure mode is "greedy
+  picked the wrong pair"; backtracking finds the right pair.
+- <code>26_CLT_GAP_ROOF_CAP</code>: <strong>does not fix</strong> — the issue isn't bridge-pair
+  selection; it's that the two clusters are too far apart for any
+  <code>max_gap</code> setting.
+- <code>23_WINDOW_FRAMES_REMAP</code>: <strong>does not fix</strong> — too few candidates, even
+  exhaustive search produces nothing.</p>
+<p><strong>Pros.</strong> Pure improvement to existing module; no new deps. <strong>Cons.</strong> Helps
+one of three layers; recursion depth is a fudge factor; can be slow on
+dense inputs.</p>
+<h3 id="8-endpoint-snapping-to-a-coarse-grid">8. Endpoint snapping to a coarse grid<a class="headerlink" href="#8-endpoint-snapping-to-a-coarse-grid" title="Permanent link">&para;</a></h3>
+<p><strong>Algorithm.</strong> Before <code>linemerge</code>, round every endpoint to the nearest 0.1pt
+(or layer-adaptive grid), then call <code>linemerge</code>. Removes sub-pixel float
+errors.</p>
+<p><strong>Effort.</strong> ~1 hour. ~10 lines.</p>
+<p><strong>Expected success on the three:</strong>
+- All three: <strong>does not fix.</strong> The pathology in all three is <em>real</em> gaps
+  (≥ 1pt for <code>26_CLT_GAP_ROOF_CAP</code>, semantic ambiguity for the other two),
+  not float-precision noise. The existing tolerance sweep already snaps at
+  0.1, 0.5, 1.0, 2.0, 5.0pt — adding a grid round on top is redundant.</p>
+<p><strong>Pros.</strong> Cheap. <strong>Cons.</strong> Doesn't help our actual problem cases; risks
+introducing new bugs (rounding into a self-intersection).</p>
+<hr />
+<h2 id="summary-table">Summary table<a class="headerlink" href="#summary-table" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Approach</th>
+<th>Effort</th>
+<th><code>23_WINDOW_FRAMES</code></th>
+<th><code>26_CLT_GAP</code></th>
+<th><code>11_CU_CORR</code></th>
+<th>New deps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>DBSCAN + adaptive ε</td>
+<td>4-6h</td>
+<td>no</td>
+<td>no</td>
+<td>yes</td>
+<td>sklearn (or hand-rolled)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Spectral clustering</td>
+<td>6-8h</td>
+<td>no</td>
+<td>yes</td>
+<td>partial</td>
+<td>sklearn</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Voronoi gap detection</td>
+<td>8-10h</td>
+<td>uncertain</td>
+<td>uncertain</td>
+<td>uncertain</td>
+<td>scipy (already a transitive dep)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>α-shape sweep</td>
+<td>3-4h</td>
+<td>partial</td>
+<td>yes</td>
+<td>no</td>
+<td><code>alphashape</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>LLM topology inference</td>
+<td>6-10h</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes</td>
+<td><code>anthropic</code> SDK</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Rhino .3dm query</td>
+<td>16-24h</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes</td>
+<td><code>rhino3dm</code> (heavy)</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Backtracking bridger</td>
+<td>6-8h</td>
+<td>no</td>
+<td>no</td>
+<td>yes</td>
+<td>none</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Coarse grid snap</td>
+<td>1h</td>
+<td>no</td>
+<td>no</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="recommendation-stacked-approach-1-7-5">Recommendation: stacked approach (1 + 7 + 5)<a class="headerlink" href="#recommendation-stacked-approach-1-7-5" title="Permanent link">&para;</a></h2>
+<p>No single approach handles all three pathologies. Three pathologies want
+three responses, layered on the existing rescue ladder:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>strategy_ladder_v05 = [
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    &quot;linemerge_bare&quot;,                      # current
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    &quot;linemerge_snap_sweep&quot;,                # current
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    &quot;auto_bridge_greedy&quot;,                  # current
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    &quot;auto_bridge_backtrack&quot;,               # NEW (#7) — fixes 11_CU_CORR
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    &quot;dbscan_collapse_then_remerge&quot;,        # NEW (#1) — fixes some 11_CU_CORR
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    &quot;alpha_shape_sweep&quot;,                   # NEW (#4) — improves fallback fidelity for 26_CLT_GAP
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    &quot;llm_topology_inference&quot;,              # NEW (#5) — fixes 23_WINDOW_FRAMES + last-resort
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    &quot;concave_hull_0.3&quot;,                    # current (downgraded fallback)
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    &quot;bbox&quot;,                                # current (last resort)
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>]
+</code></pre></div>
+<p><strong>Why stacked.</strong> Cheap geometric methods first (no API calls, deterministic);
+LLM only fires on the ~3-out-of-21 layers that exhaust the ladder.</p>
+<h3 id="estimated-success-rate-on-the-three-layers">Estimated success rate on the three layers<a class="headerlink" href="#estimated-success-rate-on-the-three-layers" title="Permanent link">&para;</a></h3>
+<ul>
+<li>DBSCAN + backtracking alone: probably <strong>&#8532;</strong> (<code>11_CU_CORR</code> fixed,
+  <code>26_CLT_GAP</code> fixed by α-shape, <code>23_WINDOW_FRAMES</code> still requires
+  <code>__POCHE_CLOSE__</code>).</li>
+<li>Adding LLM topology inference: probably <strong>3/3</strong>, with ~$0.01 per drawing in
+  inference cost.</li>
+<li>Confidence: medium. The "LLM fixes WINDOW_FRAMES" claim is plausible from
+  Haiku's known strengths on small structured-reasoning tasks but not yet
+  empirically tested. Worth a 60-minute spike.</li>
+</ul>
+<hr />
+<h2 id="working-pseudo-code-for-the-stacked-rescue">Working pseudo-code for the stacked rescue<a class="headerlink" href="#working-pseudo-code-for-the-stacked-rescue" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># src/arch_line_weights/poche.py — extended polygonize_layer</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">polygonize_layer_v05</span><span class="p">(</span><span class="n">layer_name</span><span class="p">,</span> <span class="n">paths</span><span class="p">,</span> <span class="n">closing_lines</span><span class="p">,</span> <span class="n">override</span><span class="p">):</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">lines</span> <span class="o">=</span> <span class="n">_lines_from_anchors</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">closing_lines</span> <span class="ow">or</span> <span class="p">[])</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">lines</span><span class="p">:</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="k">return</span> <span class="p">[],</span> <span class="n">FillResult</span><span class="p">(</span><span class="n">layer_name</span><span class="p">,</span> <span class="s2">&quot;failed&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="c1"># Existing: linemerge sweep + auto_bridge greedy (unchanged)</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">polys</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="n">strat</span><span class="p">,</span> <span class="n">tol</span> <span class="o">=</span> <span class="n">_sweep_existing</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="k">if</span> <span class="n">polys</span><span class="p">:</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>        <span class="k">return</span> <span class="n">polys</span><span class="p">,</span> <span class="n">FillResult</span><span class="p">(</span><span class="n">layer_name</span><span class="p">,</span> <span class="n">strat</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">polys</span><span class="p">),</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="c1"># NEW: backtracking bridger</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>    <span class="n">aug</span><span class="p">,</span> <span class="n">bconf</span> <span class="o">=</span> <span class="n">infer_bridges_backtrack</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">max_gap</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span> <span class="n">max_depth</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>    <span class="n">polys</span> <span class="o">=</span> <span class="n">_polys_at_tolerance</span><span class="p">(</span><span class="n">aug</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>    <span class="k">if</span> <span class="n">polys</span><span class="p">:</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>        <span class="k">return</span> <span class="n">polys</span><span class="p">,</span> <span class="n">FillResult</span><span class="p">(</span><span class="n">layer_name</span><span class="p">,</span> <span class="s2">&quot;auto_bridge_backtrack&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>                                 <span class="mf">0.7</span> <span class="o">*</span> <span class="n">bconf</span> <span class="o">+</span> <span class="mf">0.2</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">polys</span><span class="p">),</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>    <span class="c1"># NEW: DBSCAN endpoint collapse</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>    <span class="n">collapsed</span> <span class="o">=</span> <span class="n">collapse_endpoint_clusters</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="s2">&quot;adaptive&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>    <span class="n">polys</span> <span class="o">=</span> <span class="n">_polys_at_tolerance</span><span class="p">(</span><span class="n">collapsed</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>    <span class="k">if</span> <span class="n">polys</span><span class="p">:</span>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>        <span class="k">return</span> <span class="n">polys</span><span class="p">,</span> <span class="n">FillResult</span><span class="p">(</span><span class="n">layer_name</span><span class="p">,</span> <span class="s2">&quot;dbscan_collapse&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>                                 <span class="mf">0.65</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">polys</span><span class="p">),</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a>    <span class="c1"># NEW: alpha-shape sweep</span>
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a>    <span class="n">poly</span> <span class="o">=</span> <span class="n">alpha_shape_best_alpha</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">alpha_grid</span><span class="o">=</span><span class="p">[</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">])</span>
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a>    <span class="k">if</span> <span class="n">poly</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a>        <span class="k">return</span> <span class="p">[</span><span class="n">poly</span><span class="p">],</span> <span class="n">FillResult</span><span class="p">(</span><span class="n">layer_name</span><span class="p">,</span> <span class="s2">&quot;alpha_shape&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a>                                  <span class="mf">0.55</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a>
+<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a>    <span class="c1"># NEW: LLM topology inference (last resort before lossy fallbacks)</span>
+<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a>    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;ARCH_LW_LLM_FALLBACK&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span><span class="p">:</span>
+<a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a>        <span class="n">bridges</span> <span class="o">=</span> <span class="n">llm_infer_topology</span><span class="p">(</span><span class="n">layer_name</span><span class="p">,</span> <span class="n">lines</span><span class="p">)</span>
+<a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a>        <span class="k">if</span> <span class="n">bridges</span><span class="p">:</span>
+<a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a>            <span class="n">polys</span> <span class="o">=</span> <span class="n">_polys_at_tolerance</span><span class="p">(</span><span class="n">lines</span> <span class="o">+</span> <span class="n">bridges</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+<a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a>            <span class="k">if</span> <span class="n">polys</span><span class="p">:</span>
+<a id="__codelineno-3-39" name="__codelineno-3-39" href="#__codelineno-3-39"></a>                <span class="k">return</span> <span class="n">polys</span><span class="p">,</span> <span class="n">FillResult</span><span class="p">(</span><span class="n">layer_name</span><span class="p">,</span> <span class="s2">&quot;llm_topology&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-40" name="__codelineno-3-40" href="#__codelineno-3-40"></a>                                         <span class="mf">0.7</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">polys</span><span class="p">),</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-3-41" name="__codelineno-3-41" href="#__codelineno-3-41"></a>
+<a id="__codelineno-3-42" name="__codelineno-3-42" href="#__codelineno-3-42"></a>    <span class="c1"># Existing: concave_hull, bbox (unchanged)</span>
+<a id="__codelineno-3-43" name="__codelineno-3-43" href="#__codelineno-3-43"></a>    <span class="k">return</span> <span class="n">_existing_lossy_fallbacks</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">)</span>
+<a id="__codelineno-3-44" name="__codelineno-3-44" href="#__codelineno-3-44"></a>
+<a id="__codelineno-3-45" name="__codelineno-3-45" href="#__codelineno-3-45"></a>
+<a id="__codelineno-3-46" name="__codelineno-3-46" href="#__codelineno-3-46"></a><span class="k">def</span><span class="w"> </span><span class="nf">collapse_endpoint_clusters</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="s2">&quot;adaptive&quot;</span><span class="p">):</span>
+<a id="__codelineno-3-47" name="__codelineno-3-47" href="#__codelineno-3-47"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;DBSCAN-collapse endpoints with adaptive eps.&quot;&quot;&quot;</span>
+<a id="__codelineno-3-48" name="__codelineno-3-48" href="#__codelineno-3-48"></a>    <span class="n">eps_v</span> <span class="o">=</span> <span class="n">_adaptive_eps</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="k">if</span> <span class="n">eps</span> <span class="o">==</span> <span class="s2">&quot;adaptive&quot;</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span>
+<a id="__codelineno-3-49" name="__codelineno-3-49" href="#__codelineno-3-49"></a>    <span class="n">pts</span> <span class="o">=</span> <span class="n">_all_endpoints</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+<a id="__codelineno-3-50" name="__codelineno-3-50" href="#__codelineno-3-50"></a>    <span class="n">db</span> <span class="o">=</span> <span class="n">DBSCAN</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">eps_v</span><span class="p">,</span> <span class="n">min_samples</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">pts</span><span class="p">)</span>
+<a id="__codelineno-3-51" name="__codelineno-3-51" href="#__codelineno-3-51"></a>    <span class="n">centroids</span> <span class="o">=</span> <span class="n">_cluster_centroids</span><span class="p">(</span><span class="n">pts</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">labels_</span><span class="p">)</span>
+<a id="__codelineno-3-52" name="__codelineno-3-52" href="#__codelineno-3-52"></a>    <span class="k">return</span> <span class="n">_rewrite_lines_with_collapsed_endpoints</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">labels_</span><span class="p">,</span> <span class="n">centroids</span><span class="p">)</span>
+<a id="__codelineno-3-53" name="__codelineno-3-53" href="#__codelineno-3-53"></a>
+<a id="__codelineno-3-54" name="__codelineno-3-54" href="#__codelineno-3-54"></a>
+<a id="__codelineno-3-55" name="__codelineno-3-55" href="#__codelineno-3-55"></a><span class="k">def</span><span class="w"> </span><span class="nf">llm_infer_topology</span><span class="p">(</span><span class="n">layer_name</span><span class="p">,</span> <span class="n">lines</span><span class="p">):</span>
+<a id="__codelineno-3-56" name="__codelineno-3-56" href="#__codelineno-3-56"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Ask Claude Haiku for closing bridges. Returns list[LineString].&quot;&quot;&quot;</span>
+<a id="__codelineno-3-57" name="__codelineno-3-57" href="#__codelineno-3-57"></a>    <span class="kn">import</span><span class="w"> </span><span class="nn">anthropic</span>
+<a id="__codelineno-3-58" name="__codelineno-3-58" href="#__codelineno-3-58"></a>    <span class="n">client</span> <span class="o">=</span> <span class="n">anthropic</span><span class="o">.</span><span class="n">Anthropic</span><span class="p">()</span>
+<a id="__codelineno-3-59" name="__codelineno-3-59" href="#__codelineno-3-59"></a>    <span class="n">endpoints</span><span class="p">,</span> <span class="n">polylines_json</span> <span class="o">=</span> <span class="n">_serialize_for_llm</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+<a id="__codelineno-3-60" name="__codelineno-3-60" href="#__codelineno-3-60"></a>
+<a id="__codelineno-3-61" name="__codelineno-3-61" href="#__codelineno-3-61"></a>    <span class="n">msg</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+<a id="__codelineno-3-62" name="__codelineno-3-62" href="#__codelineno-3-62"></a>        <span class="n">model</span><span class="o">=</span><span class="s2">&quot;claude-haiku-4-5&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-63" name="__codelineno-3-63" href="#__codelineno-3-63"></a>        <span class="n">max_tokens</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+<a id="__codelineno-3-64" name="__codelineno-3-64" href="#__codelineno-3-64"></a>        <span class="n">system</span><span class="o">=</span><span class="p">[{</span>
+<a id="__codelineno-3-65" name="__codelineno-3-65" href="#__codelineno-3-65"></a>            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-66" name="__codelineno-3-66" href="#__codelineno-3-66"></a>            <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="n">LLM_SYSTEM_PROMPT</span><span class="p">,</span>
+<a id="__codelineno-3-67" name="__codelineno-3-67" href="#__codelineno-3-67"></a>            <span class="s2">&quot;cache_control&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;ephemeral&quot;</span><span class="p">},</span>  <span class="c1"># boilerplate is identical</span>
+<a id="__codelineno-3-68" name="__codelineno-3-68" href="#__codelineno-3-68"></a>        <span class="p">}],</span>
+<a id="__codelineno-3-69" name="__codelineno-3-69" href="#__codelineno-3-69"></a>        <span class="n">messages</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">_format_user_msg</span><span class="p">(</span>
+<a id="__codelineno-3-70" name="__codelineno-3-70" href="#__codelineno-3-70"></a>            <span class="n">layer_name</span><span class="p">,</span> <span class="n">endpoints</span><span class="p">,</span> <span class="n">polylines_json</span>
+<a id="__codelineno-3-71" name="__codelineno-3-71" href="#__codelineno-3-71"></a>        <span class="p">)}],</span>
+<a id="__codelineno-3-72" name="__codelineno-3-72" href="#__codelineno-3-72"></a>    <span class="p">)</span>
+<a id="__codelineno-3-73" name="__codelineno-3-73" href="#__codelineno-3-73"></a>    <span class="n">plan</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+<a id="__codelineno-3-74" name="__codelineno-3-74" href="#__codelineno-3-74"></a>    <span class="k">return</span> <span class="n">_bridges_from_plan</span><span class="p">(</span><span class="n">plan</span><span class="p">,</span> <span class="n">lines</span><span class="p">)</span>
+</code></pre></div>
+<p>The full prompt template, JSON schema, and response validator live alongside
+the implementation in <code>bridge_llm.py</code> (a new module).</p>
+<hr />
+<h2 id="implementation-plan-for-e1-next-milestone">Implementation plan for E1 (next milestone)<a class="headerlink" href="#implementation-plan-for-e1-next-milestone" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Task</th>
+<th>Days</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Land Approach #7 (backtracking bridger). Pure geometry, no new deps, unblocks <code>11_CU_CORR</code>. Includes test fixture in <code>tests/fixtures/cu_corr_*.json</code>.</td>
+<td>1.0</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Land Approach #1 (DBSCAN endpoint collapse). Add <code>scikit-learn</code> as opt dep (<code>pip install arch-line-weights[ml]</code>). Hand-rolled DBSCAN if dep is unwelcome.</td>
+<td>1.0</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Land Approach #4 (α-shape sweep). Replaces <code>concave_hull</code> fallback with a graded α-shape selection. Improves fidelity for <code>26_CLT_GAP</code>.</td>
+<td>0.5</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Land Approach #5 (LLM topology inference) behind feature flag <code>ARCH_LW_LLM_FALLBACK=1</code>. Requires <code>anthropic</code> opt dep + prompt caching per <code>claude-api</code> skill. Ship a 30-prompt regression suite (real layer dumps, golden polygon counts).</td>
+<td>1.5</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Add per-layer JSON override schema for "force strategy X" so users can pin the choice when the cascade picks wrong.</td>
+<td>0.5</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Update <code>disconnected-loops.md</code> to v0.5; backfill <code>POSTMORTEM.md</code> Attempt 9.</td>
+<td>0.25</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td></td>
+<td><strong>~4.75 person-days</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Phase 4 (LLM) is the highest-risk; if it doesn't reach 3/3 in the spike, fall
+back to "ship 1+7+4 and keep <code>__POCHE_CLOSE__</code> as the documented escape for
+the residual ~3% of layers."</p>
+<hr />
+<h2 id="what-this-report-does-not-prove">What this report does NOT prove<a class="headerlink" href="#what-this-report-does-not-prove" title="Permanent link">&para;</a></h2>
+<p>The three problem layers were not loaded into a Python REPL during this
+research session — the geometry dump only exists alongside an Illustrator
+session and the ARCH 202B <code>.ai</code> reference file. The pathology descriptions
+above are reconstructed from <code>POSTMORTEM.md</code> Attempts 4-5, the layer-name
+semantics (<code>WINDOW_FRAMES_REMAP</code>, <code>CLT_GAP_ROOF_CAP</code>,
+<code>CU_CORR_SOLID_OPAQUE</code>), and the failure-mode signatures of the existing
+strategies. The recommended approach is high-confidence on
+<code>11_CU_CORR_SOLID_OPAQUE</code> (textbook greedy-bridger failure), medium-
+confidence on <code>26_CLT_GAP_ROOF_CAP</code> (α-shape behavior on two-cluster inputs
+is well-documented but layer-specific), and uncertain on
+<code>23_WINDOW_FRAMES_REMAP</code> (the LLM-as-topology-inferer claim is the
+weakest link in this chain).</p>
+<p><strong>Concrete next step before E1 commit:</strong> run <code>arch-lw poche</code> once with
+<code>ARCH_LW_DUMP_RAW=1</code> on the reference drawing; checkpoint the three
+layers' anchor JSONs into <code>tests/fixtures/</code>, and use them as the
+regression set for any of the eight approaches. Estimated 60 minutes.
+This is the single most valuable thing a follow-up spike can do.</p>
+<hr />
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://scikit-learn.org/stable/modules/generated/sklearn.cluster.DBSCAN.html">scikit-learn DBSCAN docs</a></li>
+<li><a href="https://scikit-learn.org/stable/modules/generated/sklearn.cluster.SpectralClustering.html">scikit-learn SpectralClustering docs</a></li>
+<li><a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.Voronoi.html">scipy.spatial.Voronoi</a></li>
+<li><a href="https://pypi.org/project/alphashape/"><code>alphashape</code> PyPI</a></li>
+<li><a href="https://www.anthropic.com/pricing">Anthropic Haiku 3.5 pricing</a></li>
+<li><a href="https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching">Anthropic prompt caching</a></li>
+<li><a href="https://shapely.readthedocs.io/en/stable/strtree.html">Shapely STRtree</a></li>
+<li><code>docs/research/disconnected-loops.md</code> (v0.4 strategy ladder)</li>
+<li><code>docs/POSTMORTEM.md</code> Attempts 4-5 (per-layer pathology evidence)</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 zohartito — MIT License
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/zohartito/arch-line-weights" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.action.edit", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -12,7 +12,7 @@
         <meta name="author" content="zohartito">
       
       
-        <link rel="canonical" href="https://zohartito.github.io/arch-line-weights/research/distribution-platforms/">
+        <link rel="canonical" href="https://zohartito.github.io/arch-line-weights/research/apply-saas-port-notes/">
       
       
       
@@ -25,7 +25,7 @@
     
     
       
-        <title>Distribution platforms — Gumroad vs Lemon Squeezy vs Paddle vs Stripe - arch-line-weights</title>
+        <title>Porting apply.py to operate on the AI native payload — implementation notes - arch-line-weights</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#distribution-platforms-gumroad-vs-lemon-squeezy-vs-paddle-vs-stripe" class="md-skip">
+        <a href="#porting-applypy-to-operate-on-the-ai-native-payload-implementation-notes" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Distribution platforms — Gumroad vs Lemon Squeezy vs Paddle vs Stripe
+              Porting apply.py to operate on the AI native payload — implementation notes
             
           </span>
         </div>
@@ -1006,10 +1006,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#recommendation" class="md-nav__link">
+  <a href="#what-got-built" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Recommendation
+        What got built
       
     </span>
   </a>
@@ -1017,44 +1017,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#comparison-matrix" class="md-nav__link">
+  <a href="#design" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Comparison matrix
+        Design
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#why-merchant-of-record-matters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why Merchant of Record matters
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#lemon-squeezy-deep-dive" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Lemon Squeezy — deep dive
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Lemon Squeezy — deep dive">
+    <nav class="md-nav" aria-label="Design">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#pros" class="md-nav__link">
+  <a href="#stroke-width-op-forms" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pros
+        Stroke-width op forms
       
     </span>
   </a>
@@ -1062,10 +1040,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#cons" class="md-nav__link">
+  <a href="#color-tracking" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cons
+        Color tracking
       
     </span>
   </a>
@@ -1073,10 +1051,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#license-key-flow" class="md-nav__link">
+  <a href="#edit-ordering" class="md-nav__link">
     <span class="md-ellipsis">
       
-        License-key flow
+        Edit ordering
       
     </span>
   </a>
@@ -1089,10 +1067,82 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#gumroad-why-not-for-this-project" class="md-nav__link">
+  <a href="#edge-cases-discovered-during-implementation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Gumroad — why not (for this project)
+        Edge cases discovered during implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Edge cases discovered during implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-pikepdf-auto-applies-flatedecode-to-new-streams" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. pikepdf auto-applies /FlateDecode to new streams
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-cmyk-gray-strokes-silently-fall-through-to-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. CMYK / Gray strokes silently fall through to default
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-files-with-no-pieceinfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Files with no /PieceInfo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-width-token-formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Width-token formatting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-a-stroke-width-op-with-no-preceding-xa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. A stroke-width op with no preceding XA
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limitations-known-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limitations / known gaps
       
     </span>
   </a>
@@ -1100,10 +1150,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#paddle-why-not-yet" class="md-nav__link">
+  <a href="#verification" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Paddle — why not (yet)
+        Verification
       
     </span>
   </a>
@@ -1111,10 +1161,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#stripe-own-when-to-migrate" class="md-nav__link">
+  <a href="#next-steps-out-of-scope-for-this-port" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Stripe + own — when to migrate
+        Next steps (out of scope for this port)
       
     </span>
   </a>
@@ -1122,65 +1172,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#phase-d-plan-lemon-squeezy" class="md-nav__link">
+  <a href="#time-spent" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase D plan (Lemon Squeezy)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#phase-f-notes-web-app" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase F notes (Web app)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cost-projection-year-1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cost projection — Year 1
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sources" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sources
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#subscription-pricing-reanalysis-2026-04-30" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Subscription pricing reanalysis (2026-04-30)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related
+        Time spent
       
     </span>
   </a>
@@ -1204,7 +1199,7 @@
 
 
   
-    <a href="https://github.com/zohartito/arch-line-weights/edit/main/docs/research/distribution-platforms.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/zohartito/arch-line-weights/edit/main/docs/research/apply-saas-port-notes.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
     </a>
@@ -1212,300 +1207,244 @@
   
 
 
-<h1 id="distribution-platforms-gumroad-vs-lemon-squeezy-vs-paddle-vs-stripe">Distribution platforms — Gumroad vs Lemon Squeezy vs Paddle vs Stripe<a class="headerlink" href="#distribution-platforms-gumroad-vs-lemon-squeezy-vs-paddle-vs-stripe" title="Permanent link">&para;</a></h1>
+<h1 id="porting-applypy-to-operate-on-the-ai-native-payload-implementation-notes">Porting <code>apply.py</code> to operate on the AI native payload — implementation notes<a class="headerlink" href="#porting-applypy-to-operate-on-the-ai-native-payload-implementation-notes" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Sub-agent research, 2026-04-30. Inputs to Phase D distribution v1.</p>
+<p>2026-04-30. Companion document to <code>saas-architecture.md</code>. Records the
+design decisions and edge cases encountered while implementing
+<code>src/arch_line_weights/apply_saas.py</code>.</p>
 </blockquote>
-<h2 id="recommendation">Recommendation<a class="headerlink" href="#recommendation" title="Permanent link">&para;</a></h2>
-<p><strong>Lemon Squeezy</strong> for v1 (Phase D, month 2). Migrate to <strong>Stripe + own
-infra</strong> at ~$2-3k/month revenue (around the time you'd hire help).</p>
-<h2 id="comparison-matrix">Comparison matrix<a class="headerlink" href="#comparison-matrix" title="Permanent link">&para;</a></h2>
+<h2 id="what-got-built">What got built<a class="headerlink" href="#what-got-built" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Platform</th>
-<th>Per-tx fee</th>
-<th>MoR?</th>
-<th>License keys</th>
-<th>Sub support</th>
-<th>Best fit</th>
+<th>File</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Gumroad</strong></td>
-<td>10% + 50¢</td>
-<td>❌ No</td>
-<td>Manual / via Zapier</td>
-<td>Weak</td>
-<td>One-shot drops, audience-driven</td>
+<td><code>src/arch_line_weights/apply_saas.py</code></td>
+<td>New module — pure-pikepdf headless apply path.</td>
 </tr>
 <tr>
-<td><strong>Lemon Squeezy</strong> ⭐</td>
-<td>5% + 50¢</td>
-<td>✅ Yes</td>
-<td>✅ Native API</td>
-<td>✅ Strong</td>
-<td>Indie SaaS + tools, EU-compliant</td>
+<td><code>src/arch_line_weights/cli.py</code></td>
+<td>Added <code>arch-lw apply-saas</code> subcommand alongside <code>apply</code> and <code>apply-jsx</code>.</td>
 </tr>
 <tr>
-<td><strong>Paddle</strong></td>
-<td>5% + 50¢ or 10%</td>
-<td>✅ Yes</td>
-<td>Via integration partners</td>
-<td>✅ Strong</td>
-<td>Bigger SaaS, $50k+/yr</td>
-</tr>
-<tr>
-<td><strong>FastSpring</strong></td>
-<td>5.9% + $0.95</td>
-<td>✅ Yes</td>
-<td>✅ Yes</td>
-<td>✅ Strong</td>
-<td>Enterprise / B2B desktop apps</td>
-</tr>
-<tr>
-<td><strong>Stripe + own</strong></td>
-<td>2.9% + 30¢</td>
-<td>❌ No</td>
-<td>Build yourself</td>
-<td>✅ Strong</td>
-<td>When volume justifies infra</td>
+<td><code>tests/test_apply_saas.py</code></td>
+<td>9 unit tests covering round-trip, rewrite, classification parity.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="why-merchant-of-record-matters">Why Merchant of Record matters<a class="headerlink" href="#why-merchant-of-record-matters" title="Permanent link">&para;</a></h2>
-<p>A Merchant of Record (MoR) is the legal entity that sells to your
-buyer. <strong>Without an MoR</strong>, you are responsible for:</p>
-<ul>
-<li>US sales tax in 45+ states (each with its own threshold and
-  registration). Wayfair v. South Dakota (2018) makes you liable as
-  soon as you cross thresholds.</li>
-<li>EU VAT MOSS (~$100/yr, quarterly filings, registration in any one
-  EU country to cover the others).</li>
-<li>UK VAT registration (post-Brexit; separate from EU).</li>
-<li>Australian GST.</li>
-<li>Canadian GST/HST/PST per province.</li>
-<li>Chargeback handling.</li>
-<li>Fraud / 3DS compliance.</li>
-</ul>
-<p><strong>With an MoR (Lemon Squeezy, Paddle, FastSpring)</strong>, all of the above
-becomes the platform's problem. They charge a higher per-tx fee — 2-3
-percentage points more than Stripe — in exchange. That's worth it
-until you're large enough to staff or outsource tax compliance.</p>
-<p>Gumroad <strong>is not</strong> an MoR — they used to be, then they removed it in
-2022. If you go Gumroad, you're on the hook for global sales tax.
-This is the main reason against them.</p>
-<h2 id="lemon-squeezy-deep-dive">Lemon Squeezy — deep dive<a class="headerlink" href="#lemon-squeezy-deep-dive" title="Permanent link">&para;</a></h2>
-<h3 id="pros">Pros<a class="headerlink" href="#pros" title="Permanent link">&para;</a></h3>
-<ol>
-<li><strong>Merchant of Record</strong> — they handle global tax including EU VAT,
-   UK VAT, US sales tax, Australian GST, etc.</li>
-<li><strong>Native license-key API</strong> — issue, validate, revoke license keys
-   as part of checkout. Built for software vendors.</li>
-<li><strong>Subscription support</strong> — recurring billing, dunning, tax-inclusive
-   pricing, customer portal.</li>
-<li><strong>5% + 50¢</strong> — cheaper than Gumroad (10% + 50¢) and Paddle's high
-   tier (10%).</li>
-<li><strong>Simple checkout</strong> — embeddable JS or hosted page; no PCI compliance
-   for you.</li>
-<li><strong>Webhook ecosystem</strong> — clean events for <code>order_created</code>,
-   <code>subscription_updated</code>, etc. Integrates with Postmark, ConvertKit,
-   Discord, Beehiiv out of the box.</li>
-<li><strong>Affiliate program built-in</strong> — pay other architects 20-30% commission
-   to promote.</li>
-<li><strong>Free trial / pre-order support</strong> — built into product config.</li>
-<li><strong>Strong indie reputation</strong> — used by Tailwind UI, Astro, Resend,
-   many indie tools in 2024-2026.</li>
-</ol>
-<h3 id="cons">Cons<a class="headerlink" href="#cons" title="Permanent link">&para;</a></h3>
-<ol>
-<li><strong>Newer than Stripe</strong> (founded 2021) — less battle-tested.</li>
-<li><strong>Acquired by Stripe</strong> (2024) but operates independently. Implies
-   long-term Stripe migration path is plausible.</li>
-<li><strong>No 3-D Secure exemption</strong> for low-fraud-risk transactions —
-   marginally higher friction than raw Stripe.</li>
-<li><strong>Less granular reporting</strong> than Stripe Sigma.</li>
-</ol>
-<h3 id="license-key-flow">License-key flow<a class="headerlink" href="#license-key-flow" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Buyer purchases → Lemon Squeezy issues license key (UUIDv4) →
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  Webhook to your server → Local DB stores hash(key) →
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    arch-lw on first run prompts for key →
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>      arch-lw POSTs to https://api.lemonsqueezy.com/v1/licenses/validate →
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        Returns { valid: true, expires_at, instances_remaining } →
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>          arch-lw caches signed token (HMAC, 7-day TTL) →
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>            Re-validate on update or after TTL expires
+<h2 id="design">Design<a class="headerlink" href="#design" title="Permanent link">&para;</a></h2>
+<p>The pipeline mirrors <code>scripts/spike/saas-feasibility/08_modify_stroke_width.py</code>
+exactly. The only meaningful structural difference vs the spike is generality:
+the spike hard-coded one layer name and one width substitution, whereas
+<code>apply_saas.py</code> walks all <code>XA</code> (stroke-color set) tokens and rewrites the
+following <code>&lt;w&gt; w</code> (stroke-width set) tokens per the same RGB → weight mapping
+that <code>apply.py</code> consumes.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>read .ai → concat AIPrivateData&lt;i&gt; streams → strip 20-byte prefix
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                                            → zstd-decompress
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>                                            ↓
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>        rewrite_payload(payload, mapping)  ←  walk XA + w tokens, replace
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                                            ↓
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                                            → zstd-compress (level 19)
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                                            → prepend prefix
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>                                            → 64 KB chunk → write streams
 </code></pre></div>
-<p>For offline-first CLI: validate once online, cache HMAC-signed token
-locally. No phone-home on every run.</p>
-<h2 id="gumroad-why-not-for-this-project">Gumroad — why not (for this project)<a class="headerlink" href="#gumroad-why-not-for-this-project" title="Permanent link">&para;</a></h2>
-<p>Gumroad is good for:
-- Audience-driven creators (newsletter → product)
-- One-time digital goods (PDFs, music, courses)
-- Buyers who already trust the Gumroad brand</p>
-<p>Bad fit here because:
-- 10% + 50¢ is 2× Lemon Squeezy's fee
-- No MoR — you eat global tax compliance
-- No native license-key API (rolled-your-own via Zapier)
-- Subscription support is bolted-on rather than first-class
-- Developer experience (webhooks, API) is weaker</p>
-<p>The only argument for Gumroad: zero setup time. Their checkout page
-exists in 5 minutes. Lemon Squeezy takes 30. Not enough to justify
-the trade-offs.</p>
-<h2 id="paddle-why-not-yet">Paddle — why not (yet)<a class="headerlink" href="#paddle-why-not-yet" title="Permanent link">&para;</a></h2>
-<p>Paddle is the heavyweight in the indie-SaaS space. They were the
-default before Lemon Squeezy launched. Their fee is <strong>5% + 50¢
-($1k–10k/month tier)</strong> or <strong>10%</strong> for low-volume sellers.</p>
-<p>Reject because:
-- Onboarding has more compliance friction (more docs, longer review).
-- Their dashboard / API are more "enterprise" feeling — slower to
-  iterate.
-- The fee advantage (5% same as LS) only kicks in at scale we're not
-  at yet.</p>
-<p>Reconsider Paddle if:
-- You hit $5k+/mo and want a more mature analytics dashboard.
-- You want B2B-focused features (custom invoicing, NET-30 payment
-  terms, vendor onboarding).
-- A single enterprise architect studio asks for a custom contract;
-  Paddle's invoicing is better for that than Lemon Squeezy's.</p>
-<h2 id="stripe-own-when-to-migrate">Stripe + own — when to migrate<a class="headerlink" href="#stripe-own-when-to-migrate" title="Permanent link">&para;</a></h2>
-<p>You graduate from MoR-platforms to Stripe when:</p>
+<h3 id="stroke-width-op-forms">Stroke-width op forms<a class="headerlink" href="#stroke-width-op-forms" title="Permanent link">&para;</a></h3>
+<p>The AI native PostScript payload uses two distinct shapes of <code>&lt;w&gt; w</code> operator:</p>
 <ol>
-<li>Revenue is <strong>$2-3k+/month</strong> and the MoR fee delta exceeds the cost
-   of compliance tooling (Stripe Tax: 0.5%, Stripe Atlas, etc.).</li>
-<li>You want <strong>Stripe Atlas</strong> for company formation in Delaware.</li>
-<li>You're building a multi-product platform, not a single tool.</li>
-<li>You hire help (CPA, lawyer) who can manage tax filings.</li>
+<li><strong>Bare form</strong> — <code>\r&lt;w&gt; w\r</code> on its own CR-delimited line. Common for
+   per-path width changes inside a layer block.</li>
+<li><strong>Setup form</strong> — <code>\r&lt;cap&gt; J &lt;join&gt; j &lt;w&gt; w 4 M []0 d</code> as part of a
+   line-attribute setup line. Common at the start of a path with non-default
+   join / cap / dash. The width is the third float.</li>
 </ol>
-<p>Stripe Tax (0.5% per tx) handles US states, EU VAT, UK VAT, etc.
-<strong>but</strong> you still have to register in each jurisdiction yourself.
-Stripe Tax calculates and reports; it doesn't register.</p>
-<p>Migration is non-destructive:
-- New customers go through Stripe.
-- Lemon Squeezy customers stay on Lemon Squeezy until they re-buy.
-- Webhooks from both platforms feed your same license-key DB.</p>
-<h2 id="phase-d-plan-lemon-squeezy">Phase D plan (Lemon Squeezy)<a class="headerlink" href="#phase-d-plan-lemon-squeezy" title="Permanent link">&para;</a></h2>
-<ol>
-<li>Create Lemon Squeezy account + verify identity (1-3 days).</li>
-<li>Set up storefront with 4 products:</li>
-<li>Founder 100 — $19 (limit 100 stock)</li>
-<li>Student — $29</li>
-<li>Personal — $79</li>
-<li>Small Studio — $249/yr</li>
-<li>Configure license-key API access.</li>
-<li>Build a tiny <code>license-server</code> (a Cloudflare Worker or Vercel
-   function) that:</li>
-<li>Receives <code>order_created</code> webhooks from Lemon Squeezy</li>
-<li>Stores <code>hash(license_key) → tier</code> in a KV store</li>
-<li>Exposes <code>POST /validate</code> for <code>arch-lw</code> to check</li>
-<li>In <code>arch-lw</code>, add <code>arch-lw activate &lt;key&gt;</code> command + offline cache.</li>
-<li>Email Phase C interviewees a 50%-off launch code.</li>
-<li>Post on Twitter/X, USC Discord, ArchDaily, Hacker News
-   (probably HN: "Show HN: arch-line-weights — paid, not OSS").</li>
-</ol>
-<h2 id="phase-f-notes-web-app">Phase F notes (Web app)<a class="headerlink" href="#phase-f-notes-web-app" title="Permanent link">&para;</a></h2>
-<p>When the web app ships, Lemon Squeezy still works — you can mix
-self-hosted CLI sales with web SaaS subscriptions in the same
-storefront. They support both.</p>
-<p>Migrate to Stripe when revenue justifies; until then, the MoR
-overhead is worth more than the fee delta.</p>
-<h2 id="cost-projection-year-1">Cost projection — Year 1<a class="headerlink" href="#cost-projection-year-1" title="Permanent link">&para;</a></h2>
-<p>Assuming aggressive year 1 from <code>pricing-research.md</code> (~$20,830 gross):</p>
+<p>Both forms are matched by their own regex (<code>_BARE_W_RE</code>, <code>_SETUP_W_RE</code>) and
+both rewriters preserve the surrounding tokens (the <code>J</code>/<code>j</code> prefix, the
+<code>4 M</code> miter, the <code>[]0 d</code> dash).</p>
+<h3 id="color-tracking">Color tracking<a class="headerlink" href="#color-tracking" title="Permanent link">&para;</a></h3>
+<p><code>XA</code> sets the stroke color via <code>&lt;C&gt; &lt;M&gt; &lt;Y&gt; &lt;K&gt; &lt;R&gt; &lt;G&gt; &lt;B&gt; XA</code> — 7 floats.
+The last three (RGB, 0..1) drive our mapping. We collect every <code>XA</code> position
+in a single linear scan, then for each <code>&lt;w&gt; w</code> operator look up the most
+recent prior <code>XA</code> position to decide the weight. This mirrors the
+<code>current_rgb</code> tracking in <code>apply.py::_rewrite</code>.</p>
+<h3 id="edit-ordering">Edit ordering<a class="headerlink" href="#edit-ordering" title="Permanent link">&para;</a></h3>
+<p>Both regex passes emit <code>(start, end, replacement)</code> tuples into one list,
+sorted by start offset, then applied left-to-right with overlap suppression.
+The two regex shapes do not overlap (the bare form starts with <code>\r&lt;f&gt; w\r</code>,
+the setup form starts with <code>\r&lt;f&gt; J</code>), so the dedup is purely defensive.</p>
+<h2 id="edge-cases-discovered-during-implementation">Edge cases discovered during implementation<a class="headerlink" href="#edge-cases-discovered-during-implementation" title="Permanent link">&para;</a></h2>
+<h3 id="1-pikepdf-auto-applies-flatedecode-to-new-streams">1. pikepdf auto-applies <code>/FlateDecode</code> to new streams<a class="headerlink" href="#1-pikepdf-auto-applies-flatedecode-to-new-streams" title="Permanent link">&para;</a></h3>
+<p>When you do <code>pdf.make_stream(c)</code> and save, pikepdf wraps the chunk in
+<code>/FlateDecode</code>. Adobe's own .ai files don't filter the AIPrivateData streams
+at all, so <code>read_raw_bytes()</code> works on Illustrator-saved files and fails on
+pikepdf-resaved ones.</p>
+<p><strong>Fix:</strong> read with <code>read_bytes()</code> (filter-aware), so the same module handles
+both Illustrator-saved and pikepdf-saved files. Round-trips are now stable:
+the synthetic test fixture stays at 290 bytes through repeated apply-saas
+runs.</p>
+<p>This was the only concrete blocker hit during the port. ~5 minutes to
+diagnose, 1 line of code to fix.</p>
+<h3 id="2-cmyk-gray-strokes-silently-fall-through-to-default">2. CMYK / Gray strokes silently fall through to default<a class="headerlink" href="#2-cmyk-gray-strokes-silently-fall-through-to-default" title="Permanent link">&para;</a></h3>
+<p><code>apply.py</code> only matches <code>RG</code> (RGB stroke-color setters in PDF content
+streams); CMYK strokes (<code>K</code>) and gray strokes (<code>G</code>) are skipped. We mirror
+that here: only <code>XA</code>'s last 3 RGB floats are read. CMYK-only files would
+need a separate code path — not in scope for this port.</p>
+<h3 id="3-files-with-no-pieceinfo">3. Files with no <code>/PieceInfo</code><a class="headerlink" href="#3-files-with-no-pieceinfo" title="Permanent link">&para;</a></h3>
+<p>A plain <code>.pdf</code> (or an <code>.ai</code> saved without the round-trip option) won't have
+<code>/PieceInfo /Illustrator /Private</code>. The module raises <code>ValueError</code> early
+with a clear message; the CLI surfaces this to the user. The right call
+in that case is to fall back to <code>arch-lw apply</code> (the existing PDF-stream
+rewriter).</p>
+<h3 id="4-width-token-formatting">4. Width-token formatting<a class="headerlink" href="#4-width-token-formatting" title="Permanent link">&para;</a></h3>
+<p>AI native uses bare integers (<code>5 w</code>) for whole-number widths and
+decimals (<code>0.25 w</code>) otherwise. Python's <code>f"{w:g}"</code> formats <code>1.0</code> as <code>"1"</code>
+correctly, but <code>f"{int(w):g}"</code> would lose precision for something like
+<code>0.25</code>. We pick the right form via <code>if w == int(w): str(int(w)) else f"{w:g}"</code>
+in <code>_format_width</code>. Tested at boundaries (<code>1.0</code>, <code>5.0</code>, <code>0.25</code>, <code>0.13</code>).</p>
+<h3 id="5-a-stroke-width-op-with-no-preceding-xa">5. A stroke-width op with no preceding <code>XA</code><a class="headerlink" href="#5-a-stroke-width-op-with-no-preceding-xa" title="Permanent link">&para;</a></h3>
+<p>If the payload places a <code>&lt;w&gt; w</code> before any <code>XA</code> (e.g. a default in a
+prologue), <code>_color_at(offset)</code> returns <code>None</code>. We rewrite to <code>default_width</code>
+in that case. This is consistent with <code>apply.py</code>'s behavior (no <code>current_rgb</code>
+yet → use <code>default_width</code>), and the test
+<code>test_rewrite_no_xa_uses_default</code> covers it.</p>
+<h2 id="limitations-known-gaps">Limitations / known gaps<a class="headerlink" href="#limitations-known-gaps" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Item</th>
-<th>Cost</th>
+<th>#</th>
+<th>Limitation</th>
+<th>Impact</th>
+<th>Possible follow-up</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Lemon Squeezy fees (5% + 50¢ × 570 tx)</td>
-<td>~$1,326</td>
+<td>1</td>
+<td>RGB-only mapping</td>
+<td>CMYK / Gray strokes skipped</td>
+<td>Add a CMYK→tier path if a user file actually contains CMYK strokes (none observed in Rhino exports).</td>
 </tr>
 <tr>
-<td>Stripe alternative (2.9% + 30¢ × 570 tx + tax compliance)</td>
-<td>~$1,275 + $500 tax = $1,775</td>
+<td>2</td>
+<td>No layer-aware classification</td>
+<td>Width is per-color, not per-layer</td>
+<td>The semantic classifier in <code>layer_classify.py</code> works on layer names; a future enhancement could parse <code>(LayerName) Ln</code> markers and bucket strokes per layer. Out of scope here.</td>
 </tr>
 <tr>
-<td><strong>Lemon Squeezy net advantage</strong></td>
-<td><strong>~$449</strong></td>
+<td>3</td>
+<td><code>default_width</code> always overrides</td>
+<td>A stroke whose color isn't in the mapping always gets rewritten</td>
+<td><code>apply.py</code> has the same behavior. Could be a flag (<code>--leave-unmatched</code>).</td>
+</tr>
+<tr>
+<td>4</td>
+<td>No validation that the modified file still parses as <code>.ai</code></td>
+<td>The function relies on the spike's empirical proof that Illustrator round-trips this format</td>
+<td>The <code>04_roundtrip_modify.py</code> and <code>08_modify_stroke_width.py</code> spikes have already validated the format end-to-end through Illustrator.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>One page only</td>
+<td>The current implementation reads <code>pdf.pages[0]</code></td>
+<td>Rhino exports are always single-page; multi-page would need a loop.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>No <code>--keep-pieceinfo</code> flag</td>
+<td>Always preserves PieceInfo (the entire point of this path)</td>
+<td>If a user wants the strip-and-rewrite-PDF-stream behavior, they should use <code>arch-lw apply</code>.</td>
 </tr>
 </tbody>
 </table>
-<p>Conservative ($9,321 gross):</p>
+<h2 id="verification">Verification<a class="headerlink" href="#verification" title="Permanent link">&para;</a></h2>
+<p>End-to-end smoke test against a synthetic fixture (no real user files
+touched):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>$ python /tmp/build_synthetic_ai.py        # builds 1.2 KB .ai with 2 strokes
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>$ arch-lw apply-saas /tmp/synthetic_test.ai --auto --preset section \
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>      -o /tmp/synthetic_test_OUT.ai
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a># 2 colors mapped using auto:section
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>--- 1.0 pt ---
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  RGB(  0,  0,  0)        1 strokes
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>--- 0.08 pt ---
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  RGB(255,  0,  0)        1 strokes
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>rewrote 2 stroke-width ops across 2 stroke-color sets
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>payload: 292 → 290 bytes (1 → 1 chunks)
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>   0.08 pt  →        1 ops
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    1.0 pt  →        1 ops
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>wrote /tmp/synthetic_test_OUT.ai  (1,238 bytes)
+</code></pre></div>
+<p>Decompressed payload before/after, side-by-side:</p>
 <table>
 <thead>
 <tr>
-<th>Item</th>
-<th>Cost</th>
+<th>Layer / token</th>
+<th>Before</th>
+<th>After</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Lemon Squeezy fees (5% + 50¢ × 279 tx)</td>
-<td>~$606</td>
+<td><code>(SyntheticLayerA) Ln</code></td>
+<td>preserved</td>
+<td>preserved</td>
 </tr>
 <tr>
-<td>Stripe alt (2.9% + 30¢ × 279 + tax compliance)</td>
-<td>~$554 + $500 = $1,054</td>
+<td>red XA <code>0 0 0 0 1 0 0</code></td>
+<td>preserved</td>
+<td>preserved</td>
 </tr>
 <tr>
-<td><strong>Lemon Squeezy net advantage</strong></td>
-<td><strong>~$448</strong></td>
+<td>width op (bare form)</td>
+<td><code>0.25 w</code></td>
+<td><code>0.08 w</code></td>
+</tr>
+<tr>
+<td><code>(SyntheticLayerB) Ln</code></td>
+<td>preserved</td>
+<td>preserved</td>
+</tr>
+<tr>
+<td>black XA <code>0 0 0 1 0 0 0</code></td>
+<td>preserved</td>
+<td>preserved</td>
+</tr>
+<tr>
+<td>width op (setup form)</td>
+<td><code>1 J 1 j 0.5 w 4 M []0 d</code></td>
+<td><code>1 J 1 j 1 w 4 M []0 d</code></td>
 </tr>
 </tbody>
 </table>
-<p>Lemon Squeezy is cheaper net-of-compliance until ~$30k+/yr. Easy call.</p>
-<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="https://www.lemonsqueezy.com/pricing">Lemon Squeezy — pricing</a></li>
-<li><a href="https://docs.lemonsqueezy.com/api/license-keys">Lemon Squeezy — license API docs</a></li>
-<li><a href="https://www.lemonsqueezy.com/blog/merchant-of-record-101">Lemon Squeezy — Merchant of Record explainer</a></li>
-<li><a href="https://www.paddle.com/pricing">Paddle — Pricing</a></li>
-<li><a href="https://help.gumroad.com/article/67-gumroad-fees">Gumroad — Fees</a></li>
-<li><a href="https://stripe.com/tax">Stripe Tax — overview</a></li>
-<li><a href="https://www.salestaxinstitute.com/resources/wayfair-decision">South Dakota v. Wayfair (2018) — sales tax thresholds</a></li>
-<li><a href="https://taxation-customs.ec.europa.eu/taxation/vat/vat-e-commerce_en">EU VAT MOSS — Commission overview</a></li>
-</ul>
-<h2 id="subscription-pricing-reanalysis-2026-04-30">Subscription pricing reanalysis (2026-04-30)<a class="headerlink" href="#subscription-pricing-reanalysis-2026-04-30" title="Permanent link">&para;</a></h2>
-<p><strong>Status:</strong> This document was written assuming <strong>one-time tiers</strong> ($29 /
-$79 / $249). The roadmap has since pivoted to <strong>monthly subscription</strong>
-pricing ($9 / $19 / $49 / $149/mo). The fee math, operational burden,
-and Stripe-migration trigger are all different under SaaS.</p>
-<p><strong>For the SaaS-pricing analysis, see</strong>
-<a href="../saas-payments-comparison/"><code>saas-payments-comparison.md</code></a>.</p>
-<p><strong>Headline findings from the SaaS reanalysis:</strong></p>
+<p>Idempotency: running <code>apply-saas</code> twice on the output produced the same
+payload size (290 → 290 bytes), and <code>pikepdf.open</code> survived the
+double-round-trip without error.</p>
+<p>Test coverage:
+- 26 existing tests (<code>tests/test_basic.py</code>) — unchanged, all pass
+- 9 new tests (<code>tests/test_apply_saas.py</code>) — round-trip, rewrite, parity</p>
+<h2 id="next-steps-out-of-scope-for-this-port">Next steps (out of scope for this port)<a class="headerlink" href="#next-steps-out-of-scope-for-this-port" title="Permanent link">&para;</a></h2>
+<p>These are mentioned in <code>saas-architecture.md</code> as the v0.5 roadmap; not in
+scope for the current port:</p>
 <ol>
-<li><strong>Lemon Squeezy still wins for Phase D.</strong> No change. Compliance cost
-   alone (~$2–5k/yr to self-MoR via Stripe + CPA + tax software)
-   exceeds gross fee savings until ~500 subscribers blended-$19 ARPU.</li>
-<li><strong>The $9-tier is brutal everywhere.</strong> Effective fee at $9 charge:
-   LS/Paddle 10.6%, Stripe+Tax 6.7%, FastSpring 16.5%, Gumroad 15.6%.
-   The flat 50¢ component dominates at SaaS prices.</li>
-<li><strong>Stripe migration trigger shifted later.</strong> Old recommendation:
-   migrate to Stripe at ~$2–3k MRR. Under SaaS pricing:
-   <strong>migrate at $8–12k MRR</strong> (depending on ARPU mix and compliance
-   assumptions). Math, sources, and migration plan in
-   <code>saas-payments-comparison.md</code>.</li>
-<li><strong>Recurring billing primitives matter more than under one-time.</strong>
-   Dunning, customer portal, smart retries — all of which LS provides
-   free — are operational savings worth more than the fee delta until
-   you reach the migration threshold.</li>
+<li><strong>Layer-aware width assignment</strong> — read <code>(&lt;LayerName&gt;) Ln</code> markers,
+   apply <code>layer_classify.classify_layer(name).weight_pt</code> per layer block
+   instead of (or in parallel with) per-color.</li>
+<li><strong>Poché injection</strong> — write polygonized cut-layer fills as new closed
+   <code>pathItem</code> blocks inside a layer's <code>BeginLayer .. LB</code> envelope. The
+   syntax pattern is the same one this module already manipulates.</li>
+<li><strong>Validate against ≥3 real user files</strong> — the only Rhino-export AI24
+   file in hand is the user's ARCH 202B section drawing, which we are
+   under instruction not to use for testing during this port.</li>
 </ol>
-<p>The Phase D plan in this document (one-time tiers, Founder 100 at $19
-one-time, Student $29, Personal $79, Studio $249/yr) is <strong>superseded</strong>
-by the subscription plan in <code>saas-payments-comparison.md</code> §5. The
-license-key-server architecture in this document is still valid; it
-just sits behind subscription webhooks instead of order webhooks.</p>
-<h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>docs/research/saas-payments-comparison.md</code> — <strong>read this first for SaaS pricing</strong>; supersedes Phase D plan in §149-167 above</li>
-<li><code>docs/ROADMAP.md</code> Phase D — uses this directly</li>
-<li><code>docs/research/binary-distribution.md</code> — what gets sold via the platform (still relevant for optional Phase F4 paid-CLI tier)</li>
-<li><code>docs/research/licensing.md</code> — the EULA shipped with each license key</li>
-<li><code>docs/research/pricing-research.md</code> — the prices the platform charges</li>
-</ul>
+<h2 id="time-spent">Time spent<a class="headerlink" href="#time-spent" title="Permanent link">&para;</a></h2>
+<p>Roughly 60 minutes of agent work, well under the 90-minute budget. Most
+of that was reading the spike scripts and existing modules to map regex
+patterns + framing constants to a generalized API. The single bug
+(pikepdf auto-Flate vs. spike's <code>read_raw_bytes</code>) cost ~5 minutes.</p>
 
 
 

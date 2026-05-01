@@ -1550,15 +1550,16 @@ drawing.</p>
 </ul>
 <p><strong>Phase B remaining work:</strong></p>
 <ul>
-<li>[ ] B6. <strong>Port <code>apply.py</code> line-weight logic to operate on decompressed
-  AI native PostScript</strong> — regex-replace per-color stroke widths inside
-  the AI24 zstd payload. Estimated 4-8 hours.</li>
+<li>[x] B6. <strong>Port <code>apply.py</code> line-weight logic to operate on decompressed
+  AI native PostScript</strong> — DONE 2026-04-30. New module <code>src/arch_line_weights/apply_saas.py</code></li>
+<li><code>arch-lw apply-saas</code> CLI command. 9 new tests pass; 35/35 total. See
+  <code>docs/research/apply-saas-port-notes.md</code> for implementation notes.</li>
 <li>[ ] B7. <strong>Port poché pipeline (<code>poche.py</code>)</strong> to inject filled <code>pathItem</code>
   blocks directly into cut-layer <code>BeginLayer..LB</code> envelopes via
   pikepdf+zstd. Estimated 1-2 days.</li>
-<li>[ ] B8. <strong>End-to-end SaaS prototype</strong>: input .ai → pure-Python pipeline →
-  modified .ai output, no JSX, no Illustrator. Verify in Illustrator on
-  user's machine.</li>
+<li>[ ] B8. <strong>End-to-end SaaS prototype</strong>: combine B6 + B7 into a single
+  <code>arch-lw apply-saas --poche</code> command. Verify in Illustrator on user's
+  machine that output matches <code>apply-jsx --poche</code> baseline.</li>
 <li>[ ] B9. <strong>License swap</strong> (deferred until product is ready to publish).
   When prototype works, replace LICENSE with PolyForm Free Trial 1.0.0</li>
 <li>add commercial EULA. See <code>docs/research/licensing.md</code> for the 5-step

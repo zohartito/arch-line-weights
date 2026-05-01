@@ -1285,21 +1285,26 @@ thoughts, customer interviews, partnership conversations, etc.</p>
 - Studio plan: $499/yr (multi-seat)
 - Conservatively 500 personal-tier × $108 = $54k + 30 studios × $499 = $15k = ~$70k/yr.</p>
 <h2 id="competitive-positioning">Competitive positioning<a class="headerlink" href="#competitive-positioning" title="Permanent link">&para;</a></h2>
-<p>(Detailed competitive landscape: <code>docs/research/competitive-landscape.md</code> from earlier sub-agent.)</p>
-<p><strong>Direct competitors:</strong> None known. The market gap is real.</p>
+<p>Detailed competitive landscape: <a href="../research/competitive-landscape/"><code>docs/research/competitive-landscape.md</code></a>.</p>
+<p><strong>Top direct competitors (revised 2026-04-30):</strong></p>
+<ol>
+<li><strong>Manual Illustrator workflow</strong> (the actual baseline) — threat 5/5. Every prospect compares us to "free, plus 30 min of my time." Phase C interviews must price-anchor against this honestly.</li>
+<li><strong>AutoLineWeight</strong> (Chenzhi Xu, MIT, free, Food4Rhino) — threat &#8536;. The only direct architecture-aware competitor. Runs <em>inside</em> Rhino, assigns weights by edge geometry. Sparsely maintained but free and already on Food4Rhino. Highest-likelihood disruptor if anyone takes it on.</li>
+<li><strong>McNeel shipping "Print Style PDF" that survives round-trip</strong> (existential, 18–36 mo) — if they ship, the export problem disappears. Mitigation is to lean into the layer-name semantic classifier, the part McNeel won't ship.</li>
+</ol>
 <p><strong>Adjacent threats:</strong>
 - Show It Better — cultural competitor (Photoshop actions, brushes). Could expand into automation.
 - Astute Graphics — Adobe Illustrator extension publisher. Has the distribution.
-- AutoCAD CTB / Revit View Templates / ArchiCAD Pen Sets — solve it inside-app, locked in.
-- McNeel themselves — if they ship a "Print Style" PDF export that survives the round-trip, our problem disappears.</p>
-<p><strong>Defensibility:</strong>
-- Layer-name semantic classifier → pattern library that gets better with more customer drawings
-- POSTMORTEM-driven engineering → speed of iterating on edge cases
-- Direct customer relationships → rare for a $19 tool</p>
+- AutoCAD CTB / Revit View Templates / ArchiCAD Pen Sets — solve it inside-app, locked in.</p>
+<p><strong>Defensibility (top 3 differentiation claims for messaging):</strong>
+1. <strong>Fixes Rhino-exported PDFs that already lost their line weights</strong> — no Rhino plugin install needed. AutoLineWeight requires running inside Rhino <em>before</em> export.
+2. <strong>Architecture-specific line-weight intelligence</strong> — <code>WALL_SECTION_CUT</code> becomes 0.7 mm without you teaching it. Layer-name semantic classifier is the moat; AutoLineWeight assigns by edge geometry only.
+3. <strong>$19–79 one-time / $9–19 per month</strong>, not $149/yr Astute, not $347 lifetime Show It Better, not $1,300+/yr BIM tools. Founder-100 lifetime tier locks in price perception.</p>
 <h2 id="distribution-thoughts-pre-validation">Distribution thoughts (pre-validation)<a class="headerlink" href="#distribution-thoughts-pre-validation" title="Permanent link">&para;</a></h2>
-<p>(Detailed distribution comparison: <code>docs/research/distribution-platforms.md</code> from sub-agent.)</p>
-<p><strong>v1 (month 2):</strong> Gumroad single-binary download. $19 / $79 / $499 tiers.</p>
-<p><strong>v2 (month 5+):</strong> archlineweights.com SaaS. Stripe subscriptions.</p>
+<p>Detailed distribution comparison: <a href="../research/distribution-platforms/"><code>docs/research/distribution-platforms.md</code></a> and <a href="../research/saas-payments-comparison/"><code>docs/research/saas-payments-comparison.md</code></a>.</p>
+<p><strong>v1 SaaS (Phase D, month 2):</strong> Lemon Squeezy as Merchant of Record at monthly subscription pricing. Founder 100 tier $19 lifetime, then $9–19 personal / $49 small studio / $149 large studio per month.</p>
+<p><strong>v2 scale (Phase F, year 2+):</strong> Migrate to Stripe + Stripe Tax once MRR clears ~$8–12k. Lemon Squeezy customers stay grandfathered.</p>
+<p><strong>Optional Pro Desktop tier (Phase F4):</strong> signed binary at $79 one-time / $149 lifetime — for the ~30% of small-studio customers who refuse cloud upload (per <code>pdf-only-acceptance.md</code>).</p>
 <p><strong>v3 (year 2+):</strong> Adobe Exchange listing (when UXP ships) + Food4Rhino plugin.</p>
 <h2 id="marketing-messaging">Marketing / messaging<a class="headerlink" href="#marketing-messaging" title="Permanent link">&para;</a></h2>
 <p><strong>Tagline candidates:</strong>
