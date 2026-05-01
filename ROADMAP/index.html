@@ -1040,10 +1040,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#what-works-kept-will-not-regress" class="md-nav__link">
+  <a href="#what-works-real-world-validated" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What works (kept, will not regress)
+        What works (real-world validated)
       
     </span>
   </a>
@@ -1051,10 +1051,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#what-does-not-yet-work-known-limitations" class="md-nav__link">
+  <a href="#what-works-synthetic-unit-test-only" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What does NOT yet work (known limitations)
+        What works (synthetic / unit-test only)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-does-not-yet-work-known-limitations-real-world-bugs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What does NOT yet work (known limitations + real-world bugs)
       
     </span>
   </a>
@@ -1316,19 +1327,19 @@ inputs <em>is</em> professional-grade. Holding for 100% means never shipping.</p
 </tr>
 <tr>
 <td>Source code (Python)</td>
-<td>~3,300 LOC across 11 modules</td>
+<td>~5,500 LOC across 14 modules</td>
 </tr>
 <tr>
 <td>Tests passing</td>
-<td>26 / 26, ruff clean</td>
+<td>292 (269 fast + 23 slow hatch), ruff clean</td>
 </tr>
 <tr>
 <td>Documented research transcripts</td>
-<td>10 in <code>docs/research/</code></td>
+<td>35 in <code>docs/research/</code></td>
 </tr>
 <tr>
 <td>Material hatch recipes</td>
-<td>14</td>
+<td>19 (top-5 v0.5 expansion: cmu, board-formed, standing-seam copper, stucco, polyiso)</td>
 </tr>
 <tr>
 <td>Cut-layer coverage on reference drawing</td>
@@ -1336,11 +1347,15 @@ inputs <em>is</em> professional-grade. Holding for 100% means never shipping.</p
 </tr>
 <tr>
 <td>Layer-fidelity preservation</td>
-<td>62 / 62 (100%) on the apply-jsx path</td>
+<td>62 / 62 (100%) on every code path</td>
 </tr>
 <tr>
 <td>Preset families</td>
-<td>1 generic + per-scale offsets (sections only)</td>
+<td>4 (section / plan / elevation / detail), each with PRINT + SCREEN ladders, 7 scale offsets</td>
+</tr>
+<tr>
+<td>Layer-name classifier sources</td>
+<td>2 (Rhino Make2D + AutoCAD/AIA NCS)</td>
 </tr>
 <tr>
 <td>Rhino integrations</td>
@@ -1354,47 +1369,116 @@ inputs <em>is</em> professional-grade. Holding for 100% means never shipping.</p
 <td>MkDocs site</td>
 <td>Built, but offline (private repo on GH free plan = no Pages)</td>
 </tr>
+<tr>
+<td>Web app (Phase D)</td>
+<td>Local-runnable scaffold: FastAPI + SvelteKit; 15 backend tests</td>
+</tr>
+<tr>
+<td>Open GitHub Issues</td>
+<td>14 (all genuinely-hanging items tracked)</td>
+</tr>
+<tr>
+<td>Real-world drawings validated</td>
+<td>2 (24 MB section + 98 MB plan, both via headless apply-saas)</td>
+</tr>
 </tbody>
 </table>
-<h3 id="what-works-kept-will-not-regress">What works (kept, will not regress)<a class="headerlink" href="#what-works-kept-will-not-regress" title="Permanent link">&para;</a></h3>
+<h3 id="what-works-real-world-validated">What works (real-world validated)<a class="headerlink" href="#what-works-real-world-validated" title="Permanent link">&para;</a></h3>
 <ol>
-<li><strong>PDF stream rewrite for stroke widths</strong> — <code>arch_line_weights.apply</code>
-   path injects <code>&lt;width&gt; w</code> before stroke ops, color-keyed by recent RG.
-   Fast (110 s on 340 K strokes). Use case: when layer fidelity is
-   expendable.</li>
+<li><strong>Headless <code>apply-saas</code> end-to-end</strong> — pure-Python pipeline (pikepdf +
+   zstd + AI native PostScript modification). Validated on:</li>
+<li>24 MB ARCH 202B section drawing: 63 stroke ops + 287 polygons across
+     20/20 cut layers in ~26 sec</li>
+<li><strong>98 MB ARCH 211 plan drawing: 50 stroke ops in ~5 min, plan preset</strong>
+     (PLAN_ISO_SCREEN ladder applied as designed) — Phase A1 first non-section
+     real-world success.</li>
 <li><strong>Layer-preserving JSX apply</strong> — <code>apply_jsx.py</code> walks each leaf
    layer in Illustrator, classifies semantically, sets stroke weight per
-   <code>pathItem</code>. 11 minutes for 340 K strokes, 0 layer loss. <strong>The default
-   path.</strong></li>
+   <code>pathItem</code>. 11 minutes for 340 K strokes, 0 layer loss. <strong>Now also has
+   --preset, --timeout, --for-print, --scale flags + JSX heartbeat +
+   [Converted] state detection (v0.6.1).</strong></li>
+<li><strong>B7 poché injection into AI native PostScript</strong> — <code>poche_saas.py</code>
+   synthesizes filled-black polygons into the decompressed AI24 payload.
+   287 polygons across 18/21 cut layers on the reference drawing.</li>
 <li><strong>Two-stage poché pipeline</strong> — JSX dump anchors → Python shapely
-   linemerge+polygonize+fallback ladder → JSX apply with baked
-   coordinates. 86% layer success on reference drawing.</li>
-<li><strong>Auto-bridge inference</strong> — <code>bridge.py</code> greedy nearest-endpoint
-   pairing with STRtree. Rescues 4 additional layers (14 → 18 / 21).</li>
-<li><strong>Material hatch engine</strong> — 14 recipes (parallel, crosshatch,
-   poisson-disk, sine-zigzag, brick stretcher-bond, CLT cross-grain).
-   Bridson sampling capped to avoid pathological inputs.</li>
-<li><strong>ISO 128 standards-aligned tier presets</strong> — <code>--scale</code> and
-   <code>--for-print</code> flags do the right thing for plotted output.</li>
-<li><strong>Side-by-side / diff preview</strong> — <code>preview.py</code> produces before-after
-   PNGs at any DPI. PyMuPDF default; Ghostscript fallback for sub-0.25pt
-   stroke fidelity.</li>
+   linemerge+polygonize+fallback ladder → JSX apply (or SaaS injection).
+   86% layer success on reference drawing.</li>
+<li><strong>Auto-bridge + backtracking + DBSCAN selector</strong> — <code>bridge.py</code> four
+   strategies via <code>infer_bridges_best</code>. Greedy default, opt-in <code>best</code>
+   with --bridge-strategy flag.</li>
+<li><strong>Alpha-shape rescue rung</strong> — <code>alpha_shape.py</code> (v0.6) — between
+   auto_bridge and concave_hull at confidence 0.55. Fires correctly on
+   multi-component topology.</li>
+<li><strong>Material hatch engine — 19 recipes</strong> — parallel, crosshatch,
+   poisson-disk, sine-zigzag, brick stretcher-bond, CLT cross-grain,
+   plus v0.5 top-5 expansion (cmu, board-formed concrete, standing-seam
+   copper, stucco, polyiso). MultiPolygon dispatch via @multipoly_aware
+   decorator (v0.5.1 simplification).</li>
+<li><strong>4 preset families with ISO 128 scaling</strong> — section / plan /
+   elevation / detail — each with PRINT and SCREEN variants and 7 scale
+   offsets (1/16 → full). Anchored at &frac14;" baseline.</li>
+<li><strong>AutoCAD/AIA NCS layer classifier</strong> — extends Rhino-only classifier
+   to AIA NCS via <code>--source</code> flag; ~25 patterns covering 90% of US/EU
+   AutoCAD shop conventions.</li>
 <li><strong><code>maximumUndoDepth=1</code> ExtendScript pattern</strong> — turns exponential
-   bulk-edit time into linear time. Restored at end-of-script.</li>
+    bulk-edit time into linear time. Restored at end-of-script.</li>
+<li><strong>Phase D web app scaffold</strong> — FastAPI + SvelteKit local-runnable
+    skeleton. POST /api/jobs wires apply-saas + poche_saas. 15 backend
+    tests. Frontend npm install pending user.</li>
+<li><strong>Demo gallery + benchmark scripts</strong> — <code>scripts/demo_gallery.py</code> and
+    <code>scripts/benchmark.py</code>. First benchmark: apply-saas at 24 sec on
+    24 MB; apply-saas --poche at 26 sec; apply-jsx &gt;180s timeout.</li>
 <li><strong>POSTMORTEM-driven engineering</strong> — every failed approach documented
-   in <code>docs/POSTMORTEM.md</code>. 7 attempts logged. Future-us doesn't repeat
-   them.</li>
+    in <code>docs/POSTMORTEM.md</code>. <strong>9 attempts logged.</strong> Future-us doesn't
+    repeat them.</li>
 </ol>
-<h3 id="what-does-not-yet-work-known-limitations">What does NOT yet work (known limitations)<a class="headerlink" href="#what-does-not-yet-work-known-limitations" title="Permanent link">&para;</a></h3>
+<h3 id="what-works-synthetic-unit-test-only">What works (synthetic / unit-test only)<a class="headerlink" href="#what-works-synthetic-unit-test-only" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>PDF stream rewrite for stroke widths</strong> — <code>arch_line_weights.apply</code>
+    path injects <code>&lt;width&gt; w</code> before stroke ops, color-keyed by recent RG.
+    Fast on small files. Flattens layers — use only when layer fidelity
+    is expendable.</li>
+<li><strong>Side-by-side / diff preview</strong> — <code>preview.py</code> produces before-after
+    PNGs. PyMuPDF default; Ghostscript fallback. <strong>Caveat: PyMuPDF
+    renders the legacy PDF stream, not the modified PieceInfo — so PNG
+    previews of SaaS-modified files look identical before/after. Real
+    visual check requires Illustrator.</strong></li>
+</ol>
+<h3 id="what-does-not-yet-work-known-limitations-real-world-bugs">What does NOT yet work (known limitations + real-world bugs)<a class="headerlink" href="#what-does-not-yet-work-known-limitations-real-world-bugs" title="Permanent link">&para;</a></h3>
 <ol>
 <li><strong>3 stubborn cut layers</strong> on the reference drawing —</li>
-<li><code>23_WINDOW_FRAMES_REMAP</code> — too few points; concave_hull degenerate</li>
-<li><code>26_CLT_GAP_ROOF_CAP</code> — disconnected segments, no nearest-pair under threshold</li>
-<li><code>11_CU_CORR_SOLID_OPAQUE</code> — endpoint clusters fool the bridger</li>
-<li><strong>Plan / elevation / detail presets</strong> — currently share the section
-   ISO ladder. Should differ per drawing type.</li>
-<li><strong>Non-Make2D vector sources</strong> — Inkscape, Vectorworks, AutoCAD DXF —
-   classifier doesn't recognize their layer-name conventions.</li>
+<li><code>23_WINDOW_FRAMES_REMAP</code> — collinear points (zero-width bbox);
+     needs LLM topology inference (rung 5, deferred)</li>
+<li><code>26_CLT_GAP_ROOF_CAP</code> — too few anchors for any 2-D rescue;
+     alpha-shape doesn't help (verified 2026-04-30)</li>
+<li><code>11_CU_CORR_SOLID_OPAQUE</code> — auto_bridge succeeds at conf=0.59 but
+     not high-quality; selector with --bridge-strategy=best may lift</li>
+<li><strong>Real-world bugs surfaced 2026-05-01 (Phase A1)</strong> — see GitHub Issues:</li>
+<li><strong>#9 PyMuPDF can't open &gt;200 MB .ai files</strong> — fixed via pikepdf
+     dispatch (v0.6.1). 237 MB <code>macro.ai</code> is <em>also</em> corrupt at the
+     trailer; pikepdf can't recover; user must save-as via Illustrator.</li>
+<li><strong>#10 apply-jsx fails on Illustrator [Converted] doc state</strong> —
+     fixed via active-doc detection (v0.6.1). <strong>#14 follow-up</strong>: matcher
+     misses trailing-space disk filenames.</li>
+<li><strong>#11 hardcoded 60-min JSX timeout</strong> — fixed via --timeout flag +
+     ARCH_LW_JSX_TIMEOUT_MIN env var (v0.6.1).</li>
+<li><strong>#8 / #11 no JSX progress feedback</strong> — fixed via heartbeat file
+     <code>/tmp/arch_lw_jsx_progress.txt</code> polled at 2 sec by Python wrapper
+     (v0.6.1).</li>
+<li><strong>#12 output path collision risk</strong> — apply-jsx and apply-saas still
+     write to same default <code>&lt;src&gt; HIERARCHY.&lt;ext&gt;</code>. <strong>PENDING.</strong></li>
+<li><strong>#13 apply-jsx --preset flag</strong> — fixed (v0.6.1) so non-section
+     drawings via JSX path can pick the right tier ladder.</li>
+<li><strong>Disk-corrupted .ai files</strong> — files where Illustrator can fix the
+   trailer on open but neither pikepdf nor PyMuPDF can recover (e.g.
+   <code>wall section iso cut .ai</code>, <code>macro.ai</code> original). Workaround: save-as
+   via Illustrator. <strong>No automated fix possible</strong> — the file format is
+   genuinely damaged at the trailer dictionary level.</li>
+<li><strong>Phase D web app: not yet locally tested by user</strong> — scaffold exists,
+   FastAPI passes 15 tests, but <code>npm install</code> not run on frontend.</li>
+<li><strong>No user-facing visual validation</strong> — Issue #7 still open. PyMuPDF
+   renders the legacy PDF stream, not the modified PieceInfo; only
+   Illustrator can render the actual SaaS output for visual check.</li>
 <li><strong>Batch mode</strong> — no "drag a folder" UX. One drawing per CLI invoke.</li>
 <li><strong>Material library</strong> — 14 recipes; the "amazing" bar wants 25+.</li>
 <li><strong>No headless / no-Illustrator mode</strong> — apply step requires

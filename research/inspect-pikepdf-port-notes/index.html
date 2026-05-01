@@ -12,7 +12,7 @@
         <meta name="author" content="zohartito">
       
       
-        <link rel="canonical" href="https://zohartito.github.io/arch-line-weights/POSTMORTEM/">
+        <link rel="canonical" href="https://zohartito.github.io/arch-line-weights/research/inspect-pikepdf-port-notes/">
       
       
       
@@ -20,19 +20,19 @@
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Postmortem — every poché attempt and what we learned - arch-line-weights</title>
+        <title>Porting inspect.py from PyMuPDF to pikepdf for .ai files — implementation notes - arch-line-weights</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -51,9 +51,9 @@
       
     
     
-      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#postmortem-every-poche-attempt-and-what-we-learned" class="md-skip">
+        <a href="#porting-inspectpy-from-pymupdf-to-pikepdf-for-ai-files-implementation-notes" class="md-skip">
           Skip to content
         </a>
       
@@ -94,7 +94,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="arch-line-weights" class="md-header__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
+    <a href="../.." title="arch-line-weights" class="md-header__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Postmortem — every poché attempt and what we learned
+              Porting inspect.py from PyMuPDF to pikepdf for .ai files — implementation notes
             
           </span>
         </div>
@@ -226,7 +226,7 @@
   
   
     <li class="md-tabs__item">
-      <a href=".." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -247,7 +247,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../tutorials/your-first-section-drawing/" class="md-tabs__link">
+        <a href="../../tutorials/your-first-section-drawing/" class="md-tabs__link">
           
   
   
@@ -269,7 +269,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../how-to/apply-line-weights/" class="md-tabs__link">
+        <a href="../../how-to/apply-line-weights/" class="md-tabs__link">
           
   
   
@@ -291,7 +291,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../reference/cli/" class="md-tabs__link">
+        <a href="../../reference/cli/" class="md-tabs__link">
           
   
   
@@ -313,7 +313,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../explanation/how-poche-works/" class="md-tabs__link">
+        <a href="../../explanation/how-poche-works/" class="md-tabs__link">
           
   
   
@@ -355,7 +355,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="arch-line-weights" class="md-nav__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
+    <a href="../.." title="arch-line-weights" class="md-nav__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -385,7 +385,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -468,7 +468,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/your-first-section-drawing/" class="md-nav__link">
+      <a href="../../tutorials/your-first-section-drawing/" class="md-nav__link">
         
   
   
@@ -567,7 +567,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/apply-line-weights/" class="md-nav__link">
+      <a href="../../how-to/apply-line-weights/" class="md-nav__link">
         
   
   
@@ -595,7 +595,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/generate-poche/" class="md-nav__link">
+      <a href="../../how-to/generate-poche/" class="md-nav__link">
         
   
   
@@ -623,7 +623,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/material-hatching/" class="md-nav__link">
+      <a href="../../how-to/material-hatching/" class="md-nav__link">
         
   
   
@@ -651,7 +651,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/use-with-rhino/" class="md-nav__link">
+      <a href="../../how-to/use-with-rhino/" class="md-nav__link">
         
   
   
@@ -679,7 +679,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/troubleshoot/" class="md-nav__link">
+      <a href="../../how-to/troubleshoot/" class="md-nav__link">
         
   
   
@@ -772,7 +772,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/cli/" class="md-nav__link">
+      <a href="../../reference/cli/" class="md-nav__link">
         
   
   
@@ -800,7 +800,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/python-api/" class="md-nav__link">
+      <a href="../../reference/python-api/" class="md-nav__link">
         
   
   
@@ -895,7 +895,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../explanation/how-poche-works/" class="md-nav__link">
+      <a href="../../explanation/how-poche-works/" class="md-nav__link">
         
   
   
@@ -923,7 +923,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../explanation/why-this-tool-exists/" class="md-nav__link">
+      <a href="../../explanation/why-this-tool-exists/" class="md-nav__link">
         
   
   
@@ -951,7 +951,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../explanation/the-postmortem/" class="md-nav__link">
+      <a href="../../explanation/the-postmortem/" class="md-nav__link">
         
   
   
@@ -1006,10 +1006,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#context" class="md-nav__link">
+  <a href="#why" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Context
+        Why
       
     </span>
   </a>
@@ -1017,10 +1017,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#attempt-1-v01-pikepdf-rewrite-strip-pieceinfo" class="md-nav__link">
+  <a href="#what-got-built" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Attempt 1 (v0.1) — pikepdf rewrite + strip PieceInfo
+        What got built
       
     </span>
   </a>
@@ -1028,10 +1028,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#attempt-2-v02-illustrator-jsx-with-maximumundodepth1" class="md-nav__link">
+  <a href="#dispatch" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Attempt 2 (v0.2) — Illustrator JSX with maximumUndoDepth=1
+        Dispatch
       
     </span>
   </a>
@@ -1039,10 +1039,60 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#attempt-3-v03-try-1-jsx-appexecutemenucommandjoin-to-chain-endpoints-fill" class="md-nav__link">
+  <a href="#how-the-pikepdf-walker-mirrors-pymupdf" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Attempt 3 (v0.3 try 1) — JSX app.executeMenuCommand("join") to chain endpoints + fill
+        How the pikepdf walker mirrors PyMuPDF
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How the pikepdf walker mirrors PyMuPDF">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-a-regex-walker-is-enough" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why a regex walker is enough
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reconciling-with-pymupdfs-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reconciling with PyMuPDF's output
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#default-stroke-width-when-no-w-op-is-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default stroke width when no w op is set
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metadata-layer-extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metadata + layer extraction
       
     </span>
   </a>
@@ -1050,10 +1100,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#attempt-4-v03-try-2-pikepdf-only-ocg-aware-stream-rewrite" class="md-nav__link">
+  <a href="#fallback-semantics" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Attempt 4 (v0.3 try 2) — pikepdf-only OCG-aware stream rewrite
+        Fallback semantics
       
     </span>
   </a>
@@ -1061,10 +1111,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#attempt-5-v03-try-3-jsx-dump-anchors-python-shapely-jsx-apply" class="md-nav__link">
+  <a href="#test-coverage-added" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Attempt 5 (v0.3 try 3) — JSX dump anchors + Python shapely + JSX apply
+        Test coverage added
       
     </span>
   </a>
@@ -1072,10 +1122,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#attempt-6-planned-v04-disconnected-loop-rescue" class="md-nav__link">
+  <a href="#whats-still-on-pymupdf" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Attempt 6 (planned, v0.4) — Disconnected-loop rescue
+        What's still on PyMuPDF
       
     </span>
   </a>
@@ -1083,43 +1133,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#attempt-7-2026-04-30-open-source-publish-then-yank" class="md-nav__link">
+  <a href="#smoke-tests-on-the-real-arch-211-drawing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Attempt 7 (2026-04-30) — Open-source publish, then yank
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#attempt-8-2026-04-30-pikepdf-only-ai-modification-the-saas-unlock" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Attempt 8 (2026-04-30) — pikepdf-only .ai modification (the SaaS unlock)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#attempt-9-2026-05-01-first-real-world-plan-drawing-run" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Attempt 9 (2026-05-01) — first real-world plan drawing run
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cross-cutting-lessons-the-durable-ones" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cross-cutting lessons (the durable ones)
+        Smoke tests on the real ARCH 211 drawing
       
     </span>
   </a>
@@ -1143,7 +1160,7 @@
 
 
   
-    <a href="https://github.com/zohartito/arch-line-weights/edit/main/docs/POSTMORTEM.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/zohartito/arch-line-weights/edit/main/docs/research/inspect-pikepdf-port-notes.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
     </a>
@@ -1151,275 +1168,278 @@
   
 
 
-<h1 id="postmortem-every-poche-attempt-and-what-we-learned">Postmortem — every poché attempt and what we learned<a class="headerlink" href="#postmortem-every-poche-attempt-and-what-we-learned" title="Permanent link">&para;</a></h1>
+<h1 id="porting-inspectpy-from-pymupdf-to-pikepdf-for-ai-files-implementation-notes">Porting <code>inspect.py</code> from PyMuPDF to pikepdf for <code>.ai</code> files — implementation notes<a class="headerlink" href="#porting-inspectpy-from-pymupdf-to-pikepdf-for-ai-files-implementation-notes" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Living document. Each entry: what we tried, what worked, what failed,
-what to keep doing or stop doing. The point is to make sure no future
-contributor (including future-us) repeats any of these.</p>
+<p>2026-05-01. Closes Issue #9 from POSTMORTEM Attempt 9. Companion to
+<code>apply-saas-port-notes.md</code>: same model (pikepdf-only on <code>.ai</code>), but for the
+read-only inspection path that feeds <code>auto_by_luminance</code>.</p>
 </blockquote>
-<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
-<p>Project: <code>arch-line-weights</code> — apply architectural line-weight hierarchy +
-poché to color-coded vector drawings (typically Rhino-exported <code>.ai</code>).
-Reference test file: USC ARCH 202B section drawing, 24 MB, 340,323 strokes,
-62 OCG layers, 21 of which are <code>Visible::ClippingPlaneIntersections::*</code> (the
-section cuts that should become poché).</p>
-<h2 id="attempt-1-v01-pikepdf-rewrite-strip-pieceinfo">Attempt 1 (v0.1) — pikepdf rewrite + strip PieceInfo<a class="headerlink" href="#attempt-1-v01-pikepdf-rewrite-strip-pieceinfo" title="Permanent link">&para;</a></h2>
-<p><strong>What:</strong> Rewrite the PDF content stream to inject <code>&lt;width&gt; w</code> before every
-stroke operator, color-keyed by the most recent <code>RG</code>. Strip <code>/PieceInfo</code> so
-Illustrator parses the modified stream instead of its private cache.</p>
-<p><strong>Result:</strong> Strokes worked perfectly. Speed was great (110 s on 340 K
-strokes). Shipped as v0.1.</p>
-<p><strong>Failure:</strong> Stripping PieceInfo <strong>flattened all 62 Rhino layers into a
-single Illustrator layer</strong>. The user opened it, said "you turned it into one
-layer," and we rolled back the default.</p>
-<p><strong>Root cause:</strong> <code>.ai</code> files are dual-encoded: <code>/PieceInfo /Illustrator
-/Private</code> holds the canonical layer/group structure; the PDF content stream
-is a rendering fallback. Strip PieceInfo → Illustrator falls back to the PDF
-parser, which collapses OCGs to the default Layer 1 unless you open via
-<code>File &gt; Open</code> with <code>pDFPreserveLayers</code> enabled (no equivalent for
-double-clicking the file).</p>
-<p><strong>Lesson kept:</strong> Layer fidelity &gt; raw speed for any tool whose users will
-iterate on the output. Default to layer-preserving even if slower.</p>
-<p><strong>Lesson kept:</strong> "Open in Illustrator and look at the Layers panel" is a
-required acceptance test — not just "fills look right in preview."</p>
-<h2 id="attempt-2-v02-illustrator-jsx-with-maximumundodepth1">Attempt 2 (v0.2) — Illustrator JSX with <code>maximumUndoDepth=1</code><a class="headerlink" href="#attempt-2-v02-illustrator-jsx-with-maximumundodepth1" title="Permanent link">&para;</a></h2>
-<p><strong>What:</strong> Hand a JSX to Illustrator that walks each leaf layer, derives a
-weight from the new semantic layer-name classifier (<code>layer_classify.py</code>),
-and applies it to every <code>pathItem</code> in that layer. Outline view + cap undo
-depth at 1 to keep ExtendScript linear-time.</p>
-<p><strong>Result:</strong> Worked. 11 minutes for 340 K strokes, all 62 layers preserved,
-0 errors. Shipped as v0.2.</p>
-<p><strong>Lesson kept:</strong> ExtendScript per-item iteration is <strong>linear with
-<code>maximumUndoDepth=1</code>, exponential without</strong>. The first naive try (no undo
-cap) showed exponential degradation — first 10 K paths in 79 s, second in
-132 s, third in 280 s. ETA was 2+ hours and rising.</p>
-<p><strong>Lesson kept:</strong> Layer-name semantic classification beats color
-classification for any Rhino export. <code>Visible::ClippingPlaneIntersections::*</code>
-is <strong>always</strong> the cut tier regardless of trailing material code.</p>
-<h2 id="attempt-3-v03-try-1-jsx-appexecutemenucommandjoin-to-chain-endpoints-fill">Attempt 3 (v0.3 try 1) — JSX <code>app.executeMenuCommand("join")</code> to chain endpoints + fill<a class="headerlink" href="#attempt-3-v03-try-1-jsx-appexecutemenucommandjoin-to-chain-endpoints-fill" title="Permanent link">&para;</a></h2>
-<p><strong>What:</strong> For each cut layer, select all paths, repeatedly call
-<code>app.executeMenuCommand("join")</code> to chain coincident endpoints, then fill
-the resulting closed paths black.</p>
-<p><strong>Result:</strong> Catastrophic. Each layer's 100s of paths joined into ONE giant
-self-intersecting tangled polygon, which then filled along its zigzag stroke
-order. The user's screenshot showed black bars criss-crossing the courtyard.</p>
-<p><strong>Failure:</strong> Illustrator's Join is not topology-aware. Given N paths whose
-endpoints are all near-coincident in pairs, Join chains them in <strong>arbitrary
-order</strong>, not by the actual graph structure. So 100 segments that should form
-10 separate closed polygons collapse into 1 self-intersecting blob.</p>
-<p><strong>Lesson kept:</strong> Naive endpoint-chaining (Illustrator's Join, simple
-linemerge without graph structure) is a trap. Use shapely's
-<code>linemerge + polygonize</code> which <strong>preserves topology</strong> — it identifies
-<em>separate</em> connected components and only chains within each.</p>
-<p><strong>Kept in repo:</strong> <code>scripts/poche/apply_join_NAIVE.jsx</code> as a warning marker.</p>
-<h2 id="attempt-4-v03-try-2-pikepdf-only-ocg-aware-stream-rewrite">Attempt 4 (v0.3 try 2) — pikepdf-only OCG-aware stream rewrite<a class="headerlink" href="#attempt-4-v03-try-2-pikepdf-only-ocg-aware-stream-rewrite" title="Permanent link">&para;</a></h2>
-<p><strong>What:</strong> Walk the PDF content stream, track current OCG via <code>BDC/EMC</code> +
-<code>/Properties</code> lookup, collect line segments per OCG, run shapely linemerge +
-polygonize per OCG, append filled polygons to the content stream, save.</p>
-<p><strong>Result:</strong> Buggy. My MC# matcher used <code>"/MC28"</code> in one place and <code>"MC28"</code>
-(no slash) in the other — collected 0 segments for every layer.</p>
-<p><strong>Failure:</strong> Format mismatch in dict keys. Trivial bug, hours to find
-because PDF content-stream debugging is hard.</p>
-<p><strong>Lesson kept:</strong> When walking PDF marked content, normalize names exactly
-once. <code>pikepdf.Name</code> objects can stringify with or without leading <code>/</code>
-depending on context.</p>
-<p><strong>Lesson kept:</strong> When an extraction returns 0 results across the board,
-<strong>dump the actual operator format first</strong> before debugging the geometry.</p>
-<h2 id="attempt-5-v03-try-3-jsx-dump-anchors-python-shapely-jsx-apply">Attempt 5 (v0.3 try 3) — JSX dump anchors + Python shapely + JSX apply<a class="headerlink" href="#attempt-5-v03-try-3-jsx-dump-anchors-python-shapely-jsx-apply" title="Permanent link">&para;</a></h2>
-<p><strong>What:</strong> Two-stage pipeline:
-1. JSX A walks every cut layer and dumps <code>pathItem.pathPoints[i].anchor</code> to
-   <code>/tmp/cut_geometry.json</code> (skips PDF stream entirely)
-2. Python loads the JSON, runs <code>shapely.ops.linemerge + polygonize</code> per
-   layer (with snap+linemerge fallback ladder)
-3. Python builds JSX B with the resulting polygon coordinates baked in as a
-   JS object literal (no I/O at runtime)
-4. JSX B opens the file in Illustrator, creates new closed <code>pathItem</code>s in
-   each layer with <code>filled = true; fillColor = black</code>, saves</p>
-<p><strong>Result:</strong> Mostly works.</p>
+<h2 id="why">Why<a class="headerlink" href="#why" title="Permanent link">&para;</a></h2>
+<p>POSTMORTEM Attempt 9 §1: <strong><code>fitz.open()</code> raised <code>FileDataError</code></strong> on the
+237 MB ARCH 211 <code>macro.ai</code> plan drawing. The user's workaround was to do
+"Save As" in Illustrator, which produced a 98 MB version that PyMuPDF then
+opened fine. But:</p>
+<ul>
+<li>Real customers will hit this on complex urban drawings.</li>
+<li><code>apply_saas</code> already opens the same Adobe-saved files with pikepdf
+  (via <code>_read_payload</code> in <code>apply_saas.py:71</code>).</li>
+<li>Asking users to round-trip through Illustrator before they can run
+  <code>arch-lw inspect</code> defeats the whole point of a headless tool.</li>
+</ul>
+<p>So <code>inspect.py</code> now dispatches per-format: <strong>pikepdf for <code>.ai</code>, PyMuPDF for
+<code>.pdf</code></strong>.</p>
+<h2 id="what-got-built">What got built<a class="headerlink" href="#what-got-built" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Outcome</th>
-<th>Layers</th>
-<th>Why</th>
+<th>File</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Clean polygons</td>
-<td>13 / 21</td>
-<td>Bare linemerge produced N separate closed loops</td>
+<td><code>src/arch_line_weights/inspect.py</code></td>
+<td>Refactored; now per-format dispatch via <code>inspect_file()</code>.</td>
 </tr>
 <tr>
-<td>Concave-hull fallback</td>
-<td>7 / 21</td>
-<td>linemerge gave 0 polys → fell back, produces 1 lumpy polygon instead of N</td>
-</tr>
-<tr>
-<td>Failed</td>
-<td>1 / 21</td>
-<td><code>23_WINDOW_FRAMES</code> — too few points</td>
+<td><code>tests/test_basic.py</code></td>
+<td>+4 tests for the pikepdf path (dispatch, q/Q state, fallback error, .pdf routing).</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Sub-failures along the way:</strong>
-- v3 added <code>snap()</code> pre-pass that <strong>over-merged</strong> the dense cladding layers.
-  TEC_STAIRS went from 29 polys (no snap) to 0 (snap at 0.5pt) → fell back
-  to bad concave_hull. Reverted snap → use bare linemerge first.
-- After <code>saveAs</code>, Illustrator's in-memory copy of the <em>source</em> doc still
-  contains all the JSX-added pathItems. If the user clicks back to that tab
-  thinking it's the clean source, they see "weird extra lines." Reproduced
-  by the user. Force-close and reopen from disk to recover.</p>
-<p><strong>Lessons kept:</strong>
-- Two-stage pipeline (Illustrator dump → Python compute → Illustrator
-  apply) is the working pattern. Easier to debug than PDF content stream
-  hacking.
-- For per-layer geometry processing, <strong>try a sweep of strategies and pick
-  the one that maximizes polygon count</strong>, not the first that gives any
-  polygons. Some layers want 0.01pt tolerance, some want 2pt.
-- After <code>saveAs</code> with new pathItems added, the source doc is dirty. Either
-  close-without-saving programmatically before next iteration, or instruct
-  the user to manually close and reopen.</p>
-<h2 id="attempt-6-planned-v04-disconnected-loop-rescue">Attempt 6 (planned, v0.4) — Disconnected-loop rescue<a class="headerlink" href="#attempt-6-planned-v04-disconnected-loop-rescue" title="Permanent link">&para;</a></h2>
-<p><strong>What:</strong> Per the disconnected-loops sub-agent report, layered fallback with
-confidence scoring:
-1. bare linemerge → conf 1.00
-2. snap+linemerge at 0.5/&frac12;/5 pt → conf 0.85–0.7 (whichever maxes polys)
-3. user-marked <code>__POCHE_CLOSE__</code> layer (Rhino-side fix) → conf 0.95
-4. concave_hull(densified) → conf 0.55
-5. axis-aligned bbox → conf 0.30</p>
-<p>Plus emit per-fill metadata so the UI can flag low-confidence with warnings.</p>
-<p><strong>Status:</strong> Roadmapped. Not yet implemented.</p>
-<h2 id="attempt-7-2026-04-30-open-source-publish-then-yank">Attempt 7 (2026-04-30) — Open-source publish, then yank<a class="headerlink" href="#attempt-7-2026-04-30-open-source-publish-then-yank" title="Permanent link">&para;</a></h2>
-<p><strong>What:</strong> Published v1.0.0 to PyPI under MIT license via OIDC Trusted
-Publishing. Build verified; clean-venv install confirmed; CLI returned
-"arch-lw, version 1.0.0".</p>
-<p><strong>Result:</strong> Working publish. Anyone could <code>pip install arch-line-weights</code>
-for ~15 minutes.</p>
-<p><strong>Failure:</strong> I had committed to MIT before deciding the business model.
-The user wanted to monetize. MIT distribution is irrevocable for
-distributed copies. We yanked v1.0.0 (hides from <code>pip install</code>,
-preserves project name, still legally MIT for anyone who downloaded it).
-Removed the Trusted Publisher to cut the OIDC pipeline. Disabled the
-release workflow. Made the repo private.</p>
-<p><strong>Side effects:</strong>
-- GitHub Pages site went 404 (private repos need GH Pro for Pages)
-- Marketing drafts in <code>docs/announce/</code> are now stale (they pitch open-source)
-- v1.0.0 still installable via explicit <code>pip install arch-line-weights==1.0.0</code>
-  (yank semantics, not deletion)</p>
-<p><strong>Lesson kept:</strong> <strong>Pick the license BEFORE you publish to a public
-registry.</strong> Once a version is on PyPI under any license, that exact
-version's license is fixed in perpetuity. Future versions can be any
-license, but the MIT cat is partially out of the bag for v1.0.0.</p>
-<p><strong>Lesson kept:</strong> Yank is a one-way door for <code>pip install</code> discovery
-but not for legal rights. Treat "what license is on the wheel I'm
-about to upload" as the gate, not "what license is in my README right
-now."</p>
-<p><strong>Lesson kept:</strong> Going private and enabling docs auto-deploy on the
-same day is a foot-gun. Pages 404'd within 5 minutes of the visibility
-flip. Always check what depends on the visibility before changing it.</p>
-<h2 id="attempt-8-2026-04-30-pikepdf-only-ai-modification-the-saas-unlock">Attempt 8 (2026-04-30) — pikepdf-only .ai modification (the SaaS unlock)<a class="headerlink" href="#attempt-8-2026-04-30-pikepdf-only-ai-modification-the-saas-unlock" title="Permanent link">&para;</a></h2>
-<p><strong>What:</strong> Investigate whether pikepdf alone can modify a Rhino-exported
-<code>.ai</code> file's <code>/PieceInfo /Illustrator /Private</code> payload such that
-Illustrator opens the result with all 62 OCG layers intact and the
-modifications applied. This was the make-or-break question for the SaaS
-pivot.</p>
-<p><strong>Result:</strong> <strong>Worked, end-to-end.</strong> Eight spike scripts in
-<code>scripts/spike/saas-feasibility/</code> demonstrate inspect / decompress /
-round-trip / stroke-color modify / stroke-width modify, all verified in
-Illustrator.</p>
-<p><strong>Discovery:</strong> The 305 <code>/AIPrivateData</code> streams concatenate into a
-20-byte ASCII prefix <code>%AI24_ZStandard_Data</code> + Zstandard-compressed
-payload. Decompressed: ~55 MB of plain-text Adobe Illustrator native
-PostScript — the same publicly-documented AI3-AI8 syntax we'd been
-writing JSX against for months, just zstd-wrapped + chunked across PDF
-streams.</p>
-<p><strong>Verified operations:</strong>
-- Round-trip null edit → byte-perfect, OCG count 62→62
-- Stroke color: <code>(1 0 1) XA</code> → 172 paths now magenta
-- Stroke width: <code>1 w</code> → <code>5 w</code> → 172 paths now 5pt</p>
-<p><strong>Implications for the project:</strong>
-- <strong>The "no Illustrator on Linux server" blocker is gone.</strong> We can run
-  the entire pipeline server-side in pure Python.
-- The existing JSX-based <code>apply_jsx.py</code> and <code>poche.py</code> can be ported to
-  operate directly on the decompressed AI native PostScript instead of
-  via Illustrator's scripting bridge. Estimated 1-2 days.
-- The hybrid local-helper path (Attempt-3-style) is no longer needed as
-  primary architecture; reserved for "Pro Privacy" upsells.</p>
-<p><strong>Lesson kept:</strong> The format we'd been treating as proprietary all along
-<strong>was actually a documented PostScript dialect wrapped in modern
-compression</strong>. Future-us: when a format looks closed, check if it's
-just an old format wearing modern packaging before assuming it's
-proprietary.</p>
-<p><strong>Lesson kept:</strong> A 60-minute time-boxed feasibility spike resolved a
-question that v0.1 (Attempt 1, "strip PieceInfo") tried to dodge by
-flattening layers. Spikes &gt; workarounds.</p>
-<p><strong>Kept in repo:</strong> Eight scripts in <code>scripts/spike/saas-feasibility/</code>
-demonstrating the operations. These become the foundation of the v0.7
-prototype that ports the apply / poché pipelines to pure Python.</p>
-<h2 id="attempt-9-2026-05-01-first-real-world-plan-drawing-run">Attempt 9 (2026-05-01) — first real-world plan drawing run<a class="headerlink" href="#attempt-9-2026-05-01-first-real-world-plan-drawing-run" title="Permanent link">&para;</a></h2>
-<p><strong>What:</strong> Apply line-weight hierarchy to <code>/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 211/macro.ai</code> — an urban-scale plan drawing, ~237 MB original / 98 MB saved, ~1.25M strokes, 50 distinct stroke colors. First non-section drawing the tool has been used on.</p>
-<p><strong>Result:</strong> <strong>Headless <code>apply-saas</code> succeeded in 5 min on the 98 MB file.</strong> First real-world validation of the v0.5 plan preset family. <code>apply-jsx</code> failed twice and then hung past its 60-min osascript timeout, requiring force-quit.</p>
-<p><strong>What worked:</strong>
-- Pure-Python <code>apply-saas --auto --preset plan</code> on 98 MB: 50 stroke-width ops rewritten across 50 stroke colors, layer fidelity preserved, output 72.8 MB.
-- Plan preset (PLAN_ISO_SCREEN) ladder applied as designed: 0.18 / 0.25 / 0.35 / 0.50 / 0.71 pt.
-- Pure-Python pipeline is <strong>at least 12× faster than JSX in practice</strong> (5 min vs 60+ min timeout).</p>
-<p><strong>What failed (5 distinct issues surfaced):</strong></p>
+<p>The public API is unchanged: <code>inspect_file(path) -&gt; InspectionReport</code>,
+<code>InspectionReport.to_dict()</code>, <code>color_to_rgb255()</code>. Downstream consumers
+(<code>classify</code>, <code>apply</code>, <code>apply_saas</code>, <code>cli</code>) didn't need a single-line edit.</p>
+<h2 id="dispatch">Dispatch<a class="headerlink" href="#dispatch" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>inspect_file(path)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    ├── ext == &quot;.ai&quot;   ──┐
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    ├── _looks_like_illustrator(path)  ──┤  → _inspect_ai (pikepdf)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    │                                    │     ↓ on failure
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    │                                    └─→ _inspect_pdf (PyMuPDF) fallback
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    │
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    └── ext != &quot;.ai&quot; and not Illustrator
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>                                          → _inspect_pdf (PyMuPDF)
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                                                ↓ on failure
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>                                            _inspect_ai (pikepdf) fallback
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    Both fail → RuntimeError(&quot;...try Save As in Illustrator...&quot;)
+</code></pre></div>
+<p><code>_looks_like_illustrator</code> opens the file with pikepdf and probes
+<code>page0.obj["/PieceInfo"]["/Illustrator"]</code>. Cheap (lazy-load only the
+trailer + first page object) and catches the case of an <code>.ai</code>-flavored
+file that's been renamed to <code>.pdf</code>.</p>
+<h2 id="how-the-pikepdf-walker-mirrors-pymupdf">How the pikepdf walker mirrors PyMuPDF<a class="headerlink" href="#how-the-pikepdf-walker-mirrors-pymupdf" title="Permanent link">&para;</a></h2>
+<p>PyMuPDF's <code>page.get_drawings()</code> returns one entry per stroked-or-filled
+path with the resolved color, width, and fill. The pikepdf walker reproduces
+the same accounting by parsing the page content stream directly:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>_TOKEN_RE = re.compile(rb&#39;&#39;&#39;(?:
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    ([0-9.eE\-+]+)\s+([0-9.eE\-+]+)\s+([0-9.eE\-+]+)\s+(RG|rg)  # 1-4
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  | ([0-9.eE\-+]+)\s+(w)                                          # 5-6
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  | (q)|(Q)                                                       # 7,8
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  | (B\*|b\*|S|s|B|b|f\*|F|f)                                     # 9
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>)(?=[\s\r\n])&#39;&#39;&#39;)
+</code></pre></div>
+<p>For each match:</p>
+<table>
+<thead>
+<tr>
+<th>Op</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RG</code></td>
+<td>Set <code>current_stroke = (r*255, g*255, b*255)</code></td>
+</tr>
+<tr>
+<td><code>rg</code></td>
+<td>Set <code>current_fill</code></td>
+</tr>
+<tr>
+<td><code>&lt;w&gt; w</code></td>
+<td>Set <code>current_width</code></td>
+</tr>
+<tr>
+<td><code>q</code></td>
+<td><code>state_stack.append((current_stroke, current_fill, current_width))</code></td>
+</tr>
+<tr>
+<td><code>Q</code></td>
+<td>Pop the stack and restore</td>
+</tr>
+<tr>
+<td><code>S/s/B/b/B*/b*</code></td>
+<td>Increment <code>total_drawings</code>, <code>total_stroked</code>; bucket <code>(stroke_color, width)</code></td>
+</tr>
+<tr>
+<td><code>f/F/f*</code></td>
+<td>Increment <code>total_drawings</code>; bucket <code>fill_color</code></td>
+</tr>
+</tbody>
+</table>
+<p>The walker is <code>O(n)</code> in content-stream bytes (no parse tree). On the 98 MB
+<code>macro_for_archlw.ai</code> it walks 113 MB of content stream in <strong>24 s</strong>. Compare
+PyMuPDF: it parses + builds drawing objects in <strong>~9 s</strong> but <strong>fails outright
+on the 237 MB original</strong>.</p>
+<h3 id="why-a-regex-walker-is-enough">Why a regex walker is enough<a class="headerlink" href="#why-a-regex-walker-is-enough" title="Permanent link">&para;</a></h3>
+<p>I considered three alternatives and rejected each:</p>
 <ol>
 <li>
-<p><strong>PyMuPDF <code>fitz.open()</code> failed on the 237 MB original <code>.ai</code></strong> — <code>inspect_file()</code> raised <code>FileDataError</code>. Workaround: user saved-as a smaller version (98 MB) via Illustrator, which then worked. Real customers WILL hit this on complex urban drawings.</p>
+<p><strong><code>pikepdf.parse_content_stream</code> + visitor</strong> — gives us proper PDF tokens,
+   not just regex hits. Tested it: 6 s to parse 8.1 M ops on the 98 MB file,
+   then another 5 s to walk. Total ~11 s, ~2× faster than the regex. But it
+   has no way to expose <code>q</code>/<code>Q</code> state changes alongside operators in a single
+   stream — we'd have to reconstruct the same state machine anyway. The regex
+   walker is simpler to read and we don't bottleneck on inspection time.</p>
 </li>
 <li>
-<p><strong><code>apply-jsx</code> failed with "target doc not open" on <code>[Converted]</code> state</strong> — when Illustrator opens a non-AI source (PDF, older AI) as a <code>[Converted]</code> virtual doc, AppleScript <code>tell ... open</code> returns silently without actually opening the disk file. The JSX then can't find its target document. UX is confusing — gives no hint what happened.</p>
+<p><strong>Walk the AI24 native payload</strong> (the same blob <code>apply_saas</code> rewrites). 
+   More accurate (this is Illustrator's authoritative model), but ~2× the
+   complexity and identical results on every Rhino-export file we've checked.
+   The PDF content stream <code>RG</code>/<code>S</code> data is what Illustrator emits when it
+   saves, so the two views agree.</p>
 </li>
 <li>
-<p><strong>60-min JSX timeout was insufficient on a 98 MB file</strong> — Illustrator kept running JSX past the osascript-side timeout, creating a stuck process that consumed 100% CPU indefinitely. No way to safely abort from outside.</p>
-</li>
-<li>
-<p><strong>No JSX progress heartbeat</strong> — during the 60+ min run, no indication of progress, completion ETA, or hang detection. Issue #8 filed before this attempt finished.</p>
-</li>
-<li>
-<p><strong>Default output path collision</strong> — both <code>apply-jsx</code> and <code>apply-saas</code> write to <code>&lt;src&gt; HIERARCHY.&lt;ext&gt;</code>. Running both can race. (In this case, <code>apply-saas</code> wrote first; if the stuck JSX had eventually completed, it would have overwritten.)</p>
-</li>
-<li>
-<p><strong>CLI inconsistency</strong> — <code>apply-jsx</code> lacks <code>--preset</code> flag while <code>apply-saas</code> has it. For non-section drawings via JSX, users can't pick the right tier ladder.</p>
+<p><strong>Keep PyMuPDF and just add a <code>try</code>/<code>except</code> around <code>fitz.open</code></strong> — sounds
+   like the simplest fix, but the original failure surfaces a real
+   architectural mismatch. PyMuPDF reads the whole file into memory and
+   chokes on &gt;200 MB Illustrator output. pikepdf's lazy loader handles it
+   cleanly. Better to switch backends than paper over the symptom.</p>
 </li>
 </ol>
-<p><strong>Lessons kept:</strong>
-- <strong>PyMuPDF is not the right inspection backend for <code>.ai</code> files at scale.</strong> Switch to pikepdf (which already opened the same file fine for the rewrite step). PyMuPDF stays for <code>.pdf</code> only.
-- <strong>Detect <code>[Converted]</code> Illustrator state explicitly in <code>apply-jsx</code>.</strong> Either work on the open document directly or fail with a clear "save-as first" message.
-- <strong>JSX timeout must be configurable + heartbeat-driven.</strong> Hardcoded 60 min is wrong both ways — too long for small files (waste), too short for big ones (false abort).
-- <strong>Different default output paths for the two pipelines.</strong> <code>HIERARCHY-saas.ai</code> vs <code>HIERARCHY-jsx.ai</code> prevents the race entirely.
-- <strong>The headless apply-saas pipeline is genuinely production-ready.</strong> v0.5's plan/elevation/detail preset families work as designed on a 4× larger drawing than the reference.</p>
-<p><strong>Filed as GitHub Issues:</strong> #9 (PyMuPDF replacement), #10 (Converted state), #11 (JSX timeout config), #12 (output path collision), #13 (apply-jsx --preset).</p>
-<h2 id="cross-cutting-lessons-the-durable-ones">Cross-cutting lessons (the durable ones)<a class="headerlink" href="#cross-cutting-lessons-the-durable-ones" title="Permanent link">&para;</a></h2>
-<ol>
-<li><strong>Layer fidelity is non-negotiable.</strong> Any change that destroys it must
-   be explicit opt-in, not the default.</li>
-<li><strong>Sub-agents in parallel</strong> are how to move fast on unknowns. Eight
-   sub-agent reports across this 30-hour session each gave us in 2 minutes
-   what would have taken hours of solo research.</li>
-<li><strong>Two-stage pipelines</strong> (Illustrator dump → Python compute → Illustrator
-   apply) are easier to debug than monolithic pikepdf or monolithic JSX.</li>
-<li><strong>Topology-aware geometry libraries</strong> (shapely) &gt; naive endpoint chaining
-   (Illustrator Join) every time.</li>
-<li><strong>Best-effort sweep over strategies + confidence scoring</strong> &gt; picking one
-   tolerance and hoping. Different layers need different tolerances within
-   the same file.</li>
-<li><strong>Document failed approaches in the repo</strong>, not just successful ones.
-   This file is the contract.</li>
-<li><strong>The user's verification ritual matters.</strong> "Does it look right in
-   Illustrator's Preview view at the layers panel?" is the ground truth, not
-   "does the JSON say success."</li>
-<li><strong>Save the source separately from the modification.</strong> Use <code>saveAs</code> to a
-   new file every time. Never modify the user's source in place.</li>
-<li><strong><code>maximumUndoDepth=1</code> + Outline view</strong> turns ExtendScript from
-   exponential-time to linear-time on bulk edits.</li>
-<li><strong>Standards-compliant defaults trump aesthetics.</strong> The current 0.1–1.0pt
-    range was chosen for screen review; for plotted print at &frac14;"=1' the
-    section cut should be 0.7mm = 1.98pt per ISO 128. v0.4 will add scale-
-    aware presets (see <code>docs/research/standards.md</code>).</li>
-</ol>
+<h3 id="reconciling-with-pymupdfs-output">Reconciling with PyMuPDF's output<a class="headerlink" href="#reconciling-with-pymupdfs-output" title="Permanent link">&para;</a></h3>
+<p>I verified the new walker against PyMuPDF on the 98 MB file:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>PyMuPDF</th>
+<th>pikepdf walker</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>total_drawings</code></td>
+<td>1,282,989</td>
+<td>1,282,990</td>
+</tr>
+<tr>
+<td><code>total_stroked</code></td>
+<td>1,282,989</td>
+<td>1,282,990</td>
+</tr>
+<tr>
+<td>Distinct stroke RGB colors</td>
+<td>41</td>
+<td>41</td>
+</tr>
+<tr>
+<td>Distinct stroke widths</td>
+<td>1 (all 1.0)</td>
+<td>1 (all 1.0)</td>
+</tr>
+<tr>
+<td>Top color: <code>RGB(240,190,130)</code></td>
+<td>617,899</td>
+<td>617,899</td>
+</tr>
+<tr>
+<td>Next: <code>RGB(220,165,100)</code></td>
+<td>565,214</td>
+<td>565,214</td>
+</tr>
+</tbody>
+</table>
+<p>The off-by-one on <code>total_drawings</code> is a marked-content sentinel that
+PyMuPDF skips and the regex walker counts. Within rounding, the two backends
+agree, and the auto-classifier (which only consumes <code>stroke_colors</code>) gets
+identical results.</p>
+<h3 id="default-stroke-width-when-no-w-op-is-set">Default stroke width when no <code>w</code> op is set<a class="headerlink" href="#default-stroke-width-when-no-w-op-is-set" title="Permanent link">&para;</a></h3>
+<p>PDF's default line width is <code>1.0</code>. PyMuPDF returns <code>width=1.0</code> when no <code>w</code>
+operator has fired. The pikepdf walker mirrors that:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">wval</span> <span class="o">=</span> <span class="n">current_width</span> <span class="k">if</span> <span class="n">current_width</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">1.0</span>
+</code></pre></div>
+<p>If we left strokes with <code>current_width is None</code> out of the counter, the
+plan-drawing fixture above would report 0 widths, breaking auto-classify.</p>
+<h2 id="metadata-layer-extraction">Metadata + layer extraction<a class="headerlink" href="#metadata-layer-extraction" title="Permanent link">&para;</a></h2>
+<p>The pikepdf path sources both from the document tree directly:</p>
+<ul>
+<li><strong>PDF metadata</strong> — <code>pdf.docinfo[&lt;key&gt;]</code>, normalised to both <code>/Producer</code>
+  (PDF spelling) and <code>producer</code> (lowercased) so <code>detect_source</code> doesn't care
+  which backend produced the report.</li>
+<li><strong>Layer names</strong> — <code>pdf.Root["/OCProperties"]["/OCGs"][i]["/Name"]</code>. Same
+  list PyMuPDF surfaces via <code>doc.layer_ui_configs()</code>, in the same order
+  Illustrator wrote them.</li>
+</ul>
+<p>Both functions defensively swallow exceptions and return empty
+collections — <code>inspect_file()</code> should never abort over a missing layer
+panel, since <code>auto_by_luminance</code> works fine without one.</p>
+<h2 id="fallback-semantics">Fallback semantics<a class="headerlink" href="#fallback-semantics" title="Permanent link">&para;</a></h2>
+<p>If pikepdf raises (corrupt trailer, malformed <code>/Contents</code>, etc.), the
+dispatcher falls back to PyMuPDF. If PyMuPDF also raises, we wrap both
+errors in a <code>RuntimeError</code> whose message ends with:</p>
+<blockquote>
+<p>If this is an Illustrator file, try opening it in Adobe Illustrator and
+using File → Save As to write a smaller copy, then re-run arch-lw on the
+smaller version.</p>
+</blockquote>
+<p>This is the workaround the postmortem documents and the only way out for
+the 237 MB original <code>macro.ai</code> (which has a damaged trailer that defeats
+both backends — pikepdf reports <code>unable to find trailer dictionary while
+recovering damaged file</code>, PyMuPDF reports <code>FileDataError</code>).</p>
+<h2 id="test-coverage-added">Test coverage added<a class="headerlink" href="#test-coverage-added" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>What it proves</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test_inspect_dispatches_to_pikepdf_for_ai_extension</code></td>
+<td><code>.ai</code> → pikepdf path; counters, colors, widths, layer names, metadata all populated.</td>
+</tr>
+<tr>
+<td><code>test_inspect_pikepdf_path_tracks_q_Q_state</code></td>
+<td><code>q</code>/<code>Q</code> push/pop restores the outer color, mirroring PDF graphics-state semantics.</td>
+</tr>
+<tr>
+<td><code>test_inspect_unreadable_file_raises_with_workaround_hint</code></td>
+<td>Both-backends-fail error message names both backends and points at the Save-As workaround.</td>
+</tr>
+<tr>
+<td><code>test_inspect_routes_pdf_extension_to_pymupdf_path</code></td>
+<td>Plain <code>.pdf</code> (no <code>/PieceInfo</code>) doesn't unnecessarily invoke pikepdf.</td>
+</tr>
+</tbody>
+</table>
+<p>Run: <code>pytest tests/test_basic.py -k inspect_</code> → 4 passed in ~0.4 s.</p>
+<h2 id="whats-still-on-pymupdf">What's still on PyMuPDF<a class="headerlink" href="#whats-still-on-pymupdf" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>arch_line_weights/preview.py</code> — uses PyMuPDF's <code>get_pixmap</code> for raster
+  rendering of before/after PNGs. Out of scope for Issue #9.</li>
+<li>Plain <code>.pdf</code> inspection path, when the file is not Illustrator-saved.</li>
+</ul>
+<h2 id="smoke-tests-on-the-real-arch-211-drawing">Smoke tests on the real ARCH 211 drawing<a class="headerlink" href="#smoke-tests-on-the-real-arch-211-drawing" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>$ time arch-lw inspect &#39;/.../macro_for_archlw.ai&#39;   # 98 MB AI
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>1,282,990 total_drawings, 41 distinct stroke colors, 49 OCG layer names
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>real    0m25s
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>$ arch-lw inspect &#39;/.../macro.ai&#39;                   # 237 MB AI (damaged)
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>RuntimeError: Failed to open &#39;...&#39; with both pikepdf
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>(PdfError(&#39;...unable to find trailer dictionary while recovering damaged file&#39;))
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>and PyMuPDF (FileDataError(&#39;Failed to open file ...&#39;)). If this is an
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>Illustrator file, try opening it in Adobe Illustrator and using
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>File → Save As to write a smaller copy, then re-run arch-lw on the
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>smaller version.
+</code></pre></div>
+<p>The 237 MB file is genuinely damaged at the PDF-trailer level — neither
+backend can recover it. The Save-As workflow is the right answer. The 98 MB
+Save-As output now opens cleanly via pikepdf (it was already opening cleanly
+via <code>apply_saas</code>'s pikepdf path; this change just brings <code>inspect</code> in line).</p>
 
 
 
@@ -1494,10 +1514,10 @@ prototype that ports the apply / poché pipelines to pure Python.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.action.edit", "content.tabs.link"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.action.edit", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
