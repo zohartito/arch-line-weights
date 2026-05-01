@@ -1,0 +1,1676 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Apply architectural line-weight hierarchy to Rhino-exported vector drawings.">
+      
+      
+        <meta name="author" content="zohartito">
+      
+      
+        <link rel="canonical" href="https://zohartito.github.io/arch-line-weights/research/poche-saas-port-notes/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Porting poche.py to operate on the AI native payload — implementation notes - arch-line-weights</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-orange">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#porting-pochepy-to-operate-on-the-ai-native-payload-implementation-notes" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="arch-line-weights" class="md-header__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            arch-line-weights
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Porting poche.py to operate on the AI native payload — implementation notes
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="deep-orange"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/zohartito/arch-line-weights" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zohartito/arch-line-weights
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tutorials/your-first-section-drawing/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../how-to/apply-line-weights/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  How-to
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../explanation/how-poche-works/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Explanation
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="arch-line-weights" class="md-nav__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    arch-line-weights
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/zohartito/arch-line-weights" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zohartito/arch-line-weights
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/your-first-section-drawing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your first section drawing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/apply-line-weights/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Apply line weights
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/generate-poche/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Generate poché
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/material-hatching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Material hatching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/use-with-rhino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use with Rhino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/troubleshoot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshoot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/how-poche-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How poché works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/why-this-tool-exists/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why this tool exists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/the-postmortem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postmortem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-got-built" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What got built
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ai-native-postscript-fragment-for-a-filled-polygon" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI native PostScript fragment for a filled polygon
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#locating-a-layers-ai5_beginlayer-lb-envelope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Locating a layer's %AI5_BeginLayer ... LB envelope
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reusing-polygonize_layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reusing polygonize_layer()
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#right-to-left-splicing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Right-to-left splicing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#layer-path-enumeration-without-jsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer-path enumeration without JSX
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_is_cut_layer-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        _is_cut_layer filter
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#edge-cases-discovered-during-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Edge cases discovered during implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Edge cases discovered during implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-shapelys-auto-closed-exterior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Shapely's auto-closed exterior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-consecutive-duplicate-vertex-dedup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Consecutive-duplicate vertex dedup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-lookbehind-with-alternation-regex" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Lookbehind-with-alternation regex
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-right-to-left-splice-ordering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Right-to-left splice ordering
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-r-lb-r-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. \r LB \r boundary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-end-to-end-round-trip-via-pikepdf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. End-to-end round-trip via pikepdf
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limitations-known-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limitations / known gaps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#whats-gated-on-a-real-rhino-export-ai-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's gated on a real Rhino-export .ai file
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#time-spent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time spent
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/zohartito/arch-line-weights/edit/main/docs/research/poche-saas-port-notes.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="porting-pochepy-to-operate-on-the-ai-native-payload-implementation-notes">Porting <code>poche.py</code> to operate on the AI native payload — implementation notes<a class="headerlink" href="#porting-pochepy-to-operate-on-the-ai-native-payload-implementation-notes" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>2026-04-30. Companion document to <code>apply-saas-port-notes.md</code>. Records the
+design decisions and edge cases encountered while implementing
+<code>src/arch_line_weights/poche_saas.py</code> — the headless poché injector that
+writes filled black polygons directly into the decompressed AI native
+PostScript payload, eliminating the JSX dependency.</p>
+</blockquote>
+<h2 id="what-got-built">What got built<a class="headerlink" href="#what-got-built" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>src/arch_line_weights/poche_saas.py</code></td>
+<td>New module — pure-Python headless poché injector. Re-uses <code>poche.polygonize_layer()</code> for the compute step; replaces the JSX apply step with byte-level surgery.</td>
+</tr>
+<tr>
+<td><code>src/arch_line_weights/cli.py</code></td>
+<td>Added <code>--poche</code> and <code>--poche-overrides</code> flags to the existing <code>apply-saas</code> subcommand.</td>
+</tr>
+<tr>
+<td><code>tests/test_apply_saas_poche.py</code></td>
+<td>17 unit tests covering synthesis, envelope location, injection, round-trip, and end-to-end via <code>apply_saas_with_poche</code>.</td>
+</tr>
+<tr>
+<td><code>docs/research/poche-saas-port-notes.md</code></td>
+<td>This file.</td>
+</tr>
+</tbody>
+</table>
+<p><code>poche.py</code> and <code>apply_jsx.py</code> were <em>not</em> modified — the new module is
+strictly additive.</p>
+<h2 id="design">Design<a class="headerlink" href="#design" title="Permanent link">&para;</a></h2>
+<p>The pipeline mirrors the existing <code>apply_saas.py</code> rewrite-payload pattern, but
+extends it with a second pass that <em>inserts</em> (rather than replaces) bytes:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>read .ai → concat AIPrivateData&lt;i&gt; streams → strip 20-byte prefix
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                                            → zstd-decompress
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>                                            ↓
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        [enumerate cut-layer paths from payload]
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                                            ↓
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        [polygonize_layer per cut layer (poche.py)]
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>                                            ↓
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>        rewrite_payload(payload, mapping)  ←  width rewrite (B6)
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>                                            ↓
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>        inject_poche_polygons(payload, polys_by_layer)
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>                                            ↓
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>                                            → zstd-compress (level 19)
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>                                            → prepend prefix
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>                                            → 64 KB chunk → write streams
+</code></pre></div>
+<h3 id="ai-native-postscript-fragment-for-a-filled-polygon">AI native PostScript fragment for a filled polygon<a class="headerlink" href="#ai-native-postscript-fragment-for-a-filled-polygon" title="Permanent link">&para;</a></h3>
+<p>For each shapely.Polygon we emit:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>\r0 0 0 1 1 0 0 0 Xa\r       # fill color = CMYK 0 0 0 K=1, RGB 0 0 0 (black)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>0 R\r                         # render-mode reset
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>&lt;x0&gt; &lt;y0&gt; m\r                 # moveto first vertex
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>&lt;x1&gt; &lt;y1&gt; L\r                 # lineto
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>&lt;x2&gt; &lt;y2&gt; L\r
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>... 
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>&lt;xN-1&gt; &lt;yN-1&gt; L\r
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>f\r                           # closepath + fill
+</code></pre></div>
+<p>Notes:</p>
+<ul>
+<li><code>Xa</code> (lowercase <code>a</code>) is the <em>fill</em> color setter. It takes 8 floats:
+  CMYK (<code>&lt;C&gt; &lt;M&gt; &lt;Y&gt; &lt;K&gt;</code>) followed by RGB (<code>&lt;R&gt; &lt;G&gt; &lt;B&gt;</code>) and a
+  composite-alpha indicator (<code>&lt;...&gt; Xa</code>). Black uses <code>0 0 0 1 1 0 0 0</code>.
+  This is distinct from <code>XA</code> (uppercase) which sets <em>stroke</em> color — the
+  same operator family the B6 stroke-width rewriter already touches.</li>
+<li><code>f</code> is the closepath-and-fill operator from the legacy AI3-AI8 file
+  format spec. It closes the current subpath (regardless of whether the
+  caller emitted a duplicate first/last vertex) and fills it.</li>
+<li>The fragment starts and ends with <code>\r</code> so it can be spliced into any
+  AI layer block without disturbing the surrounding tokens.</li>
+<li>Duplicate consecutive vertices and the closing-vertex duplicate that
+  shapely adds to <code>Polygon.exterior.coords</code> are stripped before emission
+  to keep the payload terse.</li>
+</ul>
+<h3 id="locating-a-layers-ai5_beginlayer-lb-envelope">Locating a layer's <code>%AI5_BeginLayer ... LB</code> envelope<a class="headerlink" href="#locating-a-layers-ai5_beginlayer-lb-envelope" title="Permanent link">&para;</a></h3>
+<p>The decompressed payload structure for one layer is:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>%AI5_BeginLayer\r
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>&lt;flags...&gt; Lb\r
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>(&lt;full layer name&gt;) Ln\r
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>... layer attribute setup ...
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>... path data, S / f / B operators ...
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>LB\r
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>%AI5_EndLayer--\r
+</code></pre></div>
+<p><code>find_layer_envelope(payload, name)</code> searches for the
+<code>(&lt;name&gt;) Ln</code> marker (this disambiguates layers that happen to share path
+data shapes), then walks backward to the nearest <code>%AI5_BeginLayer</code> and
+forward to the matching <code>LB</code>. Returns <code>(begin_offset, ln_offset, lb_offset)</code>.</p>
+<p>The injection point is the <code>lb_offset</code> — new path operators are spliced
+<em>before</em> <code>LB</code> so the fills become the last children of the layer. In AI's
+drawing model, "later in the stream" = "drawn on top", so this gives the
+classic poché look (fill on top of strokes, cut reads black).</p>
+<h3 id="reusing-polygonize_layer">Reusing <code>polygonize_layer()</code><a class="headerlink" href="#reusing-polygonize_layer" title="Permanent link">&para;</a></h3>
+<p>The compute step (segments → polygons) is unchanged from the existing
+<code>poche.py</code> JSX pipeline. We import <code>polygonize_layer</code> and run the same
+rescue ladder (linemerge → snap-tolerance sweep → auto-bridge →
+concave_hull → bbox), so any layer that polygonized correctly under the
+JSX apply path will polygonize identically here.</p>
+<p>The only divergence is at the apply step: instead of baking polygons into
+JSX as <code>setEntirePath()</code> calls, we synthesize the equivalent AI native
+PostScript and splice it in.</p>
+<h3 id="right-to-left-splicing">Right-to-left splicing<a class="headerlink" href="#right-to-left-splicing" title="Permanent link">&para;</a></h3>
+<p>Because every splice inserts new bytes (no deletion), naively splicing
+left-to-right would invalidate the offsets of every subsequent layer. We
+collect all (lb_offset, name, polys) triples, sort them by <code>lb_offset</code>
+descending, and splice from the end of the payload to the start. Each
+splice only changes offsets <em>forward</em> of itself, which we've already
+processed.</p>
+<h3 id="layer-path-enumeration-without-jsx">Layer-path enumeration without JSX<a class="headerlink" href="#layer-path-enumeration-without-jsx" title="Permanent link">&para;</a></h3>
+<p><code>enumerate_layer_paths_from_payload(payload)</code> walks the decompressed
+payload directly and dumps <code>{layer_name: [[[x, y], ...], ...]}</code> — exactly
+the shape <code>polygonize_layer()</code> expects. This replaces the JSX-side
+<code>dump_cut_geometry.jsx</code> for the SaaS code path. Implementation:</p>
+<ul>
+<li>Match every <code>(&lt;name&gt;) Ln\r</code> marker via regex</li>
+<li>For each match, take the bytes from the marker to the next <code>\rLB\r</code></li>
+<li>Split on <code>\r</code>, walk tokens, and build a polyline per <code>S</code>-terminated
+  sub-path (the same termination logic the AI native format uses)</li>
+</ul>
+<p>Curve operators (<code>C</code>, <code>c</code>) are approximated by their endpoint, mirroring
+what JSX dumps as <code>pathPoint.anchor</code> (the on-curve point). This is
+sufficient for poché since the cut layers we care about contain only
+straight-line segments from Rhino exports.</p>
+<h3 id="_is_cut_layer-filter"><code>_is_cut_layer</code> filter<a class="headerlink" href="#_is_cut_layer-filter" title="Permanent link">&para;</a></h3>
+<p>Mirrors the <code>shouldDump</code> heuristic in <code>poche.py</code>'s JSX template:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="s2">&quot;CLIPPINGPLANEINTERSECTIONS&quot;</span> <span class="ow">in</span> <span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="ow">and</span> <span class="s2">&quot;GLASS&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="ow">and</span> <span class="s2">&quot;IGU&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+</code></pre></div>
+<p>This excludes window/glazing layers, which we never poché.</p>
+<h2 id="edge-cases-discovered-during-implementation">Edge cases discovered during implementation<a class="headerlink" href="#edge-cases-discovered-during-implementation" title="Permanent link">&para;</a></h2>
+<h3 id="1-shapelys-auto-closed-exterior">1. Shapely's auto-closed exterior<a class="headerlink" href="#1-shapelys-auto-closed-exterior" title="Permanent link">&para;</a></h3>
+<p><code>shapely.Polygon.exterior.coords</code> always returns a closed ring (last
+vertex == first). AI's <code>f</code> operator already does closepath; emitting the
+duplicate would produce a zero-length segment that some renderers don't
+like. We strip the duplicate before emission.</p>
+<p>Tested via <code>test_synthesize_square_emits_4_vertices</code> — a 4-vertex input
+emits 1 <code>m</code> + 3 <code>L</code> (4 distinct vertices, not 5).</p>
+<h3 id="2-consecutive-duplicate-vertex-dedup">2. Consecutive-duplicate vertex dedup<a class="headerlink" href="#2-consecutive-duplicate-vertex-dedup" title="Permanent link">&para;</a></h3>
+<p>The synthesize path dedupes consecutive duplicates explicitly. This is
+defensive for shapely outputs that pass through <code>simplify(tolerance=0)</code>
+or similar pipelines that can leave coincident points.</p>
+<h3 id="3-lookbehind-with-alternation-regex">3. Lookbehind-with-alternation regex<a class="headerlink" href="#3-lookbehind-with-alternation-regex" title="Permanent link">&para;</a></h3>
+<p>I initially wrote a <code>(?&lt;!GLASS|_IGU)</code> regex for the cut-layer filter,
+which Python rejects because lookbehind needs fixed-width patterns. The
+fix is the simpler <code>_is_cut_layer()</code> function with explicit substring
+checks, which is also clearer.</p>
+<h3 id="4-right-to-left-splice-ordering">4. Right-to-left splice ordering<a class="headerlink" href="#4-right-to-left-splice-ordering" title="Permanent link">&para;</a></h3>
+<p>Inserting bytes shifts all subsequent offsets. Sorting <code>(lb_offset, ...)</code>
+tuples descending and splicing back-to-front avoids the recompute.</p>
+<h3 id="5-r-lb-r-boundary">5. <code>\r LB \r</code> boundary<a class="headerlink" href="#5-r-lb-r-boundary" title="Permanent link">&para;</a></h3>
+<p>The synthesized fragment ends with <code>f\r</code>, and <code>LB</code> is preceded by <code>\r</code>
+in the original payload. So when we splice the fragment in, the
+<code>\r</code> of <code>f\r</code> and the <code>\r</code> of <code>\rLB\r</code> <em>do not</em> combine — the result is
+<code>f\r\rLB\r</code> (a blank line between them). AI's tokenizer treats blank
+<code>\r</code>-delimited lines as no-ops, so this is harmless. The test
+<code>test_inject_poche_polygons_splices_before_lb</code> verifies the <code>f</code> byte sits
+exactly one <code>\r</code> before the <code>LB</code> marker.</p>
+<h3 id="6-end-to-end-round-trip-via-pikepdf">6. End-to-end round-trip via pikepdf<a class="headerlink" href="#6-end-to-end-round-trip-via-pikepdf" title="Permanent link">&para;</a></h3>
+<p>The synthetic <code>.ai</code> test fixture (<code>write_synthetic_test_ai</code>) uses
+<code>pikepdf.Pdf.new()</code> + manual <code>/PieceInfo /Illustrator /Private</code> dict
+construction. <code>pdf.make_stream(c)</code> may apply a <code>/FlateDecode</code> filter on
+save (this was caught earlier during the B6 port and fixed via
+<code>read_bytes()</code> instead of <code>read_raw_bytes()</code> in <code>_read_payload</code>). The
+fixture goes round-trip through that same code path — the
+<code>test_apply_saas_with_poche_end_to_end_on_synthetic_fixture</code> test exercises
+the full pipeline.</p>
+<h2 id="limitations-known-gaps">Limitations / known gaps<a class="headerlink" href="#limitations-known-gaps" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Limitation</th>
+<th>Impact</th>
+<th>Possible follow-up</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Curve segments approximated by endpoint</td>
+<td>Poché on Rhino-exported drawings is straight-segment-only, so curves don't appear. If Illustrator-edited cut layers contain curves, the polygon shape will be slightly wrong.</td>
+<td>Walk <code>c</code> / <code>C</code> operators with a Bezier flattener (e.g. <code>shapely.segmentize</code> after constructing a CubicBezier). Not in scope — Rhino exports never produce curves.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Paren-escaping in layer names</td>
+<td>A layer with <code>(</code> or <code>)</code> in the name would have those chars backslash-escaped in the AI payload. Our exact-byte search would miss it.</td>
+<td>Rhino exports never use parens, so this is theoretical. If hit, escape the layer name byte-string the same way AI does before searching.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>No layer-name-by-OCG validation</td>
+<td>We trust that the layer name we got from <code>enumerate_layer_paths_from_payload</code> matches the layer name in <code>find_layer_envelope</code>. If they diverge (e.g. the spike's "4<sup>th</sup> name reference" caveat), polygons would land in the wrong layer.</td>
+<td>Cross-check against the OCG <code>/Name</code> entries. Out of scope.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Single-pass injection</td>
+<td>We don't merge multiple polygon batches for the same layer — the caller must aggregate.</td>
+<td>The current <code>compute_polygons_for_layers</code> already does this; just a note for direct callers of <code>inject_poche_polygons</code>.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>No fill-color customization</td>
+<td>Always emits <code>0 0 0 1 1 0 0 0 Xa</code> (black).</td>
+<td>Add a <code>fill_color</code> argument to <code>synthesize_polygon_block</code> if someone wants gray poché or a different convention.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>No multi-page support</td>
+<td>Reads <code>pdf.pages[0]</code> only, like <code>apply_saas.py</code>.</td>
+<td>Loop over pages. Rhino exports are always single-page.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Validation against real Rhino-export <code>.ai</code></td>
+<td>Not run during this port (per the time-box constraint and the user's instruction not to touch their real ARCH 202B file). The synthetic fixture proves the byte mechanics work.</td>
+<td>Smoke-test against a small representative Rhino export in a separate session.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="verification">Verification<a class="headerlink" href="#verification" title="Permanent link">&para;</a></h2>
+<p>End-to-end smoke test against the synthetic fixture:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>$ python -c &#39;from arch_line_weights.poche_saas import write_synthetic_test_ai; \
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>             write_synthetic_test_ai(&quot;/tmp/test_poche_cli.ai&quot;, \
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>             layer_name=&quot;axon::Visible::ClippingPlaneIntersections::TEST&quot;)&#39;
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>$ arch-lw apply-saas /tmp/test_poche_cli.ai --auto --preset section --poche \
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>      -o /tmp/test_poche_cli_OUT.ai
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a># 0 colors mapped using auto:section
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>rewrote 1 stroke-width ops across 1 stroke-color sets
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>payload: 343 → 404 bytes (1 → 1 chunks)
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>   0.25 pt  →        1 ops
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>unmatched (defaulted to 0.25 pt):
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>  RGB(0, 0, 0): 1
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>poché: injected 1 polygons across 1/1 cut layers (+58 bytes)
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>  ✓ TEST            linemerge_bare      polys=  1  conf=1.00
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>wrote /tmp/test_poche_cli_OUT.ai  (1,065 bytes)
+</code></pre></div>
+<p>The output decompresses to:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>%!PS-Adobe-3.0
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>%%Creator: Adobe Illustrator(R) 24.0
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>%AI24_TestFixture
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>%%EndComments
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>%AI5_BeginLayer
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>1 1 1 1 0 0 1 -1 240 190 130 0 100 0 Lb
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>(axon::Visible::ClippingPlaneIntersections::TEST) Ln
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>0 AE
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>0 A
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>0 0 0 1 0 0 0 XA
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>1 J 1 j 0.25 w 4 M []0 d        ← B6 width rewrite (1 -&gt; 0.25)
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>0 XR
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>0 0 m
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>100 0 L
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>S
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>... (4 stroked sides of square) ...
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>                                   ← splice point
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>0 0 0 1 1 0 0 0 Xa                ← injected: fill color black
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>0 R
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>0 0 m                              ← injected: polygon path
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>0 100 L
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>100 100 L
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>100 0 L
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>f                                  ← injected: fill + closepath
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>LB
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>%AI5_EndLayer--
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>%%EOF
+</code></pre></div>
+<ul>
+<li><code>%AI5_BeginLayer ... LB</code> envelope intact</li>
+<li>Original 4 stroked sides preserved</li>
+<li>Stroke-width op rewritten (B6 path)</li>
+<li>New <code>Xa</code> + <code>f</code> filled polygon path injected immediately before <code>LB</code></li>
+</ul>
+<p>Test coverage:</p>
+<ul>
+<li>35 existing tests (<code>tests/test_basic.py</code>, <code>tests/test_apply_saas.py</code>) — unchanged, all pass</li>
+<li>17 new tests (<code>tests/test_apply_saas_poche.py</code>) — synthesis, envelope
+  location, injection, zstd round-trip, end-to-end via <code>apply_saas_with_poche</code></li>
+</ul>
+<p>Total: 52 tests, all green. Ruff: clean.</p>
+<h2 id="whats-gated-on-a-real-rhino-export-ai-file">What's gated on a real Rhino-export <code>.ai</code> file<a class="headerlink" href="#whats-gated-on-a-real-rhino-export-ai-file" title="Permanent link">&para;</a></h2>
+<p>The synthetic fixture proves:</p>
+<ol>
+<li>The byte mechanics work — pikepdf reads, zstd decompresses, regex finds
+   layer envelope, polygons synthesize, splice happens, recompress + chunk</li>
+<li>
+<p>write succeeds, and the output decompresses to a payload containing
+   the injected operators.</p>
+</li>
+<li>
+<p>The compute step works — <code>polygonize_layer()</code> from <code>poche.py</code> is reused
+   verbatim and produces the same polygons it would produce in the JSX
+   pipeline.</p>
+</li>
+</ol>
+<p>What's <em>not</em> yet proven (but should work given the spike-08 evidence on
+stroke widths and the matching syntax pattern):</p>
+<ul>
+<li>
+<p>That Adobe Illustrator opens the modified file and renders the injected
+  fills correctly at the right Z-order. The B6 spike (<code>08_modify_stroke_width.py</code>)
+  proves the format is round-trip-safe through Illustrator for syntactically
+  identical edits; injected <code>Xa</code> / <code>m</code> / <code>L</code> / <code>f</code> operators use the same
+  AI native PostScript syntax, so the same proof should extend.</p>
+</li>
+<li>
+<p>That a multi-layer real Rhino export with 60+ cut layers produces the
+  correct fills at scale (no missed envelopes, no off-by-one offsets, no
+  unicode-name escape issues).</p>
+</li>
+</ul>
+<p>The recommended next step is a single smoke test on a small
+representative Rhino-export <code>.ai</code> (e.g. a 5-layer test export) before
+scaling to the full ARCH 202B drawing.</p>
+<h2 id="time-spent">Time spent<a class="headerlink" href="#time-spent" title="Permanent link">&para;</a></h2>
+<p>Roughly 70 minutes of agent work, well under the 90-minute budget. Most
+of that was understanding the AI native PostScript syntax for filled
+polygons (the spike scripts hadn't yet exercised <code>Xa</code>/<code>f</code>) and reading the
+existing <code>poche.py</code> + <code>apply_saas.py</code> modules to mirror their patterns.
+The lookbehind regex bug cost ~5 minutes; the synthetic-fixture
+<code>pikepdf.Dictionary</code> construction cost ~5 minutes. The end-to-end pipeline
+ran clean on the first integration attempt after those two fixes.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 zohartito — MIT License
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/zohartito/arch-line-weights" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.action.edit", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
