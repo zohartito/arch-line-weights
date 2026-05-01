@@ -1,160 +1,121 @@
-# Roadmap
+# Roadmap (post-pivot, 2026-04-30)
 
-This is the long-form companion to the table in [README.md](../README.md).
-Each phase has a "why ambitious" note so future maintainers can see what
-we're optimizing for.
+> **Status:** v1.0.0 was published to PyPI under MIT for ~15 minutes,
+> then yanked. The project is now **private and pre-monetization**. This
+> document supersedes the earlier OSS-focused roadmap.
 
-## Status legend
-- ✅ shipped
-- 🚧 in progress
-- ⏸️ planned
-- ❓ exploratory
+## Where we are now
 
----
+- 6 minor releases shipped (v0.1 → v0.6.2)
+- ~9,000 lines of code + 1,800 lines of docs/research
+- 26 tests passing, ruff lint clean
+- Auto-bridge module rescues 14→18/21 cut layers on the reference drawing
+- Material hatching engine (14 recipes, shapely-backed)
+- Three Rhino integration scaffolds (GhPython component, Eto toolbar, pre-export tagger)
+- Visual preview via PyMuPDF + Ghostscript fallback
+- ISO 128 standards-aligned tier presets with `--scale --for-print`
+- MkDocs Material site (offline now since the repo is private on the GH free plan)
+- Comprehensive POSTMORTEM documenting every failed approach
+- 12 sub-agent research transcripts in `docs/research/`
 
-## Phase 1 — MVP color-classify (✅ shipped 0.1.0)
-Working `inspect` + `apply` (pikepdf) + auto-by-luminance classifier +
-section/plan/elevation/detail presets + Claude Code skill. Validated on
-a 24 MB / 340 K-stroke section drawing in 110 s.
+## Phases A–G
 
-## Phase 2 — Layer preservation + semantic classify (✅ shipped 0.2.0)
-Two key shifts:
-- **Default for `.ai` is now `apply-jsx`** — hands a JSX to Illustrator,
-  preserves all layers, slower but correct.
-- **Semantic layer-name classifier** — Rhino's `Visible::ClippingPlaneIntersections::*`
-  always = cut tier; material suffix table for Curves layers.
+### Phase A — Personal use (now → 1 month) 🚧
 
-This phase fixed the v0.1 layer-flattening bug. See `POSTMORTEM.md`.
+**Goal: validate the tool by living on it.**
 
-## Phase 3 — Poché (🚧 in progress, target 0.3.0)
-Architectural sections aren't done at line weights — the "cut" reads as
-**solid black fill** (poché) on cut structural elements. v0.3 adds:
-- A `--poche` flag on `apply-jsx` that fills closed paths in
-  `ClippingPlaneIntersections` layers with solid black.
-- `vpype linemerge` (Python) pre-pass to chain open Make2D output
-  endpoints into closed loops at ~0.05 mm tolerance, before handing to JSX.
-- Compound-path handling for donut shapes (CLT panel cut showing
-  inside-out) using even-odd fill.
-- Material-class overrides: glass layers stay blank/outline; concrete /
-  CLT / steel get black fill; insulation gets hatch (defer to 3.1).
+- [ ] A1. Use it on every remaining ARCH 202B + ARCH 211 drawing this term
+- [ ] A2. Build a portfolio with HIERARCHY.ai + POCHE.ai outputs
+- [ ] A3. Show classmates the result without explaining the tool — gauge organic "what'd you use?" reactions
+- [ ] A4. Fix the 3 stubborn cut layers via `__POCHE_CLOSE__` workflow on actual drawings
+- [ ] A5. Track manual fixes still needed per drawing — that's the "remaining work" the tool doesn't yet do
 
-**Why ambitious**: this is the move that turns "pretty good line weights"
-into "the cut reads from across the room" — the single highest-impact
-visual upgrade for an architectural section.
+### Phase B — Lock in IP (this week)
 
-## Phase 4 — Standards-compliant presets (⏸️ planned 0.4.0)
-Tier weight values cited from authoritative sources rather than first-
-principles guessing:
-- Ramsey/Sleeper Architectural Graphic Standards
-- Francis Ching, *Architectural Graphics* (6th ed)
-- AIA standard practice
-- NCARB ARE study guides
-- USC / GSD / MIT studio reference docs
+**Goal: stop being open-source going forward; preserve future commercial options.**
 
-Per-scale (1/4"=1', 1/8"=1', 1/16"=1', 3/8"=1') tier sets, with print-vs-
-screen variants. Sub-agent research already returned candidate values.
+- [ ] B1. Replace `LICENSE` (MIT) with a proprietary EULA (see `docs/research/licensing.md` once Phase B sub-agent returns)
+- [ ] B2. Add `NOTICE.md` documenting the v1.0.0 MIT snapshot is irrevocable for that exact version, but all future versions are proprietary
+- [ ] B3. Strip OSS framing from `README.md`, `CONTRIBUTING.md`, marketing drafts
+- [ ] B4. Save offline copy of repo + `dist/` + `pyproject.toml`-pinned deps
+- [ ] B5. Add internal `BUSINESS.md` for pricing thoughts, target customers, learnings as we go
 
-## Phase 5 — Hybrid classifier (⏸️ planned 0.5.0)
-Score every available signal per stroke / per layer and pick the most
-confident:
-- (a) layer-name pattern (Phase 2)
-- (b) layer position in document (top-of-stack often = front)
-- (c) color luminance / saturation / hue
-- (d) frequency
-- (e) stroke geometry (long-and-straight vs short-and-curvy)
+### Phase C — Demand validation (2 weeks)
 
-Returns a confidence score per assignment so the user can review only
-the ambiguous ones.
+**Goal: know if the market exists before building distribution.**
 
-## Phase 6 — Visual preview generator (⏸️ planned 0.6.0)
-Pipeline: `pikepdf` modifies → `pymupdf` renders side-by-side before/after
-PNG at multiple plot scales (1/4", 1/8", 1/16"). Per-tier color overlay
-(cut=red, profile=orange, etc.) so the user can verify each tier is going
-where they expect. Ghostscript `-dNOMINLINEWIDTH` fallback for hairline
-accuracy.
+- [ ] C1. Interview 5–10 architecture students (script in `docs/research/customer-interviews.md` once sub-agent returns)
+- [ ] C2. Interview 2–3 small-studio (5–20 person offices) reps
+- [ ] C3. Define crisp value prop: "saves N hours per submission set"
+- [ ] C4. Pick price points based on findings, not gut. Likely tiers:
+  - Student: $19 one-time
+  - Personal / sole practitioner: $79 one-time or $9/mo
+  - Small studio (≤20 seats): $499/yr
+  - Mid studio (≤100 seats): $TBD
+- [ ] C5. **Decision gate:** if <30% of interviewees say "I'd pay $X for this," shelve to a portfolio piece. If ≥30%, go to Phase D.
 
-## Phase 7 — Multi-format input (⏸️ planned 0.7.0)
-Priority order from sub-agent research:
-1. **PDF with OCGs** (covers AutoCAD, Vectorworks, ArchiCAD, Revit-via-DWG)
-2. **Native SVG** (lxml, sub-second on 340K nodes)
-3. **IL-native PieceInfo decoder** (niche but high-value)
-4. **Color-only fallback** for flat PDFs (Revit native, Inkscape SVG→PDF)
-5. **Affinity** — defer until they ship an API
+### Phase D — Distribution v1 (month 2)
 
-Each format gets its own classifier where Rhino conventions don't apply.
+**Goal: first paying customer.**
 
-## Phase 8 — Workflow integration (⏸️ planned 0.8.0)
-- **Watch mode** — re-apply on Rhino re-export (use `watchdog`)
-- **Batch mode** — process whole folders
-- **`--scale` flag** — adjust weights for plot scale
-- **`--for-print` / `--for-screen`** — different weight ranges
+- [ ] D1. PyInstaller single-binary build for macOS + Windows (no Python install required by buyer)
+- [ ] D2. macOS code signing + notarization (Apple Dev $99/yr)
+- [ ] D3. Windows code signing (EV cert ~$300/yr OR Azure Trusted Signing if cheaper)
+- [ ] D4. Pick distribution platform: Gumroad / Lemon Squeezy / Paddle (research in `docs/research/distribution-platforms.md`)
+- [ ] D5. Simple license-key system — UUID per purchase, HMAC verify on first run, no online phone-home
+- [ ] D6. Closed beta with the people from Phase C
+- [ ] D7. First public sale 🎉
 
-## Phase 9 — Studio template system (⏸️ planned 0.9.0)
-YAML templates contributed by users:
-- USC ARCH 202B / 502 conventions
-- GSD studio standards
-- AIA construction docs (NCS pen weights)
-- NCARB ARE conventions
+### Phase E — Solve the unsolveds (month 3)
 
-The first repo-user-contributed format. Goal: become the de-facto portable
-preset format (analogous to `.editorconfig`).
+**Goal: tool stops requiring user-side workarounds.**
 
-## Phase 10 — GUI (⏸️ planned 1.0.0)
-- Web app with drag-drop + live preview
-- VS Code / Cursor extension wrapper
-- Polished Claude Code skill (already exists; refine)
-- Optional Eto.Forms toolbar button **inside Rhino** (see Phase 11)
+- [ ] E1. The 3 stubborn cut layers — proper algorithmic fix beyond `__POCHE_CLOSE__`. Probably involves: (a) better endpoint clustering, (b) fallback that queries Rhino's source if available, (c) ML-based topology inference
+- [ ] E2. More material hatches: slate, terrazzo, OSB, polished concrete, perforated metal, pavers, mineral wool variants
+- [ ] E3. Plan / elevation / detail presets actually distinct from section (currently they share the same ISO ladder)
+- [ ] E4. Batch mode — drag a folder of `.ai`s, process all
+- [ ] E5. Smarter Rhino layer-name inference (handles non-Make2D Rhino exports — Inkscape, Vectorworks, AutoCAD)
 
-## Phase 11 — Distribution & quality (⏸️ planned 1.1.0)
-- PyPI: `pip install arch-line-weights`
-- Homebrew tap: `brew install arch-line-weights`
-- CI with GitHub Actions (mypy / pytest / coverage / benchmark)
-- Notarized macOS .pkg installer
-- Docker image for CI use
+### Phase F — Web app (month 5+)
 
-## Phase 12 — Rhino integration (❓ exploratory, target 1.2.0)
-Most-leverage approach (per sub-agent research): **GhPython 3 component**
-that shells out to `arch-lw`. Ships as a single `.gh` file, runs on
-Win + Mac, no plugin install. Long-term: an Eto.Forms toolbar button
-inside Rhino itself.
+**Goal: lower friction to "drag and drop, get result."**
 
-Smarter trick: inject `__TIER:cut` into Rhino layer names *at export time*
-so the downstream classifier never has to guess. Requires a tiny RhinoScript
-or GhPython script that runs before PDF/AI export.
+- [ ] F1. Domain (`archlineweights.com` or shorter alternative)
+- [ ] F2. Web upload → Stripe-paywalled processing → download result
+- [ ] F3. Browser-based before/after preview (`preview.py` served as a service)
+- [ ] F4. User accounts, magic-link auth, subscription tiers
+- [ ] F5. Migrate Gumroad customers to free web accounts as thanks
+- [ ] F6. Tax handling via Stripe Tax or Merchant of Record (Paddle / Lemon Squeezy hosted)
 
-## Phase 13 — Smart classification (LLM-assisted) (❓ exploratory)
-When layer names are missing or ambiguous, send the inspection JSON to an
-LLM (Claude API) to suggest a mapping. The LLM examines layer names + colors
-+ path-geometry summary and proposes a tier per path-class with reasoning.
-User confirms or edits.
+### Phase G — Scale (year 2+)
 
-## Phase 14 — Multi-drawing consistency (❓ exploratory)
-Apply the same hierarchy across plan / section / elevation set so a sheet
-reads as one drawing. Detect that all three are present (filename heuristic
-or user input), use the same color-or-layer mapping across all of them.
+**Goal: move from "indie tool" to "studio-standard.**
 
-## Phase 15 — Style transfer (❓ exploratory)
-"Make my drawing look like this reference" — extract weight ratios + poché
-style from a reference PDF, apply to the user's drawing. Reference can be a
-canonical published section (Tatiana Bilbao, OFFICE KGDVS, SO-IL, etc.).
+- [ ] G1. Studio enterprise plans (per-seat, SSO, on-prem option for security-sensitive offices)
+- [ ] G2. Rhino plugin distribution via Food4Rhino marketplace (paid listing)
+- [ ] G3. Adobe Exchange listing if/when Adobe ships UXP for Illustrator (still internal-only as of 2026-04)
+- [ ] G4. AI-assisted variant: LLM analyzes drawing, suggests stylistic improvements
+- [ ] G5. Multi-drawing consistency (apply same hierarchy across plan/section/elevation set)
+- [ ] G6. Style transfer ("make this look like the Tatiana Bilbao funeral home section")
 
----
+## Decision gates
 
-## Sub-agent research artifacts to fold into the code
+- **End of Phase A:** is the tool good enough that *I* prefer it to manual work? If no, fix the tool. If yes, advance.
+- **End of Phase C:** is there demand at viable prices? If no, shelve. If yes, advance.
+- **3 months after first sale:** is revenue covering hosting + signing certs + my time at $X/hr? If no, narrow scope. If yes, scale.
 
-This roadmap synthesizes findings from 6 sub-agents launched on 2026-04-29:
+## What WILL break this roadmap
 
-| Agent | Phase consumed |
-|---|---|
-| ExtendScript performance | 2 (validated `maximumUndoDepth`) |
-| UXP from CLI | dead end — explicit non-goal documented |
-| Alternative vector tools | 6 (visual preview), 7 (multi-format) |
-| Visual preview / PDF rendering | 6 (PyMuPDF + Ghostscript fallback) |
-| Rhino-Grasshopper integration | 12 (GhPython 3 shell-out path) |
-| Multi-format compatibility | 7 (priority order) |
-| Rhino layer naming conventions | 2 (semantic classifier patterns) |
-| Architectural standards | 4 (preset values per source) |
-| Competitive landscape | positioning + risks (no direct competitor; closest = Auto Line Weight on Food4Rhino, `creold/illustrator-scripts`) |
-| Poché conventions | 3 (material→treatment table, vpype+JSX outline) |
+Documented for future-me / future contributors:
 
-Full sub-agent reports live in `docs/research/` (TODO: stash transcripts).
+- **Adobe ships UXP for Illustrator publicly** → opens a much bigger market (Adobe Exchange listing) → accelerate Phase G3
+- **Rhino 9 changes Make2D output format** → may need parser rewrites
+- **A competitor launches first** → Show It Better, Astute Graphics, or some YC company with venture money — may need to pivot to differentiation rather than feature parity
+- **Architecture school tooling shifts to AI-first** (Hyperboloid, etc.) → may make the line-weight problem moot for new students; pivot to AI-augmented mode
+
+## See also
+
+- [`docs/POSTMORTEM.md`](POSTMORTEM.md) — every failed approach, never repeat
+- [`docs/LESSONS_LEARNED.md`](LESSONS_LEARNED.md) — what works, kept short
+- [`docs/BUSINESS.md`](BUSINESS.md) — pricing, target customers, learnings (private)
+- [`docs/research/`](research/) — sub-agent research transcripts informing each phase

@@ -152,6 +152,42 @@ Plus emit per-fill metadata so the UI can flag low-confidence with warnings.
 
 **Status:** Roadmapped. Not yet implemented.
 
+## Attempt 7 (2026-04-30) — Open-source publish, then yank
+
+**What:** Published v1.0.0 to PyPI under MIT license via OIDC Trusted
+Publishing. Build verified; clean-venv install confirmed; CLI returned
+"arch-lw, version 1.0.0".
+
+**Result:** Working publish. Anyone could `pip install arch-line-weights`
+for ~15 minutes.
+
+**Failure:** I had committed to MIT before deciding the business model.
+The user wanted to monetize. MIT distribution is irrevocable for
+distributed copies. We yanked v1.0.0 (hides from `pip install`,
+preserves project name, still legally MIT for anyone who downloaded it).
+Removed the Trusted Publisher to cut the OIDC pipeline. Disabled the
+release workflow. Made the repo private.
+
+**Side effects:**
+- GitHub Pages site went 404 (private repos need GH Pro for Pages)
+- Marketing drafts in `docs/announce/` are now stale (they pitch open-source)
+- v1.0.0 still installable via explicit `pip install arch-line-weights==1.0.0`
+  (yank semantics, not deletion)
+
+**Lesson kept:** **Pick the license BEFORE you publish to a public
+registry.** Once a version is on PyPI under any license, that exact
+version's license is fixed in perpetuity. Future versions can be any
+license, but the MIT cat is partially out of the bag for v1.0.0.
+
+**Lesson kept:** Yank is a one-way door for `pip install` discovery
+but not for legal rights. Treat "what license is on the wheel I'm
+about to upload" as the gate, not "what license is in my README right
+now."
+
+**Lesson kept:** Going private and enabling docs auto-deploy on the
+same day is a foot-gun. Pages 404'd within 5 minutes of the visibility
+flip. Always check what depends on the visibility before changing it.
+
 ## Cross-cutting lessons (the durable ones)
 
 1. **Layer fidelity is non-negotiable.** Any change that destroys it must
