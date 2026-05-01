@@ -1082,6 +1082,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#strategy-pricing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strategy / pricing
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1165,6 +1176,14 @@ this page is the durable lessons distilled.</p>
 <li><strong>Open core / dual license is a trap for solo devs.</strong> Either fully OSS or fully commercial. Splitting the brain is too much work.</li>
 <li><strong>Architecture-school tools have a small but real market.</strong> Don't expect Stripe-style growth; expect 100s of paying users, not millions.</li>
 <li><strong>The hard problem is reaching customers</strong>, not building product. From v1.0 onward, every hour of feature work needs a matching hour of distribution work.</li>
+</ol>
+<h2 id="strategy-pricing">Strategy / pricing<a class="headerlink" href="#strategy-pricing" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>"Flawless" is not the bar; ≥95% on real edge-case-heavy inputs is.</strong> Software with 100% coverage doesn't ship. Define the "amazing" bar in concrete terms (% layer success, library size, scale coverage) so perfectionism doesn't delay launch indefinitely.</li>
+<li><strong>Subscription on a desktop CLI binary is hard to sell;</strong> subscription on a web app is natural. The pricing model and the architecture choice are coupled — decide them together, not separately.</li>
+<li><strong>License-swap deadlines aren't real until you publish.</strong> v1.0.0 is yanked, repo is private; the LICENSE file doesn't <em>have</em> to change today. Don't burn a Saturday on PolyForm + EULA in advance of needing it. Do it ~3 days before v1.0.1 ships.</li>
+<li><strong>Snapshot research before pivoting.</strong> A SaaS-first pivot makes the v2 binary-distribution research (<code>docs/research/binary-distribution.md</code>, <code>distribution-platforms.md</code>) look obsolete — it's not. Keep it for the eventual paid-CLI complementary tier (Phase F4 / G).</li>
+<li><strong>Web-app SaaS for a desktop-tool problem requires solving the headless-output question first.</strong> For us, that's: can pikepdf write <code>.ai</code> files Illustrator opens with layer fidelity, without an Illustrator install on the server? This is the single biggest unknown gating SaaS, and it's a feasibility spike — not an architecture choice you can defer.</li>
 </ol>
 
 
