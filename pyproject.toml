@@ -110,3 +110,6 @@ strict = false  # gradual typing for now
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-v"
+markers = [
+    "integration: tests that require external apps (Illustrator) — skipped in CI by default. Run locally via `pytest -m integration`.",
+]
