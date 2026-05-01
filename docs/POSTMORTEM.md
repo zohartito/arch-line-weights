@@ -188,6 +188,54 @@ now."
 same day is a foot-gun. Pages 404'd within 5 minutes of the visibility
 flip. Always check what depends on the visibility before changing it.
 
+## Attempt 8 (2026-04-30) — pikepdf-only .ai modification (the SaaS unlock)
+
+**What:** Investigate whether pikepdf alone can modify a Rhino-exported
+`.ai` file's `/PieceInfo /Illustrator /Private` payload such that
+Illustrator opens the result with all 62 OCG layers intact and the
+modifications applied. This was the make-or-break question for the SaaS
+pivot.
+
+**Result:** **Worked, end-to-end.** Eight spike scripts in
+`scripts/spike/saas-feasibility/` demonstrate inspect / decompress /
+round-trip / stroke-color modify / stroke-width modify, all verified in
+Illustrator.
+
+**Discovery:** The 305 `/AIPrivateData` streams concatenate into a
+20-byte ASCII prefix `%AI24_ZStandard_Data` + Zstandard-compressed
+payload. Decompressed: ~55 MB of plain-text Adobe Illustrator native
+PostScript — the same publicly-documented AI3-AI8 syntax we'd been
+writing JSX against for months, just zstd-wrapped + chunked across PDF
+streams.
+
+**Verified operations:**
+- Round-trip null edit → byte-perfect, OCG count 62→62
+- Stroke color: `(1 0 1) XA` → 172 paths now magenta
+- Stroke width: `1 w` → `5 w` → 172 paths now 5pt
+
+**Implications for the project:**
+- **The "no Illustrator on Linux server" blocker is gone.** We can run
+  the entire pipeline server-side in pure Python.
+- The existing JSX-based `apply_jsx.py` and `poche.py` can be ported to
+  operate directly on the decompressed AI native PostScript instead of
+  via Illustrator's scripting bridge. Estimated 1-2 days.
+- The hybrid local-helper path (Attempt-3-style) is no longer needed as
+  primary architecture; reserved for "Pro Privacy" upsells.
+
+**Lesson kept:** The format we'd been treating as proprietary all along
+**was actually a documented PostScript dialect wrapped in modern
+compression**. Future-us: when a format looks closed, check if it's
+just an old format wearing modern packaging before assuming it's
+proprietary.
+
+**Lesson kept:** A 60-minute time-boxed feasibility spike resolved a
+question that v0.1 (Attempt 1, "strip PieceInfo") tried to dodge by
+flattening layers. Spikes > workarounds.
+
+**Kept in repo:** Eight scripts in `scripts/spike/saas-feasibility/`
+demonstrating the operations. These become the foundation of the v0.7
+prototype that ports the apply / poché pipelines to pure Python.
+
 ## Cross-cutting lessons (the durable ones)
 
 1. **Layer fidelity is non-negotiable.** Any change that destroys it must

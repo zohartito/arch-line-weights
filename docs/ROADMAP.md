@@ -146,35 +146,67 @@ generate portfolio assets, build organic demand signals.**
 **Decision gate:** is the tool good enough that *Zohar* prefers it to
 manual work? If no, fix the tool. If yes → advance to Phase B.
 
-### Phase B — SaaS feasibility (this week → 2 weeks)
+### Phase B — SaaS feasibility ✅ RESOLVED 2026-04-30
 
 **Goal: answer the make-or-break question. Can we produce
 shippable-quality output without Illustrator on the user's machine?**
 
-- [ ] B1. **Spike: pikepdf-only `.ai` output with layer fidelity** —
-  can we write `/PieceInfo /Illustrator /Private` directly so a
-  resulting `.ai` opens in Illustrator with all 62 OCG layers intact?
-  Documented as Attempt 4 in POSTMORTEM, but never fully resolved.
-  Resolves the "no headless Illustrator on Linux" blocker.
-- [ ] B2. **Spike: PDF-only output** — what if the SaaS output is a
-  finished PDF (poché baked, weights baked, layers preserved as OCGs)
-  with **no .ai round-trip**? Acceptable to a paying segment? Run past
-  3 Phase C interviewees as part of demo.
-- [ ] B3. **Spike: hybrid local-helper** — web app does compute,
-  user runs a tiny bundled local helper that drives their Illustrator
-  via JSX/AppleScript. UX is clunky; security model is friendly
-  (drawings never leave the user's machine).
-- [ ] B4. Pick one of B1 / B2 / B3 as the SaaS architecture. Write
-  decision in `docs/research/saas-architecture.md` (new).
-- [ ] B5. **License swap** (deferred from v2 Phase B until product is
-  ready to publish). When B4 is decided, replace LICENSE with PolyForm
-  Free Trial 1.0.0 + add commercial EULA. See `docs/research/licensing.md`
-  for the 5-step checklist.
+**ANSWER: YES.** Wave 1 sub-agent spike proved pure-pikepdf modification
+of `/PieceInfo /Illustrator /Private` works end-to-end on the reference
+drawing.
 
-**Decision gate:** Is there a buildable architecture that produces
-"amazing"-grade output without Illustrator on the user's server? If no,
-SaaS is impossible — **fall back to v2 plan** (CLI binary at one-time
-pricing + eventual companion web app for "lite" use). If yes → advance.
+Key findings (full report: [`docs/research/saas-architecture.md`](research/saas-architecture.md)):
+
+- The 305 `/AIPrivateData` streams concatenate into a 20-byte ASCII
+  prefix `%AI24_ZStandard_Data` + Zstandard-compressed payload.
+- Decompressed payload is ~55 MB of **plain-text Adobe Illustrator native
+  PostScript** — same publicly-documented AI3-AI8 syntax, just zstd-wrapped.
+- Round-trip null edit: byte-perfect, OCG count 62→62, opens cleanly.
+- Stroke color modification: `(1 0 1) XA` → magenta — Illustrator confirmed.
+- **Stroke width modification (the project's actual use case)**: `1 w → 5 w`
+  in the cut layer — Illustrator confirmed all 172 paths now `width=5`.
+- 8 working spike scripts in `scripts/spike/saas-feasibility/`.
+
+**What's open vs closed:**
+
+| Operation | Status |
+|---|---|
+| Modify existing stroke widths in user-uploaded .ai | ✅ Works |
+| Modify existing stroke colors | ✅ Works |
+| Inject new filled paths (poché) into existing layer blocks | ✅ Path is clear (1-2 days port from `apply_jsx.py`) |
+| Preserve all 62 OCG layers intact | ✅ Works |
+| Synthesize a PieceInfo from scratch (greenfield SVG/DXF input) | ❌ Not proven, **not needed** — input is always Rhino-exported .ai |
+| Rename layers in panel | ⚠️ Unknown 4th layer-name copy somewhere — **not blocking**, we never rename layers |
+
+**Architectural implications:**
+
+- **B1 (pure pikepdf .ai output) is the SaaS compute path.** No Illustrator
+  on server required. Pure Python pipeline, scales horizontally.
+- **B2 (PDF-only output) becomes a tier feature, not an architecture
+  choice.** Cheap student tier can ship PDF; paid tiers ship editable .ai.
+- **B3 (hybrid local-helper) is unnecessary as primary path.** Reserved
+  for paranoid-privacy users who want drawings to never leave their
+  machine — likely a "Pro Privacy" tier upcharge later, not v1.
+
+**Phase B remaining work:**
+
+- [ ] B6. **Port `apply.py` line-weight logic to operate on decompressed
+  AI native PostScript** — regex-replace per-color stroke widths inside
+  the AI24 zstd payload. Estimated 4-8 hours.
+- [ ] B7. **Port poché pipeline (`poche.py`)** to inject filled `pathItem`
+  blocks directly into cut-layer `BeginLayer..LB` envelopes via
+  pikepdf+zstd. Estimated 1-2 days.
+- [ ] B8. **End-to-end SaaS prototype**: input .ai → pure-Python pipeline →
+  modified .ai output, no JSX, no Illustrator. Verify in Illustrator on
+  user's machine.
+- [ ] B9. **License swap** (deferred until product is ready to publish).
+  When prototype works, replace LICENSE with PolyForm Free Trial 1.0.0
+  + add commercial EULA. See `docs/research/licensing.md` for the 5-step
+  checklist.
+
+**Phase B exit criterion**: B6+B7 prototype produces a modified .ai
+that's visually indistinguishable from the current JSX-driven output,
+on the reference drawing. Once that's true, advance to Phase D.
 
 ### Phase C — Demand validation (parallel with B; 2 weeks)
 
