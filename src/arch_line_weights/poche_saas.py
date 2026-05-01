@@ -263,19 +263,29 @@ def inject_poche_polygons(
         _, _, lb_offset = env
         located.append((lb_offset, name, polys))
 
-    located.sort(key=lambda t: t[0], reverse=True)
+    # Sort ascending so we walk the payload left-to-right and assemble the
+    # output in a single ``b"".join`` pass. The previous implementation did
+    # ``out[:lb] + fragment + out[lb:]`` per layer, which on a 55 MB payload
+    # × 21 cut layers would allocate ~1.1 GB of transient bytes. Using a
+    # single segment list and one join keeps the splice O(payload_size) total
+    # rather than O(payload_size × n_layers).
+    located.sort(key=lambda t: t[0])
 
-    out = payload
+    segments: list[bytes] = []
+    cursor = 0
     for lb_offset, _name, polys in located:
         fragment = synthesize_polygon_blocks(polys)
         if not fragment:
             continue
-        out = out[:lb_offset] + fragment + out[lb_offset:]
+        segments.append(payload[cursor:lb_offset])
+        segments.append(fragment)
+        cursor = lb_offset
         result.layers_injected += 1
         result.polygons_injected += len(polys)
         result.bytes_injected += len(fragment)
+    segments.append(payload[cursor:])
 
-    return out
+    return b"".join(segments)
 
 
 # --------------------------------------------------------------------------- #
@@ -416,11 +426,17 @@ def enumerate_layer_paths_from_payload(
 # --------------------------------------------------------------------------- #
 
 
+_CUT_LAYER_FILTER = re.compile(rb"(?i)clippingplaneintersections")
+
+
 def _is_cut_layer(name: str) -> bool:
     """Heuristic: a layer participates in poché iff its name contains
     ``ClippingPlaneIntersections`` and *isn't* a glass / IGU sub-layer.
 
     Matches the ``shouldDump`` filter in ``poche.py``'s JSX template.
+    The ``_CUT_LAYER_FILTER`` regex above is the cheap pre-filter that
+    `enumerate_layer_paths_from_payload` uses to skip non-cut layers
+    entirely; this Python predicate refines further by excluding glass/IGU.
     """
     n = name.upper()
     if "CLIPPINGPLANEINTERSECTIONS" not in n:
@@ -469,7 +485,11 @@ def apply_saas_with_poche(
         # doesn't change layer-marker positions because it only edits widths
         # in-place to similar-length strings — the LB offsets shift slightly
         # but find_layer_envelope re-runs the search post-rewrite.)
-        cut_paths = enumerate_layer_paths_from_payload(payload)
+        # Pre-filter at the byte level so we don't tokenize the ~40 non-cut
+        # layers (annotations, dims, hidden curves, etc.) that we'd discard
+        # immediately. The Python `_is_cut_layer` post-filter keeps the
+        # glass/IGU exclusion and lives outside the regex.
+        cut_paths = enumerate_layer_paths_from_payload(payload, layer_filter=_CUT_LAYER_FILTER)
         cut_paths = {k: v for k, v in cut_paths.items() if _is_cut_layer(k)}
         polygons_by_layer, poche_report = compute_polygons_for_layers(
             cut_paths, overrides

@@ -461,13 +461,26 @@ def _adaptive_eps(
     cap: float = 5.0,
     floor: float = 0.05,
 ) -> float:
-    """Adaptive ε derived from the median nearest-neighbour distance among
-    ``points``. Scales with the layer's intrinsic spacing so corrugation
-    peaks survive while cluster-pinches collapse.
+    """Layer-adaptive ε for DBSCAN — a single ε per call, derived from the
+    median nearest-neighbour distance across ``points``.
+
+    The ε is *adaptive across layers* (each layer gets a different ε that
+    matches its intrinsic spacing, so dense cladding layers don't collapse
+    corrugation peaks while sparse foundations still bridge stub gaps), but
+    *fixed within a layer* (every point uses the same ε for clustering).
+    For point-local adaptive ε, a different algorithm (e.g. OPTICS or
+    HDBSCAN) would be needed; that's intentionally not what this is.
 
     Returns ``floor`` when there are fewer than 2 points.
+
+    Memory note: defensively returns ``floor`` for n > 5000 to avoid the
+    O(n²) numpy diff allocation. In practice cut-layer endpoint counts are
+    well below this, but a degenerate layer with 10 K+ stub strokes would
+    otherwise allocate ~800 MB.
     """
     if len(points) < 2:
+        return floor
+    if len(points) > 5000:
         return floor
     arr = np.asarray(points, dtype=float)
     # Brute-force NN distances. Endpoint counts in this codebase are small
@@ -692,6 +705,12 @@ def infer_bridges_best(
         aug_g, conf_g = infer_bridges(segments, max_gap=max_gap, min_gap=min_gap)
         n_g = _polygon_count(aug_g)
         results.append((_strategy_score(n_g, conf_g, expected), aug_g, conf_g, "greedy"))
+        # Early-exit: if greedy already hit the expected polygon count with
+        # full confidence, the slower strategies (backtracking, DBSCAN) can
+        # only match — never beat — this. Skip them to save ~3-4× wall-clock
+        # on the common case (most layers polygonize cleanly with greedy).
+        if n_g >= expected and conf_g >= 1.0 - 1e-9:
+            return aug_g, conf_g, "greedy"
     except Exception:
         pass
 

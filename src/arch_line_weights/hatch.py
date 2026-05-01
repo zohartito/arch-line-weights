@@ -371,9 +371,28 @@ class MaterialRecipe:
     description: str = ""
 
 
+def multipoly_aware(fn):
+    """Decorator that handles MultiPolygon dispatch for hatch recipe functions.
+
+    Recipes only need to think about a single Polygon; the decorator splits a
+    MultiPolygon into its components and concatenates the resulting line lists.
+    Replaces the 3-line ``if isinstance(polygon, MultiPolygon): return functools.reduce(...)``
+    boilerplate that was duplicated across every recipe in v0.4.
+    """
+
+    @functools.wraps(fn)
+    def wrapper(polygon, scale, **kw):
+        if isinstance(polygon, MultiPolygon):
+            return functools.reduce(
+                operator.iadd, (wrapper(p, scale, **kw) for p in polygon.geoms), []
+            )
+        return fn(polygon, scale, **kw)
+
+    return wrapper
+
+
+@multipoly_aware
 def hatch_concrete(polygon, scale, **kw):
-    if isinstance(polygon, MultiPolygon):
-        return functools.reduce(operator.iadd, (hatch_concrete(p, scale, **kw) for p in polygon.geoms), [])
     spacing = mm_to_pt(1.5, scale)
     dot_spacing = mm_to_pt(0.8, scale)
     dot_size = mm_to_pt(0.3, scale)
@@ -384,13 +403,8 @@ def hatch_concrete_solid(*a, **kw):
     return []
 
 
+@multipoly_aware
 def hatch_clt_cross_grain(polygon, scale, lamella_mm: float = 25.0, **kw):
-    if isinstance(polygon, MultiPolygon):
-        return functools.reduce(
-            operator.iadd,
-            (hatch_clt_cross_grain(p, scale, lamella_mm=lamella_mm, **kw) for p in polygon.geoms),
-            [],
-        )
     return clt_layers(polygon, mm_to_pt(lamella_mm, scale))
 
 
@@ -398,11 +412,8 @@ def hatch_clt_solid(*a, **kw):
     return []
 
 
+@multipoly_aware
 def hatch_solid_timber(polygon, scale, **kw):
-    if isinstance(polygon, MultiPolygon):
-        return functools.reduce(
-            operator.iadd, (hatch_solid_timber(p, scale, **kw) for p in polygon.geoms), []
-        )
     angle = _principal_angle(polygon)
     spacing = mm_to_pt(0.9, scale)
 
@@ -416,61 +427,45 @@ def hatch_steel_solid(*a, **kw):
     return []
 
 
+@multipoly_aware
 def hatch_steel_hatch_45(polygon, scale, **kw):
-    if isinstance(polygon, MultiPolygon):
-        return functools.reduce(
-            operator.iadd, (hatch_steel_hatch_45(p, scale, **kw) for p in polygon.geoms), []
-        )
     return parallel_hatch(polygon, mm_to_pt(0.8, scale), 45.0)
 
 
+@multipoly_aware
 def hatch_insulation_mineral_wool(polygon, scale, **kw):
-    if isinstance(polygon, MultiPolygon):
-        return functools.reduce(
-            operator.iadd, (hatch_insulation_mineral_wool(p, scale, **kw) for p in polygon.geoms), []
-        )
     return sine_zigzag(polygon, wavelength=mm_to_pt(2.0, scale), amplitude=mm_to_pt(1.5, scale))
 
 
+@multipoly_aware
 def hatch_insulation_rigid(polygon, scale, **kw):
-    if isinstance(polygon, MultiPolygon):
-        return functools.reduce(
-            operator.iadd, (hatch_insulation_rigid(p, scale, **kw) for p in polygon.geoms), []
-        )
     return crosshatch(polygon, mm_to_pt(1.0, scale), 45.0, 135.0)
 
 
+@multipoly_aware
 def hatch_earth(polygon, scale, **kw):
-    if isinstance(polygon, MultiPolygon):
-        return functools.reduce(operator.iadd, (hatch_earth(p, scale, **kw) for p in polygon.geoms), [])
     return stipple_dots(polygon, mm_to_pt(0.4, scale), dot_size=mm_to_pt(0.15, scale))
 
 
+@multipoly_aware
 def hatch_brick(polygon, scale, **kw):
-    if isinstance(polygon, MultiPolygon):
-        return functools.reduce(operator.iadd, (hatch_brick(p, scale, **kw) for p in polygon.geoms), [])
     return brick_pattern(polygon, mm_to_pt(215.0, scale), mm_to_pt(65.0, scale))
 
 
+@multipoly_aware
 def hatch_glass(polygon, scale, n_lines: int = 3, **kw):
-    if isinstance(polygon, MultiPolygon):
-        return functools.reduce(
-            operator.iadd, (hatch_glass(p, scale, n_lines=n_lines, **kw) for p in polygon.geoms), []
-        )
     angle = _principal_angle(polygon)
     spacing = mm_to_pt(1.0, scale)
     return parallel_hatch(polygon, spacing, angle)[:n_lines]
 
 
+@multipoly_aware
 def hatch_gypsum(polygon, scale, **kw):
-    if isinstance(polygon, MultiPolygon):
-        return functools.reduce(operator.iadd, (hatch_gypsum(p, scale, **kw) for p in polygon.geoms), [])
     return stipple_dots(polygon, mm_to_pt(1.5, scale), dot_size=mm_to_pt(0.2, scale))
 
 
+@multipoly_aware
 def hatch_aluminum(polygon, scale, **kw):
-    if isinstance(polygon, MultiPolygon):
-        return functools.reduce(operator.iadd, (hatch_aluminum(p, scale, **kw) for p in polygon.geoms), [])
     return parallel_hatch(polygon, mm_to_pt(0.8, scale), 45.0)
 
 
@@ -480,81 +475,51 @@ def hatch_aluminum(polygon, scale, **kw):
 # --------------------------------------------------------------------------- #
 
 
+@multipoly_aware
 def hatch_cmu(polygon, scale, **kw):
-    """Concrete masonry unit — 390×190 mm running-bond tile (NCMA/ASTM C90).
-
-    Source: ASTM C90-23 §3 nominal dimensions; Ramsey/Sleeper 12th ed. p.232
-    masonry conventions.
-    """
-    if isinstance(polygon, MultiPolygon):
-        return functools.reduce(operator.iadd, (hatch_cmu(p, scale, **kw) for p in polygon.geoms), [])
+    """CMU — 390×190 mm running-bond tile (ASTM C90-23 §3, Ramsey/Sleeper p.232)."""
     return brick_pattern(polygon, mm_to_pt(390.0, scale), mm_to_pt(190.0, scale))
 
 
+@multipoly_aware
 def hatch_board_formed_concrete(polygon, scale, **kw):
-    """Board-formed concrete — concrete diagonal hatch + horizontal seams every 200 mm.
+    """Board-formed concrete — concrete pattern + horizontal seams every 200 mm.
 
     Heavy contemporary frequency (Brutalist revival, exposed-concrete signature
     work). Source: Detail magazine 2023 issues 4-11; Ching p.232.
     """
-    if isinstance(polygon, MultiPolygon):
-        return functools.reduce(
-            operator.iadd, (hatch_board_formed_concrete(p, scale, **kw) for p in polygon.geoms), []
-        )
-    # Standard concrete pattern (45° hatch + stipple)
     base = hatch_concrete(polygon, scale, **kw)
-    # Plus horizontal seams every 200 mm (typical board width)
     seams = parallel_hatch(polygon, mm_to_pt(200.0, scale), 0.0)
     return base + seams
 
 
+@multipoly_aware
 def hatch_standing_seam_copper(polygon, scale, seam_pitch_mm: float = 430.0, **kw):
-    """Standing-seam copper — vertical seams at typical 430 mm pitch + panel reveal.
+    """Standing-seam copper — vertical seams at 430 mm pitch + panel reveals.
 
-    Source: SMACNA Architectural Sheet Metal Manual 7th ed. §3.6 standing-seam
-    spacing typical 16-20 inch (406-508 mm). Default 430 mm = 17 inch midpoint.
-    Critical for the user's ARCH 202B project (copper rain screen).
+    Default 430 mm = 17 inch midpoint of SMACNA Architectural Sheet Metal Manual
+    7th ed. §3.6 spacing range (16-20 inch). Critical for ARCH 202B copper
+    rain screen.
     """
-    if isinstance(polygon, MultiPolygon):
-        return functools.reduce(
-            operator.iadd,
-            (hatch_standing_seam_copper(p, scale, seam_pitch_mm=seam_pitch_mm, **kw) for p in polygon.geoms),
-            [],
-        )
-    # Vertical seams (parallel lines at 90° = vertical)
     seams = parallel_hatch(polygon, mm_to_pt(seam_pitch_mm, scale), 90.0)
-    # Plus a faint horizontal panel reveal every 1500 mm (typical sheet length)
     reveals = parallel_hatch(polygon, mm_to_pt(1500.0, scale), 0.0)
     return seams + reveals
 
 
+@multipoly_aware
 def hatch_stucco(polygon, scale, **kw):
-    """Stucco — dense fine stipple. Workhorse for residential / Mediterranean / desert.
-
-    Source: Ramsey/Sleeper 12th ed. p.244 stucco/plaster surface convention.
-    Denser than `gypsum` (1.5 mm spacing); stucco runs at 0.6 mm.
-    """
-    if isinstance(polygon, MultiPolygon):
-        return functools.reduce(operator.iadd, (hatch_stucco(p, scale, **kw) for p in polygon.geoms), [])
+    """Stucco — dense fine stipple at 0.6 mm (Ramsey/Sleeper p.244)."""
     return stipple_dots(polygon, mm_to_pt(0.6, scale), dot_size=mm_to_pt(0.18, scale))
 
 
+@multipoly_aware
 def hatch_insulation_polyiso(polygon, scale, **kw):
-    """Polyisocyanurate (PIR) rigid insulation — parallel hatch + triangle stipple.
+    """Polyisocyanurate (PIR) — parallel hatch + foil-face triangle markers.
 
-    Distinguishes from `insulation_rigid` (generic XPS/PIR crosshatch).
-    PIR convention per Ramsey/Sleeper 12th ed. p.296: closer-spaced lines
-    with embedded triangular markers indicating foil-faced PIR boards.
-
+    Distinguishes from generic ``insulation_rigid`` per Ramsey/Sleeper p.296.
     Source: Detail 2023 issue 7 (insulation hatching survey).
     """
-    if isinstance(polygon, MultiPolygon):
-        return functools.reduce(
-            operator.iadd, (hatch_insulation_polyiso(p, scale, **kw) for p in polygon.geoms), []
-        )
-    # Parallel hatch slightly tighter than generic rigid
     base = parallel_hatch(polygon, mm_to_pt(0.8, scale), 45.0)
-    # Plus sparse triangles indicating foil-faced PIR
     triangles = stipple_triangles(
         polygon, mm_to_pt(8.0, scale), size=mm_to_pt(1.2, scale)
     )
