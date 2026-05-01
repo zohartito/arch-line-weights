@@ -47,6 +47,10 @@ class InspectionReport:
     stroke_colors: dict[str, int] = field(default_factory=dict)
     fill_colors: dict[str, int] = field(default_factory=dict)
     width_by_color: dict[str, dict[str, int]] = field(default_factory=dict)
+    # Phase E5: source-detection inputs. Both default to empty so older
+    # callers that hand-construct InspectionReport don't break.
+    pdf_metadata: dict = field(default_factory=dict)
+    layer_names: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
@@ -60,7 +64,61 @@ class InspectionReport:
             "stroke_colors": self.stroke_colors,
             "fill_colors": self.fill_colors,
             "width_by_color": {k: dict(v) for k, v in self.width_by_color.items()},
+            "pdf_metadata": dict(self.pdf_metadata),
+            "layer_names": list(self.layer_names),
         }
+
+
+def _extract_pdf_metadata(doc) -> dict:
+    """Pull `/Producer`, `/Creator`, and `/Title` from a PyMuPDF `Document`.
+
+    Returns a dict with both `/Producer` (PDF spelling) and `producer`
+    (lowercased) keys for compatibility with `detect_source`.
+    """
+    raw = getattr(doc, "metadata", {}) or {}
+    out: dict = {}
+    for key in ("producer", "creator", "title", "author"):
+        val = raw.get(key)
+        if val:
+            out[f"/{key.capitalize()}"] = val
+            out[key] = val
+    return out
+
+
+def _extract_layer_names(doc) -> list[str]:
+    """Best-effort OCG (optional content group) layer names.
+
+    PyMuPDF exposes layers via `doc.layer_ui_configs()` (older) or
+    `doc.get_layer()` / `doc.layers` (newer). We try several APIs and merge.
+    """
+    names: list[str] = []
+    seen: set[str] = set()
+
+    # PyMuPDF newer API
+    try:
+        ui = doc.layer_ui_configs()  # type: ignore[attr-defined]
+    except Exception:
+        ui = None
+    if ui:
+        for entry in ui:
+            n = entry.get("text") if isinstance(entry, dict) else getattr(entry, "text", None)
+            if n and n not in seen:
+                names.append(n)
+                seen.add(n)
+
+    # Fallback: `doc.layers` returns list of OCG names in some versions
+    try:
+        layer_list = doc.layers()  # type: ignore[attr-defined]
+    except Exception:
+        layer_list = None
+    if layer_list:
+        for entry in layer_list:
+            n = entry if isinstance(entry, str) else (entry.get("name") if isinstance(entry, dict) else None)
+            if n and n not in seen:
+                names.append(n)
+                seen.add(n)
+
+    return names
 
 
 def inspect_file(path: str) -> InspectionReport:
@@ -100,4 +158,8 @@ def inspect_file(path: str) -> InspectionReport:
     rep.stroke_colors = dict(stroke_colors)
     rep.fill_colors = dict(fill_colors)
     rep.width_by_color = {k: dict(v) for k, v in width_by_color.items()}
+
+    # Phase E5: source-detection inputs.
+    rep.pdf_metadata = _extract_pdf_metadata(doc)
+    rep.layer_names = _extract_layer_names(doc)
     return rep

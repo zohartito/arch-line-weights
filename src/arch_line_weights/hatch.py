@@ -475,6 +475,93 @@ def hatch_aluminum(polygon, scale, **kw):
 
 
 # --------------------------------------------------------------------------- #
+# v0.5 expansion: 5 new high-frequency materials
+# (per docs/research/hatch-library-expansion.md)
+# --------------------------------------------------------------------------- #
+
+
+def hatch_cmu(polygon, scale, **kw):
+    """Concrete masonry unit — 390×190 mm running-bond tile (NCMA/ASTM C90).
+
+    Source: ASTM C90-23 §3 nominal dimensions; Ramsey/Sleeper 12th ed. p.232
+    masonry conventions.
+    """
+    if isinstance(polygon, MultiPolygon):
+        return functools.reduce(operator.iadd, (hatch_cmu(p, scale, **kw) for p in polygon.geoms), [])
+    return brick_pattern(polygon, mm_to_pt(390.0, scale), mm_to_pt(190.0, scale))
+
+
+def hatch_board_formed_concrete(polygon, scale, **kw):
+    """Board-formed concrete — concrete diagonal hatch + horizontal seams every 200 mm.
+
+    Heavy contemporary frequency (Brutalist revival, exposed-concrete signature
+    work). Source: Detail magazine 2023 issues 4-11; Ching p.232.
+    """
+    if isinstance(polygon, MultiPolygon):
+        return functools.reduce(
+            operator.iadd, (hatch_board_formed_concrete(p, scale, **kw) for p in polygon.geoms), []
+        )
+    # Standard concrete pattern (45° hatch + stipple)
+    base = hatch_concrete(polygon, scale, **kw)
+    # Plus horizontal seams every 200 mm (typical board width)
+    seams = parallel_hatch(polygon, mm_to_pt(200.0, scale), 0.0)
+    return base + seams
+
+
+def hatch_standing_seam_copper(polygon, scale, seam_pitch_mm: float = 430.0, **kw):
+    """Standing-seam copper — vertical seams at typical 430 mm pitch + panel reveal.
+
+    Source: SMACNA Architectural Sheet Metal Manual 7th ed. §3.6 standing-seam
+    spacing typical 16-20 inch (406-508 mm). Default 430 mm = 17 inch midpoint.
+    Critical for the user's ARCH 202B project (copper rain screen).
+    """
+    if isinstance(polygon, MultiPolygon):
+        return functools.reduce(
+            operator.iadd,
+            (hatch_standing_seam_copper(p, scale, seam_pitch_mm=seam_pitch_mm, **kw) for p in polygon.geoms),
+            [],
+        )
+    # Vertical seams (parallel lines at 90° = vertical)
+    seams = parallel_hatch(polygon, mm_to_pt(seam_pitch_mm, scale), 90.0)
+    # Plus a faint horizontal panel reveal every 1500 mm (typical sheet length)
+    reveals = parallel_hatch(polygon, mm_to_pt(1500.0, scale), 0.0)
+    return seams + reveals
+
+
+def hatch_stucco(polygon, scale, **kw):
+    """Stucco — dense fine stipple. Workhorse for residential / Mediterranean / desert.
+
+    Source: Ramsey/Sleeper 12th ed. p.244 stucco/plaster surface convention.
+    Denser than `gypsum` (1.5 mm spacing); stucco runs at 0.6 mm.
+    """
+    if isinstance(polygon, MultiPolygon):
+        return functools.reduce(operator.iadd, (hatch_stucco(p, scale, **kw) for p in polygon.geoms), [])
+    return stipple_dots(polygon, mm_to_pt(0.6, scale), dot_size=mm_to_pt(0.18, scale))
+
+
+def hatch_insulation_polyiso(polygon, scale, **kw):
+    """Polyisocyanurate (PIR) rigid insulation — parallel hatch + triangle stipple.
+
+    Distinguishes from `insulation_rigid` (generic XPS/PIR crosshatch).
+    PIR convention per Ramsey/Sleeper 12th ed. p.296: closer-spaced lines
+    with embedded triangular markers indicating foil-faced PIR boards.
+
+    Source: Detail 2023 issue 7 (insulation hatching survey).
+    """
+    if isinstance(polygon, MultiPolygon):
+        return functools.reduce(
+            operator.iadd, (hatch_insulation_polyiso(p, scale, **kw) for p in polygon.geoms), []
+        )
+    # Parallel hatch slightly tighter than generic rigid
+    base = parallel_hatch(polygon, mm_to_pt(0.8, scale), 45.0)
+    # Plus sparse triangles indicating foil-faced PIR
+    triangles = stipple_triangles(
+        polygon, mm_to_pt(8.0, scale), size=mm_to_pt(1.2, scale)
+    )
+    return base + triangles
+
+
+# --------------------------------------------------------------------------- #
 # Registry
 # --------------------------------------------------------------------------- #
 
@@ -504,6 +591,24 @@ for recipe in [
     MaterialRecipe("glass", hatch_glass, description="2-3 thin parallel rules"),
     MaterialRecipe("gypsum", hatch_gypsum, description="Light dotted stipple"),
     MaterialRecipe("aluminum", hatch_aluminum, description="Tighter 45° hatch"),
+    # v0.5 expansion (top-5 highest-frequency in real architectural section drawings)
+    MaterialRecipe("cmu", hatch_cmu, description="Concrete masonry unit — 390×190 mm running bond"),
+    MaterialRecipe(
+        "board_formed_concrete",
+        hatch_board_formed_concrete,
+        description="Board-formed concrete — 45° hatch + horizontal seams",
+    ),
+    MaterialRecipe(
+        "standing_seam_copper",
+        hatch_standing_seam_copper,
+        description="Standing-seam copper roof — vertical seams + panel reveals",
+    ),
+    MaterialRecipe("stucco", hatch_stucco, description="Stucco / plaster — fine dense stipple"),
+    MaterialRecipe(
+        "insulation_polyiso",
+        hatch_insulation_polyiso,
+        description="Polyisocyanurate (PIR) — parallel hatch + foil-face triangles",
+    ),
 ]:
     register_material(recipe)
 
@@ -525,33 +630,96 @@ def hatch_polygon(polygon: Polygon | MultiPolygon, material: str, scale: float, 
 # Substring-based: first match wins. Keep in sync with Rhino layer naming
 # conventions documented in docs/research/poche-conventions.md.
 LAYER_TO_MATERIAL: list[tuple[str, str]] = [
+    # CMU and structural masonry (most-specific first)
+    ("CMU", "cmu"),
+    ("MASONRY_UNIT", "cmu"),
+    ("CONCRETE_BLOCK", "cmu"),
+    ("STRUCTURAL_CLAY", "cmu"),
+    # Board-formed concrete (specific) — must come before generic CONCRETE
+    ("BOARD_FORMED", "board_formed_concrete"),
+    ("BOARDFORMED", "board_formed_concrete"),
+    ("BFC_", "board_formed_concrete"),
+    ("BRUTALIST", "board_formed_concrete"),
+    # Generic concrete
     ("CONCRETE", "concrete_solid"),
     ("FOUNDATION", "concrete_solid"),
+    ("FOOTING", "concrete_solid"),
+    ("PIER", "concrete_solid"),
+    ("SLAB", "concrete_solid"),
+    ("PRECAST", "concrete_solid"),
+    # CLT and timber
     ("CLT", "clt_solid"),
+    ("GLULAM", "solid_timber"),
+    ("LVL", "solid_timber"),
     ("TIMBER", "solid_timber"),
+    ("LUMBER", "solid_timber"),
+    ("WOOD_FRAMING", "solid_timber"),
+    # Steel
     ("STEEL", "steel_solid"),
     ("SHS", "steel_solid"),
     ("RHS", "steel_solid"),
+    ("HSS", "steel_solid"),
+    ("WIDEFLANGE", "steel_solid"),
+    ("ANGLE_IRON", "steel_solid"),
     ("BRACKET", "steel_solid"),
     ("CLEAT", "steel_solid"),
+    ("FASTENER", "steel_solid"),
+    # Stairs (often concrete)
     ("STAIR", "concrete_solid"),
+    # Standing-seam copper (specific) — before generic CU_
+    ("STANDING_SEAM", "standing_seam_copper"),
+    ("STANDING-SEAM", "standing_seam_copper"),
+    ("SS_COPPER", "standing_seam_copper"),
+    ("SS_CU", "standing_seam_copper"),
+    ("CU_STANDING", "standing_seam_copper"),
+    # Generic copper / cladding (cut treated as solid)
     ("WINDOW_FRAME", "aluminum"),
     ("ALUM", "aluminum"),
-    ("CU_", "concrete_solid"),  # copper cladding cut
+    ("CU_", "concrete_solid"),
+    ("COPPER", "concrete_solid"),
     ("CLADDING", "concrete_solid"),
-    ("INSUL", "insulation_mineral_wool"),
+    ("RAINSCREEN", "concrete_solid"),
+    # Insulation: most-specific first
+    ("POLYISO", "insulation_polyiso"),
+    ("PIR_BOARD", "insulation_polyiso"),
+    ("PIR ", "insulation_polyiso"),  # trailing space avoids matching e.g. PIRELLI
     ("XPS", "insulation_rigid"),
-    ("PIR", "insulation_rigid"),
+    ("EPS_RIGID", "insulation_rigid"),
+    ("EPS_BOARD", "insulation_rigid"),
+    ("MINERAL_WOOL", "insulation_mineral_wool"),
     ("MINERAL", "insulation_mineral_wool"),
+    ("ROCKWOOL", "insulation_mineral_wool"),
+    ("BATT", "insulation_mineral_wool"),
+    ("INSUL", "insulation_mineral_wool"),
+    # Roofing / membranes
     ("EPDM", "concrete_solid"),
+    ("TPO_MEMBRANE", "concrete_solid"),
     ("MEMBRANE", "concrete_solid"),
+    ("BITUM", "concrete_solid"),
+    ("ASPHALT_SHINGLE", "concrete_solid"),
+    # Ground / earth
     ("EARTH", "earth"),
     ("GROUND", "earth"),
+    ("SOIL", "earth"),
+    ("GRAVEL", "earth"),
+    ("BACKFILL", "earth"),
+    # Masonry — generic brick comes after CMU
     ("BRICK", "brick"),
+    ("CLAY_TILE", "brick"),
+    # Glass
     ("GLASS", "glass"),
+    ("GLAZING", "glass"),
     ("IGU", "glass"),
+    # Gypsum / drywall
+    ("GYPSUM", "gypsum"),
     ("GYP", "gypsum"),
     ("GWB", "gypsum"),
+    ("DRYWALL", "gypsum"),
+    # Stucco / plaster
+    ("STUCCO", "stucco"),
+    ("PLASTER", "stucco"),
+    ("EIFS", "stucco"),
+    ("RENDER", "stucco"),
 ]
 
 

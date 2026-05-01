@@ -13,9 +13,35 @@ from .apply_jsx import apply_via_jsx
 from .apply_saas import apply_to_file as apply_to_file_saas
 from .classify import auto_by_luminance, explain_mapping, from_user_mapping
 from .inspect import color_to_rgb255, inspect_file
-from .layer_classify import classify_layer
+from .layer_classify import (
+    Source,
+    classify_layer,
+    detect_source,
+    explain_source_match,
+)
 from .poche import apply_poche
 from .presets import PRESETS, select_preset
+
+# CLI-facing source choices. Keep AUTO first so it's the default.
+_SOURCE_CHOICES = [Source.AUTO.value, Source.RHINO.value, Source.AUTOCAD.value]
+
+
+def _resolve_source(
+    source_arg: str,
+    pdf_metadata: dict | None,
+    layer_names: list[str] | None,
+) -> tuple[Source, float]:
+    """Resolve a `--source auto|rhino|autocad` flag to a concrete Source.
+
+    For `auto`, runs `detect_source` and falls back to `Source.RHINO` if
+    detection is inconclusive (so existing behavior is preserved).
+    """
+    if source_arg == Source.AUTO.value:
+        detected, conf = detect_source(pdf_metadata, layer_names)
+        if detected == Source.AUTO:
+            return Source.RHINO, 0.0  # fall back to Rhino baseline
+        return detected, conf
+    return Source(source_arg), 1.0  # user-forced — full confidence
 
 
 @click.group()
@@ -36,11 +62,31 @@ def cli():
 @cli.command()
 @click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.option("--pretty/--no-pretty", default=True, help="Pretty-print JSON output.")
-def inspect(src: Path, pretty: bool):
+@click.option(
+    "--source",
+    type=click.Choice(_SOURCE_CHOICES),
+    default=Source.AUTO.value,
+    show_default=True,
+    help="Force a layer-name convention. 'auto' detects from PDF metadata + layer-name shape.",
+)
+def inspect(src: Path, pretty: bool, source: str):
     """Report the color / stroke-width distribution of a .ai or .pdf file."""
     rep = inspect_file(str(src))
     indent = 2 if pretty else None
     click.echo(json.dumps(rep.to_dict(), indent=indent))
+
+    # Layer-source detection (Phase E5). Print to stderr so JSON on stdout
+    # stays parseable by automation.
+    pdf_metadata = getattr(rep, "pdf_metadata", None) or {}
+    layer_names = getattr(rep, "layer_names", None) or []
+    resolved, conf = _resolve_source(source, pdf_metadata, layer_names)
+    if source == Source.AUTO.value:
+        click.echo(
+            f"# detected layer-name source: {resolved.value} (confidence={conf:.2f})",
+            err=True,
+        )
+    else:
+        click.echo(f"# layer-name source: {resolved.value} (forced via --source)", err=True)
 
 
 @cli.command()
@@ -97,6 +143,15 @@ def inspect(src: Path, pretty: bool):
     is_flag=True,
     help="Compute and explain the mapping; don't write any file.",
 )
+@click.option(
+    "--source",
+    type=click.Choice(_SOURCE_CHOICES),
+    default=Source.AUTO.value,
+    show_default=True,
+    help="Layer-name convention to use for semantic classification. "
+    "'auto' detects from PDF metadata + layer-name shape; "
+    "'rhino' = Rhino Make2D + ClippingPlane; 'autocad' = AIA NCS / ISO 13567-2.",
+)
 def apply(
     src: Path,
     output: Path | None,
@@ -108,6 +163,7 @@ def apply(
     default_width: float,
     keep_pieceinfo: bool,
     dry_run: bool,
+    source: str,
 ):
     """Rewrite the file with per-color stroke widths."""
     if not (auto or mapping_file):
@@ -116,6 +172,19 @@ def apply(
         raise click.UsageError("--auto and --mapping are mutually exclusive")
 
     rep = inspect_file(str(src))
+
+    # Layer-source resolution. Print so users see what convention drove the
+    # classifier; lets them re-run with `--source autocad` if detection is wrong.
+    pdf_metadata = getattr(rep, "pdf_metadata", None) or {}
+    layer_names = getattr(rep, "layer_names", None) or []
+    resolved_source, source_conf = _resolve_source(source, pdf_metadata, layer_names)
+    if source == Source.AUTO.value:
+        click.echo(
+            f"# layer-source: {resolved_source.value} (auto-detected, confidence={source_conf:.2f})",
+            err=True,
+        )
+    else:
+        click.echo(f"# layer-source: {resolved_source.value} (forced)", err=True)
 
     if mapping_file:
         raw = json.loads(mapping_file.read_text())
@@ -175,7 +244,14 @@ def apply(
     type=click.Path(dir_okay=False, path_type=Path),
     help="Output path. Defaults to '<src> HIERARCHY.<ext>'.",
 )
-def apply_jsx_cmd(src: Path, output: Path | None):
+@click.option(
+    "--source",
+    type=click.Choice(_SOURCE_CHOICES),
+    default=Source.AUTO.value,
+    show_default=True,
+    help="Layer-name convention used by the embedded JSX classifier.",
+)
+def apply_jsx_cmd(src: Path, output: Path | None, source: str):
     """Layer-preserving apply via Illustrator JSX (slower, but keeps every layer).
 
     \b
@@ -189,6 +265,8 @@ def apply_jsx_cmd(src: Path, output: Path | None):
     Rhino-exported drawings with meaningful OCG layer names.
     """
     out = str(output) if output else None
+    if source != Source.AUTO.value:
+        click.echo(f"# layer-source: {source} (forced)", err=True)
     click.echo(f"opening {src} in Illustrator and running layer-aware JSX...", err=True)
     result = apply_via_jsx(str(src), out)
     click.echo(result["report"])
@@ -239,9 +317,29 @@ def apply_jsx_cmd(src: Path, output: Path | None):
     help="Width applied to colors not in the mapping.",
 )
 @click.option(
+    "--poche",
+    is_flag=True,
+    help="Also inject solid-black poché fills into ClippingPlaneIntersections layers "
+    "(headless, no Illustrator install needed).",
+)
+@click.option(
+    "--poche-overrides",
+    "poche_overrides_path",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help='JSON of per-layer poché strategy overrides; same schema as `arch-lw poche --overrides`.',
+)
+@click.option(
     "--dry-run",
     is_flag=True,
     help="Compute and explain the mapping; don't write any file.",
+)
+@click.option(
+    "--source",
+    type=click.Choice(_SOURCE_CHOICES),
+    default=Source.AUTO.value,
+    show_default=True,
+    help="Layer-name convention. 'auto' detects from PDF metadata + layer-name shape; "
+    "'rhino' = Rhino Make2D; 'autocad' = AIA NCS.",
 )
 def apply_saas_cmd(
     src: Path,
@@ -252,7 +350,10 @@ def apply_saas_cmd(
     for_print: bool,
     auto: bool,
     default_width: float,
+    poche: bool,
+    poche_overrides_path: Path | None,
     dry_run: bool,
+    source: str,
 ):
     """Headless apply: modify the AI native payload directly (preserves layers).
 
@@ -273,6 +374,17 @@ def apply_saas_cmd(
         raise click.UsageError("--auto and --mapping are mutually exclusive")
 
     rep = inspect_file(str(src))
+
+    pdf_metadata = getattr(rep, "pdf_metadata", None) or {}
+    layer_names = getattr(rep, "layer_names", None) or []
+    resolved_source, source_conf = _resolve_source(source, pdf_metadata, layer_names)
+    if source == Source.AUTO.value:
+        click.echo(
+            f"# layer-source: {resolved_source.value} (auto-detected, confidence={source_conf:.2f})",
+            err=True,
+        )
+    else:
+        click.echo(f"# layer-source: {resolved_source.value} (forced)", err=True)
 
     if mapping_file:
         raw = json.loads(mapping_file.read_text())
@@ -301,12 +413,34 @@ def apply_saas_cmd(
     if output is None:
         output = src.with_name(f"{src.stem} HIERARCHY{src.suffix}")
 
-    result = apply_to_file_saas(
-        str(src),
-        str(output),
-        mapping,
-        default_width=default_width,
-    )
+    if poche:
+        from .poche_saas import apply_saas_with_poche
+
+        overrides = {}
+        if poche_overrides_path:
+            overrides = json.loads(poche_overrides_path.read_text())
+
+        result, poche_result, poche_report = apply_saas_with_poche(
+            str(src),
+            str(output),
+            mapping,
+            default_width=default_width,
+            overrides=overrides,
+        )
+    else:
+        if poche_overrides_path:
+            click.echo(
+                "warning: --poche-overrides has no effect without --poche",
+                err=True,
+            )
+        result = apply_to_file_saas(
+            str(src),
+            str(output),
+            mapping,
+            default_width=default_width,
+        )
+        poche_result = None
+        poche_report = None
 
     click.echo("", err=True)
     click.echo(
@@ -326,6 +460,32 @@ def apply_saas_cmd(
         click.echo(f"unmatched (defaulted to {default_width} pt):", err=True)
         for rgb, n in sorted(result.unmatched_colors.items(), key=lambda kv: -kv[1])[:10]:
             click.echo(f"  RGB{rgb}: {n}", err=True)
+
+    if poche_result is not None and poche_report is not None:
+        click.echo("", err=True)
+        click.echo(
+            f"poché: injected {poche_result.polygons_injected} polygons across "
+            f"{poche_result.layers_injected}/{poche_result.layers_targeted} cut layers "
+            f"(+{poche_result.bytes_injected:,} bytes)",
+            err=True,
+        )
+        if poche_result.layers_missing:
+            click.echo(
+                f"  warning: {len(poche_result.layers_missing)} layer(s) had polygons "
+                "but couldn't be located in the payload:",
+                err=True,
+            )
+            for n in poche_result.layers_missing[:10]:
+                click.echo(f"    {n}", err=True)
+        for fr in sorted(poche_report.fills, key=lambda f: -f.confidence):
+            short = fr.layer.split("::")[-1]
+            marker = "✓" if fr.confidence >= 0.85 else ("~" if fr.confidence > 0 else "✗")
+            click.echo(
+                f"  {marker} {short:50}  {fr.strategy:18}  polys={fr.polygon_count:>3}  "
+                f"conf={fr.confidence:.2f}",
+                err=True,
+            )
+
     click.echo("", err=True)
     click.echo(f"wrote {output}  ({result.output_size:,} bytes)", err=True)
 
@@ -359,7 +519,22 @@ def apply_saas_cmd(
     show_default=True,
     help="Plot scale (1/N as decimal). 0.02 = 1:50, 0.01 = 1:100. Used only when --style material.",
 )
-def poche_cmd(src: Path, output: Path | None, overrides_path: Path | None, style: str, hatch_scale: float):
+@click.option(
+    "--source",
+    type=click.Choice(_SOURCE_CHOICES),
+    default=Source.AUTO.value,
+    show_default=True,
+    help="Layer-name convention used to identify cut layers (only Rhino "
+    "ClippingPlaneIntersections is currently a poché target; AIA NCS support is preliminary).",
+)
+def poche_cmd(
+    src: Path,
+    output: Path | None,
+    overrides_path: Path | None,
+    style: str,
+    hatch_scale: float,
+    source: str,
+):
     """Generate solid-black poché on cut layers via shapely linemerge + polygonize.
 
     \b
@@ -386,6 +561,8 @@ def poche_cmd(src: Path, output: Path | None, overrides_path: Path | None, style
     """
     out = str(output) if output else None
     over = str(overrides_path) if overrides_path else None
+    if source != Source.AUTO.value:
+        click.echo(f"# layer-source: {source} (forced)", err=True)
     click.echo(f"applying poche to {src} (style={style}, scale=1:{int(1 / hatch_scale)})...", err=True)
     report = apply_poche(str(src), out, overrides_path=over, style=style, scale=hatch_scale)
     click.echo("", err=True)
@@ -459,16 +636,43 @@ def preview_cmd(before: Path, after: Path, output: Path, mode: str, dpi: int, gh
 
 @cli.command("explain-layer")
 @click.argument("layer_name")
-def explain_layer(layer_name: str):
+@click.option(
+    "--source",
+    type=click.Choice(_SOURCE_CHOICES),
+    default=Source.AUTO.value,
+    show_default=True,
+    help="Pattern library to consult. 'auto' infers from the layer name's shape "
+    "(e.g. `::`-joined → rhino, `A-WALL-FULL` → autocad).",
+)
+def explain_layer(layer_name: str, source: str):
     """Show what tier+weight the semantic classifier would assign to a layer name.
 
     \b
     Examples:
         arch-lw explain-layer 'axon::Visible::ClippingPlaneIntersections::TEC_TIMBER_BEAMS'
         arch-lw explain-layer 'axon::Visible::Curves::FLOOR_DATUMS'
+        arch-lw explain-layer 'A-WALL-FULL' --source autocad
     """
-    a = classify_layer(layer_name)
-    click.echo(f"{a.weight_pt} pt — {a.tier} ({a.why})")
+    if source == Source.AUTO.value:
+        # Single-name detection: use layer-shape inference only (no metadata).
+        detected, conf = detect_source(None, [layer_name])
+        if detected == Source.AUTO:
+            detected = Source.RHINO
+            conf = 0.0
+        click.echo(
+            f"# detected source: {detected.value} (confidence={conf:.2f})",
+            err=True,
+        )
+        click.echo(explain_source_match(layer_name, detected))
+    else:
+        forced = Source(source)
+        click.echo(f"# source: {forced.value} (forced via --source)", err=True)
+        click.echo(explain_source_match(layer_name, forced))
+
+
+# Re-export so the unused `classify_layer` import stays referenced and
+# downstream callers can still `from arch_line_weights.cli import classify_layer`.
+__all__ = ["classify_layer", "cli"]
 
 
 if __name__ == "__main__":
