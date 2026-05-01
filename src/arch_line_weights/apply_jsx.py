@@ -278,14 +278,20 @@ def query_active_doc() -> tuple[str | None, str | None]:
     whitespace, so the matcher downstream sees the exact name shape
     Illustrator reported.
     """
+    # NB: Illustrator's AppleScript dictionary disambiguation is finicky.
+    # `name of active document` raises "expected end of line, but found
+    # class name" on Illustrator 2026 (Adobe build 30.x). Two fixes
+    # combine reliably: use `current document` instead of `active
+    # document`, AND wrap the property access in `(get ... of ...)` so
+    # the parser binds the property to the receiver explicitly.
     script = (
         'tell application "Adobe Illustrator"\n'
         '  if (count of documents) is 0 then\n'
         '    return ""\n'
         '  end if\n'
-        '  set docName to name of active document\n'
+        '  set docName to (get name of current document)\n'
         '  try\n'
-        '    set docPath to POSIX path of (file path of active document)\n'
+        '    set docPath to POSIX path of (file path of current document)\n'
         '  on error\n'
         '    set docPath to ""\n'
         '  end try\n'
