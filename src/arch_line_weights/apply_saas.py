@@ -27,6 +27,7 @@ from __future__ import annotations
 import os
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import pikepdf
 import zstandard as zstd
@@ -36,6 +37,28 @@ import zstandard as zstd
 # raise loudly rather than silently corrupting.
 PREFIX = b"%AI24_ZStandard_Data"
 CHUNK = 65536  # AIPrivateData<i> stream size, except the last which is shorter
+
+# Suffix appended to the source stem when the user does not pass `-o`. Kept
+# distinct from `apply-jsx` so concurrent runs of both pipelines on the same
+# source don't race on the same output filename (Issue #12). The legacy
+# `apply` command (pikepdf, layer-flattening) keeps the bare " HIERARCHY"
+# suffix for back-compat.
+DEFAULT_OUTPUT_SUFFIX = " HIERARCHY-saas"
+
+
+def default_output_path(src: str | os.PathLike[str]) -> str:
+    """Return the default output path for `apply-saas` given the source.
+
+    Issue #12: distinct from ``apply-jsx``'s ``-jsx`` suffix to avoid
+    output-file collisions when both pipelines run on the same source.
+
+    Examples:
+
+        ``/x/macro.ai`` -> ``/x/macro HIERARCHY-saas.ai``
+        ``/x/macro.pdf`` -> ``/x/macro HIERARCHY-saas.pdf``
+    """
+    p = Path(src)
+    return str(p.with_name(f"{p.stem}{DEFAULT_OUTPUT_SUFFIX}{p.suffix}"))
 
 # AI native stroke-color set: "<C> <M> <Y> <K> <R> <G> <B> XA" — last 3 floats
 # are the RGB 0..1 components of the stroke. Tokens are space-separated and

@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+import re
 import subprocess
 import textwrap
 import threading
@@ -269,6 +270,13 @@ def query_active_doc() -> tuple[str | None, str | None]:
     saved path until the user does Save As).
 
     Returns `(None, None)` when there's no active doc or AppleScript fails.
+
+    Issue #14: the doc name may contain internal trailing whitespace
+    (e.g. ``"wall section iso cut  [Converted].ai"`` for a disk file
+    named ``"wall section iso cut .ai"``). We only strip the single
+    trailing newline that ``osascript`` appends, NOT all surrounding
+    whitespace, so the matcher downstream sees the exact name shape
+    Illustrator reported.
     """
     script = (
         'tell application "Adobe Illustrator"\n'
@@ -285,19 +293,63 @@ def query_active_doc() -> tuple[str | None, str | None]:
         'end tell'
     )
     try:
-        out = subprocess.run(
+        raw = subprocess.run(
             ["osascript", "-e", script],
             check=True,
             capture_output=True,
             text=True,
             timeout=30,
-        ).stdout.strip()
+        ).stdout
     except (subprocess.SubprocessError, OSError):
         return None, None
+    # Trim ONLY the trailing newline(s) osascript appends; preserve any
+    # whitespace inside the name field (Issue #14).
+    out = raw.rstrip("\r\n")
     if not out:
         return None, None
     name, _, path = out.partition("|")
     return (name or None), (path or None)
+
+
+# Matches a Unicode whitespace run immediately preceding the `[Converted]`
+# token, plus any whitespace + optional extension trailing it. Used to peel
+# the [Converted] decoration off an Illustrator doc name to recover the
+# normalized stem.
+_CONVERTED_DECOR_RE = re.compile(r"\s*\[Converted\]\s*(?:\.[A-Za-z0-9]+)?\s*$")
+
+
+def _normalize_stem(s: str) -> str:
+    """Return `s` with any trailing whitespace stripped.
+
+    Whitespace here is the full Unicode notion (``str.rstrip()`` default):
+    ASCII space, tab, NBSP, etc. Used by `_is_converted_match` to make the
+    comparison robust to disk filenames that end in whitespace before the
+    extension (Issue #14).
+    """
+    return s.rstrip()
+
+
+def _strip_converted_decoration(name: str) -> str:
+    """Return the active-doc name with the trailing ``[Converted]`` decoration
+    removed, including any whitespace immediately before/after it and the
+    optional file extension that Illustrator may re-append.
+
+    Examples (Issue #14):
+
+        "macro [Converted].ai"            -> "macro"
+        "macro [Converted]"               -> "macro"
+        "wall section iso cut  [Converted].ai"
+                                          -> "wall section iso cut"
+        "wall\\t[Converted]"              -> "wall"
+
+    If the input has no ``[Converted]`` token, returns the file's stem
+    (extension stripped) so the caller can compare against a disk stem.
+    """
+    if "[Converted]" in name:
+        stripped = _CONVERTED_DECOR_RE.sub("", name)
+        return _normalize_stem(stripped)
+    # No [Converted] decoration — fall back to plain stem.
+    return _normalize_stem(Path(name).stem)
 
 
 def _is_converted_match(active_name: str | None, active_path: str | None, src: str) -> bool:
@@ -308,28 +360,80 @@ def _is_converted_match(active_name: str | None, active_path: str | None, src: s
     ``<basename> [Converted]`` virtual docs. The active doc has the
     `[Converted]` suffix in its name and either an empty file-path or a
     file-path pointing at the original `src`.
+
+    Normalization rules (Issue #14):
+
+      * Both stems are compared after :func:`str.rstrip` strips ALL trailing
+        whitespace (ASCII space, tab, NBSP, other Unicode whitespace).
+      * The ``[Converted]`` token, the whitespace surrounding it, and any
+        Illustrator-appended extension are peeled from the active doc name
+        before stem comparison.
+      * Comparison is case-sensitive on the stem itself but case-insensitive
+        when falling back to a basename-substring check (legacy looser path).
+
+    These normalizations let a disk file like
+    ``/path/wall section iso cut .ai`` (trailing space before ``.ai``)
+    correctly match Illustrator's
+    ``"wall section iso cut  [Converted].ai"`` (two spaces before
+    ``[Converted]`` because the trailing space is preserved between the
+    stem and Illustrator's own leading space).
     """
     if not active_name:
         return False
-    name = active_name.strip()
+    # NOTE: do NOT use `str.strip()` here — it would discard internal
+    # trailing whitespace that lives between the disk-name stem and the
+    # Illustrator-added " [Converted]" suffix. Only strip the kind of
+    # leading/trailing space that osascript could realistically introduce
+    # — but `query_active_doc()` already does that conservatively.
+    name = active_name
     src_path = Path(src)
     src_basename = src_path.name
     src_stem = src_path.stem
+    src_stem_norm = _normalize_stem(src_stem)
+    src_basename_norm = _normalize_stem(src_basename)
 
-    # AI: "<basename> [Converted].ai" or "<basename> [Converted]"
-    converted_suffixes = (
-        f"{src_basename} [Converted]",
-        f"{src_basename} [Converted].ai",
-        f"{src_stem} [Converted]",
-        f"{src_stem} [Converted].ai",
-    )
-    if not any(name == s or name.endswith(s) for s in converted_suffixes):
-        # also accept the looser case where '[Converted]' just appears
-        if "[Converted]" not in name:
-            return False
-        # Confirm the basename root matches.
-        if src_stem.lower() not in name.lower() and src_basename.lower() not in name.lower():
-            return False
+    # Primary path: peel the [Converted] decoration and compare normalized
+    # stems for equality. We require the [Converted] token to be present,
+    # otherwise a regular saved doc whose path matches `src` would falsely
+    # match here (the wrapper relies on this False return to fall through
+    # to the standard `open POSIX file` path).
+    if "[Converted]" in name:
+        active_stem_norm = _strip_converted_decoration(name)
+        if active_stem_norm and active_stem_norm == src_stem_norm:
+            # Stems match after whitespace normalization; fall through to
+            # the path-consistency check below.
+            pass
+        else:
+            # Fall through to legacy candidate-suffix sweep.
+            active_stem_norm = None
+    else:
+        active_stem_norm = None
+    if active_stem_norm is None:
+        # Legacy candidate-suffix sweep — kept so any pre-existing exact
+        # name shape we already supported still matches. Compare against
+        # both the raw and the normalized basename / stem.
+        converted_suffixes = (
+            f"{src_basename} [Converted]",
+            f"{src_basename} [Converted].ai",
+            f"{src_stem} [Converted]",
+            f"{src_stem} [Converted].ai",
+            f"{src_basename_norm} [Converted]",
+            f"{src_basename_norm} [Converted].ai",
+            f"{src_stem_norm} [Converted]",
+            f"{src_stem_norm} [Converted].ai",
+        )
+        if not any(name == s or name.endswith(s) for s in converted_suffixes):
+            # Looser fallback: name must contain "[Converted]" AND share a
+            # basename substring with the source.
+            if "[Converted]" not in name:
+                return False
+            if (
+                src_stem.lower() not in name.lower()
+                and src_basename.lower() not in name.lower()
+                and src_stem_norm.lower() not in name.lower()
+                and src_basename_norm.lower() not in name.lower()
+            ):
+                return False
 
     # Path check: a [Converted] virtual doc usually has no saved path. If
     # AppleScript returned a path, accept it only if it actually points at
@@ -427,6 +531,35 @@ class _HeartbeatPoller(threading.Thread):
 
 
 # --------------------------------------------------------------------------- #
+# Issue #12 — distinct default output path per apply path
+# --------------------------------------------------------------------------- #
+
+# Suffix appended to the source stem when the user does not pass `-o`. Kept
+# distinct from `apply-saas` so concurrent runs of both pipelines on the
+# same source don't race on the same output filename. The legacy `apply`
+# command (pikepdf, layer-flattening) keeps the bare " HIERARCHY" suffix
+# for back-compat with users who already script around it.
+DEFAULT_OUTPUT_SUFFIX = " HIERARCHY-jsx"
+
+
+def default_output_path(src: str | os.PathLike[str]) -> str:
+    """Return the default output path for `apply-jsx` given the source.
+
+    Issue #12: the `apply-jsx` and `apply-saas` defaults must differ so the
+    two pipelines don't overwrite each other when both run on the same
+    source. We add a `-jsx` suffix here; `apply_saas.default_output_path`
+    uses `-saas`. Users override with `-o` / `--output`.
+
+    Examples:
+
+        ``/x/macro.ai`` -> ``/x/macro HIERARCHY-jsx.ai``
+        ``/x/macro.pdf`` -> ``/x/macro HIERARCHY-jsx.pdf``
+    """
+    p = Path(src)
+    return str(p.with_name(f"{p.stem}{DEFAULT_OUTPUT_SUFFIX}{p.suffix}"))
+
+
+# --------------------------------------------------------------------------- #
 # Issue #11 — configurable timeout
 # --------------------------------------------------------------------------- #
 
@@ -477,7 +610,9 @@ def apply_via_jsx(
 
     Args:
         src: Path to the source `.ai` file. Must exist.
-        dst: Optional output path. Defaults to `<src> HIERARCHY.<ext>`.
+        dst: Optional output path. Defaults to `<src> HIERARCHY-jsx.<ext>`
+            (Issue #12: distinct from ``apply-saas`` so the two pipelines
+            don't overwrite each other when both run on the same source).
         jsx_path: Optional override for where the rendered JSX is written.
         timeout_min: JSX timeout in minutes. Defaults to
             ``ARCH_LW_JSX_TIMEOUT_MIN`` env var, then ``DEFAULT_TIMEOUT_MIN``
@@ -497,8 +632,7 @@ def apply_via_jsx(
     """
     src = os.path.abspath(src)
     if dst is None:
-        p = Path(src)
-        dst = str(p.with_name(f"{p.stem} HIERARCHY{p.suffix}"))
+        dst = default_output_path(src)
     dst = os.path.abspath(dst)
     if dst == src:
         raise ValueError("dst must differ from src")

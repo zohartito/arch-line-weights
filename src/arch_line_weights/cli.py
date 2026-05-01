@@ -12,6 +12,7 @@ from . import __version__
 from .apply import apply_to_file
 from .apply_jsx import apply_via_jsx
 from .apply_saas import apply_to_file as apply_to_file_saas
+from .apply_saas import default_output_path as default_output_path_saas
 from .classify import auto_by_luminance, explain_mapping, from_user_mapping
 from .inspect import color_to_rgb255, inspect_file
 from .layer_classify import (
@@ -250,7 +251,8 @@ def apply(
     "-o",
     "--output",
     type=click.Path(dir_okay=False, path_type=Path),
-    help="Output path. Defaults to '<src> HIERARCHY.<ext>'.",
+    help="Output path. Defaults to '<src> HIERARCHY-jsx.<ext>' "
+    "(distinct from apply-saas to avoid output collisions; Issue #12).",
 )
 @click.option(
     "--preset",
@@ -361,7 +363,8 @@ def apply_jsx_cmd(
     "-o",
     "--output",
     type=click.Path(dir_okay=False, path_type=Path),
-    help="Output path. Defaults to '<src> HIERARCHY.<ext>'.",
+    help="Output path. Defaults to '<src> HIERARCHY-saas.<ext>' "
+    "(distinct from apply-jsx to avoid output collisions; Issue #12).",
 )
 @click.option(
     "--mapping",
@@ -432,6 +435,18 @@ def apply_jsx_cmd(
     "in the v0.5 review. Also reads the ARCH_LW_BRIDGE_STRATEGY env var.",
 )
 @click.option(
+    "--llm-fallback",
+    is_flag=True,
+    default=False,
+    help="Enable the LLM topology-inference rescue rung (rung 5, between "
+    "alpha_shape and concave_hull). Opt-in only — sends layer names + "
+    "endpoint coordinates (no filenames, no metadata) to Anthropic Claude "
+    "Haiku for a closure plan when all geometric rungs fail. Requires the "
+    "anthropic package (install via `pip install arch-line-weights[llm]`) "
+    "and ANTHROPIC_API_KEY in the environment. ~$0.003/stubborn layer. "
+    "See docs/research/ai-augmented-mode.md.",
+)
+@click.option(
     "--dry-run",
     is_flag=True,
     help="Compute and explain the mapping; don't write any file.",
@@ -457,6 +472,7 @@ def apply_saas_cmd(
     poche_overrides_path: Path | None,
     alpha_shape: bool,
     bridge_strategy: str,
+    llm_fallback: bool,
     dry_run: bool,
     source: str,
 ):
@@ -515,8 +531,10 @@ def apply_saas_cmd(
         click.echo("--dry-run: no file written.", err=True)
         return
 
+    # Issue #12: distinct default output path from apply-jsx so concurrent
+    # runs of both pipelines on the same source don't race / overwrite.
     if output is None:
-        output = src.with_name(f"{src.stem} HIERARCHY{src.suffix}")
+        output = Path(default_output_path_saas(src))
 
     if poche:
         from .poche_saas import apply_saas_with_poche
@@ -524,6 +542,13 @@ def apply_saas_cmd(
         overrides = {}
         if poche_overrides_path:
             overrides = json.loads(poche_overrides_path.read_text())
+
+        # Surface --llm-fallback to the polygonize ladder via the env var
+        # gate. The flag's lifetime is the duration of the CLI run; we
+        # don't unset on exit because the process is exiting anyway.
+        if llm_fallback:
+            os.environ["ARCH_LW_LLM_FALLBACK"] = "1"
+            click.echo("# llm-fallback: enabled (rung 5)", err=True)
 
         result, poche_result, poche_report = apply_saas_with_poche(
             str(src),
@@ -548,6 +573,11 @@ def apply_saas_cmd(
         if bridge_strategy != "greedy":
             click.echo(
                 "warning: --bridge-strategy has no effect without --poche",
+                err=True,
+            )
+        if llm_fallback:
+            click.echo(
+                "warning: --llm-fallback has no effect without --poche",
                 err=True,
             )
         result = apply_to_file_saas(
@@ -657,6 +687,18 @@ def apply_saas_cmd(
     "identified in the v0.5 review. Also reads ARCH_LW_BRIDGE_STRATEGY env var.",
 )
 @click.option(
+    "--llm-fallback",
+    is_flag=True,
+    default=False,
+    help="Enable the LLM topology-inference rescue rung (rung 5, between "
+    "alpha_shape and concave_hull). Opt-in only — sends layer names + "
+    "endpoint coordinates (no filenames, no metadata) to Anthropic Claude "
+    "Haiku for a closure plan when all geometric rungs fail. Requires the "
+    "anthropic package (install via `pip install arch-line-weights[llm]`) "
+    "and ANTHROPIC_API_KEY in the environment. ~$0.003/stubborn layer. "
+    "See docs/research/ai-augmented-mode.md.",
+)
+@click.option(
     "--source",
     type=click.Choice(_SOURCE_CHOICES),
     default=Source.AUTO.value,
@@ -672,6 +714,7 @@ def poche_cmd(
     hatch_scale: float,
     alpha_shape: bool,
     bridge_strategy: str,
+    llm_fallback: bool,
     source: str,
 ):
     """Generate solid-black poché on cut layers via shapely linemerge + polygonize.
@@ -704,6 +747,9 @@ def poche_cmd(
         click.echo(f"# layer-source: {source} (forced)", err=True)
     if bridge_strategy != "greedy":
         click.echo(f"# bridge-strategy: {bridge_strategy} (forced via --bridge-strategy)", err=True)
+    if llm_fallback:
+        os.environ["ARCH_LW_LLM_FALLBACK"] = "1"
+        click.echo("# llm-fallback: enabled (rung 5)", err=True)
     click.echo(f"applying poche to {src} (style={style}, scale=1:{int(1 / hatch_scale)})...", err=True)
     report = apply_poche(
         str(src),

@@ -86,6 +86,7 @@ Strategy = Literal[
     "linemerge_snap",
     "auto_bridge",
     "alpha_shape",
+    "llm_topology",
     "concave_hull",
     "bbox",
     "user_override",
@@ -328,6 +329,36 @@ def polygonize_layer(
                 )
         except Exception:
             pass
+
+    # LLM topology inference (rung 5): opt-in via ARCH_LW_LLM_FALLBACK=1 +
+    # an Anthropic API key. Hands the layer name + raw endpoint
+    # coordinates (no filenames, no metadata) to a small LLM and asks for
+    # a closure plan. Default OFF — the rung returns None when the gate
+    # is closed, the SDK is missing, the API key is missing, the network
+    # call fails, or the response fails schema validation. See
+    # ``llm_topology.py`` and
+    # ``docs/research/llm-topology-impl-notes.md``.
+    try:
+        from .llm_topology import bridges_from_plan, infer_closing_plan
+
+        anchors_flat: list[tuple[float, float]] = []
+        for ls in lines:
+            try:
+                anchors_flat.extend((float(x), float(y)) for x, y in ls.coords)
+            except Exception:
+                continue
+        plan = infer_closing_plan(layer_name, anchors_flat, lines)
+        if plan is not None:
+            llm_bridges = bridges_from_plan(plan, anchors_flat)
+            if llm_bridges:
+                augmented_llm = lines + llm_bridges
+                polys_llm = _polys_at_tolerance(augmented_llm, 0.0)
+                if polys_llm:
+                    return polys_llm, FillResult(
+                        layer_name, "llm_topology", 0.65, len(polys_llm), n_segments
+                    )
+    except Exception:
+        pass
 
     # Concave hull fallback
     ch = _try_concave_hull(lines, ratio=0.3)
