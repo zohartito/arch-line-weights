@@ -33,6 +33,8 @@ dependencies = [
     "shapely>=2.0",
     "numpy>=1.26",
     "Pillow>=10.0",
+    "zstandard>=0.22",  # required by apply_saas / poche_saas for AI24 zstd payload
+    "scipy>=1.11",      # required by alpha_shape (scipy.spatial.Delaunay)
 ]
 
 [project.optional-dependencies]
