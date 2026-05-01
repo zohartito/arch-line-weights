@@ -114,15 +114,52 @@ Copy this for each new drawing run:
   - Auto-close source after `saveAs` to prevent tab confusion
 - **Decision**: ⚠️ needs fix before next drawing (3 stubborn layers) BUT good enough to use on simpler drawings now
 
+### Entry 1 — 2026-05-01 — `macro.ai` (ARCH 211 urban-scale plan)
+
+- **Source file**: `/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 211/macro.ai` (eventually saved-as `macro_for_archlw.ai`)
+- **File size MB**: 98 (saved version; original was 237 MB)
+- **Stroke count**: ~1.25M (565K + 617K + smaller buckets per inspect output)
+- **OCG layer count**: not enumerated (apply-saas pipeline doesn't list them; would be in inspect)
+- **Cut layers total**: N/A — not a section drawing
+- **Cut layers polygonized cleanly**: N/A
+- **Cut layers needing __POCHE_CLOSE__**: N/A
+- **Cut layers fully failed**: N/A
+- **Hierarchy preset used**: **plan** (first non-section validation!)
+- **Scale flag**: default (1/4)
+- **Print flag**: no (screen weights)
+- **Estimated manual time it would have taken**: ~3-4 hours (1.25M strokes × 50 distinct colors at ~5 min per color manually)
+- **Actual time spent (incl. CLI runtime + manual fixes)**: ~5 min CLI + 0 min manual = ~5 min
+- **Estimated hours saved vs manual**: ~3-4 hrs
+- **Manual fixes needed**: 0 (output is clean; user opened in Illustrator post-run)
+- **What worked well**:
+  - **First successful headless run on a real non-section drawing**
+  - Plan preset (PLAN_ISO_SCREEN ladder) applied: 0.18 / 0.25 / 0.35 / 0.50 / 0.71 pt
+  - Auto color classifier handled 50 distinct stroke colors → 50 width ops, all tiered correctly
+  - Layer fidelity preserved (PieceInfo intact)
+  - Output 72.8 MB (smaller than input due to zstd recompression)
+  - Pure-Python: zero Illustrator dependency for the actual work
+- **What didn't work / what surprised me**:
+  - **`apply-saas` first attempt failed on 237 MB original** — PyMuPDF couldn't open `inspect_file()`. Required user to first save-as a smaller version (98 MB) via Illustrator.
+  - **`apply-jsx` failed twice** on the same file — Illustrator had it open as `[Converted]` and AppleScript `tell ... open` returned silently without actually opening the disk file. Then on retry hit the 60-min osascript timeout while Illustrator kept grinding indefinitely (forced-quit eventually).
+  - **No progress feedback during long JSX runs** — already filed as Issue #8.
+  - **CLI inconsistency**: `apply-jsx` doesn't have `--preset` flag while `apply-saas` does.
+- **What I'd add to the tool because of this**:
+  - Replace PyMuPDF inspect with pikepdf-based inspect for `.ai` files (PyMuPDF stays for `.pdf` only)
+  - Detect `[Converted]` Illustrator state in `apply-jsx` and fail with clear message + suggestion
+  - Make JSX timeout configurable; add JSX heartbeat to detect hangs vs progress (Issue #8)
+  - Add `--preset` to `apply-jsx` for parity with `apply-saas`
+  - Different default output paths for `apply-jsx` (`HIERARCHY-jsx.ai`) vs `apply-saas` (`HIERARCHY-saas.ai`) to prevent overwrite races
+- **Decision**: ✅ **tool good enough for plan drawings via `apply-saas`** — major win. ⚠️ apply-jsx path has rough edges that need fixing before it's reliable on large files.
+
 ---
 
 (Add new entries above this line)
 
 ## Roll-up (re-run aggregation script as entries accumulate)
 
-| Drawings logged | Mean success rate | Total hours saved | Decision-ready? |
-|---|---|---|---|
-| 1 (reference only) | 86% | 5.8 hrs | No — need ≥5 drawings |
+| Drawings logged | Drawing types | Headless success | Hours saved | Decision-ready? |
+|---|---|---|---|---|
+| 2 (reference + macro) | section, plan | 2/2 (100%) | ~9 hrs | No — need ≥5 drawings |
 
 ## Related
 

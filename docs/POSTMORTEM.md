@@ -236,6 +236,40 @@ flattening layers. Spikes > workarounds.
 demonstrating the operations. These become the foundation of the v0.7
 prototype that ports the apply / poché pipelines to pure Python.
 
+## Attempt 9 (2026-05-01) — first real-world plan drawing run
+
+**What:** Apply line-weight hierarchy to `/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 211/macro.ai` — an urban-scale plan drawing, ~237 MB original / 98 MB saved, ~1.25M strokes, 50 distinct stroke colors. First non-section drawing the tool has been used on.
+
+**Result:** **Headless `apply-saas` succeeded in 5 min on the 98 MB file.** First real-world validation of the v0.5 plan preset family. `apply-jsx` failed twice and then hung past its 60-min osascript timeout, requiring force-quit.
+
+**What worked:**
+- Pure-Python `apply-saas --auto --preset plan` on 98 MB: 50 stroke-width ops rewritten across 50 stroke colors, layer fidelity preserved, output 72.8 MB.
+- Plan preset (PLAN_ISO_SCREEN) ladder applied as designed: 0.18 / 0.25 / 0.35 / 0.50 / 0.71 pt.
+- Pure-Python pipeline is **at least 12× faster than JSX in practice** (5 min vs 60+ min timeout).
+
+**What failed (5 distinct issues surfaced):**
+
+1. **PyMuPDF `fitz.open()` failed on the 237 MB original `.ai`** — `inspect_file()` raised `FileDataError`. Workaround: user saved-as a smaller version (98 MB) via Illustrator, which then worked. Real customers WILL hit this on complex urban drawings.
+
+2. **`apply-jsx` failed with "target doc not open" on `[Converted]` state** — when Illustrator opens a non-AI source (PDF, older AI) as a `[Converted]` virtual doc, AppleScript `tell ... open` returns silently without actually opening the disk file. The JSX then can't find its target document. UX is confusing — gives no hint what happened.
+
+3. **60-min JSX timeout was insufficient on a 98 MB file** — Illustrator kept running JSX past the osascript-side timeout, creating a stuck process that consumed 100% CPU indefinitely. No way to safely abort from outside.
+
+4. **No JSX progress heartbeat** — during the 60+ min run, no indication of progress, completion ETA, or hang detection. Issue #8 filed before this attempt finished.
+
+5. **Default output path collision** — both `apply-jsx` and `apply-saas` write to `<src> HIERARCHY.<ext>`. Running both can race. (In this case, `apply-saas` wrote first; if the stuck JSX had eventually completed, it would have overwritten.)
+
+6. **CLI inconsistency** — `apply-jsx` lacks `--preset` flag while `apply-saas` has it. For non-section drawings via JSX, users can't pick the right tier ladder.
+
+**Lessons kept:**
+- **PyMuPDF is not the right inspection backend for `.ai` files at scale.** Switch to pikepdf (which already opened the same file fine for the rewrite step). PyMuPDF stays for `.pdf` only.
+- **Detect `[Converted]` Illustrator state explicitly in `apply-jsx`.** Either work on the open document directly or fail with a clear "save-as first" message.
+- **JSX timeout must be configurable + heartbeat-driven.** Hardcoded 60 min is wrong both ways — too long for small files (waste), too short for big ones (false abort).
+- **Different default output paths for the two pipelines.** `HIERARCHY-saas.ai` vs `HIERARCHY-jsx.ai` prevents the race entirely.
+- **The headless apply-saas pipeline is genuinely production-ready.** v0.5's plan/elevation/detail preset families work as designed on a 4× larger drawing than the reference.
+
+**Filed as GitHub Issues:** #9 (PyMuPDF replacement), #10 (Converted state), #11 (JSX timeout config), #12 (output path collision), #13 (apply-jsx --preset).
+
 ## Cross-cutting lessons (the durable ones)
 
 1. **Layer fidelity is non-negotiable.** Any change that destroys it must
