@@ -358,14 +358,183 @@ def classify_layer(name: str, source: Source = Source.RHINO) -> TierAssignment:
     return default
 
 
-def as_jsx_function(function_name: str = "weightFor", source: Source = Source.RHINO) -> str:
+# --------------------------------------------------------------------------- #
+# Tier-name cross-walk: classifier tiers → preset tier names
+# --------------------------------------------------------------------------- #
+#
+# `RHINO_RULES` (and `AUTOCAD_RULES`) tag every layer with a `tier` string
+# like "cut", "structure_primary", "frames", etc. The Tier objects in
+# `presets.py` use a different vocabulary per drawing type (e.g. plan uses
+# "walls_cut" / "casework" / "furniture"). To wire a `--preset` flag through
+# the JSX path, we need to map classifier tiers onto the chosen preset's
+# weight ladder. Issue #13.
+#
+# The mapping is approximate by design — we pick the closest analog in each
+# preset, and unknown tiers fall back to the preset's middle weight (or the
+# `default` weight when no middle is obvious). This keeps the JSX behaviour
+# predictable across drawing types without making the user re-tag layers.
+#
+# Per-preset mapping. Keys are classifier tier names (see RHINO_RULES /
+# AUTOCAD_RULES), values are the matching preset tier name. If a preset
+# doesn't ship the named tier (or the entry is missing here), the emitter
+# falls back to the preset's last "default-like" tier.
+
+_RHINO_TIER_TO_PRESET_TIER: dict[str, dict[str, str]] = {
+    "section": {
+        # Section cross-walk is calibrated to reproduce the v0.5.1 hardcoded
+        # weights 1:1 so that `--preset section` (the default) is a no-op
+        # for existing users:
+        #   cut 1.0, structure_primary 0.5, frames 0.3, edges_secondary 0.3,
+        #   structure_secondary 0.35, glazing 0.25, connectors 0.25,
+        #   cladding 0.18, reference 0.13, material_minor 0.13,
+        #   insulation 0.13, annotation 0.13, default 0.25
+        # SECTION_ISO_SCREEN: cut 1.0, profile 0.5, edges 0.3, hidden 0.18,
+        # material 0.13, texture 0.08, special 0.25.
+        "cut": "cut",
+        "structure_primary": "profile",
+        "frames": "edges",
+        "structure_secondary": "edges",  # v0.5.1 0.35 → edges 0.3 (closest)
+        "edges_secondary": "edges",
+        "glazing": "special",
+        "connectors": "special",  # v0.5.1 0.25 → special 0.25
+        "cladding": "hidden",  # v0.5.1 0.18 → hidden 0.18
+        "reference": "material",  # v0.5.1 0.13 → material 0.13
+        "material_minor": "material",
+        "insulation": "material",
+        "annotation": "material",
+        "default": "special",  # v0.5.1 default 0.25
+    },
+    "plan": {
+        "cut": "walls_cut",
+        "glazing": "special",
+        "reference": "pattern",
+        "structure_primary": "casework",
+        "structure_secondary": "furniture",
+        "frames": "furniture",
+        "edges_secondary": "furniture",
+        "connectors": "pattern",
+        "cladding": "site",
+        "material_minor": "texture",
+        "insulation": "texture",
+        "annotation": "texture",
+        "default": "furniture",
+    },
+    "elevation": {
+        "cut": "silhouette",  # no cut in elevation; silhouette is the heaviest line
+        "glazing": "special",
+        "reference": "joints",
+        "structure_primary": "profile",
+        "structure_secondary": "openings",
+        "frames": "openings",
+        "edges_secondary": "openings",
+        "connectors": "joints",
+        "cladding": "material",
+        "material_minor": "texture",
+        "insulation": "texture",
+        "annotation": "texture",
+        "default": "openings",
+    },
+    "detail": {
+        "cut": "cut_primary",
+        "glazing": "special",
+        "reference": "hidden",
+        "structure_primary": "cut_secondary",
+        "structure_secondary": "profile",
+        "frames": "profile",
+        "edges_secondary": "edges",
+        "connectors": "edges",
+        "cladding": "material",
+        "material_minor": "texture",
+        "insulation": "texture",
+        "annotation": "annotation",
+        "default": "edges",
+    },
+}
+
+
+def tier_weights_for_preset(
+    preset_name: str = "section",
+    scale: str = "1/4",
+    for_print: bool = False,
+    source: Source = Source.RHINO,
+) -> dict[str, float]:
+    """Return a `{classifier_tier: weight_pt}` dict for the given preset.
+
+    Used by `as_jsx_function(preset=...)` to override the hard-coded tier
+    weights with values pulled from the chosen preset family. Falls back to
+    classifier defaults when a tier has no preset analog.
+
+    Closes Issue #13 (apply-jsx --preset wire-up).
+    """
+    # Lazy import to avoid a circular import at module load time.
+    from .presets import select_preset
+
+    tiers = select_preset(preset_name, scale=scale, for_print=for_print)
+    by_name = {t.name: t.weight_pt for t in tiers}
+
+    crosswalk = _RHINO_TIER_TO_PRESET_TIER.get(
+        preset_name.lower().strip(),
+        _RHINO_TIER_TO_PRESET_TIER["section"],
+    )
+
+    rules = DISPATCH.get(source, RHINO_RULES)
+    default = DEFAULTS.get(source, DEFAULT)
+
+    out: dict[str, float] = {}
+    seen_tiers: set[str] = set()
+    for _, assignment in rules:
+        if assignment.tier in seen_tiers:
+            continue
+        seen_tiers.add(assignment.tier)
+        preset_tier_name = crosswalk.get(assignment.tier)
+        if preset_tier_name and preset_tier_name in by_name:
+            out[assignment.tier] = by_name[preset_tier_name]
+        else:
+            # No analog — keep the classifier's stock weight.
+            out[assignment.tier] = assignment.weight_pt
+
+    # The 'default' fall-through gets its own remap.
+    default_preset_tier = crosswalk.get("default")
+    if default_preset_tier and default_preset_tier in by_name:
+        out["default"] = by_name[default_preset_tier]
+    else:
+        out["default"] = default.weight_pt
+
+    return out
+
+
+def as_jsx_function(
+    function_name: str = "weightFor",
+    source: Source = Source.RHINO,
+    preset: str | None = None,
+    scale: str = "1/4",
+    for_print: bool = False,
+) -> str:
     """Emit the classifier as ExtendScript-compatible JS for a single source.
 
     The single-source emitter keeps existing JSX consumers stable. Multi-source
     JSX dispatch is a Phase E5 v0.5+ stretch goal.
+
+    `preset`: when set to one of the preset family names (section/plan/
+    elevation/detail), the emitted weights are pulled from
+    `tier_weights_for_preset(preset, scale, for_print)` rather than the
+    classifier's stock per-tier weights. `None` (default) preserves
+    pre-Issue-#13 behaviour — the function still emits the v0.5.1 weights.
     """
     rules = DISPATCH.get(source, RHINO_RULES)
     default = DEFAULTS.get(source, DEFAULT)
+
+    if preset is not None:
+        tier_overrides = tier_weights_for_preset(
+            preset, scale=scale, for_print=for_print, source=source
+        )
+    else:
+        tier_overrides = None
+
+    def _resolve(assignment: TierAssignment) -> float:
+        if tier_overrides is None:
+            return assignment.weight_pt
+        return tier_overrides.get(assignment.tier, assignment.weight_pt)
 
     lines = [f"function {function_name}(name) {{", "    var n = String(name).toUpperCase();"]
     if source == Source.AUTOCAD:
@@ -374,8 +543,11 @@ def as_jsx_function(function_name: str = "weightFor", source: Source = Source.RH
         if isinstance(patterns, str):
             patterns = (patterns,)
         cond = " || ".join(f'n.indexOf("{p}") !== -1' for p in patterns)
-        lines.append(f"    if ({cond}) return {assignment.weight_pt};")
-    lines.append(f"    return {default.weight_pt};")
+        lines.append(f"    if ({cond}) return {_resolve(assignment)};")
+    if tier_overrides is not None:
+        lines.append(f"    return {tier_overrides.get('default', default.weight_pt)};")
+    else:
+        lines.append(f"    return {default.weight_pt};")
     lines.append("}")
     return "\n".join(lines)
 

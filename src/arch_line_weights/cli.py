@@ -253,6 +253,35 @@ def apply(
     help="Output path. Defaults to '<src> HIERARCHY.<ext>'.",
 )
 @click.option(
+    "--preset",
+    type=click.Choice(sorted(PRESETS)),
+    default="section",
+    show_default=True,
+    help="Tier ladder used by the embedded JSX classifier. Matches "
+    "`apply-saas --preset`. Issue #13.",
+)
+@click.option(
+    "--scale",
+    default="1/4",
+    show_default=True,
+    help="Plot scale for ISO 128 weight selection (1/16, 1/8, 1/4, 1/2). "
+    "Used with --for-print.",
+)
+@click.option(
+    "--for-print",
+    is_flag=True,
+    help="Use ISO 128 standards-aligned weights at the chosen --scale "
+    "(heavier than the default screen weights).",
+)
+@click.option(
+    "--timeout",
+    "timeout_min",
+    type=click.IntRange(1, 240),
+    default=None,
+    help="JSX timeout in minutes (default 30, max 240). Honors the "
+    "ARCH_LW_JSX_TIMEOUT_MIN env var when omitted. Issue #11.",
+)
+@click.option(
     "--source",
     type=click.Choice(_SOURCE_CHOICES),
     default=Source.AUTO.value,
@@ -270,7 +299,16 @@ def apply(
     "Only the apply-jsx command's poché step (if invoked downstream) "
     "consumes this; otherwise it's surfaced for symmetry with `apply-saas`.",
 )
-def apply_jsx_cmd(src: Path, output: Path | None, source: str, bridge_strategy: str):
+def apply_jsx_cmd(
+    src: Path,
+    output: Path | None,
+    preset: str,
+    scale: str,
+    for_print: bool,
+    timeout_min: int | None,
+    source: str,
+    bridge_strategy: str,
+):
     """Layer-preserving apply via Illustrator JSX (slower, but keeps every layer).
 
     \b
@@ -292,8 +330,28 @@ def apply_jsx_cmd(src: Path, output: Path | None, source: str, bridge_strategy: 
         # doesn't currently call the polygonize_layer ladder, but if a future
         # poché-via-JSX step does, it'll inherit the selection.
         os.environ["ARCH_LW_BRIDGE_STRATEGY"] = bridge_strategy
+    # Section preset is the v0.5.1 default. Preserve byte-identical JSX
+    # output by passing `preset=None` (no override), so existing users see
+    # zero behaviour change. Issue #13 only takes effect when the user
+    # explicitly picks plan / elevation / detail (or asks for --for-print).
+    effective_preset: str | None
+    if preset == "section" and not for_print:
+        effective_preset = None
+    else:
+        effective_preset = preset
+        click.echo(f"# preset: {preset} (forced via --preset)", err=True)
+    if for_print:
+        click.echo(f"# for-print: scale={scale}", err=True)
     click.echo(f"opening {src} in Illustrator and running layer-aware JSX...", err=True)
-    result = apply_via_jsx(str(src), out)
+    result = apply_via_jsx(
+        str(src),
+        out,
+        timeout_min=timeout_min,
+        preset=effective_preset,
+        scale=scale,
+        for_print=for_print,
+        printer=lambda s: click.echo(s, err=True),
+    )
     click.echo(result["report"])
 
 

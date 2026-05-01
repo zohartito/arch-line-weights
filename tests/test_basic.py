@@ -326,3 +326,221 @@ def test_poisson_disk_safety_cap():
     samples = poisson_disk(huge, min_dist=0.01, max_samples=1000)
     # Cap holds and no hang
     assert len(samples) <= 1000
+
+
+# --------------------------------------------------------------------------- #
+# Issue #9 — inspect.py per-format dispatch (pikepdf for .ai, PyMuPDF for .pdf)
+# --------------------------------------------------------------------------- #
+
+
+def _build_minimal_ai_content_stream(layer_name: str = "TEST_LAYER") -> bytes:
+    """One PDF content-stream block with a marked-content layer wrapping a
+    handful of strokes in two distinct RGB colors at two distinct widths.
+
+    This mirrors the shape of a real Rhino-export ``.ai`` content stream:
+
+        /OC /MC0 BDC
+            <r> <g> <b> RG       % set stroke color
+            <w> w                 % set stroke width
+            q ... S Q             % stroked path, repeated
+        EMC
+    """
+    return (
+        b"/OC /MC0 BDC\n"
+        b"0.784 0.529 0.275 RG\n"  # RGB(200, 135, 70)
+        b"0.5 w\n"
+        b"q 1 0 0 1 100 100 cm 0 0 m 10 10 l S Q\n"
+        b"q 1 0 0 1 200 200 cm 0 0 m 20 20 l S Q\n"
+        b"q 1 0 0 1 300 300 cm 0 0 m 30 30 l S Q\n"
+        b"EMC\n"
+        b"/OC /MC1 BDC\n"
+        b"0.0 0.0 0.0 RG\n"  # RGB(0, 0, 0) — heaviest tier
+        b"1.0 w\n"
+        b"q 1 0 0 1 0 0 cm 0 0 m 5 5 l S Q\n"
+        b"EMC\n"
+    )
+
+
+def _write_minimal_ai_fixture(path: str, layer_name: str = "TEST_LAYER") -> None:
+    """Write a tiny ``.ai`` file whose page content-stream + OCG layers are
+    walkable by the pikepdf backend in :mod:`arch_line_weights.inspect`.
+
+    The file does **not** need a valid AIPrivateData payload — ``inspect`` only
+    reads ``/Contents`` and ``/OCProperties``, not ``/PieceInfo``. We still set
+    ``/PieceInfo /Illustrator`` so the dispatch's ``_looks_like_illustrator``
+    probe routes to pikepdf even if the caller passes a ``.pdf`` extension.
+    """
+    import pikepdf
+
+    pdf = pikepdf.new()
+    pdf.add_blank_page(page_size=(500, 500))
+    page = pdf.pages[0]
+
+    # Marked-content layer references
+    ocg_a = pdf.make_indirect(
+        pikepdf.Dictionary(
+            {
+                "/Type": pikepdf.Name("/OCG"),
+                "/Name": pikepdf.String(f"{layer_name}::A"),
+            }
+        )
+    )
+    ocg_b = pdf.make_indirect(
+        pikepdf.Dictionary(
+            {
+                "/Type": pikepdf.Name("/OCG"),
+                "/Name": pikepdf.String(f"{layer_name}::B"),
+            }
+        )
+    )
+    properties = pikepdf.Dictionary({"/MC0": ocg_a, "/MC1": ocg_b})
+    page.obj["/Resources"] = pikepdf.Dictionary({"/Properties": properties})
+    pdf.Root["/OCProperties"] = pikepdf.Dictionary(
+        {
+            "/OCGs": pikepdf.Array([ocg_a, ocg_b]),
+            "/D": pikepdf.Dictionary(
+                {"/Order": pikepdf.Array([ocg_a, ocg_b]), "/BaseState": pikepdf.Name("/ON")}
+            ),
+        }
+    )
+
+    # /PieceInfo /Illustrator marker — makes _looks_like_illustrator() return True
+    # so a hypothetical `.pdf`-extensioned Illustrator file still routes to pikepdf.
+    page.obj["/PieceInfo"] = pikepdf.Dictionary(
+        {
+            "/Illustrator": pikepdf.Dictionary(
+                {"/Private": pikepdf.Dictionary({"/NumBlock": 0})}
+            )
+        }
+    )
+
+    # Stamp PDF metadata so detect_source has something to look at.
+    pdf.docinfo["/Producer"] = "Adobe PDF library (test)"
+    pdf.docinfo["/Creator"] = "Adobe Illustrator (test)"
+    pdf.docinfo["/Title"] = "test_inspect_pikepdf"
+
+    page.Contents = pdf.make_stream(_build_minimal_ai_content_stream(layer_name))
+    pdf.save(path)
+    pdf.close()
+
+
+def test_inspect_dispatches_to_pikepdf_for_ai_extension(tmp_path):
+    """A .ai file should route through the pikepdf backend and return a
+    populated InspectionReport without invoking PyMuPDF.
+    """
+    from arch_line_weights.inspect import inspect_file
+
+    src = tmp_path / "synthetic.ai"
+    _write_minimal_ai_fixture(str(src), layer_name="axon::Curves::TEST")
+
+    rep = inspect_file(str(src))
+    assert rep.pages == 1
+    # 4 stroke ops in the fixture: 3 in MC0 + 1 in MC1
+    assert rep.total_drawings == 4
+    assert rep.total_stroked == 4
+    # Two distinct stroke colors, two distinct widths
+    assert "RGB(200,135,70)" in rep.stroke_colors
+    assert "RGB(0,0,0)" in rep.stroke_colors
+    assert rep.stroke_colors["RGB(200,135,70)"] == 3
+    assert rep.stroke_colors["RGB(0,0,0)"] == 1
+    assert rep.stroke_widths.get("0.5") == 3
+    assert rep.stroke_widths.get("1.0") == 1
+    # width_by_color cross-tab also populated
+    assert rep.width_by_color["RGB(200,135,70)"]["0.5"] == 3
+    assert rep.width_by_color["RGB(0,0,0)"]["1.0"] == 1
+    # Layer names + PDF metadata flow through the pikepdf path
+    assert any("TEST::A" in n for n in rep.layer_names)
+    assert any("TEST::B" in n for n in rep.layer_names)
+    assert rep.pdf_metadata.get("creator", "").startswith("Adobe Illustrator")
+    assert rep.pdf_metadata.get("/Producer", "").startswith("Adobe PDF library")
+
+
+def test_inspect_pikepdf_path_tracks_q_Q_state(tmp_path):
+    """The pikepdf walker should restore the prior stroke color across `q`/`Q`
+    push/pop, so a stroke after `Q` uses the outer color, not the inner one.
+    """
+    import pikepdf
+
+    from arch_line_weights.inspect import inspect_file
+
+    src = tmp_path / "qq.ai"
+    pdf = pikepdf.new()
+    pdf.add_blank_page(page_size=(100, 100))
+    page = pdf.pages[0]
+    page.obj["/PieceInfo"] = pikepdf.Dictionary(
+        {"/Illustrator": pikepdf.Dictionary({"/Private": pikepdf.Dictionary({"/NumBlock": 0})})}
+    )
+    # Outer red, inner black inside q/Q, then a stroke after Q must be red again.
+    page.Contents = pdf.make_stream(
+        b"1.0 0.0 0.0 RG\n"
+        b"0.5 w\n"
+        b"q\n"
+        b"  0.0 0.0 0.0 RG\n"
+        b"  1.0 w\n"
+        b"  q 1 0 0 1 0 0 cm 0 0 m 1 1 l S Q\n"  # black stroke at width 1
+        b"Q\n"
+        b"q 1 0 0 1 0 0 cm 0 0 m 2 2 l S Q\n"  # back to red at width 0.5
+    )
+    pdf.save(str(src))
+    pdf.close()
+
+    rep = inspect_file(str(src))
+    # One black stroke inside q/Q, one red stroke after Q
+    assert rep.total_stroked == 2
+    assert rep.stroke_colors.get("RGB(255,0,0)") == 1
+    assert rep.stroke_colors.get("RGB(0,0,0)") == 1
+    assert rep.width_by_color["RGB(255,0,0)"]["0.5"] == 1
+    assert rep.width_by_color["RGB(0,0,0)"]["1.0"] == 1
+
+
+def test_inspect_unreadable_file_raises_with_workaround_hint(tmp_path):
+    """If both backends fail, the error message should point at the
+    Illustrator Save-As workaround the postmortem documents.
+    """
+    from arch_line_weights.inspect import inspect_file
+
+    bogus = tmp_path / "not_a_pdf.ai"
+    bogus.write_bytes(b"this is definitely not a PDF or AI file\n")
+    with pytest.raises(RuntimeError) as ex:
+        inspect_file(str(bogus))
+    msg = str(ex.value)
+    assert "pikepdf" in msg
+    assert "PyMuPDF" in msg
+    assert "Save As" in msg or "save as" in msg.lower()
+
+
+def test_inspect_routes_pdf_extension_to_pymupdf_path(tmp_path, monkeypatch):
+    """A plain ``.pdf`` (no /PieceInfo) should bypass the pikepdf walker so
+    PyMuPDF's full XObject-aware drawing extraction stays in charge.
+    """
+    import pikepdf
+
+    from arch_line_weights import inspect as inspect_mod
+
+    src = tmp_path / "plain.pdf"
+    pdf = pikepdf.new()
+    pdf.add_blank_page(page_size=(100, 100))
+    pdf.pages[0].Contents = pdf.make_stream(b"")
+    pdf.save(str(src))
+    pdf.close()
+
+    pikepdf_called = {"n": 0}
+    pymupdf_called = {"n": 0}
+    real_pikepdf = inspect_mod._inspect_ai
+    real_pymupdf = inspect_mod._inspect_pdf
+
+    def spy_pikepdf(p):
+        pikepdf_called["n"] += 1
+        return real_pikepdf(p)
+
+    def spy_pymupdf(p):
+        pymupdf_called["n"] += 1
+        return real_pymupdf(p)
+
+    monkeypatch.setattr(inspect_mod, "_inspect_ai", spy_pikepdf)
+    monkeypatch.setattr(inspect_mod, "_inspect_pdf", spy_pymupdf)
+
+    inspect_mod.inspect_file(str(src))
+    # PyMuPDF should be tried first for .pdf without /PieceInfo
+    assert pymupdf_called["n"] == 1
+    assert pikepdf_called["n"] == 0
