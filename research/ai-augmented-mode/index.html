@@ -1,0 +1,1937 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Apply architectural line-weight hierarchy to Rhino-exported vector drawings.">
+      
+      
+        <meta name="author" content="zohartito">
+      
+      
+        <link rel="canonical" href="https://zohartito.github.io/arch-line-weights/research/ai-augmented-mode/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>AI-augmented mode — feasibility for Phase G4 (and earlier) - arch-line-weights</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-orange">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ai-augmented-mode-feasibility-for-phase-g4-and-earlier" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="arch-line-weights" class="md-header__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            arch-line-weights
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              AI-augmented mode — feasibility for Phase G4 (and earlier)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="deep-orange"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/zohartito/arch-line-weights" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zohartito/arch-line-weights
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tutorials/your-first-section-drawing/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../how-to/apply-line-weights/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  How-to
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../explanation/how-poche-works/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Explanation
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="arch-line-weights" class="md-nav__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    arch-line-weights
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/zohartito/arch-line-weights" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zohartito/arch-line-weights
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/your-first-section-drawing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your first section drawing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/apply-line-weights/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Apply line weights
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/generate-poche/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Generate poché
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/material-hatching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Material hatching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/use-with-rhino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use with Rhino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/troubleshoot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshoot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/how-poche-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How poché works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/why-this-tool-exists/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why this tool exists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/the-postmortem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postmortem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tldr-recommendation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TL;DR — recommendation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-what-problems-would-ai-augment-that-the-deterministic-core-cant-solve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. What problems would AI augment that the deterministic core can't solve?
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/zohartito/arch-line-weights/edit/main/docs/research/ai-augmented-mode.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="ai-augmented-mode-feasibility-for-phase-g4-and-earlier">AI-augmented mode — feasibility for Phase G4 (and earlier)<a class="headerlink" href="#ai-augmented-mode-feasibility-for-phase-g4-and-earlier" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Sub-agent research, 2026-04-30. Time-boxed ~75 min.
+Closes the dangling reference at <code>docs/ROADMAP.md</code> line 326–329 (Phase
+G4) and <code>docs/BUSINESS.md</code> §"Existential risks" items #2 and #3.
+Companion doc to <code>docs/research/stubborn-layers-deep-dive.md</code> (which
+already proposes one concrete LLM use case at the bottom of the
+rescue ladder) and <code>docs/research/competitive-landscape.md</code> Ring 4
+(AI-first sketch-to-render entrants).</p>
+<p>Methodology: ~75-min sub-agent pass. Direct-fetched 2026 pricing pages
+for Anthropic and Google; cross-checked OpenAI / Meta via search
+snippets (OpenAI's pricing page 403'd direct fetch). Reasoned about
+token budgets from the existing PieceInfo dump structure documented in
+<code>docs/research/saas-architecture.md</code>. Quotes capped at 15 words per
+the project's copyright rules.</p>
+<p>Disclaimer: pricing changes. Refresh quarterly with <code>BUSINESS.md</code>
+§"Existential risks" review. The qualitative recommendation
+("Phase G2 — defensive pivot, but ship one feature at Phase F as a
+trust-building wedge") is robust to ±50% pricing drift; the per-
+drawing dollar figures are not.</p>
+</blockquote>
+<hr />
+<h2 id="tldr-recommendation">TL;DR — recommendation<a class="headerlink" href="#tldr-recommendation" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Answer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Build full AI-augmented mode at launch (Phase F)?</td>
+<td><strong>No.</strong> "AI-powered" is on the <em>anti-tagline</em> list in <code>BUSINESS.md</code> for a reason. The deterministic classifier is the moat; leading with AI dilutes it.</td>
+</tr>
+<tr>
+<td>Build full AI-augmented mode in year 2 (Phase G)?</td>
+<td><strong>Yes, conditionally</strong> — defensive trigger, not a feature push. Ship if any of the four existential risks lights up: McNeel ships built-in line weights, school workflow pivots to AI-render, AutoLineWeight gets a maintainer, or interview signal in Phase C surfaces an unmet "I want it to suggest" need.</td>
+</tr>
+<tr>
+<td>Ship anything LLM-flavored at launch (Phase F)?</td>
+<td><strong>One narrow feature: layer-name semantic inference for unknown patterns</strong> (the <code>DEFAULT</code> bucket in the classifier). Behind a feature flag, opt-in, audit-logged, free-tier-only, with deterministic fallback. The MVP described below.</td>
+</tr>
+<tr>
+<td>Per-drawing inference cost on the recommended MVP?</td>
+<td><strong>~$0.0002–0.001 (Haiku 4.5) to ~$0.01 (Haiku 3.5 with full PieceInfo)</strong>. Detailed math in §3.</td>
+</tr>
+<tr>
+<td>One MVP feature most worth building?</td>
+<td><strong>Layer-name semantic inference for <code>DEFAULT</code>-bucketed layers</strong> — turns the deterministic classifier from a 98%-on-Rhino-style-names tool into a forgiving-of-naming-conventions tool, the part Phase E5 (Vectorworks/Inkscape/AutoCAD layer-name patterns) is otherwise hand-coded one regex at a time.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Honest acknowledgement up front.</strong> Most of the eight LLM use cases in the
+prompt ("style consistency check", "drawing critique", "auto-naming",
+"composition suggestion") are <strong>shiny-object traps</strong>. They sound great in a
+landing-page bullet list but fail the test of "would Zohar himself trust
+this output enough to ship it without manual review?" The two that pass that
+test are (a) layer-name inference for unknown patterns and (b) topology
+inference for stubborn layers (already covered in
+<code>stubborn-layers-deep-dive.md</code>). Everything else either competes badly with
+deterministic tools we already have (poché bridges) or competes with the
+human's actual creative judgment (composition, critique). Build the two
+that pass; flag the rest as "available if a customer pulls it."</p>
+<hr />
+<h2 id="1-what-problems-would-ai-augment-that-the-deterministic-core-cant-solve">1. What problems would AI augment that the deterministic core can't solve?<a class="headerlink" href="#1-what-problems-would-ai-augment-that-the-deterministic-core-cant-solve" title="Permanent link">&para;</a></h2>
+<p>For each of the 8 use cases the prompt lists, here's whether AI is the right
+tool, and whether it justifies a separate code path.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Use case</th>
+<th>Deterministic alternative</th>
+<th>AI actually needed?</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Stubborn-layer topology inference</strong></td>
+<td>DBSCAN + backtracking + α-shape ladder (covered in <code>stubborn-layers-deep-dive.md</code>)</td>
+<td>Yes — for the residual ~3% after the geometric ladder</td>
+<td><strong>Build.</strong> Already on the E1 roadmap. Cost: ~$0.003/stubborn layer × ~3 layers/drawing ≈ $0.01/drawing.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Layer-name semantic inference for <code>DEFAULT</code> patterns</strong></td>
+<td>Regex pattern library (<code>layer_classify.py</code>); user override JSON</td>
+<td>Yes — non-Rhino exports (Inkscape, Vectorworks, AutoCAD DXF) have layer names the regex doesn't recognize; expanding the regex by hand is the Phase E5 grind</td>
+<td><strong>Build (the MVP).</strong> See §6. Single highest-leverage feature.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Material identification from drawing context</strong> ("looks like CLT roof")</td>
+<td>Layer-name → hatch lookup table (current behavior)</td>
+<td><strong>Marginal.</strong> If the layer is named <code>26_CLT_GAP_ROOF_CAP</code>, the lookup already wins. If it's named <code>LAYER_47</code>, an LLM looking at vector geometry alone has very low signal — CLT cross-grain hatches and brick hatches both look like dense parallel lines at this resolution.</td>
+<td><strong>Skip at launch.</strong> Maybe Phase G6 (style transfer) territory.</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Style consistency check</strong> ("section line weights don't match plan")</td>
+<td>Compare derived ISO ladders across drawings programmatically; flag deviations deterministically</td>
+<td><strong>No.</strong> This is a programmatic check, not an LLM judgment call. The classifier already outputs the chosen tier per layer; cross-drawing diff is a 50-line function.</td>
+<td><strong>Skip — build deterministic version in Phase G5 (multi-drawing consistency).</strong></td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Drawing critique</strong> ("section cut isn't dark enough relative to foreground")</td>
+<td>None</td>
+<td>Yes, technically — but this is a <em>creative</em> judgment, the part the architect wants to keep. Outputting "your cut should be 0.7mm not 0.5mm" overrides ISO 128 + Ramsey/Sleeper, which is a worse authority than the LLM.</td>
+<td><strong>Skip.</strong> Conflicts with <code>BUSINESS.md</code> §Defensibility item #1 ("architecture-specific intelligence" — the <em>deterministic</em> kind).</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Auto-naming layers in untagged drawings</strong></td>
+<td>None deterministic</td>
+<td>Yes — but writing names back into the .ai mutates customer files in a way that's hard to undo and not what they paid for. They paid for line weights; renaming layers is a side-effect they didn't ask for.</td>
+<td><strong>Skip.</strong> If interviewees specifically request this in Phase C, revisit.</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Suggesting <code>__POCHE_CLOSE__</code> bridges for the user</strong></td>
+<td>Auto-bridge greedy + backtracking + DBSCAN (already in the ladder) + LLM topology inference (use case #1)</td>
+<td><strong>Already covered by use case #1</strong>. The user-facing version of "suggest bridges" is already what auto-bridge does silently and what the LLM fallback does on the residual.</td>
+<td><strong>Already on roadmap (E1). Don't build twice.</strong></td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>Layout / composition suggestions</strong> ("would read better at &#8539;\" with these tier shifts")</td>
+<td>None</td>
+<td>Yes — but at this point we're competing with Show It Better's $347 Everything Pack, not delivering a line-weight tool. Different product.</td>
+<td><strong>Skip — out of scope.</strong> If we ever go here, it's a separate product.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Summary:</strong> of 8 candidates, 1 is already on the deterministic roadmap (#1 +</p>
+<h1 id="7-1-is-the-mvp-2-1-is-deterministic-not-llm-territory-4-and-5-are">7), 1 is the MVP (#2), 1 is deterministic-not-LLM territory (#4), and 5 are<a class="headerlink" href="#7-1-is-the-mvp-2-1-is-deterministic-not-llm-territory-4-and-5-are" title="Permanent link">&para;</a></h1>
+<p>shiny-object traps. Build #2 first; #1 lands as a side effect of the E1
+stubborn-layer work.</p>
+<hr />
+<h2 id="2-llm-capability-matrix">2. LLM capability matrix<a class="headerlink" href="#2-llm-capability-matrix" title="Permanent link">&para;</a></h2>
+<p>Pricing as of 2026-04-30 from the model providers' published pages
+(Anthropic, Google directly fetched; OpenAI cross-referenced via
+intermediaries because their pricing page 403'd a direct fetch — figures
+flagged with † should be re-confirmed before commit).</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Input $/MTok</th>
+<th>Output $/MTok</th>
+<th>Cache hit $/MTok</th>
+<th>Latency (typ.)</th>
+<th>Privacy posture (commercial API default)</th>
+<th>Architecture fit (1–5)</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Claude Haiku 3.5</strong></td>
+<td>$0.80</td>
+<td>$4.00</td>
+<td>$0.08</td>
+<td>1–3 s</td>
+<td>API inputs <em>not</em> used to train (commercial default)</td>
+<td><strong>5</strong></td>
+<td>The model the existing <code>stubborn-layers-deep-dive.md</code> § "LLM topology inference" already costs against. Cheapest credible Anthropic option. Stable, well-known JSON tool-use.</td>
+</tr>
+<tr>
+<td><strong>Claude Haiku 4.5</strong></td>
+<td>$1.00</td>
+<td>$5.00</td>
+<td>$0.10</td>
+<td>1–3 s</td>
+<td>Same</td>
+<td><strong>5</strong></td>
+<td>Newer, higher quality, ~25% more expensive than 3.5. Reasonable default if 3.5 underperforms in spike.</td>
+</tr>
+<tr>
+<td><strong>Claude Sonnet 4.5</strong></td>
+<td>$3.00</td>
+<td>$15.00</td>
+<td>$0.30</td>
+<td>2–5 s</td>
+<td>Same</td>
+<td><strong>4</strong></td>
+<td>Overkill for layer-name classification. Reserve for whole-drawing critique experiments (which we've decided not to ship).</td>
+</tr>
+<tr>
+<td><strong>Claude Opus 4.7</strong></td>
+<td>$5.00</td>
+<td>$25.00</td>
+<td>$0.50</td>
+<td>5–15 s</td>
+<td>Same</td>
+<td><strong>2</strong></td>
+<td>Wrong cost class entirely for per-drawing inference.</td>
+</tr>
+<tr>
+<td><strong>GPT-4o-mini</strong>†</td>
+<td>$0.15</td>
+<td>$0.60</td>
+<td>n/a (50% cached)</td>
+<td>1–2 s</td>
+<td>API inputs <em>not</em> used to train (commercial default since 2023)</td>
+<td><strong>4</strong></td>
+<td>Genuinely cheap. JSON mode mature. Privacy ToS comparable to Anthropic. Risk: model lifecycle (4o-mini is not the current frontier; OpenAI's roadmap is GPT-5.x).</td>
+</tr>
+<tr>
+<td><strong>GPT-5-mini</strong>†</td>
+<td>~$0.25</td>
+<td>~$2.00</td>
+<td>n/a</td>
+<td>1–3 s</td>
+<td>Same</td>
+<td><strong>4</strong></td>
+<td>Newer than 4o-mini; ~1.7× input / 3.3× output for arguably better quality.</td>
+</tr>
+<tr>
+<td><strong>GPT-5.5</strong>†</td>
+<td>~$5.00</td>
+<td>~$30.00</td>
+<td>n/a</td>
+<td>3–10 s</td>
+<td>Same</td>
+<td><strong>2</strong></td>
+<td>Same overkill problem as Opus.</td>
+</tr>
+<tr>
+<td><strong>Gemini 2.5 Flash</strong></td>
+<td>$0.30</td>
+<td>$2.50</td>
+<td>n/a</td>
+<td>1–2 s</td>
+<td>API inputs <em>not</em> used to train per Google Cloud terms; consumer Gemini is different</td>
+<td><strong>4</strong></td>
+<td>Cheap; multimodal so can take a rendered PNG as input. Less mature JSON tool-use than Anthropic/OpenAI.</td>
+</tr>
+<tr>
+<td><strong>Gemini 2.5 Pro</strong></td>
+<td>$1.25 (≤200k) / $2.50</td>
+<td>$10.00 / $15.00</td>
+<td>n/a</td>
+<td>3–8 s</td>
+<td>Same</td>
+<td><strong>3</strong></td>
+<td>Nice for whole-drawing analysis; expensive at our token budget.</td>
+</tr>
+<tr>
+<td><strong>Llama 3.3 70B (Groq / Deep Infra hosted)</strong></td>
+<td>~$0.58</td>
+<td>~$0.71</td>
+<td>n/a</td>
+<td>&lt;1 s on Groq</td>
+<td>Hosted: depends on provider ToS (variable). Self-hosted: zero data leaves the box.</td>
+<td><strong>3</strong></td>
+<td>Genuinely interesting <em>if</em> we run it ourselves on the SaaS box (Phase D Fly.io upgrade) for "Pro Privacy" tier. Cost = our hosting; no per-token meter. Quality ~Sonnet-class for structured outputs, weaker on long-context reasoning.</td>
+</tr>
+<tr>
+<td><strong>Qwen 2.5 32B (local)</strong></td>
+<td>$0 marginal (own GPU)</td>
+<td>$0 marginal</td>
+<td>—</td>
+<td>depends on hardware</td>
+<td>Self-hosted: zero data leaves the user box</td>
+<td><strong>3</strong></td>
+<td>Interesting only for the Phase B3 hybrid local-helper tier. Not relevant to v1 SaaS.</td>
+</tr>
+<tr>
+<td><strong>Cohere Command R+</strong></td>
+<td>~$2.50</td>
+<td>~$10</td>
+<td>n/a</td>
+<td>2–5 s</td>
+<td>Commercial-friendly licensing per Cohere ToS</td>
+<td><strong>2</strong></td>
+<td>No standout reason vs. Haiku 4.5 + Anthropic for our use case; doesn't merit a separate integration.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Recommendation for the MVP:</strong> <strong>Claude Haiku 4.5</strong> as primary, <strong>GPT-4o-mini</strong> as a documented swap option for the cost-conscious. Two reasons:</p>
+<ol>
+<li>The <code>claude-api</code> skill in this codebase already enforces prompt caching ergonomics and migration-on-deprecation discipline. We get to reuse that infrastructure for free.</li>
+<li>Anthropic's commercial-API ToS posture (inputs not used to train, by default) is the cleanest sentence to write on the marketing page. "Your drawings are never used to train AI" is a literal restatement of Anthropic's commercial terms.</li>
+</ol>
+<p>Llama 3.3 70B self-hosted is the <strong>defensive option for Phase G</strong> if the privacy story becomes a sales blocker for a studio segment. Park it.</p>
+<hr />
+<h2 id="3-cost-per-drawing-math-not-vibes">3. Cost per drawing — math, not vibes<a class="headerlink" href="#3-cost-per-drawing-math-not-vibes" title="Permanent link">&para;</a></h2>
+<p>The drawing payload structure is well-understood from <code>docs/research/saas-architecture.md</code>:</p>
+<ul>
+<li>A reference Rhino-exported <code>.ai</code> has <strong>62 OCG layers</strong>.</li>
+<li>Decompressed PieceInfo payload is <strong>~55 MB plain-text Adobe Illustrator native PostScript</strong>.</li>
+<li>Of that, layer names + structure (the part the LLM needs for use case #2) is a small subset. Roughly: 62 layer name strings × ~30 chars + structure ≈ 3 KB ≈ <strong>~750 tokens</strong>.</li>
+<li>Full polyline geometry per stubborn layer (the part the LLM needs for use case #1) is ~30 endpoints × ~40 chars = ~1.2 KB ≈ <strong>~300 tokens</strong>, plus boilerplate prompt ~1.5 KB ≈ <strong>~1700 tokens total per stubborn layer</strong>.</li>
+</ul>
+<h3 id="cost-matrix-per-drawing-haiku-45-reference-rates">Cost matrix per drawing (Haiku 4.5 reference rates)<a class="headerlink" href="#cost-matrix-per-drawing-haiku-45-reference-rates" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Tokens in (cached + fresh)</th>
+<th>Tokens out</th>
+<th>Cost per drawing</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Layer-name semantic inference (MVP, use case #2)</strong></td>
+<td>~1500 fresh + ~500 cached system prompt</td>
+<td>~400 (one JSON object)</td>
+<td>$0.0015 + $0.000005 + $0.002 ≈ <strong>$0.0035</strong></td>
+<td>Per-drawing one-shot. Cache hit on identical system prompt across all customers (<code>cache_control: ephemeral</code>).</td>
+</tr>
+<tr>
+<td><strong>Stubborn-layer topology inference (use case #1)</strong></td>
+<td>3 stubborn × 1700 = 5100 fresh + ~500 cached</td>
+<td>3 × 300 = 900</td>
+<td>5100 × $1e-6 + 900 × $5e-6 = <strong>$0.0096/drawing</strong></td>
+<td>Already costed in <code>stubborn-layers-deep-dive.md</code> at ~$0.01 with Haiku 3.5; the math holds for Haiku 4.5.</td>
+</tr>
+<tr>
+<td><strong>Both features together</strong></td>
+<td>—</td>
+<td>—</td>
+<td><strong>~$0.013/drawing</strong></td>
+<td>Round to <strong>~$0.02/drawing</strong> with safety margin for retries.</td>
+</tr>
+<tr>
+<td><strong>Hypothetical "send the whole 55 MB PieceInfo" critique mode</strong></td>
+<td>~14M tokens fresh</td>
+<td>~2k</td>
+<td>14M × $1e-6 + 2k × $5e-6 = <strong>~$14/drawing</strong></td>
+<td>DO NOT BUILD. This is the "shiny-object" path. Even at GPT-4o-mini rates ($0.15 in / $0.60 out) it's still $2.10/drawing — economic poison at $9/mo subscription.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cost-matrix-at-gpt-4o-mini-reference-rates-defensive-comparison">Cost matrix at GPT-4o-mini reference rates (defensive comparison)<a class="headerlink" href="#cost-matrix-at-gpt-4o-mini-reference-rates-defensive-comparison" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Cost per drawing</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Layer-name semantic inference</td>
+<td>~$0.0005</td>
+<td>7× cheaper</td>
+</tr>
+<tr>
+<td>Topology inference (stubborn layers only)</td>
+<td>~$0.0015</td>
+<td>7× cheaper</td>
+</tr>
+<tr>
+<td>Both</td>
+<td><strong>~$0.002/drawing</strong></td>
+<td>If Anthropic prices ever feel painful, swap in.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="headroom-check">Headroom check<a class="headerlink" href="#headroom-check" title="Permanent link">&para;</a></h3>
+<p>At $9/mo personal-tier subscription with an assumed cap of 100 drawings/mo
+(generous; most students are ≤30/mo per <code>personal-use-log.md</code> patterns),
+<strong>LLM cost ceiling = $0.013 × 100 = $1.30/drawing-month per user</strong>, or
+~14% of revenue. Tolerable. At $0.002/drawing on GPT-4o-mini it's 2% of
+revenue — comfortable.</p>
+<p>The $9/mo tier survives LLM costs even at 5× drawings per user. <strong>The
+economics are not the blocker.</strong> The trust story and the regression
+discipline are.</p>
+<hr />
+<h2 id="4-what-does-the-llm-see">4. What does the LLM see?<a class="headerlink" href="#4-what-does-the-llm-see" title="Permanent link">&para;</a></h2>
+<p>Privacy-by-design rule: the LLM sees <strong>layer names + minimal geometry only</strong>, never customer-identifying metadata.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Sent to LLM?</th>
+<th>Why / why not</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Layer names (<code>23_WINDOW_FRAMES_REMAP</code>, etc.)</td>
+<td><strong>Yes</strong></td>
+<td>The whole point of use case #2; cannot infer without them.</td>
+</tr>
+<tr>
+<td>Polyline geometry (vector endpoints as text)</td>
+<td><strong>Yes for use case #1 only</strong>; <strong>no for use case #2</strong></td>
+<td>Topology inference needs the points; layer-name inference doesn't.</td>
+</tr>
+<tr>
+<td>Color palette (RGB tuples)</td>
+<td><strong>Optional</strong> for use case #2</td>
+<td>Useful signal ("0.5pt red strokes" → cut layer hint). 6 RGB triples = ~30 tokens. Cheap.</td>
+</tr>
+<tr>
+<td>Rendered drawing as PNG (multimodal)</td>
+<td><strong>No, at v1</strong></td>
+<td>Would unlock case #5 (critique) but increases token cost ~10× and adds vision-model cost. Park for Phase G experimentation.</td>
+</tr>
+<tr>
+<td>Customer name / studio / email</td>
+<td><strong>NEVER</strong></td>
+<td>Strip in the API client <em>before</em> serialization. Unit test for this.</td>
+</tr>
+<tr>
+<td>File path</td>
+<td><strong>NEVER</strong></td>
+<td>Same.</td>
+</tr>
+<tr>
+<td>Filename</td>
+<td><strong>NEVER</strong></td>
+<td>Filenames often contain project codes, addresses, "JOHNSON_RESIDENCE_2026.ai". Strip.</td>
+</tr>
+<tr>
+<td>Drawing date stamps inside PieceInfo</td>
+<td><strong>NEVER</strong></td>
+<td>Strip during the existing pikepdf decompression pass.</td>
+</tr>
+<tr>
+<td>Project metadata (XMP)</td>
+<td><strong>NEVER</strong></td>
+<td>Already not in our processing path; verify still excluded.</td>
+</tr>
+</tbody>
+</table>
+<p>The serialization function should be <strong>a single allow-list helper</strong> in
+<code>src/arch_line_weights/llm/serialize.py</code>, with a unit test asserting that no
+field outside the allow-list is present in any payload. This is the file
+the privacy lawyer wants to see during the Phase D8 review.</p>
+<hr />
+<h2 id="5-privacy-marketing-posture">5. Privacy &amp; marketing posture<a class="headerlink" href="#5-privacy-marketing-posture" title="Permanent link">&para;</a></h2>
+<p>The marketing claim that has to hold: <strong>"Your drawings are never used to train AI."</strong> Per §2 capability matrix, this is true by default for:</p>
+<ul>
+<li><strong>Anthropic API (commercial default)</strong> — inputs and outputs are not used to train models for commercial customers (Claude API, Claude for Work, Bedrock). Source: Anthropic privacy center.</li>
+<li><strong>OpenAI API (commercial default since March 2023)</strong> — API data not used for training. Source: OpenAI API data usage policy.</li>
+<li><strong>Google Cloud Vertex AI / Gemini commercial API</strong> — same posture.</li>
+</ul>
+<p><strong>What is <em>not</em> automatically true:</strong></p>
+<ul>
+<li>Consumer-grade Claude/ChatGPT/Gemini accounts do <em>not</em> have the same posture (Anthropic specifically changed consumer terms in 2025 to opt-in training by default — see <code>BUSINESS.md</code> existential risk #2 monitoring). Use <strong>API keys</strong>, never consumer-tier OAuth.</li>
+<li>"Zero Data Retention" mode (Anthropic enterprise-only addendum) is a <em>stronger</em> claim than "not used to train". We can claim the latter on standard API; the former requires an enterprise contract.</li>
+</ul>
+<h3 id="marketing-copy-that-is-defensible">Marketing copy that is defensible<a class="headerlink" href="#marketing-copy-that-is-defensible" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Claim</th>
+<th>Defensible?</th>
+<th>Caveat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Your drawings are never used to train AI."</td>
+<td><strong>Yes</strong></td>
+<td>True under Anthropic/OpenAI commercial API ToS by default.</td>
+</tr>
+<tr>
+<td>"Your drawings are end-to-end encrypted."</td>
+<td><strong>No</strong></td>
+<td>We've already decided server-side encryption only at v1 (per <code>saas-privacy.md</code>). LLM call adds another touch point.</td>
+</tr>
+<tr>
+<td>"We never see your drawings."</td>
+<td><strong>No</strong></td>
+<td>We process them server-side.</td>
+</tr>
+<tr>
+<td>"Layer names sent to AI; full geometry stays on our servers."</td>
+<td><strong>Yes (for use case #2 only)</strong></td>
+<td>Use this. It's both true and uniquely strong vs. competitors.</td>
+</tr>
+<tr>
+<td>"Local AI option available."</td>
+<td><strong>Yes — at Phase G</strong></td>
+<td>Llama 3.3 self-hosted on our box, or Qwen-on-user's-machine for the hybrid tier. Don't promise at launch.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="gdpr-dpia-implications">GDPR / DPIA implications<a class="headerlink" href="#gdpr-dpia-implications" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Subprocessor list update:</strong> adding Anthropic (or whichever LLM provider) requires a <code>/subprocessors</code> page entry per <code>saas-privacy.md</code> §Subprocessors. Half-day of work.</li>
+<li><strong>DPIA trigger:</strong> sending vector geometry to a third party is a subprocessor relationship under GDPR Art. 28; not exempt. Add Anthropic's DPA (publicly available) to the customer-facing DPA bundle.</li>
+<li><strong>Opt-out:</strong> the privacy-conscious user must be able to disable LLM augmentation per drawing or globally. UI toggle: "Use AI to suggest fixes for unrecognized layer names." Default <strong>off</strong> at launch — we earn the toggle, we don't assume it.</li>
+<li><strong>Retention:</strong> Anthropic API retains inputs for 30 days for abuse monitoring by default. Disclose in privacy policy.</li>
+</ul>
+<h3 id="why-default-off">Why "default off"<a class="headerlink" href="#why-default-off" title="Permanent link">&para;</a></h3>
+<p>The line-weight tool's promise is deterministic. Defaulting AI on contradicts the brand. The MVP defaults <strong>off</strong>; the user opts in per drawing or per project after reading a one-sentence explanation. This gives us:</p>
+<ul>
+<li>Trust signal: "we didn't sneak AI into your pipeline."</li>
+<li>Cost signal: AI cost only on opt-in users.</li>
+<li>Regression signal: A/B-able. We see exactly which drawings get AI augmentation and what the deterministic-vs-AI delta is.</li>
+</ul>
+<hr />
+<h2 id="6-prototype-sketch-the-mvp-feature">6. Prototype sketch — the MVP feature<a class="headerlink" href="#6-prototype-sketch-the-mvp-feature" title="Permanent link">&para;</a></h2>
+<p><strong>Feature:</strong> Layer-name semantic inference for unknown patterns.</p>
+<p><strong>Trigger:</strong> when <code>layer_classify.py</code> returns <code>DEFAULT</code> for ≥1 layer in the drawing AND the user has opted in to AI assistance for this run.</p>
+<p><strong>What it does:</strong> ask Haiku 4.5 to classify each <code>DEFAULT</code>-bucketed layer into the existing semantic taxonomy (cut, profile, hidden, ground, hatch, annotation, etc.), with a confidence score. Use the suggestion only if confidence ≥ 0.85 <em>and</em> the suggestion is one of the known buckets. Otherwise keep <code>DEFAULT</code> (current behavior).</p>
+<h3 id="prompt-template">Prompt template<a class="headerlink" href="#prompt-template" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>SYSTEM (cached, identical across all calls — qualifies for cache_control):
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>You classify Rhino-exported architectural drawing layer names into one of
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>these semantic buckets:
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  CUT_THICK        — section cut, primary
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  CUT_MEDIUM       — section cut, secondary
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  PROFILE          — silhouette of a 3D form, no cut
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  HIDDEN           — dashed, behind cut plane
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>  GROUND_LINE      — site / horizon
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>  ANNOTATION       — text, dimension, leader
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>  HATCH_FILL       — material fill (poché, texture)
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>  GUIDE            — non-printing construction line
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>  DEFAULT          — none of the above; insufficient info
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>Conventions you&#39;ve seen:
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>  - Number prefix (e.g. `23_`) = layer index, ignore for classification
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>  - `SECTION` / `CUT` / `PROFILE` / `OUTLINE` / `EDGE` strong signals
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>  - `FRAME`, `MULLION`, `SILL`, `JAMB` = profile (window/door parts)
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>  - `CMU`, `BRICK`, `CLT`, `GYPSUM`, `INSUL`, `MEMBRANE` = hatch fill
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>  - `DIM`, `TEXT`, `LEAD`, `NOTE`, `TAG` = annotation
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>  - `GUIDE`, `CL`, `CENTERLINE`, `REF` = guide
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>  - `GROUND`, `EARTH`, `SITE`, `TERRAIN` = ground line
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>  - Suffix `_REMAP` after a Rhino BlockReference name often preserves
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    parent semantics — strip suffix and re-classify the stem
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>  - When ambiguous, prefer DEFAULT over guessing
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>For each input layer name, return a JSON object:
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>{
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>  &quot;name&quot;: &quot;&lt;input layer name&gt;&quot;,
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>  &quot;bucket&quot;: &quot;&lt;one of the 9 buckets above&gt;&quot;,
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>  &quot;confidence&quot;: &lt;float 0.0-1.0&gt;,
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>  &quot;reasoning&quot;: &quot;&lt;≤20 words&gt;&quot;
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>}
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>
+<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>Be conservative: confidence &lt; 0.85 means &quot;not sure&quot;; we default to DEFAULT
+<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>in that case.
+<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>USER:
+<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>
+<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>Drawing context: {drawing_type or &quot;unknown&quot;} — {scale or &quot;unknown scale&quot;}
+<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>
+<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>Color palette (hex strokes): {palette_csv}
+<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>
+<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>Layers to classify (one per line):
+<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>{layer_names_newline_separated}
+<a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>
+<a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a>Return one JSON object per line, no array wrapper, no commentary outside
+<a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a>the JSON objects.
+</code></pre></div>
+<h3 id="output-schema">Output schema<a class="headerlink" href="#output-schema" title="Permanent link">&para;</a></h3>
+<p>JSON-lines (<code>{}\n{}\n{}\n…</code>), one object per <code>DEFAULT</code>-bucketed layer:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;layer_string&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;bucket&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;CUT_THICK|CUT_MEDIUM|...&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;confidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;reasoning&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;≤20 words&quot;</span><span class="p">}</span>
+</code></pre></div>
+<p>Validate with <code>pydantic.BaseModel</code>; reject the whole response if any line
+fails to parse — fall back to deterministic <code>DEFAULT</code> for everything.</p>
+<h3 id="fallback-strategy-when-llm-is-wrong">Fallback strategy when LLM is wrong<a class="headerlink" href="#fallback-strategy-when-llm-is-wrong" title="Permanent link">&para;</a></h3>
+<p>This is the part that determines whether we ship or get burned.</p>
+<ol>
+<li><strong>Confidence floor.</strong> Reject any suggestion with <code>confidence &lt; 0.85</code>. Empirically tune this floor on the regression suite (below) before unlocking the feature.</li>
+<li><strong>Bucket allow-list.</strong> Reject any suggestion whose <code>bucket</code> is not in the 9-item enum. (This is the LLM-hallucination guard.)</li>
+<li><strong>Deterministic post-check.</strong> After applying LLM suggestions, run the existing <code>verify_classification.py</code> (if exists) or its Phase E5 successor. Any classification that violates a deterministic invariant (e.g. an LLM-classified <code>HATCH_FILL</code> whose layer has no closed polygons) reverts to <code>DEFAULT</code>.</li>
+<li><strong>User-visible diff.</strong> The output preview marks LLM-augmented layers in a different color (e.g. cyan halo). The user sees exactly what the LLM contributed and can override per layer via the existing JSON override path (<code>docs/research/stubborn-layers-deep-dive.md</code> §"per-layer JSON override schema").</li>
+<li><strong>Audit log.</strong> Every LLM call is logged with input layer names, output suggestions, confidence, model version. Stored 90 days for regression analysis. Disclosed in privacy policy.</li>
+<li><strong>Regression suite as gate.</strong> Build a 50-drawing regression set with hand-labeled ground truth before ever shipping. Each release re-runs the suite; any drop in classification precision is a release blocker. This is the discipline that separates "AI feature that ships" from "AI feature that gets quietly removed in v1.2 because it embarrasses the founder."</li>
+</ol>
+<h3 id="effort-estimate">Effort estimate<a class="headerlink" href="#effort-estimate" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Day 1: extract layer names, build LLM client wrapper, unit test the privacy allow-list (no PII leaks).</li>
+<li>Day 2: prompt template, JSON-lines parser, pydantic validator, confidence-floor logic.</li>
+<li>Day 3: integration with <code>apply_jsx.py</code> / <code>apply_saas.py</code>, UI toggle, audit log, fallback paths.</li>
+<li>Day 4: regression suite of 30+ hand-labeled drawings, baseline measurement, confidence-floor tuning.</li>
+<li>Day 5: documentation, privacy policy update, subprocessor-list update.</li>
+</ul>
+<p><strong>~5 person-days for the MVP.</strong> Compare to ~4.75 person-days for the
+deterministic-only stubborn-layer rescue ladder in
+<code>stubborn-layers-deep-dive.md</code>. The two efforts are comparable in scope;
+the regression-suite discipline (#6 in fallbacks) is the most expensive
+non-obvious item.</p>
+<hr />
+<h2 id="7-roadmap-timing-recommendation">7. Roadmap timing recommendation<a class="headerlink" href="#7-roadmap-timing-recommendation" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Phase F (public launch)</strong></td>
+<td>Ship the MVP (use case #2: layer-name semantic inference for <code>DEFAULT</code>) <strong>as a feature flag, default off, free-tier-only</strong>. Marketing copy: zero mention. Internal-only signal: see if any opt-in users pull on it. Cost ceiling: &lt;$50/mo at 1000 active users × 10 drawings × $0.005.</td>
+</tr>
+<tr>
+<td><strong>Phase G2 (year 2, conditional)</strong></td>
+<td>Promote to <strong>on by default</strong> for all tiers <em>only if</em> the Phase F flag's regression suite has held precision ≥98% for 6 months <em>and</em> one of the four existential triggers has fired (McNeel ships built-in line weights, Adobe AI competitor, AutoLineWeight gets a maintainer, Phase C interview signal).</td>
+</tr>
+<tr>
+<td><strong>Phase G4 (full AI-augmented mode)</strong></td>
+<td>Build <em>only</em> as a defensive pivot if the F1 (McNeel ships) or F3 (school-tooling AI-first pivot) risks materialize. The competitive-landscape doc gives 18–36 months for F1 and 24+ months for F3. We don't need to spec G4 now; we need to keep the option open by having the LLM client wrapper, prompt template, and regression suite already in production.</td>
+</tr>
+<tr>
+<td><strong>Never ship</strong></td>
+<td>The 5 shiny-object use cases (#3, #5, #6, #8, plus full-PieceInfo critique). Re-evaluate annually but keep on the "skip" list until interview data forces a change.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="why-phase-f-flag-off-by-default-instead-of-phase-g-defensive-only">Why "Phase F flag, off by default" instead of "Phase G defensive only"<a class="headerlink" href="#why-phase-f-flag-off-by-default-instead-of-phase-g-defensive-only" title="Permanent link">&para;</a></h3>
+<p>Three reasons:</p>
+<ol>
+<li><strong>Phase E5 (smarter Rhino layer-name inference for non-Make2D exports) is on the deterministic roadmap already.</strong> That's the regex-by-hand grind. Use case #2 (LLM layer-name inference) is the <em>same problem</em> with a different tool. Better to have both available; the LLM is the catch-all for the long tail the regex won't ever cover (German layer names, French layer names, custom firm conventions, accidentally-typoed names).</li>
+<li><strong>The regression discipline takes 6 months to develop.</strong> If we wait until Phase G to start, the moment we need it we're behind. Building the audit-logging + regression-suite infrastructure at Phase F means it's ready when it has to scale.</li>
+<li><strong>One legitimate AI feature dilutes the "AI is on the anti-tagline list" stance less than a shipped-late scramble.</strong> If McNeel ships built-in line weights in Phase G and we have to bolt AI on as a panic feature, customers smell it. If we shipped a <em>subtle, opt-in, not-marketed</em> AI feature in Phase F, the panic-pivot to G4 looks like an extension of an existing capability, not a desperation move.</li>
+</ol>
+<hr />
+<h2 id="8-risks">8. Risks<a class="headerlink" href="#8-risks" title="Permanent link">&para;</a></h2>
+<h3 id="engineering-risks">Engineering risks<a class="headerlink" href="#engineering-risks" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Severity</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>LLM hallucinates a <code>HATCH_FILL</code> classification on an actual annotation layer → poché applied to text → catastrophic visual output</strong></td>
+<td><strong>Severe</strong></td>
+<td>Confidence floor 0.85 + deterministic post-check (#3 above) + visible diff (#4). Worst-case the user sees one obviously-broken poché and overrides via JSON. Not silent.</td>
+</tr>
+<tr>
+<td><strong>LLM returns malformed JSON → entire request fails → deterministic fallback should still produce shippable output</strong></td>
+<td><strong>Medium</strong></td>
+<td>The classifier already handles <code>DEFAULT</code> correctly without LLM. LLM failure = no degradation, just no augmentation. Unit-test this path explicitly.</td>
+</tr>
+<tr>
+<td><strong>Model deprecation (e.g. Anthropic deprecates Haiku 3.5 → silent regression)</strong></td>
+<td><strong>Medium</strong></td>
+<td>The <code>claude-api</code> skill in this codebase enforces model-pin best practices. Pin to <code>claude-haiku-4-5</code> or successor; CI alarm on deprecation announcements.</td>
+</tr>
+<tr>
+<td><strong>Latency hit (1–3 s per drawing extra)</strong></td>
+<td><strong>Low</strong></td>
+<td>Run LLM call in parallel with non-LLM-dependent processing steps. Already async in <code>apply_saas.py</code> patterns. Net p95 latency increase ≈ 0.5 s.</td>
+</tr>
+<tr>
+<td><strong>Token-cost surprise (a customer with a 500-layer drawing rings up $X)</strong></td>
+<td><strong>Low</strong></td>
+<td>Per-call hard cap on tokens out (<code>max_tokens=2000</code>). Per-tenant monthly cap with overage email notification at 80%.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="customer-trust-risks">Customer-trust risks<a class="headerlink" href="#customer-trust-risks" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Severity</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>"AI-powered" perception poisons the deterministic-tool brand</strong></td>
+<td><strong>Severe</strong></td>
+<td>This is the dominant reason to keep AI off by default and out of the marketing copy at launch. The Phase F flag is purely an optionality bet, not a positioning bet.</td>
+</tr>
+<tr>
+<td><strong>A privacy-conscious studio refuses to use the SaaS because "drawings sent to OpenAI/Anthropic"</strong></td>
+<td><strong>Medium</strong></td>
+<td>Per-drawing toggle + clear "deterministic-only" mode in UI. Phase G3 ship of self-hosted Llama unlocks this segment fully.</td>
+</tr>
+<tr>
+<td><strong>Audit-log discovery → customer learns we're sending their data to Anthropic and feels misled</strong></td>
+<td><strong>Severe</strong></td>
+<td>Privacy policy disclosure on day 1. Subprocessors page lists Anthropic from the moment the flag exists, even if it's off. No surprise.</td>
+</tr>
+<tr>
+<td><strong>LLM suggests something architecturally wrong that the user accepts uncritically and submits to studio review</strong></td>
+<td><strong>Medium</strong></td>
+<td>Visible diff (#4 above). Confidence-floored, allow-listed bucket. The user should always see the LLM's reasoning sentence; if they ignore it, that's downstream of our duty of care.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="strategic-risks">Strategic risks<a class="headerlink" href="#strategic-risks" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Severity</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>The "moat is the deterministic classifier" claim weakens once we ship LLM inference for the same problem</strong></td>
+<td><strong>Medium</strong></td>
+<td>Frame as "deterministic-first, LLM-fallback for the long tail." <code>BUSINESS.md</code> §Defensibility item #2 still holds: the <em>pattern library</em> is the moat, the LLM is the safety net for the regex's blind spots.</td>
+</tr>
+<tr>
+<td><strong>Competitor (AutoLineWeight v2, F5 in <code>competitive-landscape.md</code>) ships LLM layer-name inference first</strong></td>
+<td><strong>Medium</strong></td>
+<td>Ship-fast Phase F advantage. Once we have the regression suite and audit log, our LLM feature is more trustworthy than a v0.1 competitor's.</td>
+</tr>
+<tr>
+<td><strong>Anthropic / OpenAI raises prices 5×</strong></td>
+<td><strong>Low</strong></td>
+<td>Pricing is currently in the bottom-of-the-S-curve drift; raises are unlikely. Hedge by maintaining a GPT-4o-mini-compatible code path; swap if pricing shifts.</td>
+</tr>
+<tr>
+<td><strong>Architecture-school workflow pivots fully to AI-render before we're ready</strong> (existential risk #3)</td>
+<td><strong>Severe</strong></td>
+<td>Promote G4 timing if F3 risk materializes. The <code>personal-use-log.md</code> Phase A signals are the early warning.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="9-honest-is-this-needed-check">9. Honest "is this needed?" check<a class="headerlink" href="#9-honest-is-this-needed-check" title="Permanent link">&para;</a></h2>
+<p><strong>The shiny-object trap is real here.</strong> Every architecture-tool roadmap doc since 2024 has had "AI-augmented mode" on it. Most of those products shipped one and discovered:</p>
+<ul>
+<li>The deterministic version handled 95% of cases.</li>
+<li>The AI version handled the remaining 5% with 60% accuracy.</li>
+<li>The user trust hit from the 40% AI-failure rate exceeded the value of the 5% lift.</li>
+</ul>
+<p>The reason the proposed MVP (use case #2) might escape this trap:</p>
+<ol>
+<li><strong>It's a fallback, not a primary path.</strong> The deterministic regex already handles the 98% of Rhino-style names. The LLM only fires on <code>DEFAULT</code> — the part where there's <em>no</em> deterministic answer to be wrong about.</li>
+<li><strong>The failure mode is graceful.</strong> LLM wrong → <code>DEFAULT</code> fallback → user adds a manual override. Worst case: same as today.</li>
+<li><strong>The signal is cheap.</strong> $0.0035/drawing × 100 opt-in users × 30 drawings/mo = $10.50/mo. The data we get back (which layer-name patterns the regex doesn't cover) feeds Phase E5.</li>
+<li><strong>It compounds.</strong> Every quarter, we move high-confidence LLM patterns from "LLM territory" to "regex territory" — the LLM acts as a discovery engine for the deterministic library. The classifier <em>gets better</em> as a side effect.</li>
+</ol>
+<p>The reason the <em>other</em> 6 use cases probably stay traps:</p>
+<ul>
+<li>They compete with a deterministic alternative we already have or can build (#4, #7).</li>
+<li>They override the architect's creative judgment, which the architect is paying us to support (#5, #8).</li>
+<li>They mutate customer files in unrequested ways (#6).</li>
+<li>They have no defensible signal-to-noise ratio at the geometry resolution we work at (#3).</li>
+</ul>
+<p><strong>Bottom line:</strong> ship one feature, the discovery-engine one. Resist the rest. Re-evaluate after Phase F MRR data + Phase E5 layer-name pattern coverage measurements.</p>
+<hr />
+<h2 id="10-update-recommendations-for-docsroadmapmd-and-docsbusinessmd">10. Update recommendations for <code>docs/ROADMAP.md</code> and <code>docs/BUSINESS.md</code><a class="headerlink" href="#10-update-recommendations-for-docsroadmapmd-and-docsbusinessmd" title="Permanent link">&para;</a></h2>
+<h3 id="roadmapmd-phase-g4"><code>ROADMAP.md</code> Phase G4<a class="headerlink" href="#roadmapmd-phase-g4" title="Permanent link">&para;</a></h3>
+<p>Current text (line 326–329):</p>
+<blockquote>
+<p>G4. <strong>AI-augmented mode</strong> — LLM analyzes drawing semantics, suggests
+stylistic improvements, flags inconsistencies. Could be the feature
+that survives any "Rhino 9 ships built-in line weights" competitive
+shock.</p>
+</blockquote>
+<p>Suggested replacement:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">- [ ]</span> G4. <span class="gs">**AI-augmented mode (defensive pivot)**</span> — full feature set
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  TBD; only build if F1/F3/F5 existential triggers fire. Foundations
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  ship in Phase F as a flag-gated MVP (layer-name semantic inference for
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  <span class="sb">`DEFAULT`</span>-bucketed layers) per <span class="sb">`docs/research/ai-augmented-mode.md`</span>.
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  Per-drawing cost ceiling: $0.02. Default off, opt-in per drawing.
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  Anthropic Haiku 4.5 primary, GPT-4o-mini fallback.
+</code></pre></div>
+<h3 id="roadmapmd-phase-f-insert-new-sub-item"><code>ROADMAP.md</code> Phase F (insert new sub-item)<a class="headerlink" href="#roadmapmd-phase-f-insert-new-sub-item" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">- [ ]</span> F7. <span class="gs">**AI-augmentation foundation (flag-gated, default off)**</span> —
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  layer-name semantic inference for <span class="sb">`DEFAULT`</span>-bucketed layers via
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  Haiku 4.5. Behind opt-in toggle. Audit logged. ~5 person-days. Spec:
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  <span class="sb">`docs/research/ai-augmented-mode.md`</span> §6.
+</code></pre></div>
+<h3 id="businessmd-existential-risks-item-2"><code>BUSINESS.md</code> §"Existential risks" item #2<a class="headerlink" href="#businessmd-existential-risks-item-2" title="Permanent link">&para;</a></h3>
+<p>Append: "Mitigation foundation in Phase F via <code>docs/research/ai-augmented-mode.md</code> MVP; full G4 escalation only if McNeel ships."</p>
+<h3 id="businessmd-existential-risks-item-3"><code>BUSINESS.md</code> §"Existential risks" item #3<a class="headerlink" href="#businessmd-existential-risks-item-3" title="Permanent link">&para;</a></h3>
+<p>Append: "Defensive feature path lives in <code>docs/research/ai-augmented-mode.md</code>. Phase G4 trigger: ≥30% of architecture-school interviewees in re-run Phase C (year 2) prefer AI-render output to line drawings."</p>
+<h3 id="businessmd-marketing-messaging-anti-tagline"><code>BUSINESS.md</code> §"Marketing / messaging" anti-tagline<a class="headerlink" href="#businessmd-marketing-messaging-anti-tagline" title="Permanent link">&para;</a></h3>
+<p>Current text:</p>
+<blockquote>
+<p>"AI-powered" — we're not, and the credibility is worth more than the buzzword</p>
+</blockquote>
+<p>This stays correct for Phase F. Revisit at Phase G2 if the MVP graduates to default-on. Even then, do <strong>not</strong> lead with AI; the lead remains "Architectural line weights, automatically."</p>
+<hr />
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<p>Pricing pages cited per copyright rules: ≤15 words quoted per source.</p>
+<ul>
+<li><a href="https://platform.claude.com/docs/en/about-claude/pricing">Anthropic API pricing — platform.claude.com</a> — direct fetch, 2026-04-30. Authoritative for Haiku 3.5 ($0.80/$4), Haiku 4.5 ($1/$5), Sonnet 4.5 ($3/$15), Opus 4.7 ($5/$25), and prompt caching multipliers (1.25× write, 0.1× read).</li>
+<li><a href="https://privacy.claude.com/en/articles/7996868-is-my-data-used-for-model-training">Anthropic privacy center — model training opt-out</a> — commercial API default-no-train confirmed.</li>
+<li><a href="https://openai.com/api/pricing/">OpenAI API pricing</a> — direct fetch returned 403; figures (GPT-4o-mini $0.15/$0.60, GPT-5-mini ~$0.25/$2.00, GPT-5.5 ~$5/$30) cross-referenced via <a href="https://nicolalazzari.ai/articles/openai-api-pricing-explained-2026">Nicola Lazzari 2026 pricing breakdown</a> and <a href="https://pricepertoken.com/pricing-page/model/openai-gpt-5-mini">pricepertoken.com</a>. Re-verify before commit.</li>
+<li><a href="https://ai.google.dev/gemini-api/docs/pricing">Google Gemini API pricing</a> — direct fetch, 2026-04-30. Gemini 2.5 Flash $0.30/$2.50, Gemini 2.5 Pro $1.25–2.50 / $10–15.</li>
+<li><a href="https://artificialanalysis.ai/models/llama-3-3-instruct-70b">Llama 3.3 70B pricing — Artificial Analysis aggregator</a> — median ~$0.58/$0.71 across hosted providers.</li>
+<li><a href="https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching">Anthropic prompt caching docs</a>.</li>
+<li><code>docs/research/saas-architecture.md</code> — PieceInfo size + decompressed PostScript token-budget reasoning.</li>
+<li><code>docs/research/stubborn-layers-deep-dive.md</code> §5 — prior LLM costing for topology inference (~$0.01/drawing).</li>
+<li><code>docs/research/competitive-landscape.md</code> Ring 4 — F1 (McNeel), F3 (AI sketch-to-render), F5 (open-source v2) trigger conditions.</li>
+<li><code>docs/research/saas-privacy.md</code> §Subprocessors — DPA + subprocessor-list workflow already in place; LLM provider slots into existing infrastructure.</li>
+<li><code>docs/BUSINESS.md</code> §Anti-tagline — "AI-powered" off the marketing copy by design.</li>
+<li><code>docs/ROADMAP.md</code> Phases F, G4 — existing scaffolding this doc fills in.</li>
+<li><a href="https://blog.chaos.com/best-ai-rendering-tools-for-architects-compared">Chaos blog — AI rendering tools 2026</a> — competitive context for F3 trigger.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 zohartito — MIT License
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/zohartito/arch-line-weights" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.action.edit", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
