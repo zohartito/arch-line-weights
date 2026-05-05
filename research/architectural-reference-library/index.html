@@ -1141,7 +1141,7 @@ architectural-graphics standard distilled into rules that the code can execute.<
 <h2 id="ingestion-workflow">Ingestion Workflow<a class="headerlink" href="#ingestion-workflow" title="Permanent link">&para;</a></h2>
 <ol>
 <li>Create a manifest with title, author, local path, and topic tags.</li>
-<li>Extract page text with <code>pdfplumber</code> or <code>pypdf</code>.</li>
+<li>Extract page text with <code>scripts/build_reference_index.py</code>.</li>
 <li>Render selected pages to images for visual review because architectural
    graphics knowledge is diagram-heavy.</li>
 <li>Store extracted text and thumbnails in ignored local storage.</li>
@@ -1149,6 +1149,17 @@ architectural-graphics standard distilled into rules that the code can execute.<
 <li>Write short derived rules with page references.</li>
 <li>Convert rules into classifier tests and implementation.</li>
 </ol>
+<p>Smoke test:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pyenv<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>python<span class="w"> </span>scripts/build_reference_index.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--book<span class="w"> </span>ching_architectural_graphics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--limit-pages<span class="w"> </span><span class="m">20</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--force<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span>--query<span class="w"> </span><span class="s1">&#39;line weight OR section OR poche&#39;</span>
+</code></pre></div>
+<p>Full local build:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pyenv<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>python<span class="w"> </span>scripts/build_reference_index.py<span class="w"> </span>--force
+</code></pre></div>
+<p>See <code>docs/research/reference-agent-workflow.md</code> for the agent handoff.</p>
 <h2 id="copyright-boundary">Copyright Boundary<a class="headerlink" href="#copyright-boundary" title="Permanent link">&para;</a></h2>
 <p>Allowed:</p>
 <ul>

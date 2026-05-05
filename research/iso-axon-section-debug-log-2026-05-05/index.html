@@ -1121,6 +1121,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#architectural-mode-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architectural Mode Run
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1254,6 +1265,52 @@ poché coverage.</p>
 <li>Do not poché every <code>ClippingPlaneIntersections</code> layer.</li>
 <li>Do not rely on color luminance for Rhino drawings when layer names are rich.</li>
 <li>Do not use PDF preview as final proof of native-payload output.</li>
+</ul>
+<h2 id="architectural-mode-run">Architectural Mode Run<a class="headerlink" href="#architectural-mode-run" title="Permanent link">&para;</a></h2>
+<p>Output:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL.ai
+</code></pre></div>
+<p>Command:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nv">ARCH_LW_BRIDGE_BEST_LAYER_BUDGET_SEC</span><span class="o">=</span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nv">PYTHONPATH</span><span class="o">=</span>src<span class="w"> </span>pyenv<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>arch_line_weights.cli<span class="w"> </span>apply-saas<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="s2">&quot;iso axon section  [Converted].ai&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>-o<span class="w"> </span><span class="s2">&quot;iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL.ai&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span>--auto<span class="w"> </span>--architectural<span class="w"> </span>--preset<span class="w"> </span>section<span class="w"> </span>--poche<span class="w"> </span>--bridge-strategy<span class="o">=</span>best<span class="w"> </span>--no-progress
+</code></pre></div>
+<p>Run summary:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>35 colors mapped
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>63 stroke-width ops rewritten
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>62 architectural layer overrides
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>49 poché polygons injected across 7/7 structural cut layers
+</code></pre></div>
+<p>Injected structural layers:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>TEC_CLT_SLABS                            linemerge_bare       9 polygons
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>20_CLT_THICK_REMAP_49FT_BACKUP_WALL_V68  linemerge_bare      10 polygons
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>TEC_FOUNDATION                           structural_open_loop  2 polygons
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>TEC_CONCRETE_BASE                        structural_open_loop  2 polygons
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>TEC_ROOF_CLT                             structural_open_loop  3 polygons
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>03b_CLT_BACKUP_WALL_5in                  structural_open_loop  4 polygons
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>TEC_TIMBER_BEAMS                         structural_open_loop 19 polygons
+</code></pre></div>
+<p>Reported but not injected:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>26_CLT_GAP_ROOF_CAP_REMAP_49FT_V68       bbox conf=0.30
+</code></pre></div>
+<p>Visual check in Illustrator:</p>
+<ul>
+<li>The large false facade-return/blob fill is gone.</li>
+<li>Connectors and facade/screen layers no longer receive cut-weight treatment
+  just because their source colors are dark.</li>
+<li>More legitimate structural poché is present than the previous patched run.</li>
+<li>The output is improved but not yet perfect: some areas still read like heavy
+  cut bands rather than fully filled cut solids because the Rhino/AI source
+  provides partial cut-edge geometry instead of complete cut-face boundaries.</li>
+</ul>
+<p>Next engineering follow-up:</p>
+<ul>
+<li>Add a per-layer review report with inferred closure edges and skipped
+  structural candidates.</li>
+<li>For deadline work, expose a controlled manual override/closure layer for
+  the remaining areas that only the designer can disambiguate quickly.</li>
 </ul>
 
 

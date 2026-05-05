@@ -1,0 +1,1907 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Apply architectural line-weight hierarchy to Rhino-exported vector drawings.">
+      
+      
+        <meta name="author" content="zohartito">
+      
+      
+        <link rel="canonical" href="https://zohartito.github.io/arch-line-weights/research/lineweight-rulebook/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Lineweight Rulebook - Section Axon Structure Hierarchy - arch-line-weights</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-orange">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#lineweight-rulebook-section-axon-structure-hierarchy" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="arch-line-weights" class="md-header__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            arch-line-weights
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Lineweight Rulebook - Section Axon Structure Hierarchy
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="deep-orange"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/zohartito/arch-line-weights" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zohartito/arch-line-weights
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tutorials/your-first-section-drawing/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../how-to/apply-line-weights/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  How-to
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../explanation/how-poche-works/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Explanation
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="arch-line-weights" class="md-nav__button md-logo" aria-label="arch-line-weights" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    arch-line-weights
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/zohartito/arch-line-weights" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zohartito/arch-line-weights
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/your-first-section-drawing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your first section drawing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/apply-line-weights/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Apply line weights
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/generate-poche/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Generate poché
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/material-hatching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Material hatching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/use-with-rhino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use with Rhino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/troubleshoot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshoot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/how-poche-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How poché works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/why-this-tool-exists/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why this tool exists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/the-postmortem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postmortem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#sources-searched" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sources Searched
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#governing-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Governing Rule
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tier-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tier Rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#material-specific-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Material-Specific Rules
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Material-Specific Rules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#clt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLT
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concrete-and-foundations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concrete And Foundations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#roofs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Roofs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#steel-framing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Steel Framing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#connectors-brackets-cleats-clips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connectors, Brackets, Cleats, Clips
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#facade-screens-and-copper-panels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Facade Screens And Copper Panels
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#windows-and-glass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows And Glass
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hatches-textures-and-reference-lines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hatches, Textures, And Reference Lines
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-hooks-for-issue-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Hooks For Issue #16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Hooks For Issue #16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-add-an-architectural-semantic-overlay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Add an architectural semantic overlay
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-use-precedence-before-generic-cut" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Use precedence before generic cut
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-concrete-mapping-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Concrete mapping table
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-poche-whitelist-and-blacklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Poche whitelist and blacklist
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-tests-to-add" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Tests To Add
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acceptance-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance Criteria
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/zohartito/arch-line-weights/edit/main/docs/research/lineweight-rulebook.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="lineweight-rulebook-section-axon-structure-hierarchy">Lineweight Rulebook - Section Axon Structure Hierarchy<a class="headerlink" href="#lineweight-rulebook-section-axon-structure-hierarchy" title="Permanent link">&para;</a></h1>
+<p>Date: 2026-05-05</p>
+<p>Scope: semantic line-weight hierarchy for architectural section axons in the
+<code>--architectural</code> mode planned for issue #16. This rulebook is derived from
+the local reference-book SQLite index, the current classifier in
+<code>src/arch_line_weights/layer_classify.py</code>, and the real iso axon debug log.
+Page references below use the <code>page_number</code> stored in
+<code>data/reference_books/reference_pages.sqlite</code>; no source PDFs, extracted full
+text, or copied diagrams are reproduced here.</p>
+<h2 id="sources-searched">Sources Searched<a class="headerlink" href="#sources-searched" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Ching, <code>Architectural Graphics</code>: indexed pp. 28, 62, 80, 94-97, 157-160,
+  165, 171-172. Used for the graphic hierarchy of cut/profile/edge/material
+  linework, section contrast, surface texture, and reference/background
+  handling.</li>
+<li>Ching, <code>Building Construction Illustrated</code>: indexed pp. 88, 97-100, 131-132,
+  143, 149-151, 155, 168, 192, 207-208, 211-212, 236, 252-255, 259-264,
+  271, 314, 320-321, 325-328, 331. Used for CLT, foundations, concrete,
+  roofs, steel connections, curtain walls, cladding, rainscreens, glazing,
+  and membranes.</li>
+<li>Ching, <code>Building Structures Illustrated</code>: indexed pp. 33, 47, 96, 120,
+  136, 139-140, 142, 144, 173, 178-179, 189-194, 199, 220, 222-223. Used for
+  load path, structural continuity, wood/timber systems, steel/concrete
+  frames, curtain-wall relationships, facade screens, and roof structure.</li>
+<li>Repo sources: <code>src/arch_line_weights/layer_classify.py</code>,
+  <code>src/arch_line_weights/presets.py</code>, <code>src/arch_line_weights/hatch.py</code>,
+  <code>tests/test_layer_classify.py</code>, <code>docs/research/iso-axon-section-debug-log-2026-05-05.md</code>.</li>
+</ul>
+<h2 id="governing-rule">Governing Rule<a class="headerlink" href="#governing-rule" title="Permanent link">&para;</a></h2>
+<p>For a section axon, hierarchy should read in this order:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>true cut solid mass &gt; primary structural profile &gt; secondary framing &gt;
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>frames/object edges &gt; connectors/detail hardware &gt; enclosure/cladding &gt;
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>material hatches/textures/reference lines
+</code></pre></div>
+<p>The current classifier already carries most of this ladder, but
+<code>--architectural</code> needs a material-aware overlay. In particular, the generic
+Rhino rule <code>CLIPPINGPLANEINTERSECTIONS =&gt; cut</code> is too broad. It should remain
+the last structural fallback, not the first rule. Screens, copper returns,
+window frames, glass, membranes, datums, and connectors can live on
+<code>ClippingPlaneIntersections</code> layers without deserving black cut poche.</p>
+<p>Graphic basis: Ching's graphics chapters treat the section cut as the
+heaviest, most continuous profile, then step down through visible edges,
+surface material, texture, and distant/reference information
+(<code>Architectural Graphics</code>, indexed pp. 28, 62, 80, 94-97). Section tone and
+poche are used to separate cut solids from what is seen beyond the cut plane
+(<code>Architectural Graphics</code>, indexed pp. 171-172). Hatches and texture build
+tone through density and spacing, so they should remain lighter than object
+edges (<code>Architectural Graphics</code>, indexed pp. 157-160, 165).</p>
+<h2 id="tier-rules">Tier Rules<a class="headerlink" href="#tier-rules" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Semantic role</th>
+<th style="text-align: right;">Section screen weight</th>
+<th>Poche eligibility</th>
+<th>Meaning in a section axon</th>
+<th>Page support</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cut</code></td>
+<td style="text-align: right;"><code>1.0 pt</code></td>
+<td>Yes, structural whitelist only</td>
+<td>Material physically sliced by the section plane: foundation, concrete, CLT slab/wall/roof, true cut timber or steel solids</td>
+<td>AG pp. 28, 80, 172; BCI pp. 97-100, 155, 207-208, 211-212, 236; BSI pp. 33, 173, 179, 199</td>
+</tr>
+<tr>
+<td><code>structure_primary</code> / <code>profile</code></td>
+<td style="text-align: right;"><code>0.5 pt</code></td>
+<td>No, unless also a structural cut layer</td>
+<td>Major load-bearing profiles seen in elevation behind the cut: CLT walls, timber beams/columns, concrete wall/slab profiles, main roof/foundation profiles</td>
+<td>BCI pp. 155, 207, 212, 236; BSI pp. 136, 173, 179, 199</td>
+</tr>
+<tr>
+<td><code>structure_secondary</code></td>
+<td style="text-align: right;"><code>0.35 pt</code> target</td>
+<td>No by default</td>
+<td>Steel SHS/RHS/CHS/UC/UB members and secondary framing legible behind the cut, but quieter than the cut mass and primary profile</td>
+<td>BCI pp. 131-132, 192, 194; BSI pp. 120, 222-223</td>
+</tr>
+<tr>
+<td><code>frames</code> / <code>edges_secondary</code></td>
+<td style="text-align: right;"><code>0.3 pt</code></td>
+<td>No by default</td>
+<td>Window frames, sash, mullions, stair risers, door/window object edges</td>
+<td>BCI pp. 320-321, 325-326</td>
+</tr>
+<tr>
+<td><code>connectors</code></td>
+<td style="text-align: right;"><code>0.25 pt</code></td>
+<td>No by default</td>
+<td>Brackets, cleats, plates, clips, straps, bolts, welded/bolted connection hardware</td>
+<td>BCI pp. 88, 131-132, 150-151, 168, 206, 234; BSI pp. 139, 178, 189, 223</td>
+</tr>
+<tr>
+<td><code>glazing</code> / <code>special</code></td>
+<td style="text-align: right;"><code>0.25 pt</code> or lighter</td>
+<td>Never in section axon default</td>
+<td>Transparent glass and insulated glazing. Keep legible but visually light and separate from structural mass</td>
+<td>BCI pp. 314, 320-321, 325-328, 331; BSI pp. 194</td>
+</tr>
+<tr>
+<td><code>cladding</code> / <code>hidden</code></td>
+<td style="text-align: right;"><code>0.18 pt</code></td>
+<td>Never in section axon default</td>
+<td>Facade screens, copper panels, rainscreen layers, curtain-wall infill, surface panels, punch returns</td>
+<td>BCI pp. 263-264, 271, 325-326, 331; BSI pp. 190, 192-194</td>
+</tr>
+<tr>
+<td><code>material_minor</code> / <code>insulation</code> / <code>reference</code></td>
+<td style="text-align: right;"><code>0.13 pt</code></td>
+<td>Never</td>
+<td>Membranes, EPDM, sealants, insulation, hatches, datum/grid/reference lines</td>
+<td>AG pp. 157-160, 165; BCI pp. 252-255, 259-260</td>
+</tr>
+<tr>
+<td><code>texture</code></td>
+<td style="text-align: right;"><code>0.08 pt</code> where available</td>
+<td>Never</td>
+<td>Dense hatch lines, perforation texture, panel grain, background surface texture</td>
+<td>AG pp. 97, 157-160, 165</td>
+</tr>
+</tbody>
+</table>
+<p>Implementation note: the section preset currently maps <code>structure_secondary</code>
+to <code>edges</code> in <code>tier_weights_for_preset("section")</code>, which collapses <code>0.35 pt</code>
+to <code>0.3 pt</code>. For issue #16, keep a distinct <code>structure_secondary</code> weight in
+architectural mode so steel framing can sit between primary profiles and
+window/object edges.</p>
+<h2 id="material-specific-rules">Material-Specific Rules<a class="headerlink" href="#material-specific-rules" title="Permanent link">&para;</a></h2>
+<h3 id="clt">CLT<a class="headerlink" href="#clt" title="Permanent link">&para;</a></h3>
+<p>CLT is structural when it is a wall, floor, slab, or roof panel. BCI describes
+CLT as engineered mass timber panels for floors, load-bearing walls, and roofs
+(indexed pp. 155, 207-208, 236). Therefore:</p>
+<ul>
+<li><code>TEC_CLT_SLABS</code>, <code>TEC_ROOF_CLT</code>, <code>03b_CLT_BACKUP_WALL</code>,
+  <code>_CLT_THICK_</code>, and <code>_CLT_GAP_ROOF_</code> on a true cut layer are <code>cut</code>,
+  eligible for solid poche and structural open-loop closure.</li>
+<li>The same CLT terms on ordinary visible/elevation curves are
+  <code>structure_primary</code>.</li>
+<li>CLT rain-screen layers, furring, membranes, and exterior protection layers
+  are enclosure/material layers, not CLT structure.</li>
+</ul>
+<h3 id="concrete-and-foundations">Concrete And Foundations<a class="headerlink" href="#concrete-and-foundations" title="Permanent link">&para;</a></h3>
+<p>Foundations and concrete bearing elements are the most important poche
+targets. BCI treats footings and foundation walls as support and anchorage for
+the superstructure (indexed pp. 97-100), and BSI emphasizes vertical load
+continuity to the foundation (indexed pp. 33, 173, 179). Therefore:</p>
+<ul>
+<li><code>TEC_FOUNDATION</code>, <code>TEC_CONCRETE_BASE</code>, <code>FOUNDATION</code>, <code>FOOTING</code>,
+  <code>CONCRETE_*_WALL</code>, and structural <code>SLAB</code> terms on true cut layers are
+  <code>cut</code>, eligible for solid poche and open-loop closure.</li>
+<li>Concrete slabs/walls seen behind the section cut are <code>structure_primary</code>.</li>
+<li>Concrete texture, board-form marks, control joints, and surface hatching
+  stay in <code>material_minor</code> or <code>texture</code>.</li>
+</ul>
+<h3 id="roofs">Roofs<a class="headerlink" href="#roofs" title="Permanent link">&para;</a></h3>
+<p>The roof has both structure and weathering layers. BCI and BSI separate roof
+structure from membranes, insulation, and flashing (BCI indexed pp. 211-212,
+252-255, 259-260; BSI indexed p. 199). Therefore:</p>
+<ul>
+<li><code>TEC_ROOF_CLT</code>, <code>ROOF_CLT</code>, <code>ROOF_STRUCT</code>, and structural concrete/steel/
+  timber roof deck terms are <code>cut</code> if sliced and <code>structure_primary</code> or
+  <code>structure_secondary</code> if seen beyond the cut.</li>
+<li><code>26_CLT_GAP_ROOF_CAP</code> is a structural CLT roof cap, not a generic facade
+  cap. It should be eligible for structural open-loop closure, but never via
+  global <code>bbox</code>; inferred closures must be reported.</li>
+<li><code>EPDM</code>, <code>TPO_MEMBRANE</code>, <code>_MEM_</code>, <code>_WP_</code>, <code>SEALANT</code>, <code>FLASHING</code>, and roof
+  insulation are <code>material_minor</code> and are not poche targets.</li>
+</ul>
+<h3 id="steel-framing">Steel Framing<a class="headerlink" href="#steel-framing" title="Permanent link">&para;</a></h3>
+<p>Steel beams, columns, and moment/braced frames are primary structural systems
+in the building, but in this iso section they should not overpower the cut
+CLT/concrete mass unless they are themselves cut. BCI and BSI describe steel
+frames, beam-column action, and connection rigidity as structural load-path
+systems (BCI indexed pp. 131-132, 192, 194; BSI indexed pp. 120, 222-223).</p>
+<ul>
+<li><code>SHS</code>, <code>RHS</code>, <code>CHS</code>, <code>UC</code>, <code>UB</code>, <code>HSS</code>, and <code>_STL_</code> visible framing terms
+  map to <code>structure_secondary</code> at about <code>0.35 pt</code>.</li>
+<li>A steel member on a true cut layer may be <code>cut</code> only when it is a structural
+  member, not a connector, clip, or facade support bracket.</li>
+<li>If the layer name is ambiguous between steel frame and hardware, prefer the
+  lighter hardware rule and report it.</li>
+</ul>
+<h3 id="connectors-brackets-cleats-clips">Connectors, Brackets, Cleats, Clips<a class="headerlink" href="#connectors-brackets-cleats-clips" title="Permanent link">&para;</a></h3>
+<p>Connections transfer force, but graphically they are detail hardware. BCI and
+BSI show many connectors as mediating parts: hangers, angles, straps, plates,
+bolts, anchorages, and slotted adjustment hardware (BCI indexed pp. 88,
+131-132, 150-151, 168, 206, 234; BSI indexed pp. 139, 178, 189, 223).</p>
+<ul>
+<li><code>TEC_STEEL_CONNECTOR</code>, <code>L-BRACKET</code>, <code>CLEAT_PLATE</code>, <code>BRACKET</code>, <code>CLIP</code>,
+  <code>FASTENER</code>, <code>BOLT</code>, <code>SCREW</code>, <code>STRAP</code>, <code>ANCHOR</code>, and similar terms map to
+  <code>connectors</code> at <code>0.25 pt</code>.</li>
+<li>They are not default poche targets, even when dark in the source file.</li>
+<li>In detail drawings they may become heavier, but section axons should keep
+  them precise and subordinate.</li>
+</ul>
+<h3 id="facade-screens-and-copper-panels">Facade Screens And Copper Panels<a class="headerlink" href="#facade-screens-and-copper-panels" title="Permanent link">&para;</a></h3>
+<p>Curtain walls, rainscreens, panels, and copper screens belong to enclosure
+and surface systems. BCI describes curtain walls as non-load-bearing exterior
+walls carried by the structural frame and metal cladding as panels supported
+by girts; BSI separates curtain-wall enclosure from the primary frame
+(BCI indexed pp. 263-264, 271, 325-326, 331; BSI indexed pp. 190, 192-194).</p>
+<ul>
+<li><code>CU_CORR</code>, <code>CU_FLAT</code>, <code>CU_PUNCH</code>, <code>CU_PUNCH_RETURNS</code>, <code>PERF_SCREEN</code>,
+  <code>SCREEN</code>, <code>RAINSCREEN</code>, <code>CLADDING</code>, <code>FACADE</code>, <code>PANEL</code>, and <code>SPANDREL</code>
+  map to <code>cladding</code> at <code>0.18 pt</code>, with perforation/punch textures allowed
+  to fall to <code>texture</code>.</li>
+<li>They are never default poche targets in a section axon. The debug log's
+  <code>15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44</code> false blob is the reference
+  failure mode.</li>
+<li><code>11_CU_CORR_SOLID_OPAQUE</code> should be treated as copper/cladding unless a
+  user override explicitly declares it structural.</li>
+</ul>
+<h3 id="windows-and-glass">Windows And Glass<a class="headerlink" href="#windows-and-glass" title="Permanent link">&para;</a></h3>
+<p>Glazing systems require frames/mullions that support glass while allowing
+movement; curtain-wall glazing is non-load-bearing enclosure in the normal
+case (BCI indexed pp. 314, 320-321, 325-328, 331; BSI indexed p. 194).</p>
+<ul>
+<li><code>WINDOW_GLASS</code>, <code>WINDOW_IGU_GLASS</code>, <code>GLASS</code>, <code>IGU</code>, and <code>GLAZING</code> map to
+  <code>glazing</code>/<code>special</code>; never poche.</li>
+<li><code>WINDOW_FRAME</code>, <code>WINDOW_ALUM_FRAME</code>, <code>MULLION</code>, <code>SASH</code>, <code>JAMB</code>, <code>HEAD</code>,
+  and <code>SILL</code> map to <code>frames</code>/<code>edges_secondary</code>.</li>
+<li><code>23_WINDOW_FRAMES_REMAP</code> is explicitly a no-poche layer in architectural
+  mode. The older topology research treated it as a geometry challenge, but
+  the section-axon hierarchy rule says window frames should stay outlined.</li>
+</ul>
+<h3 id="hatches-textures-and-reference-lines">Hatches, Textures, And Reference Lines<a class="headerlink" href="#hatches-textures-and-reference-lines" title="Permanent link">&para;</a></h3>
+<p>Hatches and surface textures create tone through stroke density, not line
+weight. Ching's graphics chapters place texture and reference information
+below object edges in the visual hierarchy (indexed pp. 97, 157-160, 165).</p>
+<ul>
+<li><code>FLOOR_DATUMS</code>, <code>_DATUM</code>, <code>_GRID</code>, <code>_REF</code>, and guide/reference layers map
+  to <code>reference</code> at <code>0.13 pt</code>.</li>
+<li><code>INSULATION</code>, <code>_INS_</code>, <code>_MW_</code>, <code>_RW_</code>, <code>_XPS_</code>, <code>_PIR_</code>, membrane, sealant,
+  and hatch-only layers map to <code>material_minor</code> or <code>insulation</code> at <code>0.13 pt</code>.</li>
+<li>Dense material texture should use the <code>texture</code> tier where the output path
+  supports it, around <code>0.08 pt</code> for section screen output.</li>
+</ul>
+<h2 id="implementation-hooks-for-issue-16">Implementation Hooks For Issue #16<a class="headerlink" href="#implementation-hooks-for-issue-16" title="Permanent link">&para;</a></h2>
+<h3 id="1-add-an-architectural-semantic-overlay">1. Add an architectural semantic overlay<a class="headerlink" href="#1-add-an-architectural-semantic-overlay" title="Permanent link">&para;</a></h3>
+<p>Create an architectural layer interpretation step that returns both stroke
+tier and poche eligibility:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">ArchitecturalAssignment</span><span class="p">:</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">tier</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">weight_pt</span><span class="p">:</span> <span class="nb">float</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">semantic</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">poche</span><span class="p">:</span> <span class="nb">bool</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">open_loop_closure</span><span class="p">:</span> <span class="nb">bool</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">why</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+<p>This can wrap <code>classify_layer()</code> rather than replace it. The wrapper should
+run before color luminance and should be the default inside
+<code>apply-saas --architectural --auto --preset section --poche</code>.</p>
+<h3 id="2-use-precedence-before-generic-cut">2. Use precedence before generic cut<a class="headerlink" href="#2-use-precedence-before-generic-cut" title="Permanent link">&para;</a></h3>
+<p>Recommended rule order:</p>
+<ol>
+<li>Reference/annotation/datums.</li>
+<li>Glass and windows.</li>
+<li>Membranes/insulation/sealants.</li>
+<li>Connectors/brackets/cleats/clips/fasteners.</li>
+<li>Copper/cladding/screens/facade infill/punch returns.</li>
+<li>Structural cut whitelist.</li>
+<li>Structural visible profiles.</li>
+<li>Secondary steel framing.</li>
+<li>Generic <code>ClippingPlaneIntersections</code> fallback as low-confidence cut
+   requiring review.</li>
+</ol>
+<p>This order fixes the current problem where any clipped screen, frame, or
+connector becomes <code>1.0 pt</code> and may receive black fill.</p>
+<h3 id="3-concrete-mapping-table">3. Concrete mapping table<a class="headerlink" href="#3-concrete-mapping-table" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Real layer or pattern</th>
+<th>Architectural semantic</th>
+<th>Tier</th>
+<th style="text-align: right;">Weight</th>
+<th>Poche</th>
+<th>Closure</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>axon::Visible::ClippingPlaneIntersections::TEC_FOUNDATION</code></td>
+<td>concrete foundation cut</td>
+<td><code>cut</code></td>
+<td style="text-align: right;"><code>1.0</code></td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE</code></td>
+<td>concrete base cut</td>
+<td><code>cut</code></td>
+<td style="text-align: right;"><code>1.0</code></td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>axon::Visible::ClippingPlaneIntersections::TEC_CLT_SLABS</code></td>
+<td>CLT floor/slab cut</td>
+<td><code>cut</code></td>
+<td style="text-align: right;"><code>1.0</code></td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>axon::Visible::ClippingPlaneIntersections::TEC_ROOF_CLT</code></td>
+<td>CLT roof cut</td>
+<td><code>cut</code></td>
+<td style="text-align: right;"><code>1.0</code></td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>axon::Visible::ClippingPlaneIntersections::26_CLT_GAP_ROOF_CAP</code></td>
+<td>separated CLT roof caps</td>
+<td><code>cut</code></td>
+<td style="text-align: right;"><code>1.0</code></td>
+<td>yes</td>
+<td>yes, reported</td>
+</tr>
+<tr>
+<td><code>axon::Visible::ClippingPlaneIntersections::03b_CLT_BACKUP_WALL</code></td>
+<td>CLT backup wall cut</td>
+<td><code>cut</code></td>
+<td style="text-align: right;"><code>1.0</code></td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>axon::Visible::Curves::TEC_TIMBER_COLUMNS</code></td>
+<td>primary timber profile</td>
+<td><code>structure_primary</code></td>
+<td style="text-align: right;"><code>0.5</code></td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>axon::Visible::Curves::TEC_TIMBER_BEAMS</code></td>
+<td>primary timber profile</td>
+<td><code>structure_primary</code></td>
+<td style="text-align: right;"><code>0.5</code></td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>axon::Visible::Curves::05_RHS_STL_FRAME</code></td>
+<td>secondary steel frame</td>
+<td><code>structure_secondary</code></td>
+<td style="text-align: right;"><code>0.35</code></td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>axon::Visible::Curves::06_SHS_STL_FRAME</code></td>
+<td>secondary steel frame</td>
+<td><code>structure_secondary</code></td>
+<td style="text-align: right;"><code>0.35</code></td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>axon::Visible::Curves::TEC_STEEL_CONNECTOR_L-BRACKET</code></td>
+<td>connector hardware</td>
+<td><code>connectors</code></td>
+<td style="text-align: right;"><code>0.25</code></td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>axon::Visible::Curves::CLEAT_PLATE</code></td>
+<td>connector hardware</td>
+<td><code>connectors</code></td>
+<td style="text-align: right;"><code>0.25</code></td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>axon::Visible::ClippingPlaneIntersections::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44</code></td>
+<td>copper punch return</td>
+<td><code>cladding</code></td>
+<td style="text-align: right;"><code>0.18</code></td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>axon::Visible::Curves::14_CU_CORR_PERF_SCREEN</code></td>
+<td>perforated copper screen</td>
+<td><code>cladding</code> or <code>texture</code></td>
+<td style="text-align: right;"><code>0.18</code>/<code>0.08</code></td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>axon::Visible::ClippingPlaneIntersections::11_CU_CORR_SOLID_OPAQUE</code></td>
+<td>copper cladding panel</td>
+<td><code>cladding</code></td>
+<td style="text-align: right;"><code>0.18</code></td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>axon::Visible::Curves::C03_CU_CORR_PANELS</code></td>
+<td>copper panel surface</td>
+<td><code>cladding</code></td>
+<td style="text-align: right;"><code>0.18</code></td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>axon::Visible::Curves::03c_WINDOW_IGU_GLASS</code></td>
+<td>insulated glazing</td>
+<td><code>glazing</code></td>
+<td style="text-align: right;"><code>0.25</code></td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>axon::Visible::ClippingPlaneIntersections::23_WINDOW_FRAMES_REMAP</code></td>
+<td>window frame outlines</td>
+<td><code>frames</code></td>
+<td style="text-align: right;"><code>0.3</code></td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>axon::Visible::Curves::WINDOW_ALUM_FRAME</code></td>
+<td>window frame</td>
+<td><code>frames</code></td>
+<td style="text-align: right;"><code>0.3</code></td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>axon::Visible::Curves::WP_MEMBRANE_ROOF_EPDM</code></td>
+<td>roof membrane</td>
+<td><code>material_minor</code></td>
+<td style="text-align: right;"><code>0.13</code></td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>axon::Visible::Curves::INSULATION_MW</code></td>
+<td>insulation hatch</td>
+<td><code>insulation</code></td>
+<td style="text-align: right;"><code>0.13</code></td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>axon::Visible::Curves::FLOOR_DATUMS</code></td>
+<td>reference/datum</td>
+<td><code>reference</code></td>
+<td style="text-align: right;"><code>0.13</code></td>
+<td>no</td>
+<td>no</td>
+</tr>
+</tbody>
+</table>
+<h3 id="4-poche-whitelist-and-blacklist">4. Poche whitelist and blacklist<a class="headerlink" href="#4-poche-whitelist-and-blacklist" title="Permanent link">&para;</a></h3>
+<p>Whitelist for <code>--architectural --poche</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>TEC_FOUNDATION
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>TEC_CONCRETE_BASE
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>FOUNDATION
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>FOOTING
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>CONCRETE
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>TEC_CLT_SLABS
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>TEC_ROOF_CLT
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>CLT_BACKUP
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>CLT_THICK
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>CLT_GAP_ROOF
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>TEC_TIMBER
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>TIMBER_BEAM
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>TIMBER_COLUMN
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>true cut STEEL/SHS/RHS/CHS/UC/UB/HSS members only when not connector hardware
+</code></pre></div>
+<p>Blacklist for <code>--architectural --poche</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>CU_CORR
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>CU_FLAT
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>CU_PUNCH
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>PUNCH_RETURNS
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>PERF_SCREEN
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>SCREEN
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>CLADDING
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>RAINSCREEN
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>FACADE
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>FACADE_PANEL
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>COPPER_PANEL
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>METAL_PANEL
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>SPANDREL
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>WINDOW
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>GLASS
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>IGU
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>GLAZING
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>WINDOW_FRAME
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>ALUM_FRAME
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>FRAMES_REMAP
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>MULLION
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>EPDM
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>MEMBRANE
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>SEALANT
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>FLASHING
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>INSULATION
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a>DATUM
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a>GRID
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a>REF
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a>CONNECTOR
+<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a>BRACKET
+<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a>CLEAT
+<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a>CLIP
+<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a>FASTENER
+<a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a>BOLT
+<a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a>SCREW
+<a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a>STRAP
+<a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a>ANCHOR
+</code></pre></div>
+<p>If a name hits both lists, blacklist wins unless the user supplies an explicit
+override. This is the safe behavior for deadline drawings.</p>
+<h3 id="5-tests-to-add">5. Tests To Add<a class="headerlink" href="#5-tests-to-add" title="Permanent link">&para;</a></h3>
+<p>Add tests in a new <code>tests/test_architectural_mode.py</code> or extend
+<code>tests/test_layer_classify.py</code> once the architectural wrapper exists:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="s2">&quot;layer,tier,weight,poche,closure&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="p">[</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>        <span class="p">(</span><span class="s2">&quot;axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE&quot;</span><span class="p">,</span> <span class="s2">&quot;cut&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>        <span class="p">(</span><span class="s2">&quot;axon::Visible::ClippingPlaneIntersections::TEC_ROOF_CLT&quot;</span><span class="p">,</span> <span class="s2">&quot;cut&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        <span class="p">(</span><span class="s2">&quot;axon::Visible::ClippingPlaneIntersections::26_CLT_GAP_ROOF_CAP&quot;</span><span class="p">,</span> <span class="s2">&quot;cut&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>        <span class="p">(</span><span class="s2">&quot;axon::Visible::ClippingPlaneIntersections::03b_CLT_BACKUP_WALL&quot;</span><span class="p">,</span> <span class="s2">&quot;cut&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>        <span class="p">(</span><span class="s2">&quot;axon::Visible::ClippingPlaneIntersections::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44&quot;</span><span class="p">,</span> <span class="s2">&quot;cladding&quot;</span><span class="p">,</span> <span class="mf">0.18</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>        <span class="p">(</span><span class="s2">&quot;axon::Visible::ClippingPlaneIntersections::11_CU_CORR_SOLID_OPAQUE&quot;</span><span class="p">,</span> <span class="s2">&quot;cladding&quot;</span><span class="p">,</span> <span class="mf">0.18</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>        <span class="p">(</span><span class="s2">&quot;axon::Visible::ClippingPlaneIntersections::23_WINDOW_FRAMES_REMAP&quot;</span><span class="p">,</span> <span class="s2">&quot;frames&quot;</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>        <span class="p">(</span><span class="s2">&quot;axon::Visible::Curves::TEC_STEEL_CONNECTOR_L-BRACKET&quot;</span><span class="p">,</span> <span class="s2">&quot;connectors&quot;</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>        <span class="p">(</span><span class="s2">&quot;axon::Visible::Curves::05_RHS_STL_FRAME&quot;</span><span class="p">,</span> <span class="s2">&quot;structure_secondary&quot;</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>        <span class="p">(</span><span class="s2">&quot;axon::Visible::Curves::WP_MEMBRANE_ROOF_EPDM&quot;</span><span class="p">,</span> <span class="s2">&quot;material_minor&quot;</span><span class="p">,</span> <span class="mf">0.13</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>        <span class="p">(</span><span class="s2">&quot;axon::Visible::Curves::FLOOR_DATUMS&quot;</span><span class="p">,</span> <span class="s2">&quot;reference&quot;</span><span class="p">,</span> <span class="mf">0.13</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>    <span class="p">],</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="p">)</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_architectural_section_axon_semantics</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">tier</span><span class="p">,</span> <span class="n">weight</span><span class="p">,</span> <span class="n">poche</span><span class="p">,</span> <span class="n">closure</span><span class="p">):</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>    <span class="n">a</span> <span class="o">=</span> <span class="n">classify_architectural_layer</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">preset</span><span class="o">=</span><span class="s2">&quot;section&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>    <span class="k">assert</span> <span class="n">a</span><span class="o">.</span><span class="n">tier</span> <span class="o">==</span> <span class="n">tier</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>    <span class="k">assert</span> <span class="n">a</span><span class="o">.</span><span class="n">weight_pt</span> <span class="o">==</span> <span class="n">weight</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>    <span class="k">assert</span> <span class="n">a</span><span class="o">.</span><span class="n">poche</span> <span class="ow">is</span> <span class="n">poche</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>    <span class="k">assert</span> <span class="n">a</span><span class="o">.</span><span class="n">open_loop_closure</span> <span class="ow">is</span> <span class="n">closure</span>
+</code></pre></div>
+<p>Also add a regression that dark source colors cannot override semantics:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_architectural_semantics_beat_luminance_for_connectors</span><span class="p">():</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">a</span> <span class="o">=</span> <span class="n">classify_architectural_layer</span><span class="p">(</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>        <span class="s2">&quot;axon::Visible::Curves::TEC_STEEL_CONNECTOR_L-BRACKET&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>        <span class="n">source_color_rgb</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>        <span class="n">preset</span><span class="o">=</span><span class="s2">&quot;section&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="p">)</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="k">assert</span> <span class="n">a</span><span class="o">.</span><span class="n">tier</span> <span class="o">==</span> <span class="s2">&quot;connectors&quot;</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="k">assert</span> <span class="n">a</span><span class="o">.</span><span class="n">weight_pt</span> <span class="o">==</span> <span class="mf">0.25</span>
+</code></pre></div>
+<h2 id="acceptance-criteria">Acceptance Criteria<a class="headerlink" href="#acceptance-criteria" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Structural CLT/concrete/foundation/roof cut layers become heaviest and are
+  eligible for structural closure.</li>
+<li>Copper returns, perforated screens, cladding, windows, glass, membranes,
+  reference lines, and connectors do not become black poche merely because
+  Rhino put them under <code>ClippingPlaneIntersections</code>.</li>
+<li>Steel framing is legible as secondary structure, not mistaken for cut mass
+  or connector hardware.</li>
+<li>The output report lists every skipped clipped layer, every inferred closure,
+  and every low-confidence generic cut fallback.</li>
+<li>Color luminance is used only after semantic confidence is low.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 zohartito — MIT License
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/zohartito/arch-line-weights" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.action.edit", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1045,6 +1045,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#p0-reference-library-wave-for-architectural-intelligence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P0 — reference-library wave for architectural intelligence
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="P0 — reference-library wave for architectural intelligence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#r1-graphics-standards-rulebook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R1. Graphics standards rulebook
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r2-poche-and-material-rulebook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R2. Poché and material rulebook
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r3-structure-hierarchy-rulebook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R3. Structure hierarchy rulebook
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r4-roadmap-synthesis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R4. Roadmap synthesis
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#p0-gates-phase-b-do-this-week" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1487,6 +1548,57 @@ share state, results consolidate cleanly into <code>docs/research/*.md</code> fi
 <li>☐ #14 — marketing channel research</li>
 <li>☐ #15 — customer-support tooling</li>
 <li>☐ #16 — AI-augmented mode feasibility (long horizon, defer to post-launch)</li>
+</ul>
+<h2 id="p0-reference-library-wave-for-architectural-intelligence">P0 — reference-library wave for architectural intelligence<a class="headerlink" href="#p0-reference-library-wave-for-architectural-intelligence" title="Permanent link">&para;</a></h2>
+<p>This wave was added on 2026-05-05 after the iso axon section debugging session.
+The user goal is explicit: agents should read the private local books, distill
+architectural graphics knowledge, update the roadmap, then feed implementation.</p>
+<p>Do not commit source PDFs, extracted full text, or copied diagrams. Use
+<code>scripts/build_reference_index.py</code> and write only derived notes with page
+references.</p>
+<h3 id="r1-graphics-standards-rulebook">R1. Graphics standards rulebook<a class="headerlink" href="#r1-graphics-standards-rulebook" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Phase</strong>: 4 -&gt; 1</li>
+<li><strong>Effort</strong>: 90 minutes</li>
+<li><strong>Question</strong>: What do the core drawing books imply for architectural
+  hierarchy in section, axon, elevation, and detail drawings?</li>
+<li><strong>Inputs</strong>: <code>Architectural Graphics</code>, <code>Design Drawing</code>, <code>docs/research/standards.md</code>.</li>
+<li><strong>Output format</strong>: <code>docs/research/architectural-graphics-rulebook.md</code>.</li>
+<li><strong>Implementation hook</strong>: default weight tiers, drawing-type differences, and
+  QA rubric.</li>
+</ul>
+<h3 id="r2-poche-and-material-rulebook">R2. Poché and material rulebook<a class="headerlink" href="#r2-poche-and-material-rulebook" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Phase</strong>: 4 -&gt; 2</li>
+<li><strong>Effort</strong>: 90 minutes</li>
+<li><strong>Question</strong>: What should be poché in cut architectural drawings, and what
+  should never be poché even when geometry can be closed?</li>
+<li><strong>Inputs</strong>: <code>Building Construction Illustrated</code>, <code>A Visual Dictionary of
+  Architecture</code>, <code>docs/research/poche-conventions.md</code>.</li>
+<li><strong>Output format</strong>: <code>docs/research/poche-rulebook.md</code>.</li>
+<li><strong>Implementation hook</strong>: whitelist/blacklist for <code>--architectural</code> and tests
+  for iso axon layer names.</li>
+</ul>
+<h3 id="r3-structure-hierarchy-rulebook">R3. Structure hierarchy rulebook<a class="headerlink" href="#r3-structure-hierarchy-rulebook" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Phase</strong>: 4 -&gt; 1</li>
+<li><strong>Effort</strong>: 75 minutes</li>
+<li><strong>Question</strong>: How should CLT, concrete, steel framing, connectors, screens,
+  glass, and facade layers be ranked in a section axon?</li>
+<li><strong>Inputs</strong>: <code>Building Structures Illustrated</code>, real ARCH 202B layer names,
+  <code>src/arch_line_weights/layer_classify.py</code>.</li>
+<li><strong>Output format</strong>: <code>docs/research/lineweight-rulebook.md</code>.</li>
+<li><strong>Implementation hook</strong>: semantic layer classifier updates for issue #16.</li>
+</ul>
+<h3 id="r4-roadmap-synthesis">R4. Roadmap synthesis<a class="headerlink" href="#r4-roadmap-synthesis" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Phase</strong>: cross-cutting</li>
+<li><strong>Effort</strong>: 45 minutes</li>
+<li><strong>Question</strong>: Given R1-R3, what changes to the roadmap and GitHub issues
+  produce the fastest path to better drawings now and a stronger product later?</li>
+<li><strong>Inputs</strong>: R1-R3 outputs, <code>docs/research/professional-grade-roadmap-2026-05-05.md</code>,
+  GitHub issues #16-#20.</li>
+<li><strong>Output format</strong>: roadmap patch plus issue-comment summary.</li>
 </ul>
 <h2 id="p0-gates-phase-b-do-this-week">P0 — gates Phase B (do this week)<a class="headerlink" href="#p0-gates-phase-b-do-this-week" title="Permanent link">&para;</a></h2>
 <h3 id="1-illustrator-less-ai-output-spike">1. Illustrator-less <code>.ai</code> output spike<a class="headerlink" href="#1-illustrator-less-ai-output-spike" title="Permanent link">&para;</a></h3>
