@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from pathlib import Path
 
 import click
@@ -23,6 +24,7 @@ from .layer_classify import (
 )
 from .poche import apply_poche
 from .presets import PRESETS, select_preset
+from .progress import DEFAULT_PROGRESS_FILE, make_reporter
 
 # CLI-facing source choices. Keep AUTO first so it's the default.
 _SOURCE_CHOICES = [Source.AUTO.value, Source.RHINO.value, Source.AUTOCAD.value]
@@ -461,6 +463,23 @@ def apply_jsx_cmd(
     help="Layer-name convention. 'auto' detects from PDF metadata + layer-name shape; "
     "'rhino' = Rhino Make2D; 'autocad' = AIA NCS.",
 )
+@click.option(
+    "--progress/--no-progress",
+    "progress",
+    default=None,
+    help="Per-stage / per-layer progress feedback (Issue #15). Default: ON when "
+    "stderr is a TTY, OFF when piped. --no-progress is fully no-op (no stderr "
+    "output, no file write). Events also written to --progress-file for "
+    "external tailers.",
+)
+@click.option(
+    "--progress-file",
+    "progress_file",
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=None,
+    help=f"Override the progress-event log path (default: {DEFAULT_PROGRESS_FILE}). "
+    "One tab-separated event per line. Ignored when --no-progress is set.",
+)
 def apply_saas_cmd(
     src: Path,
     output: Path | None,
@@ -477,6 +496,8 @@ def apply_saas_cmd(
     llm_fallback: bool,
     dry_run: bool,
     source: str,
+    progress: bool | None,
+    progress_file: Path | None,
 ):
     """Headless apply: modify the AI native payload directly (preserves layers).
 
@@ -538,6 +559,19 @@ def apply_saas_cmd(
     if output is None:
         output = Path(default_output_path_saas(src))
 
+    # Resolve the --progress flag. Default ON when stderr is a TTY, OFF when
+    # piped (so wrapped invocations don't pollute stdout/stderr captures).
+    if progress is None:
+        progress_enabled = sys.stderr.isatty() if hasattr(sys.stderr, "isatty") else False
+    else:
+        progress_enabled = bool(progress)
+    progress_file_path = str(progress_file) if progress_file else DEFAULT_PROGRESS_FILE
+    reporter = make_reporter(
+        enabled=progress_enabled,
+        file_path=progress_file_path if progress_enabled else None,
+        stderr=sys.stderr if progress_enabled else None,
+    )
+
     if poche:
         from .poche_saas import apply_saas_with_poche
 
@@ -552,15 +586,19 @@ def apply_saas_cmd(
             os.environ["ARCH_LW_LLM_FALLBACK"] = "1"
             click.echo("# llm-fallback: enabled (rung 5)", err=True)
 
-        result, poche_result, poche_report = apply_saas_with_poche(
-            str(src),
-            str(output),
-            mapping,
-            default_width=default_width,
-            overrides=overrides,
-            use_alpha_shape=alpha_shape,
-            bridge_strategy=bridge_strategy,
-        )
+        try:
+            result, poche_result, poche_report = apply_saas_with_poche(
+                str(src),
+                str(output),
+                mapping,
+                default_width=default_width,
+                overrides=overrides,
+                use_alpha_shape=alpha_shape,
+                bridge_strategy=bridge_strategy,
+                reporter=reporter,
+            )
+        finally:
+            reporter.close()
     else:
         if poche_overrides_path:
             click.echo(
@@ -582,12 +620,16 @@ def apply_saas_cmd(
                 "warning: --llm-fallback has no effect without --poche",
                 err=True,
             )
-        result = apply_to_file_saas(
-            str(src),
-            str(output),
-            mapping,
-            default_width=default_width,
-        )
+        try:
+            result = apply_to_file_saas(
+                str(src),
+                str(output),
+                mapping,
+                default_width=default_width,
+                reporter=reporter,
+            )
+        finally:
+            reporter.close()
         poche_result = None
         poche_report = None
 

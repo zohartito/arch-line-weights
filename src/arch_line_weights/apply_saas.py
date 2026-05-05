@@ -32,6 +32,8 @@ from pathlib import Path
 import pikepdf
 import zstandard as zstd
 
+from .progress import ProgressReporter
+
 # AI24 native-payload framing constants. Every Rhino-export .ai we've inspected
 # uses these exact values; if they change in a future Illustrator release we'd
 # raise loudly rather than silently corrupting.
@@ -271,36 +273,48 @@ def apply_to_file(
     *,
     default_width: float = 0.25,
     zstd_level: int = 19,
+    reporter: ProgressReporter | None = None,
 ) -> ApplySaasResult:
     """Apply per-color stroke widths to the AI native payload of `src`.
 
     The output preserves PieceInfo (and therefore every OCG layer in the
     Layers panel) — no PieceInfo stripping, unlike `apply.apply_to_file`.
+
+    ``reporter`` (Issue #15): optional :class:`progress.ProgressReporter` for
+    per-stage progress events. Default ``None`` means a fresh disabled
+    no-op reporter is constructed internally — zero runtime cost.
     """
     if os.path.abspath(src) == os.path.abspath(dst):
         raise ValueError("dst must differ from src to keep the original safe")
 
+    if reporter is None:
+        reporter = ProgressReporter(enabled=False)
+
     result = ApplySaasResult(input_size=os.path.getsize(src))
 
     with pikepdf.open(src, allow_overwriting_input=False) as pdf:
-        payload = _read_payload(pdf)
-        result.payload_size_in = len(payload)
         page = pdf.pages[0]
         priv = page.obj["/PieceInfo"]["/Illustrator"]["/Private"]
-        result.chunks_in = int(priv["/NumBlock"])
+        chunks_in = int(priv["/NumBlock"])
+        result.chunks_in = chunks_in
 
-        new_payload = rewrite_payload(
-            payload,
-            rgb_to_weight,
-            default_width=default_width,
-            result=result,
-        )
+        with reporter.stage("read_payload", chunks=chunks_in):
+            payload = _read_payload(pdf)
+        result.payload_size_in = len(payload)
+
+        with reporter.stage("rewrite_payload", payload_size=len(payload)):
+            new_payload = rewrite_payload(
+                payload,
+                rgb_to_weight,
+                default_width=default_width,
+                result=result,
+            )
         result.payload_size_out = len(new_payload)
 
-        _, new_n = _write_payload(pdf, new_payload, level=zstd_level)
-        result.chunks_out = new_n
-
-        pdf.save(dst)
+        with reporter.stage("write_payload", zstd_level=zstd_level):
+            _, new_n = _write_payload(pdf, new_payload, level=zstd_level)
+            result.chunks_out = new_n
+            pdf.save(dst)
 
     result.output_size = os.path.getsize(dst)
     return result

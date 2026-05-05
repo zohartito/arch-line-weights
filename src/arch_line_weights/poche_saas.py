@@ -61,6 +61,7 @@ from .poche import (
     _lines_from_anchors,
     polygonize_layer,
 )
+from .progress import ProgressReporter
 
 __all__ = [
     "PocheSaasResult",
@@ -299,6 +300,7 @@ def compute_polygons_for_layers(
     *,
     use_alpha_shape: bool = True,
     bridge_strategy: str | None = None,
+    reporter: ProgressReporter | None = None,
 ) -> tuple[dict[str, list[Polygon]], PocheReport]:
     """Run :func:`poche.polygonize_layer` over every layer in ``paths_by_layer``.
 
@@ -309,9 +311,15 @@ def compute_polygons_for_layers(
     Returns ``(polygons_by_layer, report)``. ``report`` is identical in shape
     to what :func:`poche.polygonize_dump` would have built so callers can
     log per-layer strategy + confidence the same way.
+
+    ``reporter`` (Issue #15) optionally drives per-layer progress events so
+    long polygonize runs surface a 0–100% bar instead of silent CPU spin.
+    Pass ``None`` for a fast no-op.
     """
     overrides = overrides or {}
     report = PocheReport()
+    if reporter is None:
+        reporter = ProgressReporter(enabled=False)
 
     closing_lines = []
     closing_data = None
@@ -322,8 +330,12 @@ def compute_polygons_for_layers(
     if closing_data:
         closing_lines = _lines_from_anchors(closing_data)
 
+    layer_items = list(paths_by_layer.items())
+    total_layers = len(layer_items)
+    reporter.set_total_layers(total_layers)
+
     polygons_by_layer: dict[str, list[Polygon]] = {}
-    for layer_name, paths in paths_by_layer.items():
+    for idx, (layer_name, paths) in enumerate(layer_items, start=1):
         ov = overrides.get(layer_name)
         if ov is None:
             for pattern, val in overrides.items():
@@ -333,14 +345,22 @@ def compute_polygons_for_layers(
                     ov = val
                     break
 
-        polys, fr = polygonize_layer(
-            layer_name,
-            paths,
-            closing_lines,
-            ov,
-            use_alpha_shape=use_alpha_shape,
-            bridge_strategy=bridge_strategy,
-        )
+        # Cheap proxy for layer cost: total segment-equivalent count =
+        # sum(len(path)-1) across the layer's path list. Logged so users
+        # spotting a slow layer can correlate with a high segment count.
+        segments = sum(max(0, len(p) - 1) for p in paths)
+        with reporter.layer(idx, total_layers, layer_name, segments) as info:
+            polys, fr = polygonize_layer(
+                layer_name,
+                paths,
+                closing_lines,
+                ov,
+                use_alpha_shape=use_alpha_shape,
+                bridge_strategy=bridge_strategy,
+            )
+            info.polygon_count = len(polys)
+            info.strategy = fr.strategy
+            info.confidence = fr.confidence
         report.fills.append(fr)
         if polys:
             polygons_by_layer[layer_name] = polys
@@ -464,6 +484,7 @@ def apply_saas_with_poche(
     zstd_level: int = 19,
     use_alpha_shape: bool = True,
     bridge_strategy: str | None = None,
+    reporter: ProgressReporter | None = None,
 ) -> tuple[object, PocheSaasResult, PocheReport]:
     """Apply both stroke-width rewrite (B6) AND poché injection in one pass.
 
@@ -476,21 +497,31 @@ def apply_saas_with_poche(
 
     Returns ``(apply_saas_result, poche_saas_result, poche_report)`` so the
     CLI can log diagnostics from all three sub-steps.
+
+    ``reporter`` (Issue #15): optional :class:`progress.ProgressReporter` for
+    per-stage / per-layer progress events. ``None`` (default) constructs a
+    disabled no-op reporter — zero overhead.
     """
     from .apply_saas import ApplySaasResult
 
     if os.path.abspath(src) == os.path.abspath(dst):
         raise ValueError("dst must differ from src to keep the original safe")
 
+    if reporter is None:
+        reporter = ProgressReporter(enabled=False)
+
     apply_result = ApplySaasResult(input_size=os.path.getsize(src))
     poche_result = PocheSaasResult()
 
     with pikepdf.open(src, allow_overwriting_input=False) as pdf:
-        payload = _read_payload(pdf)
-        apply_result.payload_size_in = len(payload)
         page = pdf.pages[0]
         priv = page.obj["/PieceInfo"]["/Illustrator"]["/Private"]
-        apply_result.chunks_in = int(priv["/NumBlock"])
+        chunks_in = int(priv["/NumBlock"])
+        apply_result.chunks_in = chunks_in
+
+        with reporter.stage("read_payload", chunks=chunks_in):
+            payload = _read_payload(pdf)
+        apply_result.payload_size_in = len(payload)
 
         # Compute polygons before doing the rewrite so the byte-offsets we'll
         # use to inject are valid against the rewrite output too. (rewrite
@@ -501,33 +532,39 @@ def apply_saas_with_poche(
         # layers (annotations, dims, hidden curves, etc.) that we'd discard
         # immediately. The Python `_is_cut_layer` post-filter keeps the
         # glass/IGU exclusion and lives outside the regex.
-        cut_paths = enumerate_layer_paths_from_payload(payload, layer_filter=_CUT_LAYER_FILTER)
-        cut_paths = {k: v for k, v in cut_paths.items() if _is_cut_layer(k)}
-        polygons_by_layer, poche_report = compute_polygons_for_layers(
-            cut_paths,
-            overrides,
-            use_alpha_shape=use_alpha_shape,
-            bridge_strategy=bridge_strategy,
-        )
+        with reporter.stage("enumerate_layers", cut_filter="ClippingPlaneIntersections"):
+            cut_paths = enumerate_layer_paths_from_payload(payload, layer_filter=_CUT_LAYER_FILTER)
+            cut_paths = {k: v for k, v in cut_paths.items() if _is_cut_layer(k)}
+
+        with reporter.stage("polygonize", layers=len(cut_paths)):
+            polygons_by_layer, poche_report = compute_polygons_for_layers(
+                cut_paths,
+                overrides,
+                use_alpha_shape=use_alpha_shape,
+                bridge_strategy=bridge_strategy,
+                reporter=reporter,
+            )
 
         # Step 1: rewrite stroke widths (existing B6 functionality).
-        new_payload = rewrite_payload(
-            payload, rgb_to_weight, default_width=default_width, result=apply_result
-        )
+        with reporter.stage("rewrite_payload", payload_size=len(payload)):
+            new_payload = rewrite_payload(
+                payload, rgb_to_weight, default_width=default_width, result=apply_result
+            )
 
         # Step 2: inject poché polygons. find_layer_envelope re-runs against
         # the *rewrite output* so any byte shift from width rewriting is
         # already accounted for.
-        new_payload = inject_poche_polygons(
-            new_payload, polygons_by_layer, result=poche_result
-        )
+        with reporter.stage("inject_poche_polygons", layers=len(polygons_by_layer)):
+            new_payload = inject_poche_polygons(
+                new_payload, polygons_by_layer, result=poche_result
+            )
 
         apply_result.payload_size_out = len(new_payload)
 
-        _, new_n = _write_payload(pdf, new_payload, level=zstd_level)
-        apply_result.chunks_out = new_n
-
-        pdf.save(dst)
+        with reporter.stage("write_payload", zstd_level=zstd_level):
+            _, new_n = _write_payload(pdf, new_payload, level=zstd_level)
+            apply_result.chunks_out = new_n
+            pdf.save(dst)
 
     apply_result.output_size = os.path.getsize(dst)
     return apply_result, poche_result, poche_report
