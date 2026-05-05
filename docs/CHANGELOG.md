@@ -13,9 +13,14 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### In flight
 
-- **Issue #5** — wire `infer_bridges_best` as the default bridge strategy
-  (currently opt-in via `--bridge-strategy=best` / `ARCH_LW_BRIDGE_STRATEGY`).
-  Default is still greedy auto-bridge for backwards compatibility.
+- **Issue #16** — `--architectural` mode: semantic hierarchy, structural
+  poché whitelist/blacklist, and reviewable output.
+- **Issue #17** — structural open-loop closure for incomplete slab/roof/wall
+  poché loops.
+- **Issue #18** — local architectural reference library from private
+  Ching/standards books, without committing copyrighted sources.
+- **Issue #19** — Illustrator-backed visual QA and per-layer review report.
+- **Issue #20** — isometric entourage layer/library.
 - **Issue #7** — real-Illustrator visual validation pass (partially closed
   by the v0.6.x real-world runs on `macro.ai` and `wall section iso cut .ai`).
 - **Issue #4** — B9 commercial license swap, deferred until ~3 days before
@@ -37,6 +42,52 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Issue #13** — `--preset` flag on `apply-jsx` (v0.6.1).
 - **Issue #14** — `[Converted]` matcher trailing-whitespace edge case
   (v0.6.3).
+
+## [0.6.9] — 2026-05-05
+
+### Added
+
+- Per-layer `bridge-best` wall-clock budget via
+  `ARCH_LW_BRIDGE_BEST_LAYER_BUDGET_SEC` (default 60s). Slow backtracking
+  now logs the exact layer name and returns the best result so far.
+- Endpoint cap via `ARCH_LW_BRIDGE_BEST_MAX_ENDPOINTS` (default 1000);
+  layers above the cap fall back to greedy locally while keeping `best` as
+  the global default.
+- Conservative poché injection policy: low-confidence fallback results
+  (`alpha_shape`, `concave_hull`, `bbox`, LLM topology) are reported but not
+  injected by default. Explicit user overrides still inject. Escape hatch:
+  `ARCH_LW_POCHE_ALLOW_LOW_CONFIDENCE=1`.
+- AI-native CMYK `K` stroke-color support alongside RGB `XA` for
+  `apply-saas` and `inspect`.
+- Private-payload inspection fallback when the public PDF content stream has
+  zero stroke colors.
+- Documentation:
+  - `docs/research/bridge-best-perf-fix.md`
+  - `docs/research/iso-axon-section-debug-log-2026-05-05.md`
+  - `docs/research/professional-grade-roadmap-2026-05-05.md`
+  - `docs/research/architectural-reference-library.md`
+  - `references/manifest.yml`
+
+### Fixed
+
+- 43 MB `iso axon section  [Converted].ai` no longer maps 0 colors under
+  `--auto`; converted CMYK files now classify and rewrite line weights.
+- Pathological `15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44` no longer burns
+  20+ minutes in bridge-best backtracking.
+- Low-confidence facade-return and roof-cap fallback blobs are no longer
+  injected as black poché by default.
+
+### Changed
+
+- `--auto` now fails loudly if it truly finds 0 stroke colors instead of
+  continuing with an empty mapping and silently defaulting every stroke.
+- `.gitignore` now protects local reference-book folders, PDFs/EPUBs under
+  `references/`, and local SQLite reference indexes from accidental commits.
+
+### Validation
+
+- `pytest tests/ -q --ignore=tests/test_hatch_v05.py` → 382 passed.
+- `ruff check src/ tests/` → clean.
 
 ## [0.6.6] — 2026-05-05
 
