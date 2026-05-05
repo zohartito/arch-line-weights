@@ -34,6 +34,7 @@ import subprocess
 import textwrap
 import time
 from dataclasses import dataclass, field
+from itertools import pairwise
 from pathlib import Path
 from typing import Literal
 
@@ -119,6 +120,7 @@ Strategy = Literal[
     "linemerge_bare",
     "linemerge_snap",
     "auto_bridge",
+    "structural_open_loop",
     "alpha_shape",
     "llm_topology",
     "concave_hull",
@@ -257,6 +259,102 @@ def _bbox(lines: list[LineString]) -> Polygon | None:
     return box(minx, miny, maxx, maxy)
 
 
+def _is_structural_poche_layer(layer_name: str) -> bool:
+    try:
+        from .architectural import classify_architectural_layer
+
+        return classify_architectural_layer(layer_name).poche
+    except Exception:
+        return False
+
+
+def _segment_lengths(lines: list[LineString]) -> list[float]:
+    lengths: list[float] = []
+    for line in lines:
+        coords = list(line.coords)
+        for a, b in pairwise(coords):
+            seg = LineString([a, b])
+            if seg.length > 0:
+                lengths.append(float(seg.length))
+    return lengths
+
+
+def _try_structural_open_loop(layer_name: str, lines: list[LineString]) -> list[Polygon]:
+    """Close simple open structural chains by adding the missing side.
+
+    This is deliberately narrower than alpha-shape/concave-hull/bbox rescue:
+    it only runs for architectural structural-poche layers, only closes
+    individual open chains, and rejects sprawling or invalid polygons.
+    """
+    if not _is_structural_poche_layer(layer_name) or not lines:
+        return []
+
+    lengths = sorted(_segment_lengths(lines))
+    median_seg = lengths[len(lengths) // 2] if lengths else 20.0
+    max_gap = max(75.0, min(350.0, median_seg * 24.0))
+
+    try:
+        merged = linemerge(MultiLineString(lines))
+    except Exception:
+        return []
+    if isinstance(merged, LineString):
+        chains = [merged]
+    else:
+        try:
+            chains = [g for g in merged.geoms if isinstance(g, LineString)]
+        except AttributeError:
+            chains = []
+
+    closing_edges: list[LineString] = []
+    for chain in chains:
+        coords = list(chain.coords)
+        if len(coords) < 3 or chain.is_ring:
+            continue
+        start = coords[0]
+        end = coords[-1]
+        gap = LineString([start, end]).length
+        if gap <= 0.1 or gap > max_gap:
+            continue
+        if chain.length <= 0 or gap > chain.length:
+            continue
+        candidate = Polygon([*coords, start])
+        if candidate.is_empty or not candidate.is_valid or candidate.area <= 1.0:
+            continue
+        minx, miny, maxx, maxy = candidate.bounds
+        width = maxx - minx
+        height = maxy - miny
+        if width <= 1.0 or height <= 1.0:
+            continue
+        aspect = max(width, height) / max(1e-6, min(width, height))
+        if aspect > 35.0:
+            continue
+        closing_edges.append(LineString([start, end]))
+
+    if not closing_edges:
+        return []
+
+    polys = _polys_at_tolerance(lines + closing_edges, 0.0)
+    return [p for p in polys if p.is_valid and p.area > 1.0]
+
+
+def _structural_open_loop_improves(
+    layer_name: str,
+    lines: list[LineString],
+    current: list[Polygon],
+) -> list[Polygon]:
+    """Return structural-open-loop polygons only if they add useful coverage."""
+    structural = _try_structural_open_loop(layer_name, lines)
+    if not structural:
+        return []
+    current_area = sum(p.area for p in current)
+    structural_area = sum(p.area for p in structural)
+    if len(structural) > len(current):
+        return structural
+    if structural_area > current_area * 1.10:
+        return structural
+    return []
+
+
 def _try_alpha_shape(lines: list[LineString]) -> list[Polygon]:
     """Run the alpha-shape rescue over the densified endpoint cloud.
 
@@ -345,6 +443,16 @@ def polygonize_layer(
 
     if best[0]:
         polys, tol = best
+        structural_polys = _structural_open_loop_improves(layer_name, lines, polys)
+        if structural_polys:
+            return structural_polys, FillResult(
+                layer_name,
+                "structural_open_loop",
+                0.90,
+                len(structural_polys),
+                n_segments,
+                tol,
+            )
         if tol == 0:
             return polys, FillResult(layer_name, "linemerge_bare", 1.0, len(polys), n_segments, tol)
         conf = 0.95 if tol <= 0.5 else (0.85 if tol <= 1.0 else 0.7)
@@ -405,6 +513,20 @@ def polygonize_layer(
         if should_polygonize:
             polys_with_bridges = _polys_at_tolerance(augmented, 0.0)
             if polys_with_bridges:
+                structural_polys = _structural_open_loop_improves(
+                    layer_name,
+                    lines,
+                    polys_with_bridges,
+                )
+                if structural_polys:
+                    return structural_polys, FillResult(
+                        layer_name,
+                        "structural_open_loop",
+                        0.90,
+                        len(structural_polys),
+                        n_segments,
+                        bridge_strategy_name=strategy_name,
+                    )
                 return polys_with_bridges, FillResult(
                     layer_name,
                     "auto_bridge",
@@ -413,6 +535,22 @@ def polygonize_layer(
                     n_segments,
                     bridge_strategy_name=strategy_name,
                 )
+    except Exception:
+        pass
+
+    # Structural open-loop closure: recover simple 3-sided or partially open
+    # cut loops for whitelisted structural layers, without allowing facade,
+    # glass, connector, membrane, or generic clipped layers into black fill.
+    try:
+        structural_polys = _try_structural_open_loop(layer_name, lines)
+        if structural_polys:
+            return structural_polys, FillResult(
+                layer_name,
+                "structural_open_loop",
+                0.88,
+                len(structural_polys),
+                n_segments,
+            )
     except Exception:
         pass
 

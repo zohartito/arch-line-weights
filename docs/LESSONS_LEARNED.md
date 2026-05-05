@@ -115,3 +115,15 @@
 55. **Books should become rules, not blobs.** Ching/Ramsey/NCS references
     are most useful as page-cited, project-owned rulebooks that drive code
     and tests. Do not commit copyrighted PDFs or extracted full text.
+56. **A local index is enough for book agents.** The agents do not need
+    source PDFs in GitHub to use them. A gitignored SQLite page index gives
+    agents searchable context, while GitHub stores only derived rulebooks,
+    roadmap changes, tests, and code.
+57. **Substring rules need architectural token discipline.** `CLIP` matched
+    `ClippingPlaneIntersections` and briefly classified every clipped layer
+    as connector hardware. Short architectural tokens need boundary-aware
+    matching or very explicit forms.
+58. **Open-loop rescue must improve partial successes, not only failures.**
+    The iso axon had layers where one region polygonized cleanly while other
+    cut regions stayed open. A rescue rung that only runs after total failure
+    misses the actual production failure mode.

@@ -229,7 +229,8 @@ def apply(
         _require_nonempty_auto_mapping(mapping, src=src, preset=preset)
 
     click.echo(
-        f"# {len(mapping)} colors mapped using {'user file' if mapping_file else f'auto:{preset}'}", err=True
+        f"# {len(mapping)} colors mapped using {'user file' if mapping_file else f'auto:{preset}'}",
+        err=True,
     )
     for line in explain_mapping(mapping, rep):
         click.echo(line, err=True)
@@ -416,6 +417,13 @@ def apply_jsx_cmd(
     help="Auto-bucket colors into the preset's tiers by luminance + frequency.",
 )
 @click.option(
+    "--architectural",
+    is_flag=True,
+    help="Use semantic architectural layer rules before color luminance. "
+    "Keeps structural cut mass heavy while connectors, glass, cladding, "
+    "membranes, and entourage stay subordinate.",
+)
+@click.option(
     "--default-width",
     type=float,
     default=0.25,
@@ -504,6 +512,7 @@ def apply_saas_cmd(
     scale: str,
     for_print: bool,
     auto: bool,
+    architectural: bool,
     default_width: float,
     poche: bool,
     poche_overrides_path: Path | None,
@@ -528,8 +537,10 @@ def apply_saas_cmd(
     Best for SaaS / batch workflows on Rhino-exported `.ai` files. For
     plain `.pdf` files (no PieceInfo), use `apply` instead.
     """
-    if not (auto or mapping_file):
-        raise click.UsageError("provide --mapping FILE or --auto (with optional --preset)")
+    if not (auto or mapping_file or architectural):
+        raise click.UsageError(
+            "provide --mapping FILE, --auto (with optional --preset), or --architectural"
+        )
     if auto and mapping_file:
         raise click.UsageError("--auto and --mapping are mutually exclusive")
 
@@ -556,16 +567,31 @@ def apply_saas_cmd(
                 continue
             mapping[rgb] = float(w)
         mapping = from_user_mapping(mapping)
-    else:
+    elif auto:
         tiers = select_preset(preset, scale=scale, for_print=for_print)
         mapping = auto_by_luminance(rep, tiers)
-        _require_nonempty_auto_mapping(mapping, src=src, preset=preset)
+        if not architectural:
+            _require_nonempty_auto_mapping(mapping, src=src, preset=preset)
+    else:
+        mapping = {}
 
-    click.echo(
-        f"# {len(mapping)} colors mapped using {'user file' if mapping_file else f'auto:{preset}'}", err=True
-    )
+    mapping_label = "user file" if mapping_file else (f"auto:{preset}" if auto else "architectural")
+    click.echo(f"# {len(mapping)} colors mapped using {mapping_label}", err=True)
     for line in explain_mapping(mapping, rep):
         click.echo(line, err=True)
+    if architectural:
+        click.echo("# architectural: semantic layer rules enabled", err=True)
+
+    layer_weight_resolver = None
+    if architectural:
+        from .architectural import architectural_layer_weight_resolver
+
+        layer_weight_resolver = architectural_layer_weight_resolver(
+            preset=preset,
+            scale=scale,
+            for_print=for_print,
+            source=resolved_source,
+        )
 
     if dry_run:
         click.echo("--dry-run: no file written.", err=True)
@@ -613,6 +639,12 @@ def apply_saas_cmd(
                 use_alpha_shape=alpha_shape,
                 bridge_strategy=bridge_strategy,
                 reporter=reporter,
+                layer_weight_resolver=layer_weight_resolver,
+                architectural=architectural,
+                preset=preset,
+                scale=scale,
+                for_print=for_print,
+                source=resolved_source,
             )
         finally:
             reporter.close()
@@ -644,6 +676,7 @@ def apply_saas_cmd(
                 mapping,
                 default_width=default_width,
                 reporter=reporter,
+                layer_weight_resolver=layer_weight_resolver,
             )
         finally:
             reporter.close()
@@ -663,6 +696,11 @@ def apply_saas_cmd(
     )
     for w in sorted(result.weights_applied):
         click.echo(f"  {w:>5} pt  →  {result.weights_applied[w]:>7,} ops", err=True)
+    if result.layer_weight_overrides:
+        click.echo(
+            f"  architectural layer overrides → {result.layer_weight_overrides:>7,} ops",
+            err=True,
+        )
     if result.unmatched_colors:
         click.echo("", err=True)
         click.echo(f"unmatched (defaulted to {default_width} pt):", err=True)

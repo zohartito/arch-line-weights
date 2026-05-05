@@ -47,6 +47,7 @@ from __future__ import annotations
 import contextlib
 import os
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -55,6 +56,7 @@ import zstandard as zstd
 from shapely.geometry import Polygon
 
 from .apply_saas import CHUNK, PREFIX, _read_payload, _write_payload, rewrite_payload
+from .layer_classify import Source
 from .poche import (
     POCHE_CLOSE_LAYER,
     PocheReport,
@@ -460,7 +462,7 @@ def enumerate_layer_paths_from_payload(
 _CUT_LAYER_FILTER = re.compile(rb"(?i)clippingplaneintersections")
 
 
-def _is_cut_layer(name: str) -> bool:
+def _is_cut_layer(name: str, *, architectural: bool = False) -> bool:
     """Heuristic: a layer participates in poché iff its name contains
     ``ClippingPlaneIntersections`` and *isn't* a glass / IGU sub-layer.
 
@@ -472,7 +474,13 @@ def _is_cut_layer(name: str) -> bool:
     n = name.upper()
     if "CLIPPINGPLANEINTERSECTIONS" not in n:
         return False
-    return not ("GLASS" in n or "IGU" in n)
+    if not architectural:
+        return not ("GLASS" in n or "IGU" in n)
+
+    from .architectural import classify_architectural_layer
+
+    assignment = classify_architectural_layer(name)
+    return assignment.poche
 
 
 def apply_saas_with_poche(
@@ -486,6 +494,12 @@ def apply_saas_with_poche(
     use_alpha_shape: bool = True,
     bridge_strategy: str | None = None,
     reporter: ProgressReporter | None = None,
+    layer_weight_resolver: Callable[[str], float | None] | None = None,
+    architectural: bool = False,
+    preset: str = "section",
+    scale: str = "1/4",
+    for_print: bool = False,
+    source: Source = Source.RHINO,
 ) -> tuple[object, PocheSaasResult, PocheReport]:
     """Apply both stroke-width rewrite (B6) AND poché injection in one pass.
 
@@ -535,7 +549,22 @@ def apply_saas_with_poche(
         # glass/IGU exclusion and lives outside the regex.
         with reporter.stage("enumerate_layers", cut_filter="ClippingPlaneIntersections"):
             cut_paths = enumerate_layer_paths_from_payload(payload, layer_filter=_CUT_LAYER_FILTER)
-            cut_paths = {k: v for k, v in cut_paths.items() if _is_cut_layer(k)}
+            if architectural:
+                from .architectural import classify_architectural_layer
+
+                cut_paths = {
+                    k: v
+                    for k, v in cut_paths.items()
+                    if classify_architectural_layer(
+                        k,
+                        preset=preset,
+                        scale=scale,
+                        for_print=for_print,
+                        source=source,
+                    ).poche
+                }
+            else:
+                cut_paths = {k: v for k, v in cut_paths.items() if _is_cut_layer(k)}
 
         with reporter.stage("polygonize", layers=len(cut_paths)):
             polygons_by_layer, poche_report = compute_polygons_for_layers(
@@ -549,7 +578,11 @@ def apply_saas_with_poche(
         # Step 1: rewrite stroke widths (existing B6 functionality).
         with reporter.stage("rewrite_payload", payload_size=len(payload)):
             new_payload = rewrite_payload(
-                payload, rgb_to_weight, default_width=default_width, result=apply_result
+                payload,
+                rgb_to_weight,
+                default_width=default_width,
+                result=apply_result,
+                layer_weight_resolver=layer_weight_resolver,
             )
 
         # Step 2: inject poché polygons. find_layer_envelope re-runs against

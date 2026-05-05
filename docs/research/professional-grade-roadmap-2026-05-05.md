@@ -70,10 +70,10 @@ Goal: make Zohar's current drawings usable now.
 - [x] Stop hangs from `bridge-best`.
 - [x] Stop low-confidence blobs from being injected.
 - [x] Support RGB and CMYK native stroke colors.
-- [ ] Add `--architectural` mode.
-- [ ] Add structural poché whitelist/blacklist.
-- [ ] Add structural open-loop closure.
-- [ ] Add semantic hierarchy override for Rhino layer names.
+- [x] Add first-pass `--architectural` mode.
+- [x] Add structural poché whitelist/blacklist.
+- [x] Add first-pass structural open-loop closure.
+- [x] Add semantic hierarchy override for Rhino layer names.
 - [ ] Add a per-run report that says:
   - injected
   - skipped
@@ -84,11 +84,11 @@ Goal: make Zohar's current drawings usable now.
 
 Goal: encode the architectural graphics standard explicitly.
 
-- [ ] Create `docs/research/architectural-graphics-rulebook.md`.
-- [ ] Create `docs/research/lineweight-rulebook.md`.
-- [ ] Create `docs/research/poche-rulebook.md`.
-- [ ] Create `docs/research/entourage-rulebook.md`.
-- [ ] Build a layer semantic classifier independent of color.
+- [x] Create `docs/research/architectural-graphics-rulebook.md`.
+- [x] Create `docs/research/lineweight-rulebook.md`.
+- [x] Create `docs/research/poche-rulebook.md`.
+- [x] Create `docs/research/entourage-rulebook.md`.
+- [x] Build first-pass layer semantic classifier independent of color.
 - [ ] Make color classifier fallback-only for known source types.
 - [ ] Add fixture tests using real layer names from ARCH 202B and ARCH 211.
 
@@ -102,7 +102,8 @@ true cut solid mass > foreground/profile > object edge > secondary structure > c
 
 Goal: improve coverage without false positives.
 
-- [ ] Implement structural open-loop closure.
+- [x] Implement first-pass structural open-loop closure for simple open chains.
+- [ ] Expand structural closure beyond simple open chains.
 - [ ] Reject global `bbox` except explicit overrides.
 - [ ] Add polygon plausibility scoring:
   - area
@@ -132,9 +133,12 @@ Goal: stop trusting counters.
 
 Goal: use Ching/Ramsey/NCS books as a private local source of standards.
 
-- [ ] Build ignored local SQLite FTS index.
+- [x] Define reference-agent workflow.
+- [x] Add local SQLite FTS index builder.
+- [x] Run full local indexing pass on all manifest books.
+- [x] Dispatch book research agents.
 - [ ] Render selected pages for private visual review.
-- [ ] Distill page-cited rules into tracked docs.
+- [x] Distill page-cited rules into tracked docs.
 - [ ] Convert rules into tests and classifier behavior.
 - [ ] Keep source PDFs and extracted full text out of GitHub.
 
@@ -178,6 +182,11 @@ Use subagents like a real product team:
 - Product agent: web app scope, pricing, onboarding.
 - Research agent: competitive landscape and user interviews.
 
+Reference-library agents are described in
+`docs/research/reference-agent-workflow.md`. Their job is not to upload or
+reproduce books; it is to turn local reading into page-cited rules that the
+program can execute.
+
 ## Current Recommendation
 
 Do not build the web app yet.
@@ -185,4 +194,3 @@ Do not build the web app yet.
 First ship `--architectural` locally and use it on Zohar's current drawings.
 When the engine produces reviewable, trustworthy output on real studio work,
 then the web app becomes worth building.
-

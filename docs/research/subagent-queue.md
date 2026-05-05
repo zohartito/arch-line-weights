@@ -35,6 +35,60 @@ share state, results consolidate cleanly into `docs/research/*.md` files.
 - ☐ #15 — customer-support tooling
 - ☐ #16 — AI-augmented mode feasibility (long horizon, defer to post-launch)
 
+## P0 — reference-library wave for architectural intelligence
+
+This wave was added on 2026-05-05 after the iso axon section debugging session.
+The user goal is explicit: agents should read the private local books, distill
+architectural graphics knowledge, update the roadmap, then feed implementation.
+
+Do not commit source PDFs, extracted full text, or copied diagrams. Use
+`scripts/build_reference_index.py` and write only derived notes with page
+references.
+
+### R1. Graphics standards rulebook
+
+- **Phase**: 4 -> 1
+- **Effort**: 90 minutes
+- **Question**: What do the core drawing books imply for architectural
+  hierarchy in section, axon, elevation, and detail drawings?
+- **Inputs**: `Architectural Graphics`, `Design Drawing`, `docs/research/standards.md`.
+- **Output format**: `docs/research/architectural-graphics-rulebook.md`.
+- **Implementation hook**: default weight tiers, drawing-type differences, and
+  QA rubric.
+
+### R2. Poché and material rulebook
+
+- **Phase**: 4 -> 2
+- **Effort**: 90 minutes
+- **Question**: What should be poché in cut architectural drawings, and what
+  should never be poché even when geometry can be closed?
+- **Inputs**: `Building Construction Illustrated`, `A Visual Dictionary of
+  Architecture`, `docs/research/poche-conventions.md`.
+- **Output format**: `docs/research/poche-rulebook.md`.
+- **Implementation hook**: whitelist/blacklist for `--architectural` and tests
+  for iso axon layer names.
+
+### R3. Structure hierarchy rulebook
+
+- **Phase**: 4 -> 1
+- **Effort**: 75 minutes
+- **Question**: How should CLT, concrete, steel framing, connectors, screens,
+  glass, and facade layers be ranked in a section axon?
+- **Inputs**: `Building Structures Illustrated`, real ARCH 202B layer names,
+  `src/arch_line_weights/layer_classify.py`.
+- **Output format**: `docs/research/lineweight-rulebook.md`.
+- **Implementation hook**: semantic layer classifier updates for issue #16.
+
+### R4. Roadmap synthesis
+
+- **Phase**: cross-cutting
+- **Effort**: 45 minutes
+- **Question**: Given R1-R3, what changes to the roadmap and GitHub issues
+  produce the fastest path to better drawings now and a stronger product later?
+- **Inputs**: R1-R3 outputs, `docs/research/professional-grade-roadmap-2026-05-05.md`,
+  GitHub issues #16-#20.
+- **Output format**: roadmap patch plus issue-comment summary.
+
 ## P0 — gates Phase B (do this week)
 
 ### 1. Illustrator-less `.ai` output spike

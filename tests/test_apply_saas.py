@@ -138,6 +138,36 @@ def test_rewrite_tracks_cmyk_k_stroke_colors():
     assert b"\r1 J 1 j 0.35 w" in new_payload
 
 
+def test_rewrite_can_override_weight_by_layer_semantics():
+    """Architectural mode can choose stroke width from layer name before color."""
+    payload = (
+        b"%!PS-Adobe-3.0\r"
+        b"%AI5_BeginLayer\r"
+        b"(axon::Visible::Curves::TEC_STEEL_CONNECTOR_L-BRACKET) Ln\r"
+        b"0 0 0 1 0 0 0 XA\r"
+        b"1 J 1 j 1 w 4 M []0 d\r"
+        b"0 0 m\r"
+        b"10 10 L\r"
+        b"S\r"
+        b"LB\r"
+        b"%AI5_EndLayer--\r"
+    )
+    result = ApplySaasResult()
+    new_payload = rewrite_payload(
+        payload,
+        {(0, 0, 0): 1.0},
+        default_width=0.25,
+        result=result,
+        layer_weight_resolver=lambda _name: 0.25,
+    )
+
+    assert result.widths_rewritten == 1
+    assert result.layer_weight_overrides == 1
+    assert result.weights_applied == {0.25: 1}
+    assert b"\r1 J 1 j 0.25 w" in new_payload
+    assert b"\r1 J 1 j 1 w" not in new_payload
+
+
 def test_empty_auto_mapping_is_a_cli_error(tmp_path):
     """A blind auto-classifier should not silently default every stroke."""
     from arch_line_weights.cli import _require_nonempty_auto_mapping

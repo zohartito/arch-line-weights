@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import os
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -83,6 +84,7 @@ _K_RE = re.compile(
 # inline `<w> w` inside a J/j setup line second.
 _BARE_W_RE = re.compile(rb"\r([0-9.]+) w\r")
 _SETUP_W_RE = re.compile(rb"\r([0-9.]+) J ([0-9.]+) j ([0-9.]+) w")
+_LN_RE = re.compile(rb"\(([^)]+)\) Ln\r")
 
 
 @dataclass
@@ -99,6 +101,7 @@ class ApplySaasResult:
     chunks_out: int = 0
     output_size: int = 0
     input_size: int = 0
+    layer_weight_overrides: int = 0
 
 
 def _read_payload(pdf: pikepdf.Pdf) -> bytes:
@@ -195,12 +198,25 @@ def _stroke_color_events(payload: bytes) -> list[tuple[int, tuple[int, int, int]
     return events
 
 
+def _layer_intervals(payload: bytes) -> list[tuple[int, int, str]]:
+    """Return ``(start, end, layer_name)`` intervals for AI layer blocks."""
+    intervals: list[tuple[int, int, str]] = []
+    for match in _LN_RE.finditer(payload):
+        name = match.group(1).decode("utf-8", errors="replace")
+        lb_offset = payload.find(b"\rLB\r", match.end())
+        if lb_offset < 0:
+            continue
+        intervals.append((match.end(), lb_offset, name))
+    return intervals
+
+
 def rewrite_payload(
     payload: bytes,
     rgb_to_weight: dict[tuple[int, int, int], float],
     *,
     default_width: float = 0.25,
     result: ApplySaasResult | None = None,
+    layer_weight_resolver: Callable[[str], float | None] | None = None,
 ) -> bytes:
     """Track recent XA color and rewrite every following `<w> w` op per-color.
 
@@ -220,6 +236,7 @@ def rewrite_payload(
     # Collect native stroke-color events with their position + RGB.
     xa_events = _stroke_color_events(payload)
     result.xa_seen += len(xa_events)
+    layer_intervals = _layer_intervals(payload) if layer_weight_resolver else []
 
     # Helper: given the absolute payload offset of a `w` op, return the most
     # recent prior XA's RGB or None. Linear scan is fine — even on a 55 MB
@@ -233,6 +250,24 @@ def rewrite_payload(
                 break
         return last
 
+    def _layer_weight_at(offset: int) -> float | None:
+        if layer_weight_resolver is None:
+            return None
+        for start, end, layer_name in layer_intervals:
+            if start <= offset < end:
+                weight = layer_weight_resolver(layer_name)
+                if weight is not None:
+                    result.layer_weight_overrides += 1
+                return weight
+        return None
+
+    def _resolve_weight_at(offset: int) -> tuple[float | None, float]:
+        layer_weight = _layer_weight_at(offset)
+        if layer_weight is not None:
+            return layer_weight, layer_weight
+        rgb = _color_at(offset)
+        return _resolve_weight(rgb, rgb_to_weight, default_width, result)
+
     # Rewrite both bare and setup-form width ops in one pass each.
     pieces: list[bytes] = []
     last_end = 0
@@ -242,8 +277,7 @@ def rewrite_payload(
     edits: list[tuple[int, int, bytes]] = []
 
     for m in _BARE_W_RE.finditer(payload):
-        rgb = _color_at(m.start())
-        weight, weight_used = _resolve_weight(rgb, rgb_to_weight, default_width, result)
+        weight, weight_used = _resolve_weight_at(m.start())
         if weight is None:
             continue  # leave untouched
         new_token = b"\r" + _format_width(weight) + b" w\r"
@@ -252,8 +286,7 @@ def rewrite_payload(
         result.weights_applied[weight_used] = result.weights_applied.get(weight_used, 0) + 1
 
     for m in _SETUP_W_RE.finditer(payload):
-        rgb = _color_at(m.start())
-        weight, weight_used = _resolve_weight(rgb, rgb_to_weight, default_width, result)
+        weight, weight_used = _resolve_weight_at(m.start())
         if weight is None:
             continue
         cap = m.group(1)
@@ -311,6 +344,7 @@ def apply_to_file(
     default_width: float = 0.25,
     zstd_level: int = 19,
     reporter: ProgressReporter | None = None,
+    layer_weight_resolver: Callable[[str], float | None] | None = None,
 ) -> ApplySaasResult:
     """Apply per-color stroke widths to the AI native payload of `src`.
 
@@ -345,6 +379,7 @@ def apply_to_file(
                 rgb_to_weight,
                 default_width=default_width,
                 result=result,
+                layer_weight_resolver=layer_weight_resolver,
             )
         result.payload_size_out = len(new_payload)
 

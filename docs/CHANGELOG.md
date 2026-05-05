@@ -43,6 +43,50 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Issue #14** — `[Converted]` matcher trailing-whitespace edge case
   (v0.6.3).
 
+## [0.6.10] — 2026-05-05
+
+### Added
+
+- `apply-saas --architectural`: semantic layer-name hierarchy now overrides
+  color luminance for rich Rhino exports. Structural cut material stays heavy;
+  steel connectors, glass, window frames, facade screens/cladding, membranes,
+  references, and entourage stay subordinate.
+- `src/arch_line_weights/architectural.py`: architectural assignment layer
+  that returns tier, weight, semantic role, poché eligibility, open-loop
+  eligibility, confidence, and rationale.
+- Structural open-loop poché rescue rung. Whitelisted structural cut layers
+  can now recover plausible missing cut loops even when a layer already had
+  some closed polygons.
+- Local reference-book research pipeline:
+  - `scripts/build_reference_index.py`
+  - `docs/research/reference-agent-workflow.md`
+  - `docs/research/architectural-graphics-rulebook.md`
+  - `docs/research/lineweight-rulebook.md`
+  - `docs/research/poche-rulebook.md`
+  - `docs/research/entourage-rulebook.md`
+
+### Changed
+
+- `apply-saas --architectural --poche` polygonizes only semantically
+  poché-eligible structural cut layers. Generic `ClippingPlaneIntersections`
+  is no longer enough to receive black fill.
+- AI-native stroke-width rewriting can use a layer-weight resolver before
+  falling back to RGB/CMYK color mapping.
+- Poché reports now surface `structural_open_loop` as a distinct strategy.
+
+### Validation
+
+- Real run on
+  `iso axon section  [Converted].ai`:
+  `49 polygons injected across 7/7 structural cut layers`; facade/window/glass/
+  connector/cladding layers were excluded from fill.
+- Computer Use visual check in Illustrator confirmed the large false facade
+  blob is gone and connector hierarchy is calmer. Remaining limitation:
+  source geometry still provides partial cut-face boundaries, so some poché
+  reads as cut bands rather than fully filled solids.
+- `pytest tests/ -q --ignore=tests/test_hatch_v05.py` → 397 passed.
+- `ruff check src/ tests/ scripts/build_reference_index.py` → clean.
+
 ## [0.6.9] — 2026-05-05
 
 ### Added

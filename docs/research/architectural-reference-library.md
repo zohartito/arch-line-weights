@@ -61,13 +61,31 @@ docs/research/entourage-rulebook.md
 ## Ingestion Workflow
 
 1. Create a manifest with title, author, local path, and topic tags.
-2. Extract page text with `pdfplumber` or `pypdf`.
+2. Extract page text with `scripts/build_reference_index.py`.
 3. Render selected pages to images for visual review because architectural
    graphics knowledge is diagram-heavy.
 4. Store extracted text and thumbnails in ignored local storage.
 5. Build SQLite FTS search first; add embeddings later only if needed.
 6. Write short derived rules with page references.
 7. Convert rules into classifier tests and implementation.
+
+Smoke test:
+
+```bash
+pyenv exec python scripts/build_reference_index.py \
+  --book ching_architectural_graphics \
+  --limit-pages 20 \
+  --force \
+  --query 'line weight OR section OR poche'
+```
+
+Full local build:
+
+```bash
+pyenv exec python scripts/build_reference_index.py --force
+```
+
+See `docs/research/reference-agent-workflow.md` for the agent handoff.
 
 ## Copyright Boundary
 
@@ -96,4 +114,3 @@ The reference library should directly inform:
 - entourage placement/style rules
 - print vs screen presets
 - visual QA rubrics
-
