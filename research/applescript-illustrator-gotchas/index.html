@@ -12,7 +12,7 @@
         <meta name="author" content="zohartito">
       
       
-        <link rel="canonical" href="https://zohartito.github.io/arch-line-weights/research/benchmarks/">
+        <link rel="canonical" href="https://zohartito.github.io/arch-line-weights/research/applescript-illustrator-gotchas/">
       
       
       
@@ -25,7 +25,7 @@
     
     
       
-        <title>arch-line-weights benchmarks - arch-line-weights</title>
+        <title>AppleScript ↔ Illustrator gotchas — permanent reference - arch-line-weights</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#arch-line-weights-benchmarks" class="md-skip">
+        <a href="#applescript-illustrator-gotchas-permanent-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              arch-line-weights benchmarks
+              AppleScript ↔ Illustrator gotchas — permanent reference
             
           </span>
         </div>
@@ -1006,10 +1006,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#v05-v06x-summary-reference-section-drawing" class="md-nav__link">
+  <a href="#1-name-of-active-document-parser-failure-on-illustrator-2026" class="md-nav__link">
     <span class="md-ellipsis">
       
-        v0.5 → v0.6.x summary (reference section drawing)
+        1. name of active document parser failure on Illustrator 2026
       
     </span>
   </a>
@@ -1017,10 +1017,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#run-2026-05-01-074315-utc-runs3" class="md-nav__link">
+  <a href="#2-converted-virtual-document-state" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Run 2026-05-01 07:43:15 UTC (runs=3)
+        2. [Converted] virtual document state
       
     </span>
   </a>
@@ -1028,10 +1028,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#run-2026-05-01-074546-utc-runs3" class="md-nav__link">
+  <a href="#3-disk-filenames-with-trailing-whitespace" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Run 2026-05-01 07:45:46 UTC (runs=3)
+        3. Disk filenames with trailing whitespace
       
     </span>
   </a>
@@ -1039,10 +1039,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#run-2026-05-05-211448-utc-runs3-v06x" class="md-nav__link">
+  <a href="#4-osacompile-vs-osascript-e-quoting-and-n-handling" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Run 2026-05-05 21:14:48 UTC (runs=3) — v0.6.x
+        4. osacompile vs osascript -e — quoting and \n handling
       
     </span>
   </a>
@@ -1050,30 +1050,57 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#run-2026-05-05-212339-utc-runs1-v06x-macro-plan" class="md-nav__link">
+  <a href="#5-the-120-second-applescript-default-timeout" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Run 2026-05-05 21:23:39 UTC (runs=1) — v0.6.x macro plan
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Run 2026-05-05 21:23:39 UTC (runs=1) — v0.6.x macro plan">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#anomalies-notes-v06x" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Anomalies &amp; notes (v0.6.x)
+        5. The 120-second AppleScript default timeout
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#6-the-do-javascript-extendscript-bridge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. The do javascript ExtendScript bridge
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-osascript-patterns-to-test-with-what-works-and-what-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. osascript patterns to test with — what works and what fails
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-sanity-check-matrix-for-any-future-change-to-query_active_doc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Sanity-check matrix for any future change to query_active_doc
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See also
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1094,7 +1121,7 @@
 
 
   
-    <a href="https://github.com/zohartito/arch-line-weights/edit/main/docs/research/benchmarks.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/zohartito/arch-line-weights/edit/main/docs/research/applescript-illustrator-gotchas.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
     </a>
@@ -1102,239 +1129,303 @@
   
 
 
-<h1 id="arch-line-weights-benchmarks">arch-line-weights benchmarks<a class="headerlink" href="#arch-line-weights-benchmarks" title="Permanent link">&para;</a></h1>
-<p>Auto-generated by <code>scripts/benchmark.py</code>. Each section below is one
-benchmark run; sections accumulate over time so we can spot regressions.</p>
-<p>Stages timed:</p>
+<h1 id="applescript-illustrator-gotchas-permanent-reference">AppleScript ↔ Illustrator gotchas — permanent reference<a class="headerlink" href="#applescript-illustrator-gotchas-permanent-reference" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Failure-mode catalogue for the <code>osascript</code> / <code>do javascript</code> /
+<code>current document</code> bridge that <code>apply-jsx</code> rides on. Every entry
+below cost real time and shipped a regression at least once. Keep
+them here so the next person debugging the JSX path can search
+instead of rediscovering.</p>
+<p>Companion to: <code>apply-jsx-bugfixes-notes.md</code> (Issues #8/#10/#11/#13),
+<code>apply-jsx-converted-trailing-space.md</code> (Issue #14), and
+<code>docs/POSTMORTEM.md</code> Attempt 9.</p>
+<p>Source under test: <code>src/arch_line_weights/apply_jsx.py</code>.</p>
+</blockquote>
+<h2 id="1-name-of-active-document-parser-failure-on-illustrator-2026">1. <code>name of active document</code> parser failure on Illustrator 2026<a class="headerlink" href="#1-name-of-active-document-parser-failure-on-illustrator-2026" title="Permanent link">&para;</a></h2>
+<p><strong>Symptom.</strong> <code>osascript</code> exits 1 with
+<code>Expected end of line, but found class name. (-2741)</code>.</p>
+<p><strong>Trigger.</strong> The literal AppleScript</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">tell</span> <span class="nb">application</span> <span class="s2">&quot;Adobe Illustrator&quot;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  <span class="k">set</span> <span class="nv">docName</span> <span class="k">to</span> <span class="na">name</span> <span class="k">of</span> <span class="na">active</span> <span class="na">document</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">end</span> <span class="k">tell</span>
+</code></pre></div>
+<p>works on Illustrator 2024 / 2025, but fails on Illustrator 2026
+(Adobe build 30.x). The dictionary on 2026 has both a <code>name</code> <em>property</em>
+and a <code>name</code> <em>class</em>, and the parser cannot disambiguate the noun
+phrase at this exact token sequence.</p>
+<p><strong>Fix.</strong> Two adjustments combined reliably; either alone is fragile:</p>
+<ol>
+<li>Use <strong><code>current document</code></strong> instead of <code>active document</code>. Same
+   semantics, distinct dictionary path.</li>
+<li>Wrap the property access in <strong><code>(get name of current document)</code></strong> so
+   the parser binds the property to the receiver explicitly.</li>
+</ol>
+<p>Working form (the one shipped in <code>apply_jsx.py::query_active_doc</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">tell</span> <span class="nb">application</span> <span class="s2">&quot;Adobe Illustrator&quot;</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  <span class="k">if</span> <span class="p">(</span><span class="nb">count</span> <span class="k">of</span> <span class="nb">documents</span><span class="p">)</span> <span class="ow">is</span> <span class="mi">0</span> <span class="k">then</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="no">return</span> <span class="s2">&quot;&quot;</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  <span class="k">end</span> <span class="k">if</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  <span class="k">set</span> <span class="nv">docName</span> <span class="k">to</span> <span class="p">(</span><span class="k">get</span> <span class="na">name</span> <span class="k">of</span> <span class="nv">current</span> <span class="na">document</span><span class="p">)</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  <span class="k">try</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="k">set</span> <span class="nv">docPath</span> <span class="k">to</span> <span class="nv">POSIX</span> <span class="na">path</span> <span class="k">of</span> <span class="p">(</span><span class="nv">file</span> <span class="na">path</span> <span class="k">of</span> <span class="nv">current</span> <span class="na">document</span><span class="p">)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  <span class="nb">on</span> <span class="k">error</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="k">set</span> <span class="nv">docPath</span> <span class="k">to</span> <span class="s2">&quot;&quot;</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  <span class="k">end</span> <span class="k">try</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>  <span class="no">return</span> <span class="nv">docName</span> <span class="o">&amp;</span> <span class="s2">&quot;|&quot;</span> <span class="o">&amp;</span> <span class="nv">docPath</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="k">end</span> <span class="k">tell</span>
+</code></pre></div>
+<p><strong>Cited.</strong> v0.6.4 (<code>5641ddf</code>). Originally introduced in v0.6.1 as part
+of Issue #10; shipped broken on 2026 because all unit tests mocked
+<code>subprocess.run</code>, so neither <code>osascript</code> nor <code>osacompile</code> ever saw the
+literal. Issue #10 + the v0.6.5 integration tests are the regression
+backstop.</p>
+<h2 id="2-converted-virtual-document-state">2. <code>[Converted]</code> virtual document state<a class="headerlink" href="#2-converted-virtual-document-state" title="Permanent link">&para;</a></h2>
+<p><strong>Symptom.</strong> <code>apply-jsx</code> prints <code>ERROR: target doc not open: &lt;path&gt;</code>
+even though Illustrator clearly has the file open. AppleScript
+<code>open POSIX file "..."</code> returns silently a few seconds before; the JSX
+then can't find the target by <code>fullName.fsName</code>.</p>
+<p><strong>Trigger.</strong> When Illustrator opens any non-AI source — a PDF, an older
+<code>.ai</code>, or anything Illustrator considers foreign — it loads the file
+into a <em>virtual</em> document titled <code>&lt;basename&gt; [Converted]</code>. The disk file
+is unmodified and there is no in-memory <code>Document</code> whose <code>fullName.fsName</code>
+matches the disk path. <code>tell application "Adobe Illustrator" to open
+POSIX file "..."</code> is a no-op against a <code>[Converted]</code> doc.</p>
+<p><strong>Fix.</strong> Two-pronged in <code>apply_jsx.py</code>:</p>
+<ol>
+<li>Pre-flight call to <code>query_active_doc()</code> to read the active doc name</li>
+<li>saved path.</li>
+<li>If the active doc name contains <code>[Converted]</code> and <code>_is_converted_match</code>
+   recognizes it as the same file as <code>src</code> (after whitespace
+   normalization, see #4), set <code>USE_OPEN_DOC=true</code> in the rendered JSX.
+   The JSX then runs against <code>app.activeDocument</code> directly and skips
+   the brittle <code>open POSIX file</code> step.</li>
+</ol>
+<p><strong>Cited.</strong> Issue #10, v0.6.1 (<code>d97c2be</code>). Required v0.6.4 to actually
+fire because of #1 above.</p>
+<h2 id="3-disk-filenames-with-trailing-whitespace">3. Disk filenames with trailing whitespace<a class="headerlink" href="#3-disk-filenames-with-trailing-whitespace" title="Permanent link">&para;</a></h2>
+<p><strong>Symptom.</strong> A Rhino-exported file literally named
+<code>wall section iso cut .ai</code> (note the trailing space before <code>.ai</code>) was
+opened in Illustrator as <code>wall section iso cut  [Converted].ai</code> (two
+spaces between <code>cut</code> and <code>[Converted]</code>), and the v0.6.1 <code>_is_converted_match</code>
+helper failed to recognize the relationship.</p>
+<p><strong>Trigger.</strong> APFS preserves trailing whitespace in filenames byte-for-byte.
+Rhino's exporter produces such names whenever the source layer name ends
+in a space — which is common because Rhino doesn't strip trailing
+whitespace from layer names. Illustrator's display logic is <em>also</em>
+inconsistent across versions: sometimes it preserves the trailing space
+(yielding two consecutive spaces before <code>[Converted]</code>), sometimes it
+strips it (yielding one).</p>
+<p><strong>Fix.</strong> <code>_is_converted_match</code> now:</p>
+<ol>
+<li>Peels the <code>[Converted]</code> decoration via the regex
+   <code>\s*\[Converted\]\s*(?:\.[A-Za-z0-9]+)?\s*$</code>.</li>
+<li>Strips trailing whitespace via <code>str.rstrip()</code> (full Unicode — covers
+   ASCII space, tab, NBSP, U+00A0, etc.) on <strong>both</strong> sides.</li>
+<li>Compares the normalized stems for equality.</li>
+<li>Falls back to a legacy candidate-suffix sweep for pre-existing exact
+   shapes.</li>
+</ol>
+<p><code>query_active_doc()</code> correspondingly switched from <code>.strip()</code> to
+<code>rstrip("\r\n")</code> so trailing whitespace inside the doc-name field
+survives the osascript round-trip.</p>
+<p><strong>Cited.</strong> Issue #14, v0.6.3 (<code>087f402</code>). 24 test cases in
+<code>tests/test_apply_jsx_converted_match.py</code> cover the full whitespace
+matrix. See also <code>docs/research/apply-jsx-converted-trailing-space.md</code>.</p>
+<h2 id="4-osacompile-vs-osascript-e-quoting-and-n-handling">4. <code>osacompile</code> vs <code>osascript -e</code> — quoting and <code>\n</code> handling<a class="headerlink" href="#4-osacompile-vs-osascript-e-quoting-and-n-handling" title="Permanent link">&para;</a></h2>
+<p><strong>Symptom.</strong> A test that piped a heredoc through <code>osascript -e</code> passed,
+but the same literal compiled via <code>osacompile</code> failed. Or vice versa.</p>
+<p><strong>Trigger.</strong> The two tools take input differently:</p>
 <ul>
-<li><code>apply-saas</code> — B6 stroke-width rewrite only (no poché)</li>
-<li><code>apply-saas --poche</code> — B6 + B7 (rewrite + poché injection)</li>
-<li><code>apply-jsx</code> — Illustrator-driven path (skipped if osascript / Illustrator unavailable)</li>
+<li><code>osascript -e '&lt;script&gt;'</code> accepts a single string; <code>\n</code> inside that
+  string is <strong>literal</strong> unless your shell interpolates it. AppleScript
+  itself uses <code>\r</code> (CR) for line breaks at the source level when written
+  via <code>-e</code>. Multi-line scripts via <code>-e</code> typically use one <code>-e</code> per line.</li>
+<li><code>osacompile -o out.scpt in.applescript</code> reads a file. Source uses
+  newlines (LF or CR) directly; <code>\n</code> in the file is <strong>literal <code>\n</code></strong> and
+  will fail to compile.</li>
 </ul>
-<h2 id="v05-v06x-summary-reference-section-drawing">v0.5 → v0.6.x summary (reference section drawing)<a class="headerlink" href="#v05-v06x-summary-reference-section-drawing" title="Permanent link">&para;</a></h2>
-<p>The v0.6.x cluster between Apr 30 → May 5 added five new code paths that
-all run on the default <code>apply-saas</code>/<code>apply-saas --poche</code> pipeline:</p>
+<p>In <code>apply_jsx.py::query_active_doc</code>, the AppleScript literal uses
+explicit <code>\n</code> characters in a Python triple-string. When passed to
+<code>subprocess.run(["osascript", "-e", script], ...)</code>, Python sends the
+string with real newline bytes — <code>osascript -e</code> accepts that on macOS
+13+. The integration test
+<code>test_applescript_syntax_compiles</code> (v0.6.5) writes the <em>same</em> literal
+to a temp <code>.applescript</code> file and runs <code>osacompile</code> against it; that
+verifies the source survives both ingestion paths. Both must pass for
+the bridge to be safe in production.</p>
+<p><strong>Recipe.</strong> When in doubt, prefer real newlines in the Python literal
+over <code>\n</code> escapes. Treat any AppleScript that round-trips through
+<code>osascript -e</code> as suspect until <code>osacompile</code> has accepted the same
+bytes.</p>
+<p><strong>Cited.</strong> v0.6.5 (<code>6c965bd</code>), <code>tests/integration/test_apply_jsx_applescript.py</code>.
+v0.6.6 (<code>e7f6363</code>) added the <code>_illustrator_installed()</code> skip predicate
+because <code>osacompile</code> cannot resolve Illustrator's dictionary classes
+on machines without Illustrator installed (CI runners).</p>
+<h2 id="5-the-120-second-applescript-default-timeout">5. The 120-second AppleScript default timeout<a class="headerlink" href="#5-the-120-second-applescript-default-timeout" title="Permanent link">&para;</a></h2>
+<p><strong>Symptom.</strong> Long-running JSX (Illustrator chewing on 100K+ paths)
+gets killed at exactly 120 s by AppleScript even though Illustrator
+itself is still working. The user sees an <code>Apple event timed out
+(-1712)</code> error from <code>osascript</code>.</p>
+<p><strong>Trigger.</strong> AppleScript's default timeout for any <code>tell</code> block is
+<strong>120 seconds</strong>. Long <code>do javascript</code> payloads exceed this routinely.</p>
+<p><strong>Fix.</strong> Wrap every <code>tell application "Adobe Illustrator"</code> block in
+<code>with timeout of N seconds</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">with timeout of</span> <span class="mi">1800</span> <span class="nv">seconds</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  <span class="k">tell</span> <span class="nb">application</span> <span class="s2">&quot;Adobe Illustrator&quot;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="nv">do</span> <span class="nv">javascript</span> <span class="p">(</span><span class="nb">read</span> <span class="nv">POSIX</span> <span class="nv">file</span> <span class="s2">&quot;/tmp/arch_lw_apply.jsx&quot;</span> <span class="k">as</span> «<span class="nb">class utf8</span>»<span class="p">)</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  <span class="k">end</span> <span class="k">tell</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">end</span> <span class="nv">timeout</span>
+</code></pre></div>
+<p><code>apply_jsx.py::run_jsx_in_illustrator</code> uses <code>timeout</code> parameter (default
+3600 s) and <code>apply_jsx.py::open_in_illustrator</code> uses 1800 s. The
+subprocess-side <code>subprocess.run(..., timeout=timeout + 60)</code> is an
+outer guard that adds 60 s of grace.</p>
+<p><strong>Cited.</strong> Lesson #13 in <code>docs/LESSONS_LEARNED.md</code>; Issue #11 (v0.6.1,
+<code>d97c2be</code>) made the inner number configurable via <code>--timeout MINUTES</code>
+and the <code>ARCH_LW_JSX_TIMEOUT_MIN</code> env var because 60 min was wrong both
+ways (waste on small files, false-abort on big ones).</p>
+<h2 id="6-the-do-javascript-extendscript-bridge">6. The <code>do javascript</code> ExtendScript bridge<a class="headerlink" href="#6-the-do-javascript-extendscript-bridge" title="Permanent link">&para;</a></h2>
+<p><strong>Symptom.</strong> The JSX inside <code>apply_jsx.py::JSX_TEMPLATE</code> runs fine when
+double-clicked into Illustrator's Scripts panel but throws
+<code>SyntaxError</code> or returns silently when invoked through
+<code>do javascript ... as «class utf8»</code>.</p>
+<p><strong>Trigger.</strong> Two common mistakes:</p>
+<ol>
+<li><strong>Encoding cast missing</strong> — <code>do javascript (read POSIX file "X")</code>
+   reads as MacRoman by default. The <code>as «class utf8»</code> cast is required
+   for any non-ASCII content (and any source that may contain emdashes,
+   smart quotes, or comments in non-English text).</li>
+<li><strong>ExtendScript is ES3-ish.</strong> No <code>let</code>, no arrow functions, no
+   <code>Array.prototype.find</code>, no native <code>JSON</code>. The JSX template uses
+   <code>var</code>, plain <code>function</code>, and explicit string concatenation. Polyfills
+   exist but the simpler fix is staying in vanilla.</li>
+</ol>
+<p><strong>Fix.</strong> Always read with <code>as «class utf8»</code>; always lint the JSX
+against ExtendScript-compatible syntax. The <code>apply_jsx.py</code> template is
+the canonical reference; copy from it rather than re-deriving.</p>
+<p><strong>Cited.</strong> Lessons #17, #18 in <code>docs/LESSONS_LEARNED.md</code>. The
+<code>run_jsx_in_illustrator</code> helper.</p>
+<h2 id="7-osascript-patterns-to-test-with-what-works-and-what-fails">7. <code>osascript</code> patterns to test with — what works and what fails<a class="headerlink" href="#7-osascript-patterns-to-test-with-what-works-and-what-fails" title="Permanent link">&para;</a></h2>
+<p>Quick reference table for the syntaxes we've actually exercised in
+production. <code>IL = Illustrator</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Form</th>
+<th>Works on Illustrator 2024+</th>
+<th>Works on 2026 (build 30.x)</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name of active document</code></td>
+<td>✅</td>
+<td>❌ (-2741)</td>
+<td>Fail #1 above. Use <code>current document</code>.</td>
+</tr>
+<tr>
+<td><code>name of current document</code></td>
+<td>✅</td>
+<td>❌ (-2741) sometimes</td>
+<td>Wrap in <code>(get …)</code>.</td>
+</tr>
+<tr>
+<td><code>(get name of current document)</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>Canonical form.</td>
+</tr>
+<tr>
+<td><code>POSIX path of (file path of current document)</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>Wrap in <code>try</code> — virtual <code>[Converted]</code> docs raise.</td>
+</tr>
+<tr>
+<td><code>POSIX path of (file path of active document)</code></td>
+<td>✅</td>
+<td>⚠️ flaky</td>
+<td>Same <code>name</code>-class ambiguity infects siblings.</td>
+</tr>
+<tr>
+<td><code>count of documents</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>Always check before accessing <code>current document</code>.</td>
+</tr>
+<tr>
+<td><code>tell IL to open POSIX file "X"</code> against saved doc</td>
+<td>✅</td>
+<td>✅</td>
+<td>Standard happy path.</td>
+</tr>
+<tr>
+<td><code>tell IL to open POSIX file "X"</code> against <code>[Converted]</code> doc</td>
+<td>❌</td>
+<td>❌</td>
+<td>Silently no-ops. Fail #2. Use <code>USE_OPEN_DOC</code> mode.</td>
+</tr>
+<tr>
+<td><code>do javascript "..."</code> (inline)</td>
+<td>✅</td>
+<td>✅</td>
+<td>Beware shell quoting nightmares for &gt;1 line.</td>
+</tr>
+<tr>
+<td><code>do javascript (read POSIX file "X")</code> (no cast)</td>
+<td>⚠️ MacRoman</td>
+<td>⚠️ MacRoman</td>
+<td>Add <code>as «class utf8»</code>.</td>
+</tr>
+<tr>
+<td><code>do javascript (read POSIX file "X" as «class utf8»)</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>Canonical form.</td>
+</tr>
+<tr>
+<td><code>with timeout of N seconds … end timeout</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>Default is 120 s — always wrap.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Cited.</strong> Aggregate of all of the above; tested live during
+v0.6.4 / v0.6.5 against the user's Illustrator 2026 build 30.3.0
+on macOS 14 Sonoma.</p>
+<h2 id="8-sanity-check-matrix-for-any-future-change-to-query_active_doc">8. Sanity-check matrix for any future change to <code>query_active_doc</code><a class="headerlink" href="#8-sanity-check-matrix-for-any-future-change-to-query_active_doc" title="Permanent link">&para;</a></h2>
+<p>If you touch the AppleScript literal in <code>apply_jsx.py</code>, run all three:</p>
+<ol>
+<li><strong><code>osacompile</code> syntax check</strong> — proves the literal parses against
+   the installed Illustrator dictionary (<code>tests/integration/</code>).</li>
+<li><strong><code>osascript</code> live execution</strong> — proves the bound semantics work
+   against a running Illustrator.</li>
+<li><strong>Real <code>[Converted]</code> doc test</strong> — open a non-AI source (any PDF will
+   do), then run <code>apply-jsx</code> against the disk path. Wrapper should
+   print the <code># detected [Converted] doc …</code> line.</li>
+</ol>
+<p>Don't trust <code>subprocess.run</code> mocks alone. Both v0.6.1 and v0.6.3
+shipped with broken AppleScript because the unit tests passed against
+mocks while the literal was rejected by the parser. v0.6.5 added the
+syntax-compile integration test specifically to plug this regression
+class.</p>
+<p><strong>Cited.</strong> v0.6.5 commit message + the postmortem note in v0.6.6 (CI
+fix when Illustrator isn't installed at all on the runner).</p>
+<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>bridge-best default flip</strong> (v0.6.0) — rescue ladder now picks the
-  best of <em>all</em> successful rungs by confidence × polygon count, instead
-  of returning on first success. Does more strategy work per layer.</li>
-<li><strong>alpha-shape rescue rung</strong> (v0.6.0) — extra rung between auto-bridge
-  and concave_hull. Runs <code>scipy.spatial.Delaunay</code> on segment endpoints.</li>
-<li><strong>LLM topology rescue rung</strong> (v0.6.3) — opt-in LLM-driven rung;
-  default off, no runtime cost when disabled.</li>
-<li><strong><code>[Converted]</code> state detection</strong> (v0.6.3) — apply-jsx-only; no
-  measurable cost on the SaaS pipeline.</li>
-<li><strong>JSX heartbeat</strong> (v0.6.x) — apply-jsx-only; no SaaS cost.</li>
-</ul>
-<p>So the only stages with real runtime impact at default settings are
-<strong>bridge-best</strong> (apply-saas + --poche, all layers) and <strong>alpha-shape</strong>
-(--poche only, on layers that fail earlier rungs).</p>
-<table>
-<thead>
-<tr>
-<th>stage</th>
-<th>v0.5 (2026-05-01, runs=3)</th>
-<th>v0.6.x (2026-05-05, runs=3)</th>
-<th>delta (median)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>apply-saas</code> median</td>
-<td>24.03s (best 22.66s)</td>
-<td>27.95s (best 27.33s)</td>
-<td><strong>+3.92s (+16%)</strong></td>
-</tr>
-<tr>
-<td><code>apply-saas --poche</code> median</td>
-<td>26.35s (best 25.23s)</td>
-<td>26.13s (best 25.33s)</td>
-<td><strong>−0.22s (−1%)</strong></td>
-</tr>
-</tbody>
-</table>
-<p>Reference input: <code>DRAWING 4 SECTION [Converted].ai</code> (24 MB, 62 layers,
-23 cut). Same hardware (M-series Mac, macOS 26.4.1).</p>
-<p><strong>apply-saas regressed ~16%</strong> on the reference drawing. The most likely
-cause is the bridge-best default flip — every layer now runs every
-rung rather than short-circuiting on the first success. We considered
-this a deliberate quality/perf trade in v0.6.0 (it rescued 4 layers
-that bare linemerge missed) so the regression is acceptable, but worth
-documenting.</p>
-<p><strong>apply-saas --poche</strong> is statistically flat — the extra alpha-shape
-rung runs only when other rungs fail, which on this drawing is rare
-(20/20 layers polygonized cleanly via earlier rungs). The slight
-improvement could be noise; it could also be that bridge-best now
-returns the cheapest valid rung instead of always running through
-heavier fallbacks.</p>
-<h2 id="run-2026-05-01-074315-utc-runs3">Run 2026-05-01 07:43:15 UTC (runs=3)<a class="headerlink" href="#run-2026-05-01-074315-utc-runs3" title="Permanent link">&para;</a></h2>
-<p>Platform: <code>macOS-26.4.1-arm64-arm-64bit</code> — Python 3.11.7</p>
-<table>
-<thead>
-<tr>
-<th>file</th>
-<th style="text-align: right;">input</th>
-<th style="text-align: right;">layers</th>
-<th style="text-align: right;">cut</th>
-<th>apply-saas</th>
-<th>apply-saas --poche</th>
-<th>apply-jsx</th>
-<th style="text-align: right;">output (poche)</th>
-<th style="text-align: right;">polygons</th>
-<th style="text-align: right;">success</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>test.ai</code></td>
-<td style="text-align: right;">24,468,895</td>
-<td style="text-align: right;">62</td>
-<td style="text-align: right;">23</td>
-<td>21.21s (best 20.96s)</td>
-<td>22.09s (best 21.97s)</td>
-<td>skipped (skipped via --no-jsx)</td>
-<td style="text-align: right;">18,634,633</td>
-<td style="text-align: right;">287</td>
-<td style="text-align: right;">100%</td>
-</tr>
-</tbody>
-</table>
-<h2 id="run-2026-05-01-074546-utc-runs3">Run 2026-05-01 07:45:46 UTC (runs=3)<a class="headerlink" href="#run-2026-05-01-074546-utc-runs3" title="Permanent link">&para;</a></h2>
-<p>Platform: <code>macOS-26.4.1-arm64-arm-64bit</code> — Python 3.11.7</p>
-<table>
-<thead>
-<tr>
-<th>file</th>
-<th style="text-align: right;">input</th>
-<th style="text-align: right;">layers</th>
-<th style="text-align: right;">cut</th>
-<th>apply-saas</th>
-<th>apply-saas --poche</th>
-<th>apply-jsx</th>
-<th style="text-align: right;">output (poche)</th>
-<th style="text-align: right;">polygons</th>
-<th style="text-align: right;">success</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>test.ai</code></td>
-<td style="text-align: right;">24,468,895</td>
-<td style="text-align: right;">62</td>
-<td style="text-align: right;">23</td>
-<td>24.03s (best 22.66s)</td>
-<td>26.35s (best 25.23s)</td>
-<td>skipped (apply-jsx exceeded 180s — Illustrator may be unresponsive)</td>
-<td style="text-align: right;">18,634,633</td>
-<td style="text-align: right;">287</td>
-<td style="text-align: right;">100%</td>
-</tr>
-</tbody>
-</table>
-<h2 id="run-2026-05-05-211448-utc-runs3-v06x">Run 2026-05-05 21:14:48 UTC (runs=3) — v0.6.x<a class="headerlink" href="#run-2026-05-05-211448-utc-runs3-v06x" title="Permanent link">&para;</a></h2>
-<p>Platform: <code>macOS-26.4.1-arm64-arm-64bit</code> — Python 3.11.7. arch-line-weights v0.6.6.</p>
-<p>First v0.6.x run. Three inputs covering small section, reference
-section, and large plan (first non-section drawing benchmarked).</p>
-<table>
-<thead>
-<tr>
-<th>file</th>
-<th style="text-align: right;">input</th>
-<th style="text-align: right;">layers</th>
-<th style="text-align: right;">cut</th>
-<th>apply-saas</th>
-<th>apply-saas --poche</th>
-<th>apply-jsx</th>
-<th style="text-align: right;">output (poche)</th>
-<th style="text-align: right;">polygons</th>
-<th style="text-align: right;">success</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>wall_section_iso.ai</code></td>
-<td style="text-align: right;">4,169,759</td>
-<td style="text-align: right;">39</td>
-<td style="text-align: right;">16</td>
-<td>2.69s (best 2.66s)</td>
-<td>3.20s (best 3.16s)</td>
-<td>skipped (skipped via --no-jsx)</td>
-<td style="text-align: right;">2,854,583</td>
-<td style="text-align: right;">71</td>
-<td style="text-align: right;">100%</td>
-</tr>
-<tr>
-<td><code>reference_section.ai</code></td>
-<td style="text-align: right;">24,468,895</td>
-<td style="text-align: right;">62</td>
-<td style="text-align: right;">23</td>
-<td>27.95s (best 27.33s)</td>
-<td>26.13s (best 25.33s)</td>
-<td>skipped (skipped via --no-jsx)</td>
-<td style="text-align: right;">18,634,633</td>
-<td style="text-align: right;">287</td>
-<td style="text-align: right;">100%</td>
-</tr>
-</tbody>
-</table>
-<h2 id="run-2026-05-05-212339-utc-runs1-v06x-macro-plan">Run 2026-05-05 21:23:39 UTC (runs=1) — v0.6.x macro plan<a class="headerlink" href="#run-2026-05-05-212339-utc-runs1-v06x-macro-plan" title="Permanent link">&para;</a></h2>
-<p>Platform: <code>macOS-26.4.1-arm64-arm-64bit</code> — Python 3.11.7. arch-line-weights v0.6.6.</p>
-<p>First-ever benchmark on the 98 MB macro plan. Only 1 iteration to
-stay inside the 30 min wall-clock budget — earlier real-world
-runs reported "~5 min" but those were likely cold-cache + apply-jsx;
-in steady-state the SaaS pipeline is much faster (~80–90 s).</p>
-<table>
-<thead>
-<tr>
-<th>file</th>
-<th style="text-align: right;">input</th>
-<th style="text-align: right;">layers</th>
-<th style="text-align: right;">cut</th>
-<th>apply-saas</th>
-<th>apply-saas --poche</th>
-<th>apply-jsx</th>
-<th style="text-align: right;">output (poche)</th>
-<th style="text-align: right;">polygons</th>
-<th style="text-align: right;">success</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>macro_plan.ai</code></td>
-<td style="text-align: right;">98,056,614</td>
-<td style="text-align: right;">49</td>
-<td style="text-align: right;">0</td>
-<td>81.45s (best 81.45s)</td>
-<td>89.07s (best 89.07s)</td>
-<td>skipped (skipped via --no-jsx)</td>
-<td style="text-align: right;">72,786,579</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0%</td>
-</tr>
-</tbody>
-</table>
-<h3 id="anomalies-notes-v06x">Anomalies &amp; notes (v0.6.x)<a class="headerlink" href="#anomalies-notes-v06x" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Reference apply-saas runs are slower in v0.6.x</strong> (~28 s vs ~24 s
-  in v0.5; +16 % median). Attributed to bridge-best default flip — the
-  rescue ladder now traverses all rungs and selects best-by-confidence
-  rather than first-success. This is a deliberate quality/perf
-  trade-off documented in CHANGELOG v0.6.0.</li>
-<li><strong>Reference apply-saas --poche is unchanged</strong> (~26 s). Alpha-shape
-  rescue rung does not fire on this drawing (20/20 cut layers
-  polygonize via earlier rungs) so its zero-cost guarantee holds.</li>
-<li><strong>Macro plan --poche is a no-op as predicted</strong> — <code>cut_layer_count=0</code>
-  (it's a plan, not a section). <code>--poche</code> runs B6 then has no
-  ClippingPlaneIntersections layers to polygonize. The 8 s overhead
-  vs apply-saas (89.07 vs 81.45) is the polygon-discovery scan
-  finding nothing.</li>
-<li><strong>Macro success rate shows 0 %</strong> because <code>layers_targeted=0</code> —
-  table cell is correct; nothing to inject. Don't read it as a
-  failure.</li>
-<li><strong>Macro is 4× the input size of the reference but only ~3× the
-  apply-saas time</strong> (81 s vs 28 s). Throughput: ~120 MB/s for the
-  reference, ~80 MB/s for the macro — modestly sub-linear, suggests
-  pikepdf parsing dominates rather than the bridge-best traversal.</li>
+<li><code>docs/POSTMORTEM.md</code> Attempt 9 — narrative of the run that surfaced
+  Issues #8/#10/#11/#13.</li>
+<li><code>docs/LESSONS_LEARNED.md</code> lessons #10–#18 and #44 — durable form of
+  the lessons distilled here.</li>
+<li><code>docs/research/apply-jsx-bugfixes-notes.md</code> — implementation details
+  for the v0.6.1 fix cluster.</li>
+<li><code>docs/research/apply-jsx-converted-trailing-space.md</code> — the Issue
+  #14 trailing-whitespace edge case.</li>
+<li><code>docs/research/personal-use-log.md</code> Entry 2 — first real-world run
+  that exercised the full <code>[Converted]</code> + trailing-space + 2026
+  AppleScript stack end-to-end.</li>
 </ul>
 
 

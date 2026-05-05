@@ -1072,6 +1072,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#entry-2-2026-05-05-wall-section-iso-cut-ai-arch-211-wall-section-trailing-space-disk-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entry 2 — 2026-05-05 — wall section iso cut .ai (ARCH 211 wall section, trailing-space disk name)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1268,6 +1279,46 @@ decide whether to advance to Phase B.</p>
 <li>Different default output paths for <code>apply-jsx</code> (<code>HIERARCHY-jsx.ai</code>) vs <code>apply-saas</code> (<code>HIERARCHY-saas.ai</code>) to prevent overwrite races</li>
 <li><strong>Decision</strong>: ✅ <strong>tool good enough for plan drawings via <code>apply-saas</code></strong> — major win. ⚠️ apply-jsx path has rough edges that need fixing before it's reliable on large files.</li>
 </ul>
+<h3 id="entry-2-2026-05-05-wall-section-iso-cut-ai-arch-211-wall-section-trailing-space-disk-name">Entry 2 — 2026-05-05 — <code>wall section iso cut .ai</code> (ARCH 211 wall section, trailing-space disk name)<a class="headerlink" href="#entry-2-2026-05-05-wall-section-iso-cut-ai-arch-211-wall-section-trailing-space-disk-name" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Source file</strong>: <code>/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 211/wall section iso cut .ai</code> (note literal trailing space before <code>.ai</code>)</li>
+<li><strong>File size MB</strong>: 12.6</li>
+<li><strong>Stroke count</strong>: not enumerated (apply-jsx path; classifier ran on layer names, not strokes)</li>
+<li><strong>OCG layer count</strong>: ~30 leaf layers classified by the semantic classifier</li>
+<li><strong>Cut layers total</strong>: N/A (handled implicitly by classifier; no separate poché run)</li>
+<li><strong>Cut layers polygonized cleanly</strong>: N/A</li>
+<li><strong>Cut layers needing <strong>POCHE_CLOSE</strong></strong>: N/A</li>
+<li><strong>Cut layers fully failed</strong>: N/A</li>
+<li><strong>Hierarchy preset used</strong>: <strong>section</strong> (wall section drawing, iso-cut)</li>
+<li><strong>Scale flag</strong>: default</li>
+<li><strong>Print flag</strong>: no (screen weights)</li>
+<li><strong>Estimated manual time it would have taken</strong>: ~2 hrs (wall-section detail, ~30 layers × ~4 min per layer)</li>
+<li><strong>Actual time spent (incl. CLI runtime + manual fixes)</strong>: ~2 min CLI + 0 min manual = ~2 min</li>
+<li><strong>Estimated hours saved vs manual</strong>: ~2 hrs</li>
+<li><strong>Manual fixes needed</strong>: 0</li>
+<li><strong>Pipeline used</strong>: <code>apply-jsx --preset section</code> against the open <code>[Converted]</code> doc (corrupt disk file forced the JSX path; pikepdf could not open the trailer-corrupt source).</li>
+<li><strong>Output</strong>: <code>wall section iso cut  HIERARCHY-jsx.ai</code> (3.79 MB; note Issue #12 suffix <code>HIERARCHY-jsx</code>)</li>
+<li><strong>Tier breakdown</strong> (full per-layer dump in <code>/private/tmp/claude-501/tasks/b6ljidqr4.output</code>):</li>
+<li>1.0 pt — section-cut tier</li>
+<li>0.5 pt — primary structural profile</li>
+<li>0.35 pt — secondary profile / frames</li>
+<li>0.30 pt — minor profile</li>
+<li>0.18 pt — texture / hatching</li>
+<li>0.13 pt — hairline / annotation</li>
+<li><strong>What worked well</strong>:</li>
+<li><strong><code>[Converted]</code> state detection engaged correctly</strong> — the v0.6.4 AppleScript fix (<code>current document</code> + <code>(get name of …)</code>) resolved Illustrator 2026 build 30.x's <code>name</code>-property/class ambiguity, and the v0.6.3 trailing-whitespace normalization in <code>_is_converted_match</code> handled <code>wall section iso cut  [Converted].ai</code> → <code>wall section iso cut .ai</code> correctly.</li>
+<li>Wrapper printed the <code># detected [Converted] doc … operating on the open document directly (Issue #10)</code> line and skipped the brittle <code>open POSIX file</code> step.</li>
+<li>Semantic classifier hit ~30 leaf layers and tiered them across the 6-step ladder cleanly.</li>
+<li>Output saved with the new <code>HIERARCHY-jsx</code> suffix (Issue #12 fix), so it doesn't collide with any future <code>apply-saas</code> run on the same source.</li>
+<li>Heartbeat poller (Issue #8) printed per-layer progress; no stale-warning fired.</li>
+<li><strong>What didn't work / what surprised me</strong>:</li>
+<li><strong>Original disk file is trailer-corrupt</strong> — <code>pikepdf.open()</code> raised on <code>wall section iso cut .ai</code>; same root cause as <code>macro.ai</code> in Entry 1. The headless pure-Python path (<code>apply-saas</code>) is NOT a fallback when the source is structurally broken at the PDF trailer. Required Illustrator Save-As workaround would have produced a clean 12 MB version, but since Illustrator already had the file open as <code>[Converted]</code>, the JSX path operated on the in-memory doc instead — convenient but circumstantial.</li>
+<li>The trailing-space disk filename is a real-world artifact of Rhino's exporter (a layer name ending in space leaks into the export filename). Issue #14 fixed this for the matcher but the source-file-corruption gap remains.</li>
+<li><strong>What I'd add to the tool because of this</strong>:</li>
+<li>Detect trailer-corrupt <code>.ai</code> files in <code>apply-saas</code> and surface a clear "Open in Illustrator and Save As, or use <code>apply-jsx</code> against the open doc" message instead of the raw pikepdf traceback.</li>
+<li>Per-layer tier breakdown could be persisted next to the output (e.g. <code>&lt;output&gt;.tiers.json</code>) instead of only living in the JSX report file.</li>
+<li><strong>Decision</strong>: ✅ <strong><code>apply-jsx</code> is now reliable on real corrupt-source drawings</strong> thanks to the v0.6.1 / v0.6.3 / v0.6.4 issue cluster. The <code>[Converted]</code> + trailing-space + AppleScript-syntax fixes all engaged correctly on a real drawing for the first time.</li>
+</ul>
 <hr />
 <p>(Add new entries above this line)</p>
 <h2 id="roll-up-re-run-aggregation-script-as-entries-accumulate">Roll-up (re-run aggregation script as entries accumulate)<a class="headerlink" href="#roll-up-re-run-aggregation-script-as-entries-accumulate" title="Permanent link">&para;</a></h2>
@@ -1283,10 +1334,10 @@ decide whether to advance to Phase B.</p>
 </thead>
 <tbody>
 <tr>
-<td>2 (reference + macro)</td>
-<td>section, plan</td>
-<td>2/2 (100%)</td>
-<td>~9 hrs</td>
+<td>3 (reference + macro + wall-section)</td>
+<td>section, plan, section-iso</td>
+<td>3/3 pipelines validated</td>
+<td>~11 hrs</td>
 <td>No — need ≥5 drawings</td>
 </tr>
 </tbody>
