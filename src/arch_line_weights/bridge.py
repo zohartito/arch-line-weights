@@ -48,6 +48,7 @@ from __future__ import annotations
 import itertools
 import logging
 import math
+import time
 from dataclasses import dataclass
 
 import numpy as np
@@ -69,6 +70,10 @@ class _Endpoint:
     seg_idx: int  # index into the input segment list
     end: int  # 0 = start vertex, 1 = end vertex
     xy: tuple[float, float]
+
+
+class BridgeSearchTimeout(RuntimeError):
+    """Raised when the depth-first backtracking search exceeds its deadline."""
 
 
 def _collect_endpoints(segments: list[LineString]) -> list[_Endpoint]:
@@ -323,6 +328,9 @@ def _backtrack_search(
     min_gap: float,
     expected: int,
     max_depth: int,
+    *,
+    deadline: float | None = None,
+    check_interval: int = 256,
 ) -> list[LineString]:
     """Depth-bounded backtracking. Returns the bridge set that produced the
     most polygons via ``linemerge + polygonize``, breaking ties by fewer
@@ -344,11 +352,18 @@ def _backtrack_search(
     # heapq.
     best: dict[str, list[LineString]] = {"bridges": []}
     best_score: list[int] = [_polygon_count(segments), 0]  # [n_polys, -n_bridges]
+    visits = 0
 
     def search(start_idx: int, depth: int) -> bool:
         """Returns True iff we found a configuration that hits ``expected``;
         in that case the recursion can short-circuit. Otherwise it just
         updates ``best`` and lets the caller continue exploring."""
+        nonlocal visits
+        visits += 1
+        if deadline is not None and visits % check_interval == 0 and time.monotonic() >= deadline:
+            raise BridgeSearchTimeout(
+                f"backtracking exceeded deadline after {visits:,} search nodes"
+            )
         n_polys = _polygon_count(segments + bridges)
         score = (n_polys, -len(bridges))
         if (score[0], score[1]) > (best_score[0], best_score[1]):
@@ -394,6 +409,8 @@ def infer_bridges_backtrack(
     max_gap: float = 50.0,
     min_gap: float = 0.01,
     max_depth: int = 8,
+    *,
+    deadline: float | None = None,
 ) -> tuple[list[LineString], float]:
     """Infer bridge segments via depth-bounded backtracking.
 
@@ -445,7 +462,13 @@ def infer_bridges_backtrack(
         return list(segments), 0.0
 
     bridges = _backtrack_search(
-        endpoints, candidates, segments, min_gap, expected, max_depth
+        endpoints,
+        candidates,
+        segments,
+        min_gap,
+        expected,
+        max_depth,
+        deadline=deadline,
     )
     augmented = segments + bridges
     n_polys = _polygon_count(augmented)
@@ -669,6 +692,9 @@ def infer_bridges_best(
     max_gap: float = 50.0,
     min_gap: float = 0.01,
     max_depth: int = 8,
+    *,
+    time_budget_sec: float | None = None,
+    layer_name: str | None = None,
 ) -> tuple[list[LineString], float, str]:
     """Run all available bridging strategies and return the best result.
 
@@ -700,6 +726,15 @@ def infer_bridges_best(
     if not segments:
         return [], 1.0, "none"
 
+    started = time.monotonic()
+    deadline = started + time_budget_sec if time_budget_sec and time_budget_sec > 0 else None
+
+    def _expired() -> bool:
+        return deadline is not None and time.monotonic() >= deadline
+
+    def _context() -> str:
+        return f" layer={layer_name!r}" if layer_name else ""
+
     expected = _expected_polygon_count(len(segments))
     results: list[tuple[tuple[int, float], list[LineString], float, str]] = []
 
@@ -716,65 +751,117 @@ def infer_bridges_best(
             return aug_g, conf_g, "greedy"
     except Exception as e:
         _log.warning(
-            "infer_bridges_best: strategy=greedy raised %s: %s; falling back to next strategy",
+            "infer_bridges_best:%s strategy=greedy raised %s: %s; falling back to next strategy",
+            _context(),
             type(e).__name__,
             e,
         )
 
     # 2. Backtracking.
-    try:
-        aug_b, conf_b = infer_bridges_backtrack(
-            segments, max_gap=max_gap, min_gap=min_gap, max_depth=max_depth
-        )
-        n_b = _polygon_count(aug_b)
-        results.append((_strategy_score(n_b, conf_b, expected), aug_b, conf_b, "backtrack"))
-    except Exception as e:
+    if _expired():
         _log.warning(
-            "infer_bridges_best: strategy=backtrack raised %s: %s; falling back to next strategy",
-            type(e).__name__,
-            e,
+            "infer_bridges_best:%s budget %.2fs exhausted before strategy=backtrack; "
+            "using best result so far",
+            _context(),
+            time_budget_sec or 0.0,
         )
+    else:
+        try:
+            aug_b, conf_b = infer_bridges_backtrack(
+                segments,
+                max_gap=max_gap,
+                min_gap=min_gap,
+                max_depth=max_depth,
+                deadline=deadline,
+            )
+            n_b = _polygon_count(aug_b)
+            results.append((_strategy_score(n_b, conf_b, expected), aug_b, conf_b, "backtrack"))
+        except BridgeSearchTimeout as e:
+            _log.warning(
+                "infer_bridges_best:%s strategy=backtrack timed out after %.2fs: %s; "
+                "using best result so far",
+                _context(),
+                time.monotonic() - started,
+                e,
+            )
+        except Exception as e:
+            _log.warning(
+                "infer_bridges_best:%s strategy=backtrack raised %s: %s; falling back to next strategy",
+                _context(),
+                type(e).__name__,
+                e,
+            )
 
     # 3. DBSCAN-collapsed → bare linemerge.
-    try:
-        collapsed = collapse_endpoint_clusters(segments, eps="adaptive")
-        n_d = _polygon_count(collapsed)
-        # Heuristic confidence: 1.0 if collapse alone is enough (parallels
-        # ``_confidence`` behaviour), else proportional to polygon yield.
-        if n_d >= expected:
-            conf_d = 1.0
-        elif n_d > 0:
-            conf_d = 0.6 * (n_d / expected)
-        else:
-            conf_d = 0.0
-        results.append((_strategy_score(n_d, conf_d, expected), collapsed, conf_d, "dbscan_collapse"))
-    except Exception as e:
+    collapsed = list(segments)
+    if _expired():
         _log.warning(
-            "infer_bridges_best: strategy=dbscan_collapse raised %s: %s; falling back to next strategy",
-            type(e).__name__,
-            e,
+            "infer_bridges_best:%s budget %.2fs exhausted before strategy=dbscan_collapse; "
+            "using best result so far",
+            _context(),
+            time_budget_sec or 0.0,
         )
-        collapsed = list(segments)
+    else:
+        try:
+            collapsed = collapse_endpoint_clusters(segments, eps="adaptive")
+            n_d = _polygon_count(collapsed)
+            # Heuristic confidence: 1.0 if collapse alone is enough (parallels
+            # ``_confidence`` behaviour), else proportional to polygon yield.
+            if n_d >= expected:
+                conf_d = 1.0
+            elif n_d > 0:
+                conf_d = 0.6 * (n_d / expected)
+            else:
+                conf_d = 0.0
+            results.append((_strategy_score(n_d, conf_d, expected), collapsed, conf_d, "dbscan_collapse"))
+        except Exception as e:
+            _log.warning(
+                "infer_bridges_best:%s strategy=dbscan_collapse raised %s: %s; falling back to next strategy",
+                _context(),
+                type(e).__name__,
+                e,
+            )
 
     # 4. DBSCAN-collapsed → backtracking bridger.
-    try:
-        if collapsed and collapsed != list(segments):
-            aug_db, conf_db = infer_bridges_backtrack(
-                collapsed, max_gap=max_gap, min_gap=min_gap, max_depth=max_depth
-            )
-            n_db = _polygon_count(aug_db)
-            results.append((
-                _strategy_score(n_db, conf_db, expected),
-                aug_db,
-                conf_db,
-                "dbscan_collapse+backtrack",
-            ))
-    except Exception as e:
+    if _expired():
         _log.warning(
-            "infer_bridges_best: strategy=dbscan_collapse+backtrack raised %s: %s; falling back to next strategy",
-            type(e).__name__,
-            e,
+            "infer_bridges_best:%s budget %.2fs exhausted before strategy=dbscan_collapse+backtrack; "
+            "using best result so far",
+            _context(),
+            time_budget_sec or 0.0,
         )
+    else:
+        try:
+            if collapsed and collapsed != list(segments):
+                aug_db, conf_db = infer_bridges_backtrack(
+                    collapsed,
+                    max_gap=max_gap,
+                    min_gap=min_gap,
+                    max_depth=max_depth,
+                    deadline=deadline,
+                )
+                n_db = _polygon_count(aug_db)
+                results.append((
+                    _strategy_score(n_db, conf_db, expected),
+                    aug_db,
+                    conf_db,
+                    "dbscan_collapse+backtrack",
+                ))
+        except BridgeSearchTimeout as e:
+            _log.warning(
+                "infer_bridges_best:%s strategy=dbscan_collapse+backtrack timed out after %.2fs: %s; "
+                "using best result so far",
+                _context(),
+                time.monotonic() - started,
+                e,
+            )
+        except Exception as e:
+            _log.warning(
+                "infer_bridges_best:%s strategy=dbscan_collapse+backtrack raised %s: %s; falling back to next strategy",
+                _context(),
+                type(e).__name__,
+                e,
+            )
 
     if not results:
         return list(segments), 0.0, "none"

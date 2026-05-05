@@ -24,11 +24,13 @@ import pikepdf
 import pytest
 from shapely.geometry import Polygon
 
-from arch_line_weights.apply_saas import _read_payload
+from arch_line_weights.apply_saas import CHUNK, _read_payload
+from arch_line_weights.poche import FillResult
 from arch_line_weights.poche_saas import (
     PocheSaasResult,
     apply_saas_with_poche,
     compress_test_payload,
+    compute_polygons_for_layers,
     decompress_test_payload,
     enumerate_layer_paths_from_payload,
     find_layer_envelope,
@@ -297,6 +299,42 @@ def test_enumerate_handles_curves_via_endpoint_approximation():
     assert layer == [[[0.0, 0.0], [10.0, 10.0]]]
 
 
+def test_compute_polygons_does_not_inject_low_confidence_fallback(monkeypatch):
+    """Fallback alpha/bbox candidates stay in the report but are not injected."""
+    candidate = Polygon([(0, 0), (10, 0), (5, 10)])
+
+    def fake_polygonize(*_args, **_kwargs):
+        return [candidate], FillResult("LayerA", "alpha_shape", 0.55, 1, 3)
+
+    monkeypatch.setattr("arch_line_weights.poche_saas.polygonize_layer", fake_polygonize)
+    polygons_by_layer, report = compute_polygons_for_layers(
+        {"LayerA": [[[0, 0], [10, 0]]]}
+    )
+
+    assert polygons_by_layer == {}
+    assert report.polygons == {}
+    assert report.fills[0].strategy == "alpha_shape"
+    assert report.fills[0].polygon_count == 1
+
+
+def test_compute_polygons_can_opt_into_low_confidence_injection(monkeypatch):
+    """The old permissive behavior remains reachable through an env var."""
+    candidate = Polygon([(0, 0), (10, 0), (5, 10)])
+
+    def fake_polygonize(*_args, **_kwargs):
+        return [candidate], FillResult("LayerA", "bbox", 0.3, 1, 3)
+
+    monkeypatch.setenv("ARCH_LW_POCHE_ALLOW_LOW_CONFIDENCE", "1")
+    monkeypatch.setattr("arch_line_weights.poche_saas.polygonize_layer", fake_polygonize)
+
+    polygons_by_layer, report = compute_polygons_for_layers(
+        {"LayerA": [[[0, 0], [10, 0]]]}
+    )
+
+    assert polygons_by_layer == {"LayerA": [candidate]}
+    assert "LayerA" in report.polygons
+
+
 # --------------------------------------------------------------------------- #
 # 5. End-to-end: apply_saas_with_poche on a synthetic fixture
 # --------------------------------------------------------------------------- #
@@ -347,6 +385,45 @@ def test_apply_saas_with_poche_end_to_end_on_synthetic_fixture():
             b"(axon::Visible::ClippingPlaneIntersections::TEST_CUT) Ln\r"
             in new_payload
         )
+
+
+def test_inspect_falls_back_to_private_payload_cmyk_colors(tmp_path):
+    """Converted AI files can have no public PDF strokes but CMYK native colors."""
+    from arch_line_weights.inspect import inspect_file
+
+    payload = (
+        b"%!PS-Adobe-3.0\r"
+        b"%AI5_BeginLayer\r"
+        b"(axon::Visible::ClippingPlaneIntersections::CMYK) Ln\r"
+        b"0.1765 0.2745 0.4314 0.1765 K\r"
+        b"1 J 1 j 1 w 4 M []0 d\r"
+        b"0 0 m\r"
+        b"10 10 L\r"
+        b"S\r"
+        b"LB\r"
+        b"%AI5_EndLayer--\r"
+    )
+    framed = compress_test_payload(payload)
+    chunks = [framed[i : i + CHUNK] for i in range(0, len(framed), CHUNK)]
+
+    src = tmp_path / "private-cmyk.ai"
+    pdf = pikepdf.new()
+    pdf.add_blank_page(page_size=(200, 200))
+    page = pdf.pages[0]
+    priv = pikepdf.Dictionary({"/NumBlock": len(chunks)})
+    for i, chunk in enumerate(chunks, start=1):
+        priv[f"/AIPrivateData{i}"] = pdf.make_stream(chunk)
+    page.obj["/PieceInfo"] = pikepdf.Dictionary(
+        {"/Illustrator": pikepdf.Dictionary({"/Private": priv})}
+    )
+    pdf.save(str(src))
+    pdf.close()
+
+    rep = inspect_file(str(src))
+
+    assert rep.total_stroked == 1
+    assert rep.stroke_colors == {"RGB(173,152,119)": 1}
+    assert rep.width_by_color["RGB(173,152,119)"]["1.0"] == 1
 
 
 def test_apply_saas_with_poche_rejects_same_src_dst():

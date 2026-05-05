@@ -62,11 +62,19 @@ def default_output_path(src: str | os.PathLike[str]) -> str:
     p = Path(src)
     return str(p.with_name(f"{p.stem}{DEFAULT_OUTPUT_SUFFIX}{p.suffix}"))
 
-# AI native stroke-color set: "<C> <M> <Y> <K> <R> <G> <B> XA" — last 3 floats
-# are the RGB 0..1 components of the stroke. Tokens are space-separated and
-# the line is wrapped in classic Mac CR-only line endings.
+# AI native stroke-color set. Illustrator can emit either:
+#
+# * "<C> <M> <Y> <K> <R> <G> <B> XA" — last 3 floats are RGB 0..1
+# * "<C> <M> <Y> <K> K" — process-CMYK stroke color (seen in converted AI files)
+#
+# Tokens are space-separated and wrapped in classic Mac CR-only line endings.
+_NUM = rb"[0-9.eE\-+]+"
 _XA_RE = re.compile(
-    rb"\r([0-9.]+) ([0-9.]+) ([0-9.]+) ([0-9.]+) ([0-9.]+) ([0-9.]+) ([0-9.]+) XA\r"
+    rb"\r(" + _NUM + rb") (" + _NUM + rb") (" + _NUM + rb") (" + _NUM + rb") "
+    rb"(" + _NUM + rb") (" + _NUM + rb") (" + _NUM + rb") XA\r"
+)
+_K_RE = re.compile(
+    rb"\r(" + _NUM + rb") (" + _NUM + rb") (" + _NUM + rb") (" + _NUM + rb") K\r"
 )
 
 # AI native stroke-width op: " <w> w" — w is a float in points. Width can be
@@ -149,6 +157,44 @@ def _format_width(w: float) -> bytes:
     return f"{w:g}".encode("ascii")
 
 
+def _cmyk_to_rgb255(c: float, m: float, y: float, k: float) -> tuple[int, int, int]:
+    """Approximate process CMYK as RGB for the existing RGB-tier classifier."""
+    return (
+        round((1.0 - c) * (1.0 - k) * 255),
+        round((1.0 - m) * (1.0 - k) * 255),
+        round((1.0 - y) * (1.0 - k) * 255),
+    )
+
+
+def _stroke_color_events(payload: bytes) -> list[tuple[int, tuple[int, int, int]]]:
+    """Return native stroke-color events as ``(payload_offset, RGB255)``.
+
+    This intentionally normalizes both RGB ``XA`` and CMYK ``K`` operators
+    into RGB tuples so the rest of the pipeline can keep using the established
+    RGB→weight mapping API.
+    """
+    events: list[tuple[int, tuple[int, int, int]]] = []
+    for m in _XA_RE.finditer(payload):
+        try:
+            r = float(m.group(5))
+            g = float(m.group(6))
+            b = float(m.group(7))
+        except ValueError:  # pragma: no cover — malformed AI payload
+            continue
+        events.append((m.start(), (round(r * 255), round(g * 255), round(b * 255))))
+    for m in _K_RE.finditer(payload):
+        try:
+            c = float(m.group(1))
+            m_val = float(m.group(2))
+            y = float(m.group(3))
+            k = float(m.group(4))
+        except ValueError:  # pragma: no cover — malformed AI payload
+            continue
+        events.append((m.start(), _cmyk_to_rgb255(c, m_val, y, k)))
+    events.sort(key=lambda e: e[0])
+    return events
+
+
 def rewrite_payload(
     payload: bytes,
     rgb_to_weight: dict[tuple[int, int, int], float],
@@ -171,18 +217,9 @@ def rewrite_payload(
     if result is None:
         result = ApplySaasResult()
 
-    # Collect all XA matches with their position + RGB
-    xa_events: list[tuple[int, tuple[int, int, int]]] = []
-    for m in _XA_RE.finditer(payload):
-        try:
-            r = float(m.group(5))
-            g = float(m.group(6))
-            b = float(m.group(7))
-        except ValueError:  # pragma: no cover — malformed AI payload
-            continue
-        rgb = (round(r * 255), round(g * 255), round(b * 255))
-        xa_events.append((m.start(), rgb))
-        result.xa_seen += 1
+    # Collect native stroke-color events with their position + RGB.
+    xa_events = _stroke_color_events(payload)
+    result.xa_seen += len(xa_events)
 
     # Helper: given the absolute payload offset of a `w` op, return the most
     # recent prior XA's RGB or None. Linear scan is fine — even on a 55 MB

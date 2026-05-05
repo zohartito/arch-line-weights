@@ -387,6 +387,60 @@ def _extract_layer_names_pikepdf(pdf: pikepdf.Pdf) -> list[str]:
     return names
 
 
+def _walk_ai_private_payload(
+    pdf: pikepdf.Pdf,
+    rep: InspectionReport,
+) -> tuple[Counter, Counter, defaultdict[str, Counter]]:
+    """Inspect Illustrator's native payload when the public PDF stream is empty.
+
+    Some converted `.ai` files carry their drawable state only in
+    `/PieceInfo /Illustrator /Private`; the public PDF content stream can
+    contain zero strokes, which made `--auto` classify zero colors. This
+    fallback mirrors `apply_saas.rewrite_payload`: track native stroke-color
+    events (`XA` or CMYK `K`) and bucket each following width operator.
+    """
+    from .apply_saas import _BARE_W_RE, _SETUP_W_RE, _read_payload, _stroke_color_events
+
+    stroke_widths: Counter = Counter()
+    stroke_colors: Counter = Counter()
+    width_by_color: defaultdict[str, Counter] = defaultdict(Counter)
+
+    try:
+        payload = _read_payload(pdf)
+    except Exception:
+        return stroke_widths, stroke_colors, width_by_color
+
+    color_events = _stroke_color_events(payload)
+
+    def _color_at(offset: int) -> tuple[int, int, int] | None:
+        last: tuple[int, int, int] | None = None
+        for pos, rgb in color_events:
+            if pos < offset:
+                last = rgb
+            else:
+                break
+        return last
+
+    width_events: list[tuple[int, str, tuple[int, int, int] | None]] = []
+    for m in _BARE_W_RE.finditer(payload):
+        width_events.append((m.start(), f"{round(float(m.group(1)), 4)}", _color_at(m.start())))
+    for m in _SETUP_W_RE.finditer(payload):
+        width_events.append((m.start(), f"{round(float(m.group(3)), 4)}", _color_at(m.start())))
+    width_events.sort(key=lambda e: e[0])
+
+    for _offset, wkey, rgb in width_events:
+        rep.total_drawings += 1
+        stroke_widths[wkey] += 1
+        if rgb is None:
+            continue
+        rep.total_stroked += 1
+        ckey = f"RGB({rgb[0]},{rgb[1]},{rgb[2]})"
+        stroke_colors[ckey] += 1
+        width_by_color[ckey][wkey] += 1
+
+    return stroke_widths, stroke_colors, width_by_color
+
+
 def _inspect_ai(path: str) -> InspectionReport:
     """pikepdf backend — used for `.ai` files (and any PDF with /PieceInfo)."""
     with pikepdf.open(path) as pdf:
@@ -434,6 +488,17 @@ def _inspect_ai(path: str) -> InspectionReport:
 
         rep.pdf_metadata = _extract_pdf_metadata_pikepdf(pdf)
         rep.layer_names = _extract_layer_names_pikepdf(pdf)
+
+        if not rep.stroke_colors:
+            stroke_widths, stroke_colors, width_by_color = _walk_ai_private_payload(pdf, rep)
+            for k, v in stroke_widths.items():
+                rep.stroke_widths[k] = rep.stroke_widths.get(k, 0) + v
+            for k, v in stroke_colors.items():
+                rep.stroke_colors[k] = rep.stroke_colors.get(k, 0) + v
+            for ckey, wcounts in width_by_color.items():
+                target = rep.width_by_color.setdefault(ckey, {})
+                for wkey, n in wcounts.items():
+                    target[wkey] = target.get(wkey, 0) + n
     return rep
 
 

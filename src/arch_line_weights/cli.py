@@ -56,6 +56,21 @@ def _resolve_source(
     return Source(source_arg), 1.0  # user-forced — full confidence
 
 
+def _require_nonempty_auto_mapping(
+    mapping: dict[tuple[int, int, int], float],
+    *,
+    src: Path,
+    preset: str,
+) -> None:
+    if mapping:
+        return
+    raise click.UsageError(
+        f"auto:{preset} found 0 RGB stroke colors in {src.name!r}; "
+        "no line-weight hierarchy can be inferred. Re-save/export the file "
+        "from Illustrator, or provide --mapping with explicit colors."
+    )
+
+
 @click.group()
 @click.version_option(__version__, prog_name="arch-lw")
 def cli():
@@ -211,6 +226,7 @@ def apply(
     else:
         tiers = select_preset(preset, scale=scale, for_print=for_print)
         mapping = auto_by_luminance(rep, tiers)
+        _require_nonempty_auto_mapping(mapping, src=src, preset=preset)
 
     click.echo(
         f"# {len(mapping)} colors mapped using {'user file' if mapping_file else f'auto:{preset}'}", err=True
@@ -543,6 +559,7 @@ def apply_saas_cmd(
     else:
         tiers = select_preset(preset, scale=scale, for_print=for_print)
         mapping = auto_by_luminance(rep, tiers)
+        _require_nonempty_auto_mapping(mapping, src=src, preset=preset)
 
     click.echo(
         f"# {len(mapping)} colors mapped using {'user file' if mapping_file else f'auto:{preset}'}", err=True

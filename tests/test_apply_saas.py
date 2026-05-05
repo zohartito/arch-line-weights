@@ -13,6 +13,7 @@ These tests cover three scopes:
 
 from __future__ import annotations
 
+import pytest
 import zstandard as zstd
 
 from arch_line_weights.apply import _rewrite as pdf_rewrite
@@ -109,6 +110,42 @@ def test_rewrite_changes_widths_per_color():
     # Confirm layer headers preserved
     assert b"(Layer A) Ln\r" in new_payload
     assert b"(Layer B) Ln\r" in new_payload
+
+
+def test_rewrite_tracks_cmyk_k_stroke_colors():
+    """Converted AI payloads may use CMYK `K` instead of RGB `XA`."""
+    payload = (
+        b"%!PS-Adobe-3.0\r"
+        b"%AI5_BeginLayer\r"
+        b"(CMYK Layer) Ln\r"
+        b"0.1765 0.2745 0.4314 0.1765 K\r"
+        b"1 J 1 j 1 w 4 M []0 d\r"
+        b"0 0 m\r"
+        b"10 10 L\r"
+        b"S\r"
+        b"%AI5_EndLayer--\r"
+    )
+    # Approximate CMYK->RGB normalization used by apply_saas:
+    # (1-C)*(1-K)*255, etc.
+    mapping = {(173, 152, 119): 0.35}
+    result = ApplySaasResult()
+
+    new_payload = rewrite_payload(payload, mapping, default_width=0.25, result=result)
+
+    assert result.xa_seen == 1
+    assert result.widths_rewritten == 1
+    assert result.weights_applied == {0.35: 1}
+    assert b"\r1 J 1 j 0.35 w" in new_payload
+
+
+def test_empty_auto_mapping_is_a_cli_error(tmp_path):
+    """A blind auto-classifier should not silently default every stroke."""
+    from arch_line_weights.cli import _require_nonempty_auto_mapping
+
+    with pytest.raises(Exception) as ex:
+        _require_nonempty_auto_mapping({}, src=tmp_path / "blind.ai", preset="section")
+
+    assert "found 0 RGB stroke colors" in str(ex.value)
 
 
 def test_rewrite_unmatched_color_uses_default():

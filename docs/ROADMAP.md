@@ -1,5 +1,14 @@
 # Roadmap v3 — SaaS-first, post-pivot (2026-04-30)
 
+> **2026-05-05 addendum:** after the ARCH 202B iso axon debugging pass, the
+> near-term roadmap has changed. The CLI/web-app decision is now downstream of
+> an architectural rule engine. The next professional-grade milestone is
+> `--architectural`: semantic layer hierarchy, structural-only poché, structural
+> open-loop closure, and honest review reports. See
+> [`docs/research/professional-grade-roadmap-2026-05-05.md`](research/professional-grade-roadmap-2026-05-05.md)
+> and
+> [`docs/research/iso-axon-section-debug-log-2026-05-05.md`](research/iso-axon-section-debug-log-2026-05-05.md).
+
 > **Status:** v1.0.0 was published to PyPI under MIT for ~15 minutes,
 > then yanked. Repo is private. Direction has shifted again — see "What
 > changed since v2 of this doc" below. **Subscription web app, not

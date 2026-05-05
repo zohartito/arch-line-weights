@@ -78,3 +78,40 @@
 44. **Illustrator's `[Converted]` doc state is a JSX bridge landmine.** When Illustrator opens a non-AI source (older PDF, foreign format) as `<name> [Converted]`, AppleScript `tell ... open` returns silently without actually opening the disk file. The JSX then can't find its target. Detect explicitly and message the user.
 45. **Hardcoded subprocess timeouts are wrong both ways.** 60 min is too long for small files (wasted time on hangs) and too short for big files (false aborts past the wire-protocol timeout while the JS engine keeps running). Either configurable or heartbeat-driven; never hardcoded.
 46. **Output path collisions are a foot-gun.** When two pipelines (jsx, saas) write to the same default path, running both creates a race. Different default paths (`HIERARCHY-saas.ai` vs `HIERARCHY-jsx.ai`) prevent the issue entirely with zero added user complexity.
+
+## Real-world validation (iso axon section, 2026-05-05)
+
+47. **A faster algorithm can still be architecturally wrong.** The first
+    `bridge-best` fix removed the 20+ minute hang and blocked the worst
+    fallback blobs, but the drawing still missed legitimate floor, roof,
+    foundation, and wall poché. Runtime correctness and architectural
+    correctness are separate gates.
+48. **Low-confidence geometry should be reported, not drawn.** `alpha_shape`
+    and `bbox` are useful diagnostics, but injecting them as black fills
+    produced convincing false poché on facade returns. Conservative output
+    beats plausible-looking lies.
+49. **Poché eligibility is semantic, not just geometric.** Not every
+    `ClippingPlaneIntersections` layer is solid cut material. Screens,
+    cladding, punch returns, window frames, glass, EPDM, connectors, and
+    clips should not be black-filled by default.
+50. **Structural open-loop closure is the missing poché rung.** Rhino often
+    exports three sides of a cut mass. For structural materials only, the
+    program should infer the missing fourth edge when the closure produces
+    a plausible slab, roof, wall, or foundation polygon.
+51. **Color luminance is not architectural hierarchy.** The converted iso
+    axon had dark steel connector colors that mapped to heavy weights.
+    Steel connectors, brackets, cleats, and clips should stay secondary
+    unless they are the actual cut mass.
+52. **Layer-name semantics should lead; color should be fallback.** Rhino
+    exports rich layer names. The professional-grade path is semantic
+    classifier first, color classifier only when layer confidence is low.
+53. **The visual ground truth is Illustrator, not PDF preview.** The PDF
+    compatibility stream and `/PieceInfo` native payload can diverge.
+    Preview PNGs are helpful for broad checks but can miss native-payload
+    modifications; Illustrator remains the authoritative visual QA target.
+54. **CMYK support is mandatory.** Converted Illustrator files may use
+    native CMYK `K` stroke operators rather than RGB `XA`; both must feed
+    the same hierarchy classifier.
+55. **Books should become rules, not blobs.** Ching/Ramsey/NCS references
+    are most useful as page-cited, project-owned rulebooks that drive code
+    and tests. Do not commit copyrighted PDFs or extracted full text.

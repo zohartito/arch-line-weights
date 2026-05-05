@@ -1,0 +1,188 @@
+# Professional-Grade Roadmap
+
+Date: 2026-05-05
+
+This is the roadmap addendum after the `iso axon section [Converted]` debugging
+session. The main correction is philosophical: the program must behave like an
+architectural drawing assistant, not a color-sorting script plus polygonizer.
+
+## Product Thesis
+
+`arch-line-weights` should become a professional-grade architectural graphics
+engine:
+
+```text
+input drawing -> semantic diagnosis -> line hierarchy -> poché/material treatment -> reviewable output
+```
+
+The competitive advantage is not "make strokes thicker." The advantage is
+encoding architectural graphic judgment:
+
+- cut mass vs projection
+- structural vs secondary vs surface systems
+- foreground/middleground/background hierarchy
+- poché only where solid material is truly cut
+- explicit uncertainty and review points
+
+## What We Have Done
+
+### Working
+
+- Headless AI-native payload pipeline via pikepdf + zstd.
+- Layer-preserving `.ai` outputs.
+- `apply-saas` line-weight rewrite.
+- `apply-saas --poche` native poché injection.
+- Progress feedback for long runs.
+- `bridge-best` strategy selector.
+- Per-layer bridge timeout/cap.
+- Conservative low-confidence poché policy.
+- RGB and CMYK native stroke-color support.
+- Private reference-library plan for Ching/graphics books.
+- Initial standards docs for ISO 128, Ching, NCS, poché conventions.
+
+### Not Working Well Enough
+
+- Poché still misses structural cut areas when Rhino exports open/partial loops.
+- Hierarchy still relies too much on color for converted AI files.
+- Steel connectors can become too heavy.
+- Screens/cladding can still receive too much visual emphasis.
+- No automated visual QA in Illustrator.
+- No review UI for "I skipped these uncertain layers."
+- Roadmap/docs were behind the real code state.
+
+## Updated North Star
+
+A student or architect should be able to drop in a Rhino/Illustrator drawing and
+get a file that looks like it was cleaned by a careful human draftsperson:
+
+- cut solid material reads immediately
+- major section/profile edges dominate
+- secondary structure is legible but not loud
+- facade screens and panel texture recede
+- glass stays light
+- connectors are precise, not dominant
+- uncertain geometry is flagged instead of faked
+
+## Phase 0 — Deadline-Safe Local Mode
+
+Goal: make Zohar's current drawings usable now.
+
+- [x] Stop hangs from `bridge-best`.
+- [x] Stop low-confidence blobs from being injected.
+- [x] Support RGB and CMYK native stroke colors.
+- [ ] Add `--architectural` mode.
+- [ ] Add structural poché whitelist/blacklist.
+- [ ] Add structural open-loop closure.
+- [ ] Add semantic hierarchy override for Rhino layer names.
+- [ ] Add a per-run report that says:
+  - injected
+  - skipped
+  - inferred closures
+  - needs manual review
+
+## Phase 1 — Architectural Rule Engine
+
+Goal: encode the architectural graphics standard explicitly.
+
+- [ ] Create `docs/research/architectural-graphics-rulebook.md`.
+- [ ] Create `docs/research/lineweight-rulebook.md`.
+- [ ] Create `docs/research/poche-rulebook.md`.
+- [ ] Create `docs/research/entourage-rulebook.md`.
+- [ ] Build a layer semantic classifier independent of color.
+- [ ] Make color classifier fallback-only for known source types.
+- [ ] Add fixture tests using real layer names from ARCH 202B and ARCH 211.
+
+Core rules:
+
+```text
+true cut solid mass > foreground/profile > object edge > secondary structure > connector/detail > surface/cladding > texture/reference
+```
+
+## Phase 2 — Poché Geometry Engine
+
+Goal: improve coverage without false positives.
+
+- [ ] Implement structural open-loop closure.
+- [ ] Reject global `bbox` except explicit overrides.
+- [ ] Add polygon plausibility scoring:
+  - area
+  - aspect ratio
+  - layer material
+  - endpoint topology
+  - self-intersection risk
+  - relation to neighboring structural layers
+- [ ] Add closure debug output.
+- [ ] Add per-layer before/after thumbnails if possible.
+- [ ] Add manual `__POCHE_CLOSE__` fallback docs for deadline workflows.
+
+## Phase 3 — Visual QA and Review
+
+Goal: stop trusting counters.
+
+- [ ] Add Illustrator-backed visual smoke check when Illustrator is available.
+- [ ] Add a review report:
+  - green: clean
+  - yellow: inferred/needs review
+  - red: skipped/failed
+- [ ] Add `arch-lw diagnose drawing.ai`.
+- [ ] Add layer-level screenshots or isolated preview exports.
+- [ ] Build a "compare old/new" workflow for Codex Computer Use.
+
+## Phase 4 — Reference Library Brain
+
+Goal: use Ching/Ramsey/NCS books as a private local source of standards.
+
+- [ ] Build ignored local SQLite FTS index.
+- [ ] Render selected pages for private visual review.
+- [ ] Distill page-cited rules into tracked docs.
+- [ ] Convert rules into tests and classifier behavior.
+- [ ] Keep source PDFs and extracted full text out of GitHub.
+
+## Phase 5 — Entourage and Presentation Layer
+
+Goal: add scale/life while respecting hierarchy.
+
+- [ ] Create a small consistent vector entourage library.
+- [ ] Add isometric standing/walking/seated people.
+- [ ] Add `ENTOURAGE` layer convention.
+- [ ] Ensure entourage is never poché and never heavy cut weight.
+- [ ] Add placement guidance:
+  - floor plates
+  - roof/terrace
+  - near facade for scale
+  - avoid dense cut zones
+
+## Phase 6 — Professional Product Experience
+
+Goal: turn the engine into a product people trust.
+
+- [ ] Local CLI remains the power-user/proving-ground path.
+- [ ] Web app only after the engine reports confidence honestly.
+- [ ] Upload/process/download flow with:
+  - file privacy
+  - auto-delete
+  - job progress
+  - downloadable `.ai` and `.pdf`
+  - review report
+- [ ] Optional local helper later for privacy-sensitive studio users.
+
+## Phase 7 — Team/Subagent Operating Model
+
+Use subagents like a real product team:
+
+- Standards agent: Ching/Ramsey/NCS rulebook.
+- Geometry agent: open-loop closure and topology tests.
+- Hierarchy agent: semantic layer classifier.
+- Visual QA agent: Illustrator/Computer Use screenshot comparison.
+- Docs agent: tutorials, troubleshooting, issue hygiene.
+- Product agent: web app scope, pricing, onboarding.
+- Research agent: competitive landscape and user interviews.
+
+## Current Recommendation
+
+Do not build the web app yet.
+
+First ship `--architectural` locally and use it on Zohar's current drawings.
+When the engine produces reviewable, trustworthy output on real studio work,
+then the web app becomes worth building.
+

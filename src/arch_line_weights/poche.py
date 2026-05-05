@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import logging
 import os
 import subprocess
 import textwrap
@@ -43,6 +44,8 @@ from shapely.ops import linemerge, polygonize, snap, unary_union
 
 from .bridge import infer_bridges, infer_bridges_best
 from .hatch import hatch_polygon, material_for_layer
+
+_log = logging.getLogger(__name__)
 
 POCHE_CLOSE_LAYER = "__POCHE_CLOSE__"
 TOLERANCE_SWEEP = (0.0, 0.1, 0.5, 1.0, 2.0, 5.0)  # 0 = bare linemerge, no snap
@@ -61,6 +64,13 @@ BridgeStrategy = Literal["greedy", "best"]
 _VALID_BRIDGE_STRATEGIES: tuple[str, ...] = ("greedy", "best")
 _DEFAULT_BRIDGE_STRATEGY: BridgeStrategy = "best"
 _BRIDGE_STRATEGY_ENV = "ARCH_LW_BRIDGE_STRATEGY"
+_BRIDGE_BEST_BUDGET_ENV = "ARCH_LW_BRIDGE_BEST_LAYER_BUDGET_SEC"
+_BRIDGE_BEST_MAX_ENDPOINTS_ENV = "ARCH_LW_BRIDGE_BEST_MAX_ENDPOINTS"
+_POCHE_MIN_INJECT_CONFIDENCE_ENV = "ARCH_LW_POCHE_MIN_INJECT_CONFIDENCE"
+_POCHE_ALLOW_LOW_CONFIDENCE_ENV = "ARCH_LW_POCHE_ALLOW_LOW_CONFIDENCE"
+_DEFAULT_BRIDGE_BEST_BUDGET_SEC = 60.0
+_DEFAULT_BRIDGE_BEST_MAX_ENDPOINTS = 1000
+_DEFAULT_POCHE_MIN_INJECT_CONFIDENCE = 0.85
 
 
 def _resolve_bridge_strategy(explicit: str | None) -> BridgeStrategy:
@@ -77,6 +87,28 @@ def _resolve_bridge_strategy(explicit: str | None) -> BridgeStrategy:
     if candidate not in _VALID_BRIDGE_STRATEGIES:
         return _DEFAULT_BRIDGE_STRATEGY
     return candidate  # type: ignore[return-value]
+
+
+def _env_float(name: str, default: float) -> float:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    try:
+        value = float(raw)
+    except ValueError:
+        return default
+    return value if value > 0 else default
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        return default
+    return value if value > 0 else default
 
 
 # ---------------------------------------------------------------------------- #
@@ -133,6 +165,31 @@ class PocheReport:
     @property
     def failed_layers(self) -> int:
         return sum(1 for f in self.fills if f.confidence == 0)
+
+    @property
+    def injected_polygons(self) -> int:
+        return sum(len(polys) for polys in self.polygons.values())
+
+
+def should_inject_fill(result: FillResult) -> bool:
+    """Return True when a polygonize result is trustworthy enough to draw.
+
+    Low-confidence rescue geometry (alpha-shape, concave hull, bbox, LLM) is
+    useful diagnostic information, but painting it solid black can create
+    visually convincing false poché. Default to conservative output; users
+    can still opt into the old behavior with ARCH_LW_POCHE_ALLOW_LOW_CONFIDENCE=1.
+    """
+    if result.strategy in {"failed", "skipped"} or result.polygon_count <= 0:
+        return False
+    if result.strategy == "user_override":
+        return True
+    if os.environ.get(_POCHE_ALLOW_LOW_CONFIDENCE_ENV) == "1":
+        return True
+    min_conf = _env_float(
+        _POCHE_MIN_INJECT_CONFIDENCE_ENV,
+        _DEFAULT_POCHE_MIN_INJECT_CONFIDENCE,
+    )
+    return result.confidence >= min_conf
 
 
 # ---------------------------------------------------------------------------- #
@@ -306,9 +363,34 @@ def polygonize_layer(
     # for "best".
     try:
         if strategy == "best":
-            aug_best, bridge_conf, strategy_name = infer_bridges_best(
-                lines, max_gap=50.0, min_gap=0.01
+            endpoint_count = 2 * len(lines)
+            max_endpoints = _env_int(
+                _BRIDGE_BEST_MAX_ENDPOINTS_ENV,
+                _DEFAULT_BRIDGE_BEST_MAX_ENDPOINTS,
             )
+            budget_sec = _env_float(
+                _BRIDGE_BEST_BUDGET_ENV,
+                _DEFAULT_BRIDGE_BEST_BUDGET_SEC,
+            )
+            if endpoint_count > max_endpoints:
+                _log.warning(
+                    "poche layer %r has %d endpoints, above %s=%d; "
+                    "using greedy bridge strategy for this layer",
+                    layer_name,
+                    endpoint_count,
+                    _BRIDGE_BEST_MAX_ENDPOINTS_ENV,
+                    max_endpoints,
+                )
+                aug_best, bridge_conf = infer_bridges(lines, max_gap=50.0, min_gap=0.01)
+                strategy_name = "greedy_endpoint_cap"
+            else:
+                aug_best, bridge_conf, strategy_name = infer_bridges_best(
+                    lines,
+                    max_gap=50.0,
+                    min_gap=0.01,
+                    time_budget_sec=budget_sec,
+                    layer_name=layer_name,
+                )
             augmented = aug_best
             # "best" returns a usable augmented set (possibly the same
             # length as the input if dbscan_collapse won) — always try
@@ -430,7 +512,7 @@ def polygonize_dump(
             bridge_strategy=bridge_strategy,
         )
         report.fills.append(result)
-        if polys:
+        if polys and should_inject_fill(result):
             report.polygons[layer_name] = [
                 [[round(x, 4), round(y, 4)] for x, y in p.exterior.coords] for p in polys
             ]

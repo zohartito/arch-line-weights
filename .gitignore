@@ -11,3 +11,11 @@ dist/
 *.swp
 .idea/
 .vscode/
+
+# Local reference libraries: keep copyrighted/source books off GitHub.
+references/source-books/
+references/**/*.pdf
+references/**/*.epub
+data/reference_books/
+*.sqlite
+*.sqlite3

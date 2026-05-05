@@ -173,6 +173,57 @@ def test_polygonize_layer_best_calls_strategy_selector():
         }
 
 
+def test_polygonize_layer_best_respects_endpoint_cap(monkeypatch, caplog):
+    """Pathological high-endpoint layers should fall back to greedy per-layer.
+
+    This keeps ``best`` as the default while preventing a dense layer from
+    invoking the more expensive strategy selector.
+    """
+    paths = _greedy_trap_paths()
+    monkeypatch.setenv("ARCH_LW_BRIDGE_BEST_MAX_ENDPOINTS", "2")
+    with (
+        caplog.at_level(logging.WARNING),
+        patch("arch_line_weights.poche.infer_bridges_best", wraps=infer_bridges_best) as best_spy,
+        patch("arch_line_weights.poche.infer_bridges", wraps=infer_bridges) as greedy_spy,
+    ):
+        _polys, fr = polygonize_layer(
+            "pathological::layer",
+            paths,
+            bridge_strategy="best",
+            use_alpha_shape=False,
+        )
+
+    if fr.strategy == "auto_bridge":
+        assert fr.bridge_strategy_name == "greedy_endpoint_cap"
+    assert best_spy.call_count == 0
+    assert greedy_spy.call_count >= 1
+    assert "pathological::layer" in caplog.text
+    assert "above ARCH_LW_BRIDGE_BEST_MAX_ENDPOINTS=2" in caplog.text
+
+
+def test_infer_bridges_best_times_out_backtracking(monkeypatch, caplog):
+    """The selector should keep greedy's result if backtracking exceeds budget."""
+    segs = [LineString([(0, 0), (10, 0)]), LineString([(10, 1), (0, 1)])]
+
+    def slow_backtrack(*_args, **_kwargs):
+        raise TimeoutError("simulated slow recursive search")
+
+    monkeypatch.setattr("arch_line_weights.bridge.infer_bridges_backtrack", slow_backtrack)
+    with caplog.at_level(logging.WARNING):
+        aug, conf, name = infer_bridges_best(
+            segs,
+            max_gap=2.0,
+            time_budget_sec=0.01,
+            layer_name="L_TIMEOUT",
+        )
+
+    assert aug
+    assert name in {"greedy", "dbscan_collapse"}
+    assert conf >= 0.0
+    assert "L_TIMEOUT" in caplog.text
+    assert "strategy=backtrack raised TimeoutError" in caplog.text
+
+
 def test_best_at_least_matches_greedy_polygon_count():
     """On a synthetic case where backtracking helps, the "best" strategy
     must yield at least as many polygons as greedy — which is the whole

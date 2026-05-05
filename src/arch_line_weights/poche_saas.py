@@ -60,6 +60,7 @@ from .poche import (
     PocheReport,
     _lines_from_anchors,
     polygonize_layer,
+    should_inject_fill,
 )
 from .progress import ProgressReporter
 
@@ -362,7 +363,7 @@ def compute_polygons_for_layers(
             info.strategy = fr.strategy
             info.confidence = fr.confidence
         report.fills.append(fr)
-        if polys:
+        if polys and should_inject_fill(fr):
             polygons_by_layer[layer_name] = polys
             # Also record in PocheReport.polygons for compatibility with the
             # rest of the codebase that expects a dict-of-coordinate-lists
