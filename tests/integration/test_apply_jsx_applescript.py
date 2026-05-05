@@ -35,11 +35,26 @@ def _osascript_available() -> bool:
     return shutil.which("osascript") is not None
 
 
-def _illustrator_available() -> bool:
-    """Return True if Adobe Illustrator is installed (whether or not it's open)."""
-    if not _osascript_available():
+def _illustrator_installed() -> bool:
+    """Return True if Adobe Illustrator app bundle exists in /Applications.
+
+    The AppleScript syntax check requires Illustrator's dictionary to be
+    available to osacompile. On a CI macOS runner without Illustrator
+    installed, osacompile can't resolve the application's class names
+    and the test would fail spuriously.
+    """
+    from pathlib import Path
+
+    apps = Path("/Applications")
+    if not apps.exists():
         return False
-    # Try a no-op tell to detect the app's presence in OSA's app cache.
+    return any(p.name.startswith("Adobe Illustrator") for p in apps.iterdir())
+
+
+def _illustrator_running() -> bool:
+    """Return True if Adobe Illustrator is currently running (has a process)."""
+    if not _osascript_available() or not _illustrator_installed():
+        return False
     try:
         result = subprocess.run(
             ["osascript", "-e", 'tell application "System Events" to '
@@ -58,8 +73,13 @@ SKIP_NO_OSASCRIPT = pytest.mark.skipif(
     not _osascript_available(),
     reason="osascript not on PATH (non-macOS environment)",
 )
-SKIP_NO_ILLUSTRATOR = pytest.mark.skipif(
-    not _illustrator_available(),
+SKIP_NO_ILLUSTRATOR_INSTALLED = pytest.mark.skipif(
+    not _illustrator_installed(),
+    reason="Adobe Illustrator app bundle not in /Applications "
+    "(syntax check needs the dictionary loaded)",
+)
+SKIP_NO_ILLUSTRATOR_RUNNING = pytest.mark.skipif(
+    not _illustrator_running(),
     reason="Adobe Illustrator is not running (start it before running this test)",
 )
 
@@ -92,7 +112,7 @@ def test_query_active_doc_does_not_raise():
 
 @pytest.mark.integration
 @SKIP_NO_OSASCRIPT
-@SKIP_NO_ILLUSTRATOR
+@SKIP_NO_ILLUSTRATOR_RUNNING
 def test_query_active_doc_returns_string_when_illustrator_running():
     """When Illustrator IS running, the helper returns either a name or None.
 
@@ -116,6 +136,7 @@ def test_query_active_doc_returns_string_when_illustrator_running():
 
 @pytest.mark.integration
 @SKIP_NO_OSASCRIPT
+@SKIP_NO_ILLUSTRATOR_INSTALLED
 def test_applescript_syntax_compiles():
     """The exact AppleScript embedded in query_active_doc must parse.
 
