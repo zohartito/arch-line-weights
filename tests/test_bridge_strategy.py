@@ -1,13 +1,14 @@
 """Tests for the ``bridge_strategy`` parameter wired through poche.polygonize_layer.
 
-Closes GitHub Issue #5. Verifies:
+Closes GitHub Issue #5. Verifies (post-v0.6.7 default flip):
 
-* Default behaviour is unchanged from v0.5.x (`bridge_strategy=None` falls
-  back to the v0.4 greedy bridger via ``infer_bridges``).
-* Opt-in ``bridge_strategy="best"`` routes through ``infer_bridges_best``
+* Default behaviour is the strategy selector (``bridge_strategy=None``
+  routes through ``infer_bridges_best``); ``"greedy"`` remains reachable
+  for backwards compatibility via the v0.4 ``infer_bridges`` path.
+* Explicit ``bridge_strategy="best"`` routes through ``infer_bridges_best``
   and at least matches greedy on a synthetic backtracking-helps fixture.
 * The ``ARCH_LW_BRIDGE_STRATEGY`` env var is consulted when the explicit
-  arg is omitted.
+  arg is omitted, including the ``=greedy`` override path.
 * The CLI ``--bridge-strategy`` flag wires through `arch-lw poche`.
 * The silent ``except Exception: pass`` blocks in ``infer_bridges_best``
   now leave a structured warning trace via ``logging``.
@@ -70,45 +71,75 @@ def _greedy_trap_paths() -> list[list[list[float]]]:
 # --------------------------------------------------------------------------- #
 
 
-def test_default_strategy_is_greedy():
-    """``_resolve_bridge_strategy(None)`` with no env var returns ``"greedy"``."""
+def test_default_strategy_is_best():
+    """``_resolve_bridge_strategy(None)`` with no env var returns ``"best"``
+    as of v0.6.7 (default flip from greedy → best)."""
     with patch.dict(os.environ, {}, clear=False):
         os.environ.pop("ARCH_LW_BRIDGE_STRATEGY", None)
-        assert _resolve_bridge_strategy(None) == "greedy"
-        assert _DEFAULT_BRIDGE_STRATEGY == "greedy"
+        assert _resolve_bridge_strategy(None) == "best"
+        assert _DEFAULT_BRIDGE_STRATEGY == "best"
 
 
-def test_polygonize_layer_default_calls_greedy_bridger():
-    """The default ``polygonize_layer`` path must call ``infer_bridges`` and
-    NOT ``infer_bridges_best`` so v0.5.x behaviour is preserved bit-exact."""
+def test_polygonize_layer_default_calls_best_selector():
+    """The default ``polygonize_layer`` path must NOT call greedy
+    ``infer_bridges`` directly — instead it should route through
+    ``infer_bridges_best`` (v0.6.7+ default)."""
+    paths = _square_with_corner_gaps_paths(g=0.2)
+    # Make sure the env var doesn't leak from another test.
+    with (
+        patch.dict(os.environ, {}, clear=False),
+        patch("arch_line_weights.poche.infer_bridges", wraps=infer_bridges) as greedy_spy,
+        patch("arch_line_weights.poche.infer_bridges_best", wraps=infer_bridges_best) as best_spy,
+    ):
+        os.environ.pop("ARCH_LW_BRIDGE_STRATEGY", None)
+        _polys, fr = polygonize_layer("L", paths)
+    # The bare snap-sweep should already close the square (linemerge_bare /
+    # linemerge_snap path), so neither bridger needs to fire on this input.
+    # The regression we care about is that *if* the bridger runs, the "best"
+    # selector is reached and the legacy greedy entry-point isn't called
+    # directly from poche (greedy is still reachable, but only as one of the
+    # 4 strategies inside `infer_bridges_best`).
+    assert greedy_spy.call_count == 0, (
+        "polygonize_layer should no longer call infer_bridges directly "
+        "as of v0.6.7 — it dispatches via infer_bridges_best"
+    )
+    # And of course the existing test fixture should still polygonize.
+    assert fr.polygon_count >= 1
+    assert best_spy.call_count >= 0  # may or may not be reached for this fixture
+
+
+def test_polygonize_layer_default_output_matches_best():
+    """Bit-by-bit: default-call output equals explicit-best output (since
+    v0.6.7 the default is ``"best"``)."""
+    paths = _square_with_corner_gaps_paths(g=0.2)
+    with patch.dict(os.environ, {}, clear=False):
+        os.environ.pop("ARCH_LW_BRIDGE_STRATEGY", None)
+        polys_default, fr_default = polygonize_layer("L", paths)
+        polys_best, fr_best = polygonize_layer("L", paths, bridge_strategy="best")
+    assert len(polys_default) == len(polys_best)
+    assert fr_default.strategy == fr_best.strategy
+    assert fr_default.polygon_count == fr_best.polygon_count
+    assert fr_default.confidence == fr_best.confidence
+    assert fr_default.bridge_strategy_name == fr_best.bridge_strategy_name
+
+
+def test_polygonize_layer_explicit_greedy_still_calls_legacy_bridger():
+    """When the user explicitly opts into ``bridge_strategy="greedy"``, the
+    legacy v0.4 ``infer_bridges`` path must still be reachable (not a
+    regression: the env var override and explicit arg both need to keep
+    routing to the legacy bridger so existing scripts that pin to greedy
+    keep working)."""
     paths = _square_with_corner_gaps_paths(g=0.2)
     with (
         patch("arch_line_weights.poche.infer_bridges", wraps=infer_bridges) as greedy_spy,
         patch("arch_line_weights.poche.infer_bridges_best", wraps=infer_bridges_best) as best_spy,
     ):
-        _polys, fr = polygonize_layer("L", paths)
-    # The bare snap-sweep should already close the square (linemerge_bare /
-    # linemerge_snap path), so neither bridger needs to fire on this input.
-    # That's fine — the regression we care about is that *if* the bridger
-    # runs, it's the greedy one. So we just assert greedy was at least
-    # available and best was never hit.
+        _polys, fr = polygonize_layer("L", paths, bridge_strategy="greedy")
+    # Best must NOT have been hit when greedy was explicit.
     assert best_spy.call_count == 0
     assert fr.bridge_strategy_name is None
-    # And of course the existing test fixture should still polygonize.
     assert fr.polygon_count >= 1
-    assert greedy_spy.call_count >= 0  # may or may not be reached
-
-
-def test_polygonize_layer_default_output_unchanged():
-    """Bit-by-bit: default-call output equals explicit-greedy output."""
-    paths = _square_with_corner_gaps_paths(g=0.2)
-    polys_default, fr_default = polygonize_layer("L", paths)
-    polys_greedy, fr_greedy = polygonize_layer("L", paths, bridge_strategy="greedy")
-    assert len(polys_default) == len(polys_greedy)
-    assert fr_default.strategy == fr_greedy.strategy
-    assert fr_default.polygon_count == fr_greedy.polygon_count
-    assert fr_default.confidence == fr_greedy.confidence
-    assert fr_default.bridge_strategy_name == fr_greedy.bridge_strategy_name
+    assert greedy_spy.call_count >= 0  # may or may not be reached for this fixture
 
 
 # --------------------------------------------------------------------------- #
@@ -175,8 +206,30 @@ def test_env_var_resolves_to_greedy():
 
 
 def test_env_var_unknown_falls_back_to_default():
+    """Unknown env var values fall back to the post-v0.6.7 default
+    (``"best"``)."""
     with patch.dict(os.environ, {"ARCH_LW_BRIDGE_STRATEGY": "moonshot"}, clear=False):
+        assert _resolve_bridge_strategy(None) == "best"
+
+
+def test_env_var_greedy_still_routes_to_legacy_bridger():
+    """``ARCH_LW_BRIDGE_STRATEGY=greedy`` must still resolve and route through
+    the legacy bridger so existing scripts that rely on the env var to pin
+    greedy continue to work bit-exact."""
+    paths = _square_with_corner_gaps_paths(g=0.2)
+    with (
+        patch.dict(os.environ, {"ARCH_LW_BRIDGE_STRATEGY": "greedy"}, clear=False),
+        patch("arch_line_weights.poche.infer_bridges", wraps=infer_bridges) as greedy_spy,
+        patch("arch_line_weights.poche.infer_bridges_best", wraps=infer_bridges_best) as best_spy,
+    ):
+        # `_resolve_bridge_strategy` honours the env var.
         assert _resolve_bridge_strategy(None) == "greedy"
+        _polys, fr = polygonize_layer("L", paths)
+    # Best must NOT have been hit when env var pins greedy.
+    assert best_spy.call_count == 0
+    assert fr.bridge_strategy_name is None
+    assert fr.polygon_count >= 1
+    assert greedy_spy.call_count >= 0
 
 
 def test_explicit_arg_overrides_env_var():
@@ -187,7 +240,10 @@ def test_explicit_arg_overrides_env_var():
 
 
 def test_env_var_threads_through_polygonize_layer():
-    """Setting the env var with no explicit arg must route to ``best``."""
+    """Setting the env var to ``best`` with no explicit arg must route to
+    the strategy selector. (Post-v0.6.7 the default is also ``best``, so this
+    test is mostly a sanity check that the env var path is alive — it
+    shouldn't *suppress* the selector relative to default.)"""
     paths = _greedy_trap_paths()
     with (
         patch.dict(os.environ, {"ARCH_LW_BRIDGE_STRATEGY": "best"}, clear=False),
@@ -198,6 +254,26 @@ def test_env_var_threads_through_polygonize_layer():
         _polys, fr = polygonize_layer("L", paths, use_alpha_shape=False)
     if fr.strategy == "auto_bridge":
         assert best_spy.call_count == 1
+
+
+def test_env_var_greedy_threads_through_polygonize_layer():
+    """``ARCH_LW_BRIDGE_STRATEGY=greedy`` with no explicit arg must override
+    the v0.6.7 default and route through the legacy bridger."""
+    paths = _greedy_trap_paths()
+    with (
+        patch.dict(os.environ, {"ARCH_LW_BRIDGE_STRATEGY": "greedy"}, clear=False),
+        patch("arch_line_weights.poche.infer_bridges", wraps=infer_bridges) as greedy_spy,
+        patch(
+            "arch_line_weights.poche.infer_bridges_best", wraps=infer_bridges_best
+        ) as best_spy,
+    ):
+        _polys, fr = polygonize_layer("L", paths, use_alpha_shape=False)
+    # If auto_bridge fired, it must have gone through the greedy path.
+    if fr.strategy == "auto_bridge":
+        assert best_spy.call_count == 0
+        assert greedy_spy.call_count >= 1
+        # bridge_strategy_name is only set when "best" wins; greedy leaves it None.
+        assert fr.bridge_strategy_name is None
 
 
 # --------------------------------------------------------------------------- #
@@ -265,9 +341,9 @@ def test_cli_poche_threads_strategy_to_apply_poche(tmp_path):
     assert captured["kwargs"]["bridge_strategy"] == "best"
 
 
-def test_cli_poche_default_threads_greedy(tmp_path):
+def test_cli_poche_default_threads_best(tmp_path):
     """Without ``--bridge-strategy``, ``apply_poche`` is called with the
-    default ``"greedy"`` to preserve v0.5.1 behaviour bit-exact."""
+    v0.6.7 default ``"best"`` so the strategy selector runs by default."""
     fake_ai = tmp_path / "fake.ai"
     fake_ai.write_bytes(b"%PDF-1.5\n%\xc4\xe5\xf2\xe5\xeb\xa7\xf3\xa0\xd0\xc4\xc6\n")
 
@@ -281,6 +357,30 @@ def test_cli_poche_default_threads_greedy(tmp_path):
     runner = CliRunner()
     with patch("arch_line_weights.cli.apply_poche", side_effect=fake_apply_poche):
         result = runner.invoke(cli, ["poche", str(fake_ai)])
+
+    assert result.exit_code == 0, result.output
+    assert captured["kwargs"]["bridge_strategy"] == "best"
+
+
+def test_cli_poche_explicit_greedy_threads_legacy(tmp_path):
+    """``arch-lw poche --bridge-strategy=greedy`` must still reach
+    ``apply_poche`` with the literal ``"greedy"`` so the legacy bridger
+    stays reachable from the CLI for backwards compatibility."""
+    fake_ai = tmp_path / "fake.ai"
+    fake_ai.write_bytes(b"%PDF-1.5\n%\xc4\xe5\xf2\xe5\xeb\xa7\xf3\xa0\xd0\xc4\xc6\n")
+
+    captured: dict[str, object] = {}
+
+    def fake_apply_poche(*args, **kwargs):
+        captured["kwargs"] = kwargs
+        from arch_line_weights.poche import PocheReport
+        return PocheReport()
+
+    runner = CliRunner()
+    with patch("arch_line_weights.cli.apply_poche", side_effect=fake_apply_poche):
+        result = runner.invoke(
+            cli, ["poche", str(fake_ai), "--bridge-strategy=greedy"]
+        )
 
     assert result.exit_code == 0, result.output
     assert captured["kwargs"]["bridge_strategy"] == "greedy"
@@ -388,11 +488,12 @@ def test_infer_bridges_best_continues_after_each_strategy_failure(broken_func, c
 # --------------------------------------------------------------------------- #
 
 
-def test_fill_result_bridge_strategy_name_default_is_none():
-    """Default greedy path must leave ``bridge_strategy_name`` unset to
-    keep PocheReport rows backwards-compatible."""
+def test_fill_result_bridge_strategy_name_unset_when_explicit_greedy():
+    """When ``bridge_strategy="greedy"`` is explicit, ``bridge_strategy_name``
+    must stay ``None`` (only the "best" selector populates that field) —
+    keeps PocheReport rows backwards-compatible for legacy users."""
     paths = _square_with_corner_gaps_paths(g=0.2)
-    _polys, fr = polygonize_layer("L", paths)
+    _polys, fr = polygonize_layer("L", paths, bridge_strategy="greedy")
     assert fr.bridge_strategy_name is None
 
 

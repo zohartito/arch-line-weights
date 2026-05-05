@@ -16,12 +16,13 @@ handler (good enough for local + tests). Swapping to RQ/Celery means:
 from __future__ import annotations
 
 import logging
+import os
 import threading
-import traceback
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 from arch_line_weights.classify import auto_by_luminance, from_user_mapping
 from arch_line_weights.inspect import inspect_file
@@ -57,6 +58,7 @@ class JobRecord:
     apply_summary: ApplySummary | None = None
     poche_summary: PocheSummary | None = None
     fills: list[FillSummary] = field(default_factory=list)
+    flags_applied: dict[str, Any] = field(default_factory=dict)
     output_filename: str | None = None
     error: str | None = None
 
@@ -71,6 +73,7 @@ class JobRecord:
             apply_summary=self.apply_summary,
             poche_summary=self.poche_summary,
             fills=list(self.fills),
+            flags_applied=dict(self.flags_applied),
             download_url=download_url,
             error=self.error,
         )
@@ -133,6 +136,13 @@ def run_job(
     record; queue runner re-fetches from the store.
     """
     record.status = JobStatus.RUNNING
+    record.flags_applied = _flags_snapshot(record.options)
+    logger.info(
+        "job %s starting: file=%s flags=%s",
+        record.job_id,
+        record.original_filename,
+        record.flags_applied,
+    )
     try:
         rep = inspect_file(str(input_path))
         tiers = select_preset(
@@ -146,12 +156,21 @@ def run_job(
         if record.options.with_poche:
             from arch_line_weights.poche_saas import apply_saas_with_poche
 
-            apply_result, poche_result, poche_report = apply_saas_with_poche(
-                str(input_path),
-                str(output_path),
-                mapping,
-                default_width=record.options.default_width,
-            )
+            # `--llm-fallback` is gated on ARCH_LW_LLM_FALLBACK at the
+            # ``llm_topology`` import site; we set it for the duration of the
+            # call and restore it afterwards so cross-job state never leaks.
+            # The CLI sets the same env var globally; for the webapp we keep
+            # the lifetime to one job to allow concurrent jobs with different
+            # flag values once the queue runner lands.
+            with _llm_fallback_env(record.options.llm_fallback):
+                apply_result, poche_result, poche_report = apply_saas_with_poche(
+                    str(input_path),
+                    str(output_path),
+                    mapping,
+                    default_width=record.options.default_width,
+                    use_alpha_shape=record.options.alpha_shape,
+                    bridge_strategy=record.options.bridge_strategy,
+                )
             record.apply_summary = _apply_to_schema(apply_result)
             record.poche_summary = _poche_to_schema(poche_result)
             record.fills = _fills_from_report(poche_report)
@@ -168,6 +187,11 @@ def run_job(
 
         record.output_filename = _suggested_output_name(record.original_filename)
         record.status = JobStatus.DONE
+        logger.info(
+            "job %s done: applied flags=%s",
+            record.job_id,
+            record.flags_applied,
+        )
     except Exception as exc:  # noqa: BLE001 — we want the message in the API
         record.error = f"{type(exc).__name__}: {exc}"
         record.status = JobStatus.FAILED
@@ -182,6 +206,65 @@ def run_job(
 # --------------------------------------------------------------------------- #
 # Helpers — convert dataclasses to API schemas
 # --------------------------------------------------------------------------- #
+
+
+def _flags_snapshot(options: JobOptions) -> dict[str, Any]:
+    """Snapshot the resolved per-job flag set for logging and the API echo.
+
+    Returns the same shape the CLI documents in ``--help``: each user-facing
+    knob and its effective value. The frontend renders this verbatim so
+    operators can confirm what the pipeline actually saw (vs the form
+    defaults the browser silently filled in).
+    """
+    return {
+        "preset": options.preset,
+        "scale": options.scale,
+        "for_print": options.for_print,
+        "with_poche": options.with_poche,
+        "default_width": options.default_width,
+        "bridge_strategy": options.bridge_strategy,
+        "alpha_shape": options.alpha_shape,
+        "llm_fallback": options.llm_fallback,
+        "source": options.source,
+    }
+
+
+class _llm_fallback_env:  # noqa: N801 — context-manager naming convention
+    """Scoped toggle for ``ARCH_LW_LLM_FALLBACK``.
+
+    The CLI sets the env var globally for the run; the webapp scopes it to
+    a single job so concurrent jobs (once we move off the sync runner) can
+    use different ``llm_fallback`` settings without stepping on each other.
+
+    Restores any previous value on exit, even if the wrapped pipeline
+    raises — leaving the env var dirty across requests would silently
+    enable the LLM rung for jobs that didn't ask for it.
+    """
+
+    _ENV_VAR = "ARCH_LW_LLM_FALLBACK"
+
+    def __init__(self, enabled: bool) -> None:
+        self.enabled = enabled
+        self._prior: str | None = None
+        self._was_set = False
+
+    def __enter__(self) -> "_llm_fallback_env":
+        self._was_set = self._ENV_VAR in os.environ
+        self._prior = os.environ.get(self._ENV_VAR)
+        if self.enabled:
+            os.environ[self._ENV_VAR] = "1"
+        elif self._was_set:
+            # Caller asked for LLM off but the env had it on — clear it for
+            # this job so the rung doesn't fire.
+            os.environ.pop(self._ENV_VAR, None)
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        if self._was_set:
+            assert self._prior is not None  # guaranteed by _was_set
+            os.environ[self._ENV_VAR] = self._prior
+        else:
+            os.environ.pop(self._ENV_VAR, None)
 
 
 def _apply_to_schema(result) -> ApplySummary:

@@ -16,6 +16,8 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from fastapi.responses import FileResponse
 from starlette.concurrency import run_in_threadpool
 
+from pydantic import ValidationError
+
 from ..compute import JobStore, run_job
 from ..config import Settings, get_settings
 from ..schemas import JobCreated, JobDetail, JobOptions, JobStatus
@@ -42,11 +44,18 @@ def get_storage(request: Request) -> LocalStorage:
 @router.post("/jobs", response_model=JobCreated)
 async def create_job(
     file: UploadFile = File(...),
+    # Core flags (v0.4 baseline)
     preset: str = Form("section"),
     scale: str = Form("1/4"),
     for_print: bool = Form(False),
     with_poche: bool = Form(True),
     default_width: float = Form(0.25),
+    # v0.5+ / v0.6.x flags. Defaults track the CLI defaults so callers that
+    # don't know about them get the same behaviour as `arch-lw apply-saas`.
+    bridge_strategy: str = Form("best"),
+    alpha_shape: bool = Form(True),
+    llm_fallback: bool = Form(False),
+    source: str = Form("auto"),
     settings: Settings = Depends(get_settings),
     store: JobStore = Depends(get_job_store),
     storage: LocalStorage = Depends(get_storage),
@@ -68,13 +77,23 @@ async def create_job(
             detail=f"unsupported file type {suffix!r}; expected .ai or .pdf",
         )
 
-    options = JobOptions(
-        preset=preset,
-        scale=scale,
-        for_print=for_print,
-        with_poche=with_poche,
-        default_width=default_width,
-    )
+    # Build the options through Pydantic so any out-of-vocabulary enum
+    # value (e.g. preset="bogus") returns a 422 with the validation
+    # detail attached, matching FastAPI's native body-validation behaviour.
+    try:
+        options = JobOptions(
+            preset=preset,
+            scale=scale,
+            for_print=for_print,
+            with_poche=with_poche,
+            default_width=default_width,
+            bridge_strategy=bridge_strategy,
+            alpha_shape=alpha_shape,
+            llm_fallback=llm_fallback,
+            source=source,
+        )
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=exc.errors()) from exc
     record = store.create(original_filename=file.filename, options=options)
 
     # Stream the upload to disk. We bound size at the configured cap so a

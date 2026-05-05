@@ -98,11 +98,38 @@ POST `/api/jobs` form fields:
 | Field | Type | Default | Notes |
 |---|---|---|---|
 | `file` | multipart | (required) | `.ai` or `.pdf` |
-| `preset` | str | `section` | One of the registered preset names |
-| `scale` | str | `1/4` | ISO 128 scale |
-| `for_print` | bool | `false` | Use ISO-128 print weights |
+| `preset` | enum | `section` | One of `section`, `plan`, `elevation`, `detail` |
+| `scale` | enum | `1/4` | One of `1/16`, `1/8`, `1/4`, `1/2`, `1`, `3`, `full` |
+| `for_print` | bool | `false` | Use ISO-128 print weights at the chosen scale |
 | `with_poche` | bool | `true` | Inject black fills into cut layers |
 | `default_width` | float | `0.25` | Width applied to unmatched colors |
+| `bridge_strategy` | enum | `best` | `greedy` (v0.4 nearest-neighbour) or `best` (try 4, pick highest-yield) |
+| `alpha_shape` | bool | `true` | α-shape rescue rung between auto_bridge and concave_hull |
+| `llm_fallback` | bool | `false` | Opt-in LLM topology rescue (rung 5). Requires `ANTHROPIC_API_KEY` |
+| `source` | enum | `auto` | `auto`, `rhino`, or `autocad` (forces a layer-name convention) |
+
+Unknown enum values return **422** with the Pydantic validation error
+attached. Unknown booleans coerce per FastAPI's standard form handling.
+
+`GET /api/jobs/{id}` includes a `flags_applied` dict echoing the resolved
+options (useful for confirming the pipeline saw what the form sent), plus
+`poche_summary` + `fills` when `with_poche=true`.
+
+Example: run with every v0.6.x flag explicit.
+
+```bash
+curl -X POST http://localhost:8000/api/jobs \
+  -F "file=@drawing.ai" \
+  -F "preset=section" \
+  -F "scale=1/4" \
+  -F "for_print=false" \
+  -F "with_poche=true" \
+  -F "default_width=0.25" \
+  -F "bridge_strategy=best" \
+  -F "alpha_shape=true" \
+  -F "llm_fallback=false" \
+  -F "source=auto"
+```
 
 ## What this is not (yet)
 

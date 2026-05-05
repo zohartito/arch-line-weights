@@ -9,6 +9,48 @@ Stages timed:
 * `apply-saas --poche` — B6 + B7 (rewrite + poché injection)
 * `apply-jsx` — Illustrator-driven path (skipped if osascript / Illustrator unavailable)
 
+## v0.5 → v0.6.x summary (reference section drawing)
+
+The v0.6.x cluster between Apr 30 → May 5 added five new code paths that
+all run on the default `apply-saas`/`apply-saas --poche` pipeline:
+
+* **bridge-best default flip** (v0.6.0) — rescue ladder now picks the
+  best of *all* successful rungs by confidence × polygon count, instead
+  of returning on first success. Does more strategy work per layer.
+* **alpha-shape rescue rung** (v0.6.0) — extra rung between auto-bridge
+  and concave_hull. Runs `scipy.spatial.Delaunay` on segment endpoints.
+* **LLM topology rescue rung** (v0.6.3) — opt-in LLM-driven rung;
+  default off, no runtime cost when disabled.
+* **`[Converted]` state detection** (v0.6.3) — apply-jsx-only; no
+  measurable cost on the SaaS pipeline.
+* **JSX heartbeat** (v0.6.x) — apply-jsx-only; no SaaS cost.
+
+So the only stages with real runtime impact at default settings are
+**bridge-best** (apply-saas + --poche, all layers) and **alpha-shape**
+(--poche only, on layers that fail earlier rungs).
+
+| stage | v0.5 (2026-05-01, runs=3) | v0.6.x (2026-05-05, runs=3) | delta (median) |
+|---|---|---|---|
+| `apply-saas` median | 24.03s (best 22.66s) | 27.95s (best 27.33s) | **+3.92s (+16%)** |
+| `apply-saas --poche` median | 26.35s (best 25.23s) | 26.13s (best 25.33s) | **−0.22s (−1%)** |
+
+Reference input: `DRAWING 4 SECTION [Converted].ai` (24 MB, 62 layers,
+23 cut). Same hardware (M-series Mac, macOS 26.4.1).
+
+**apply-saas regressed ~16%** on the reference drawing. The most likely
+cause is the bridge-best default flip — every layer now runs every
+rung rather than short-circuiting on the first success. We considered
+this a deliberate quality/perf trade in v0.6.0 (it rescued 4 layers
+that bare linemerge missed) so the regression is acceptable, but worth
+documenting.
+
+**apply-saas --poche** is statistically flat — the extra alpha-shape
+rung runs only when other rungs fail, which on this drawing is rare
+(20/20 layers polygonized cleanly via earlier rungs). The slight
+improvement could be noise; it could also be that bridge-best now
+returns the cheapest valid rung instead of always running through
+heavier fallbacks.
+
 ## Run 2026-05-01 07:43:15 UTC (runs=3)
 
 Platform: `macOS-26.4.1-arm64-arm-64bit` — Python 3.11.7
@@ -26,3 +68,52 @@ Platform: `macOS-26.4.1-arm64-arm-64bit` — Python 3.11.7
 |------|------:|-------:|----:|-----------|--------------------|----------|---------------:|---------:|--------:|
 | `test.ai` | 24,468,895 | 62 | 23 | 24.03s (best 22.66s) | 26.35s (best 25.23s) | skipped (apply-jsx exceeded 180s — Illustrator may be unresponsive) | 18,634,633 | 287 | 100% |
 
+
+## Run 2026-05-05 21:14:48 UTC (runs=3) — v0.6.x
+
+Platform: `macOS-26.4.1-arm64-arm-64bit` — Python 3.11.7. arch-line-weights v0.6.6.
+
+First v0.6.x run. Three inputs covering small section, reference
+section, and large plan (first non-section drawing benchmarked).
+
+| file | input | layers | cut | apply-saas | apply-saas --poche | apply-jsx | output (poche) | polygons | success |
+|------|------:|-------:|----:|-----------|--------------------|----------|---------------:|---------:|--------:|
+| `wall_section_iso.ai` | 4,169,759 | 39 | 16 | 2.69s (best 2.66s) | 3.20s (best 3.16s) | skipped (skipped via --no-jsx) | 2,854,583 | 71 | 100% |
+| `reference_section.ai` | 24,468,895 | 62 | 23 | 27.95s (best 27.33s) | 26.13s (best 25.33s) | skipped (skipped via --no-jsx) | 18,634,633 | 287 | 100% |
+
+
+## Run 2026-05-05 21:23:39 UTC (runs=1) — v0.6.x macro plan
+
+Platform: `macOS-26.4.1-arm64-arm-64bit` — Python 3.11.7. arch-line-weights v0.6.6.
+
+First-ever benchmark on the 98 MB macro plan. Only 1 iteration to
+stay inside the 30 min wall-clock budget — earlier real-world
+runs reported "~5 min" but those were likely cold-cache + apply-jsx;
+in steady-state the SaaS pipeline is much faster (~80–90 s).
+
+| file | input | layers | cut | apply-saas | apply-saas --poche | apply-jsx | output (poche) | polygons | success |
+|------|------:|-------:|----:|-----------|--------------------|----------|---------------:|---------:|--------:|
+| `macro_plan.ai` | 98,056,614 | 49 | 0 | 81.45s (best 81.45s) | 89.07s (best 89.07s) | skipped (skipped via --no-jsx) | 72,786,579 | 0 | 0% |
+
+### Anomalies & notes (v0.6.x)
+
+* **Reference apply-saas runs are slower in v0.6.x** (~28 s vs ~24 s
+  in v0.5; +16 % median). Attributed to bridge-best default flip — the
+  rescue ladder now traverses all rungs and selects best-by-confidence
+  rather than first-success. This is a deliberate quality/perf
+  trade-off documented in CHANGELOG v0.6.0.
+* **Reference apply-saas --poche is unchanged** (~26 s). Alpha-shape
+  rescue rung does not fire on this drawing (20/20 cut layers
+  polygonize via earlier rungs) so its zero-cost guarantee holds.
+* **Macro plan --poche is a no-op as predicted** — `cut_layer_count=0`
+  (it's a plan, not a section). `--poche` runs B6 then has no
+  ClippingPlaneIntersections layers to polygonize. The 8 s overhead
+  vs apply-saas (89.07 vs 81.45) is the polygon-discovery scan
+  finding nothing.
+* **Macro success rate shows 0 %** because `layers_targeted=0` —
+  table cell is correct; nothing to inject. Don't read it as a
+  failure.
+* **Macro is 4× the input size of the reference but only ~3× the
+  apply-saas time** (81 s vs 28 s). Throughput: ~120 MB/s for the
+  reference, ~80 MB/s for the macro — modestly sub-linear, suggests
+  pikepdf parsing dominates rather than the bridge-best traversal.

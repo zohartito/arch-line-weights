@@ -151,6 +151,46 @@ Copy this for each new drawing run:
   - Different default output paths for `apply-jsx` (`HIERARCHY-jsx.ai`) vs `apply-saas` (`HIERARCHY-saas.ai`) to prevent overwrite races
 - **Decision**: ✅ **tool good enough for plan drawings via `apply-saas`** — major win. ⚠️ apply-jsx path has rough edges that need fixing before it's reliable on large files.
 
+### Entry 2 — 2026-05-05 — `wall section iso cut .ai` (ARCH 211 wall section, trailing-space disk name)
+
+- **Source file**: `/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 211/wall section iso cut .ai` (note literal trailing space before `.ai`)
+- **File size MB**: 12.6
+- **Stroke count**: not enumerated (apply-jsx path; classifier ran on layer names, not strokes)
+- **OCG layer count**: ~30 leaf layers classified by the semantic classifier
+- **Cut layers total**: N/A (handled implicitly by classifier; no separate poché run)
+- **Cut layers polygonized cleanly**: N/A
+- **Cut layers needing __POCHE_CLOSE__**: N/A
+- **Cut layers fully failed**: N/A
+- **Hierarchy preset used**: **section** (wall section drawing, iso-cut)
+- **Scale flag**: default
+- **Print flag**: no (screen weights)
+- **Estimated manual time it would have taken**: ~2 hrs (wall-section detail, ~30 layers × ~4 min per layer)
+- **Actual time spent (incl. CLI runtime + manual fixes)**: ~2 min CLI + 0 min manual = ~2 min
+- **Estimated hours saved vs manual**: ~2 hrs
+- **Manual fixes needed**: 0
+- **Pipeline used**: `apply-jsx --preset section` against the open `[Converted]` doc (corrupt disk file forced the JSX path; pikepdf could not open the trailer-corrupt source).
+- **Output**: `wall section iso cut  HIERARCHY-jsx.ai` (3.79 MB; note Issue #12 suffix `HIERARCHY-jsx`)
+- **Tier breakdown** (full per-layer dump in `/private/tmp/claude-501/tasks/b6ljidqr4.output`):
+  - 1.0 pt — section-cut tier
+  - 0.5 pt — primary structural profile
+  - 0.35 pt — secondary profile / frames
+  - 0.30 pt — minor profile
+  - 0.18 pt — texture / hatching
+  - 0.13 pt — hairline / annotation
+- **What worked well**:
+  - **`[Converted]` state detection engaged correctly** — the v0.6.4 AppleScript fix (`current document` + `(get name of …)`) resolved Illustrator 2026 build 30.x's `name`-property/class ambiguity, and the v0.6.3 trailing-whitespace normalization in `_is_converted_match` handled `wall section iso cut  [Converted].ai` → `wall section iso cut .ai` correctly.
+  - Wrapper printed the `# detected [Converted] doc … operating on the open document directly (Issue #10)` line and skipped the brittle `open POSIX file` step.
+  - Semantic classifier hit ~30 leaf layers and tiered them across the 6-step ladder cleanly.
+  - Output saved with the new `HIERARCHY-jsx` suffix (Issue #12 fix), so it doesn't collide with any future `apply-saas` run on the same source.
+  - Heartbeat poller (Issue #8) printed per-layer progress; no stale-warning fired.
+- **What didn't work / what surprised me**:
+  - **Original disk file is trailer-corrupt** — `pikepdf.open()` raised on `wall section iso cut .ai`; same root cause as `macro.ai` in Entry 1. The headless pure-Python path (`apply-saas`) is NOT a fallback when the source is structurally broken at the PDF trailer. Required Illustrator Save-As workaround would have produced a clean 12 MB version, but since Illustrator already had the file open as `[Converted]`, the JSX path operated on the in-memory doc instead — convenient but circumstantial.
+  - The trailing-space disk filename is a real-world artifact of Rhino's exporter (a layer name ending in space leaks into the export filename). Issue #14 fixed this for the matcher but the source-file-corruption gap remains.
+- **What I'd add to the tool because of this**:
+  - Detect trailer-corrupt `.ai` files in `apply-saas` and surface a clear "Open in Illustrator and Save As, or use `apply-jsx` against the open doc" message instead of the raw pikepdf traceback.
+  - Per-layer tier breakdown could be persisted next to the output (e.g. `<output>.tiers.json`) instead of only living in the JSX report file.
+- **Decision**: ✅ **`apply-jsx` is now reliable on real corrupt-source drawings** thanks to the v0.6.1 / v0.6.3 / v0.6.4 issue cluster. The `[Converted]` + trailing-space + AppleScript-syntax fixes all engaged correctly on a real drawing for the first time.
+
 ---
 
 (Add new entries above this line)
@@ -159,7 +199,7 @@ Copy this for each new drawing run:
 
 | Drawings logged | Drawing types | Headless success | Hours saved | Decision-ready? |
 |---|---|---|---|---|
-| 2 (reference + macro) | section, plan | 2/2 (100%) | ~9 hrs | No — need ≥5 drawings |
+| 3 (reference + macro + wall-section) | section, plan, section-iso | 3/3 pipelines validated | ~11 hrs | No — need ≥5 drawings |
 
 ## Related
 

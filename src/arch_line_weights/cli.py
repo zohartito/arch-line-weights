@@ -28,11 +28,12 @@ from .presets import PRESETS, select_preset
 _SOURCE_CHOICES = [Source.AUTO.value, Source.RHINO.value, Source.AUTOCAD.value]
 
 # Bridge-strategy CLI vocabulary, mirrored from poche.BridgeStrategy.
-# "greedy" preserves v0.4 behaviour (the legacy nearest-neighbour bridger);
-# "best" routes through bridge.infer_bridges_best, which picks the highest-
-# yield among 4 strategies — meant for the 3 stubborn cut layers identified
-# in the v0.5 review.
+# "best" (default since v0.6.7) routes through bridge.infer_bridges_best,
+# which picks the highest-yield among 4 strategies (greedy, backtrack,
+# DBSCAN, DBSCAN+backtrack). "greedy" preserves v0.4 behaviour (the legacy
+# nearest-neighbour bridger) for backwards compatibility.
 _BRIDGE_STRATEGY_CHOICES = ["greedy", "best"]
+_BRIDGE_STRATEGY_DEFAULT = "best"
 
 
 def _resolve_source(
@@ -293,13 +294,14 @@ def apply(
 @click.option(
     "--bridge-strategy",
     type=click.Choice(_BRIDGE_STRATEGY_CHOICES),
-    default="greedy",
+    default=_BRIDGE_STRATEGY_DEFAULT,
     show_default=True,
-    help="Bridge selector for the auto_bridge rung. 'greedy' = v0.4 nearest-"
-    "neighbour bridger (default). 'best' = run all 4 strategies (greedy, "
-    "backtrack, DBSCAN, DBSCAN+backtrack) and pick the highest-yield. "
-    "Only the apply-jsx command's poché step (if invoked downstream) "
-    "consumes this; otherwise it's surfaced for symmetry with `apply-saas`.",
+    help="Bridge selector for the auto_bridge rung. 'best' = run all 4 "
+    "strategies (greedy, backtrack, DBSCAN, DBSCAN+backtrack) and pick the "
+    "highest-yield (default since v0.6.7). 'greedy' = v0.4 nearest-neighbour "
+    "bridger (backwards-compat). Only the apply-jsx command's poché step "
+    "(if invoked downstream) consumes this; otherwise it's surfaced for "
+    "symmetry with `apply-saas`. Also reads the ARCH_LW_BRIDGE_STRATEGY env var.",
 )
 def apply_jsx_cmd(
     src: Path,
@@ -326,7 +328,7 @@ def apply_jsx_cmd(
     out = str(output) if output else None
     if source != Source.AUTO.value:
         click.echo(f"# layer-source: {source} (forced)", err=True)
-    if bridge_strategy != "greedy":
+    if bridge_strategy != _BRIDGE_STRATEGY_DEFAULT:
         click.echo(f"# bridge-strategy: {bridge_strategy} (forced via --bridge-strategy)", err=True)
         # Surface to downstream consumers via env var; the JSX path itself
         # doesn't currently call the polygonize_layer ladder, but if a future
@@ -426,13 +428,13 @@ def apply_jsx_cmd(
 @click.option(
     "--bridge-strategy",
     type=click.Choice(_BRIDGE_STRATEGY_CHOICES),
-    default="greedy",
+    default=_BRIDGE_STRATEGY_DEFAULT,
     show_default=True,
     help="Bridge selector for the auto_bridge rung when --poche is set. "
-    "'greedy' = v0.4 nearest-neighbour bridger (default). 'best' = run all "
-    "4 strategies (greedy, backtrack, DBSCAN, DBSCAN+backtrack) and pick "
-    "the highest-yield — meant for the 3 stubborn cut layers identified "
-    "in the v0.5 review. Also reads the ARCH_LW_BRIDGE_STRATEGY env var.",
+    "'best' = run all 4 strategies (greedy, backtrack, DBSCAN, "
+    "DBSCAN+backtrack) and pick the highest-yield (default since v0.6.7). "
+    "'greedy' = v0.4 nearest-neighbour bridger (backwards-compat). "
+    "Also reads the ARCH_LW_BRIDGE_STRATEGY env var.",
 )
 @click.option(
     "--llm-fallback",
@@ -570,7 +572,7 @@ def apply_saas_cmd(
                 "warning: --no-alpha-shape has no effect without --poche",
                 err=True,
             )
-        if bridge_strategy != "greedy":
+        if bridge_strategy != _BRIDGE_STRATEGY_DEFAULT:
             click.echo(
                 "warning: --bridge-strategy has no effect without --poche",
                 err=True,
@@ -678,13 +680,14 @@ def apply_saas_cmd(
 @click.option(
     "--bridge-strategy",
     type=click.Choice(_BRIDGE_STRATEGY_CHOICES),
-    default="greedy",
+    default=_BRIDGE_STRATEGY_DEFAULT,
     show_default=True,
-    help="Bridge selector for the auto_bridge rung. 'greedy' = v0.4 nearest-"
-    "neighbour bridger (default; preserves v0.5.1 behaviour). 'best' = run "
-    "all 4 strategies (greedy, backtrack, DBSCAN, DBSCAN+backtrack) and "
-    "pick the highest-yield — meant for the 3 stubborn cut layers "
-    "identified in the v0.5 review. Also reads ARCH_LW_BRIDGE_STRATEGY env var.",
+    help="Bridge selector for the auto_bridge rung. 'best' = run all 4 "
+    "strategies (greedy, backtrack, DBSCAN, DBSCAN+backtrack) and pick "
+    "the highest-yield (default since v0.6.7; benefits the 3 stubborn cut "
+    "layers from the v0.5 review). 'greedy' = v0.4 nearest-neighbour "
+    "bridger (backwards-compat with v0.5.x). Also reads "
+    "ARCH_LW_BRIDGE_STRATEGY env var.",
 )
 @click.option(
     "--llm-fallback",
@@ -745,7 +748,7 @@ def poche_cmd(
     over = str(overrides_path) if overrides_path else None
     if source != Source.AUTO.value:
         click.echo(f"# layer-source: {source} (forced)", err=True)
-    if bridge_strategy != "greedy":
+    if bridge_strategy != _BRIDGE_STRATEGY_DEFAULT:
         click.echo(f"# bridge-strategy: {bridge_strategy} (forced via --bridge-strategy)", err=True)
     if llm_fallback:
         os.environ["ARCH_LW_LLM_FALLBACK"] = "1"

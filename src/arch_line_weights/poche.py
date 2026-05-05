@@ -47,17 +47,19 @@ from .hatch import hatch_polygon, material_for_layer
 POCHE_CLOSE_LAYER = "__POCHE_CLOSE__"
 TOLERANCE_SWEEP = (0.0, 0.1, 0.5, 1.0, 2.0, 5.0)  # 0 = bare linemerge, no snap
 
-# Bridge strategy selector — opt-in via the ``bridge_strategy`` argument or
-# the ``ARCH_LW_BRIDGE_STRATEGY`` environment variable. Default is
-# ``"greedy"`` (the v0.4 nearest-neighbour bridger) for backwards
-# compatibility with v0.5.x. ``"best"`` routes through
-# :func:`bridge.infer_bridges_best` which picks the best of 4 strategies
-# (greedy, backtracking, DBSCAN endpoint collapse, DBSCAN+backtrack); see
+# Bridge strategy selector — controlled by the ``bridge_strategy`` argument
+# or the ``ARCH_LW_BRIDGE_STRATEGY`` environment variable. Default is
+# ``"best"`` as of v0.6.7: routes through :func:`bridge.infer_bridges_best`
+# which picks the best of 4 strategies (greedy, backtracking, DBSCAN
+# endpoint collapse, DBSCAN+backtrack). ``"greedy"`` is preserved for
+# backwards compatibility with v0.5.x and is reachable via explicit
+# ``bridge_strategy="greedy"`` or ``ARCH_LW_BRIDGE_STRATEGY=greedy``. See
 # ``docs/research/bridge-strategy-wire-notes.md`` for the wiring rationale
-# and ``docs/research/stubborn-layers-deep-dive.md`` for the strategy ladder.
+# and the v0.6.7 default-flip rationale, and
+# ``docs/research/stubborn-layers-deep-dive.md`` for the strategy ladder.
 BridgeStrategy = Literal["greedy", "best"]
 _VALID_BRIDGE_STRATEGIES: tuple[str, ...] = ("greedy", "best")
-_DEFAULT_BRIDGE_STRATEGY: BridgeStrategy = "greedy"
+_DEFAULT_BRIDGE_STRATEGY: BridgeStrategy = "best"
 _BRIDGE_STRATEGY_ENV = "ARCH_LW_BRIDGE_STRATEGY"
 
 
@@ -65,7 +67,7 @@ def _resolve_bridge_strategy(explicit: str | None) -> BridgeStrategy:
     """Resolve the bridge strategy from an explicit argument or env var.
 
     Order of precedence: explicit argument > ``ARCH_LW_BRIDGE_STRATEGY`` env
-    var > default (``"greedy"``). Unknown values silently fall back to the
+    var > default (``"best"``). Unknown values silently fall back to the
     default — this is a runtime tuning knob and a typo shouldn't break the
     pipeline.
     """
@@ -243,14 +245,15 @@ def polygonize_layer(
         concave_hull (v0.5.2 behavior). When False, that rung is skipped
         and the rescue ladder matches v0.5.1 exactly.
     bridge_strategy : str | None, default None
-        Selector for the auto-bridge rung. ``"greedy"`` (the default if
-        unset) calls :func:`bridge.infer_bridges` (the v0.4 nearest-neighbour
-        bridger). ``"best"`` calls :func:`bridge.infer_bridges_best` which
+        Selector for the auto-bridge rung. ``"best"`` (the default if
+        unset, since v0.6.7) calls :func:`bridge.infer_bridges_best` which
         picks the highest-yield among 4 strategies (greedy, backtrack,
-        DBSCAN endpoint collapse, DBSCAN+backtrack). When ``None``, the env
-        var ``ARCH_LW_BRIDGE_STRATEGY`` is consulted; if that is also unset,
-        the default ``"greedy"`` applies. Unknown values silently fall back
-        to ``"greedy"``.
+        DBSCAN endpoint collapse, DBSCAN+backtrack). ``"greedy"`` calls
+        :func:`bridge.infer_bridges` (the v0.4 nearest-neighbour bridger)
+        and is preserved for backwards compatibility. When ``None``, the
+        env var ``ARCH_LW_BRIDGE_STRATEGY`` is consulted; if that is also
+        unset, the default ``"best"`` applies. Unknown values silently fall
+        back to ``"best"``.
     """
     strategy = _resolve_bridge_strategy(bridge_strategy)
     lines = _lines_from_anchors(paths)
@@ -291,19 +294,33 @@ def polygonize_layer(
         return polys, FillResult(layer_name, "linemerge_snap", conf, len(polys), n_segments, tol)
 
     # Auto-bridge: infer missing connecting segments and re-run
-    # linemerge+polygonize. Default strategy is the v0.4 greedy nearest-
-    # neighbour bridger; when ``bridge_strategy="best"``, dispatch to the
-    # 4-way strategy selector instead.
+    # linemerge+polygonize. Default strategy (v0.6.7+) is ``"best"``, which
+    # dispatches to the 4-way strategy selector. ``"greedy"`` retains the
+    # v0.4 nearest-neighbour bridger for backwards compatibility.
+    #
+    # Note on the polygonization gate: greedy only adds bridges
+    # (``len(augmented) > len(lines)``). The "best" selector includes
+    # ``dbscan_collapse``, which mutates endpoints *in place* without adding
+    # segments, so the length stays the same. We still want to polygonize
+    # the collapsed segments — the gate has to allow the equal-length case
+    # for "best".
     try:
         if strategy == "best":
             aug_best, bridge_conf, strategy_name = infer_bridges_best(
                 lines, max_gap=50.0, min_gap=0.01
             )
             augmented = aug_best
+            # "best" returns a usable augmented set (possibly the same
+            # length as the input if dbscan_collapse won) — always try
+            # polygonization on it.
+            should_polygonize = bool(augmented)
         else:
             augmented, bridge_conf = infer_bridges(lines, max_gap=50.0, min_gap=0.01)
             strategy_name = None
-        if len(augmented) > len(lines):
+            # Greedy: only bridges (never collapses), so length increase is
+            # the right gate (preserves v0.5.x bit-exact behaviour).
+            should_polygonize = len(augmented) > len(lines)
+        if should_polygonize:
             polys_with_bridges = _polys_at_tolerance(augmented, 0.0)
             if polys_with_bridges:
                 return polys_with_bridges, FillResult(
@@ -718,10 +735,12 @@ def apply_poche(
         auto_bridge and concave_hull in the rescue ladder. When False,
         the ladder reverts to v0.5.1 behavior.
     bridge_strategy:
-        ``"greedy"`` (default if unset) | ``"best"``. Controls which bridger
-        the auto_bridge rung uses; ``"best"`` enables the 4-way strategy
-        selector for the 3 stubborn cut layers identified in v0.5.
-        ``None`` consults ``ARCH_LW_BRIDGE_STRATEGY`` env var, then defaults.
+        ``"best"`` (default if unset since v0.6.7) | ``"greedy"``. Controls
+        which bridger the auto_bridge rung uses; ``"best"`` runs the 4-way
+        strategy selector (greedy, backtrack, DBSCAN, DBSCAN+backtrack) and
+        picks the highest yield. ``"greedy"`` preserves the v0.4 nearest-
+        neighbour bridger for backwards compatibility. ``None`` consults
+        ``ARCH_LW_BRIDGE_STRATEGY`` env var, then defaults.
     """
     src = os.path.abspath(src)
     if dst is None:

@@ -132,3 +132,170 @@ def test_download_before_done_returns_409(app_client) -> None:
     )
     resp = client.get(f"/api/jobs/{record.job_id}/download")
     assert resp.status_code == 409
+
+
+# --------------------------------------------------------------------------- #
+# v0.5+ / v0.6.x flag plumbing — verify each new field round-trips through
+# the API and the server echoes it back via ``flags_applied``. Tests use the
+# synthetic .ai fixture so every combination actually runs the pipeline.
+# --------------------------------------------------------------------------- #
+
+
+def _post_synthetic(client, synthetic_ai: Path, **form: object):
+    """Helper: POST the synthetic .ai with a form-data overlay and return the response."""
+    with synthetic_ai.open("rb") as f:
+        return client.post(
+            "/api/jobs",
+            files={"file": (synthetic_ai.name, f, "application/postscript")},
+            data={k: ("true" if v is True else "false" if v is False else str(v)) for k, v in form.items()},
+        )
+
+
+def test_default_post_round_trips_default_flags(app_client, synthetic_ai: Path) -> None:
+    """A bare upload should report the documented CLI defaults via flags_applied."""
+    client, _app = app_client
+    resp = _post_synthetic(client, synthetic_ai)
+    assert resp.status_code == 200, resp.text
+    detail = client.get(f"/api/jobs/{resp.json()['job_id']}").json()
+    flags = detail["flags_applied"]
+    # Defaults must match the schema (and the CLI). Frontend reads this dict
+    # to render the "ran with: ..." chip on the job page.
+    assert flags["preset"] == "section"
+    assert flags["scale"] == "1/4"
+    assert flags["for_print"] is False
+    assert flags["with_poche"] is True
+    assert flags["bridge_strategy"] == "best"
+    assert flags["alpha_shape"] is True
+    assert flags["llm_fallback"] is False
+    assert flags["source"] == "auto"
+
+
+def test_preset_round_trip(app_client, synthetic_ai: Path) -> None:
+    client, _app = app_client
+    resp = _post_synthetic(client, synthetic_ai, preset="plan")
+    assert resp.status_code == 200, resp.text
+    detail = client.get(f"/api/jobs/{resp.json()['job_id']}").json()
+    assert detail["status"] == "done", detail
+    assert detail["options"]["preset"] == "plan"
+    assert detail["flags_applied"]["preset"] == "plan"
+
+
+def test_scale_round_trip(app_client, synthetic_ai: Path) -> None:
+    client, _app = app_client
+    resp = _post_synthetic(client, synthetic_ai, scale="1/8")
+    assert resp.status_code == 200, resp.text
+    detail = client.get(f"/api/jobs/{resp.json()['job_id']}").json()
+    assert detail["options"]["scale"] == "1/8"
+    assert detail["flags_applied"]["scale"] == "1/8"
+
+
+def test_for_print_round_trip(app_client, synthetic_ai: Path) -> None:
+    client, _app = app_client
+    resp = _post_synthetic(client, synthetic_ai, for_print=True)
+    assert resp.status_code == 200, resp.text
+    detail = client.get(f"/api/jobs/{resp.json()['job_id']}").json()
+    assert detail["options"]["for_print"] is True
+    assert detail["flags_applied"]["for_print"] is True
+
+
+def test_bridge_strategy_round_trip(app_client, synthetic_ai: Path) -> None:
+    client, _app = app_client
+    resp = _post_synthetic(client, synthetic_ai, bridge_strategy="greedy")
+    assert resp.status_code == 200, resp.text
+    detail = client.get(f"/api/jobs/{resp.json()['job_id']}").json()
+    assert detail["options"]["bridge_strategy"] == "greedy"
+    assert detail["flags_applied"]["bridge_strategy"] == "greedy"
+
+
+def test_alpha_shape_round_trip(app_client, synthetic_ai: Path) -> None:
+    """``--no-alpha-shape`` reverts to the v0.5.1 ladder; verify the boolean rides through."""
+    client, _app = app_client
+    resp = _post_synthetic(client, synthetic_ai, alpha_shape=False)
+    assert resp.status_code == 200, resp.text
+    detail = client.get(f"/api/jobs/{resp.json()['job_id']}").json()
+    assert detail["options"]["alpha_shape"] is False
+    assert detail["flags_applied"]["alpha_shape"] is False
+
+
+def test_llm_fallback_round_trip_without_api_key(
+    app_client, synthetic_ai: Path, monkeypatch
+) -> None:
+    """``llm_fallback=true`` must round-trip and *not* explode without ANTHROPIC_API_KEY.
+
+    The synthetic fixture's single rectangle closes cleanly via ``linemerge_bare``,
+    so the LLM rung never actually fires — meaning we can exercise the flag-
+    plumbing path without paying for (or mocking) a real Anthropic call.
+    Defensively we also ensure the env key is unset.
+    """
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    client, _app = app_client
+    resp = _post_synthetic(client, synthetic_ai, llm_fallback=True)
+    assert resp.status_code == 200, resp.text
+    detail = client.get(f"/api/jobs/{resp.json()['job_id']}").json()
+    assert detail["status"] == "done", detail
+    assert detail["options"]["llm_fallback"] is True
+    assert detail["flags_applied"]["llm_fallback"] is True
+    # The compute helper restores the env var on exit. Confirm it didn't leak.
+    import os
+
+    assert "ARCH_LW_LLM_FALLBACK" not in os.environ
+
+
+def test_source_round_trip(app_client, synthetic_ai: Path) -> None:
+    client, _app = app_client
+    resp = _post_synthetic(client, synthetic_ai, source="rhino")
+    assert resp.status_code == 200, resp.text
+    detail = client.get(f"/api/jobs/{resp.json()['job_id']}").json()
+    assert detail["options"]["source"] == "rhino"
+    assert detail["flags_applied"]["source"] == "rhino"
+
+
+def test_combined_non_default_flags(app_client, synthetic_ai: Path) -> None:
+    """Sanity-check that several non-default flags work together end-to-end."""
+    client, _app = app_client
+    resp = _post_synthetic(
+        client,
+        synthetic_ai,
+        preset="elevation",
+        scale="1/2",
+        for_print=True,
+        bridge_strategy="greedy",
+        alpha_shape=False,
+        source="autocad",
+    )
+    assert resp.status_code == 200, resp.text
+    detail = client.get(f"/api/jobs/{resp.json()['job_id']}").json()
+    assert detail["status"] == "done", detail
+    flags = detail["flags_applied"]
+    assert flags["preset"] == "elevation"
+    assert flags["scale"] == "1/2"
+    assert flags["for_print"] is True
+    assert flags["bridge_strategy"] == "greedy"
+    assert flags["alpha_shape"] is False
+    assert flags["source"] == "autocad"
+    # Poché should have been applied (default=true); confirm the report rode through.
+    assert detail["poche_summary"] is not None
+
+
+def test_invalid_preset_returns_422(app_client, synthetic_ai: Path) -> None:
+    client, _app = app_client
+    resp = _post_synthetic(client, synthetic_ai, preset="bogus")
+    assert resp.status_code == 422, resp.text
+
+
+def test_invalid_scale_returns_422(app_client, synthetic_ai: Path) -> None:
+    client, _app = app_client
+    resp = _post_synthetic(client, synthetic_ai, scale="42")
+    assert resp.status_code == 422, resp.text
+
+
+def test_invalid_bridge_strategy_returns_422(app_client, synthetic_ai: Path) -> None:
+    client, _app = app_client
+    resp = _post_synthetic(client, synthetic_ai, bridge_strategy="random")
+    assert resp.status_code == 422, resp.text
+
+
+def test_invalid_source_returns_422(app_client, synthetic_ai: Path) -> None:
+    client, _app = app_client
+    resp = _post_synthetic(client, synthetic_ai, source="freecad")
+    assert resp.status_code == 422, resp.text
