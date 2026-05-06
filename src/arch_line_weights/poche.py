@@ -123,6 +123,7 @@ Strategy = Literal[
     "auto_bridge",
     "structural_open_loop",
     "structural_parallel_edges",
+    "structural_visible_completion",
     "alpha_shape",
     "llm_topology",
     "concave_hull",
@@ -313,16 +314,47 @@ def _expanded_bounds_polygon(lines: list[LineString], margin: float) -> Polygon 
 
 def _polygon_uses_cut_edge(poly: Polygon, cut_lines: list[LineString]) -> bool:
     """Return True when an inferred helper polygon is anchored to cut geometry."""
+    required = max(8.0, 0.08 * poly.length)
+    shared_total = 0.0
     boundary = poly.boundary
     for line in cut_lines:
         if line.length <= 2.0:
             continue
         try:
             shared = boundary.buffer(0.75).intersection(line).length
-            if shared >= min(8.0, line.length * 0.35):
+            shared_total += shared
+            if shared_total >= required:
                 return True
         except Exception:
             continue
+    return False
+
+
+def _helper_expansion_limit(layer_name: str) -> float:
+    upper = layer_name.upper()
+    if "TEC_CONCRETE_BASE" in upper or "TEC_FOUNDATION" in upper:
+        return 1.85
+    return 4.0
+
+
+def _helper_candidate_overexpands_cut(
+    layer_name: str,
+    helper_poly: Polygon,
+    cut_only_polys: list[Polygon],
+) -> bool:
+    """Reject helper candidates that mostly widen an existing cut-only face."""
+    if helper_poly.is_empty or not cut_only_polys:
+        return False
+    limit = _helper_expansion_limit(layer_name)
+    for cut_poly in cut_only_polys:
+        if cut_poly.is_empty or cut_poly.area <= 1.0:
+            continue
+        try:
+            overlap = helper_poly.intersection(cut_poly).area
+        except Exception:
+            continue
+        if overlap >= cut_poly.area * 0.75 and helper_poly.area > cut_poly.area * limit:
+            return True
     return False
 
 
@@ -544,8 +576,17 @@ def _try_structural_open_loop(
     median_seg = lengths[len(lengths) // 2] if lengths else 20.0
     max_gap = max(75.0, min(350.0, median_seg * 24.0))
 
-    candidates = _structural_open_loop_candidates(lines, max_gap=max_gap)
-    candidates.extend(_try_structural_parallel_edges(layer_name, lines, helper_lines))
+    cut_only = _clean_structural_polygons(
+        _structural_open_loop_candidates(lines, max_gap=max_gap)
+        + _try_structural_parallel_edges(layer_name, lines, [])
+    )
+    candidates = list(cut_only)
+
+    if helper_lines:
+        for poly in _try_structural_parallel_edges(layer_name, lines, helper_lines):
+            if _helper_candidate_overexpands_cut(layer_name, poly, cut_only):
+                continue
+            candidates.append(poly)
 
     if helper_lines:
         bounds_gate = _expanded_bounds_polygon(lines, max_gap)
@@ -557,6 +598,8 @@ def _try_structural_open_loop(
             if bounds_gate is not None and not bounds_gate.covers(poly.centroid):
                 continue
             if not _polygon_uses_cut_edge(poly, lines):
+                continue
+            if _helper_candidate_overexpands_cut(layer_name, poly, cut_only):
                 continue
             candidates.append(poly)
 
@@ -576,6 +619,12 @@ def _structural_open_loop_improves(
     structural = _clean_structural_polygons(current + structural)
     current_area = sum(p.area for p in current)
     structural_area = sum(p.area for p in structural)
+    if (
+        current
+        and len(structural) <= len(current)
+        and structural_area > current_area * 1.85
+    ):
+        return []
     if len(structural) > len(current):
         return structural
     if structural_area > current_area * 1.10:

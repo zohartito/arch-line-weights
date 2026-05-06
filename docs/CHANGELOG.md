@@ -11,6 +11,43 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Reusable `make2d_completion` module for architectural component evidence:
+  parsed layers now have semantic assignments, roles, component keys, and
+  accepted/rejected completion candidates. This is the first step toward a
+  general "complete broken Make2D" stage shared by poché and line-weight
+  hierarchy.
+- Opt-in top-stack poché overlay layer via `ARCH_LW_POCHE_OVERLAY=1`. This
+  draws accepted black fills in an `ARCH_LW_POCHE` layer above Rhino visible
+  curves so later light linework cannot stripe through cut masses.
+
+### Changed
+
+- Helper-derived structural completion candidates now need meaningful shared
+  boundary with the real `ClippingPlaneIntersections` target before they can
+  become automatic black poché. Helper-only closed shapes are kept as
+  diagnostic evidence instead of filled by default.
+- Concrete/foundation helper geometry can no longer wildly expand an existing
+  cut-only face. This specifically addresses the lower-left false blob seen in
+  `iso axon section  [Converted]` while preserving conservative cut-derived
+  poché.
+- Architectural section screen hierarchy now makes secondary steel and
+  connector hardware quieter (`0.25 pt` and `0.18 pt`) so they do not compete
+  with true cut/profile structure.
+
+### Validation
+
+- Real run on
+  `iso axon section  [Converted].ai` produced
+  `v0614-no-concrete-blob.ai`: 51 polygons across 8/8 structural cut layers,
+  no 20-minute hang, and the oversized lower-left concrete-base helper fill
+  was removed.
+- Real run with `ARCH_LW_POCHE_OVERLAY=1` produced
+  `v0615-overlay.ai`; the overlay layer is present at the top of the
+  Illustrator stack. Visual review still shows the deeper issue: missing mass
+  is mostly incomplete component topology, not only draw order.
+
 ### In flight
 
 - **Issue #16** — `--architectural` mode: semantic hierarchy, structural

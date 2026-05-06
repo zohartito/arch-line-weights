@@ -45,6 +45,7 @@ a real file is gated on integration testing in a separate session.
 from __future__ import annotations
 
 import contextlib
+import logging
 import os
 import re
 from collections.abc import Callable
@@ -57,8 +58,13 @@ from shapely.geometry import LineString, Polygon
 
 from .apply_saas import CHUNK, PREFIX, _read_payload, _write_payload, rewrite_payload
 from .layer_classify import Source
+from .make2d_completion import (
+    complete_structural_cut_polygons,
+    structural_completion_paths_for_layers,
+)
 from .poche import (
     POCHE_CLOSE_LAYER,
+    FillResult,
     PocheReport,
     _lines_from_anchors,
     polygonize_layer,
@@ -66,14 +72,29 @@ from .poche import (
 )
 from .progress import ProgressReporter
 
+_log = logging.getLogger(__name__)
+_ARCHITECTURAL_COMPLETION_ENV = "ARCH_LW_ARCHITECTURAL_COMPLETION"
+_POCHE_OVERLAY_ENV = "ARCH_LW_POCHE_OVERLAY"
+_POCHE_OVERLAY_LAYER_NAME = "ARCH_LW_POCHE"
+
 __all__ = [
     "PocheSaasResult",
     "apply_saas_with_poche",
     "compute_polygons_for_layers",
     "find_layer_envelope",
+    "inject_poche_overlay_layer",
     "inject_poche_polygons",
+    "synthesize_poche_overlay_layer",
     "synthesize_polygon_block",
 ]
+
+
+def _architectural_completion_enabled() -> bool:
+    return os.environ.get(_ARCHITECTURAL_COMPLETION_ENV, "1") != "0"
+
+
+def _poche_overlay_enabled() -> bool:
+    return os.environ.get(_POCHE_OVERLAY_ENV) == "1"
 
 
 @dataclass
@@ -294,6 +315,54 @@ def inject_poche_polygons(
     return b"".join(segments)
 
 
+def synthesize_poche_overlay_layer(
+    polygons_by_layer: dict[str, list[Polygon]],
+    *,
+    layer_name: str = _POCHE_OVERLAY_LAYER_NAME,
+) -> bytes:
+    """Build a top-level AI layer containing all accepted poché fills."""
+    polygons: list[Polygon] = []
+    for polys in polygons_by_layer.values():
+        polygons.extend(polys)
+    body = synthesize_polygon_blocks(polygons)
+    if not body:
+        return b""
+    return (
+        b"%AI5_BeginLayer\r"
+        b"1 1 1 1 0 0 1 -1 240 190 130 0 100 0 Lb\r"
+        b"(" + layer_name.encode("utf-8") + b") Ln\r"
+        b"0 AE\r"
+        + body
+        + b"\rLB\r"
+        b"%AI5_EndLayer--\r"
+    )
+
+
+def inject_poche_overlay_layer(
+    payload: bytes,
+    polygons_by_layer: dict[str, list[Polygon]],
+    *,
+    result: PocheSaasResult | None = None,
+    layer_name: str = _POCHE_OVERLAY_LAYER_NAME,
+) -> bytes:
+    """Append accepted poché fills as a top-stack overlay layer."""
+    if result is None:
+        result = PocheSaasResult()
+    fragment = synthesize_poche_overlay_layer(polygons_by_layer, layer_name=layer_name)
+    result.layers_targeted += len(polygons_by_layer)
+    if not fragment:
+        return payload
+
+    page_trailer = payload.rfind(b"%%PageTrailer")
+    eof = payload.rfind(b"%%EOF")
+    insert_at = page_trailer if page_trailer >= 0 else (eof if eof >= 0 else len(payload))
+
+    result.layers_injected += len(polygons_by_layer)
+    result.polygons_injected += sum(len(polys) for polys in polygons_by_layer.values())
+    result.bytes_injected += len(fragment)
+    return payload[:insert_at] + fragment + payload[insert_at:]
+
+
 # --------------------------------------------------------------------------- #
 # 4. Compute polygons from a layer-paths dict (keeps reuse of poche.py)
 # --------------------------------------------------------------------------- #
@@ -307,6 +376,7 @@ def compute_polygons_for_layers(
     bridge_strategy: str | None = None,
     reporter: ProgressReporter | None = None,
     structural_helper_paths_by_layer: dict[str, list[list[list[float]]]] | None = None,
+    structural_completion_paths_by_layer: dict[str, list[list[list[float]]]] | None = None,
 ) -> tuple[dict[str, list[Polygon]], PocheReport]:
     """Run :func:`poche.polygonize_layer` over every layer in ``paths_by_layer``.
 
@@ -324,6 +394,7 @@ def compute_polygons_for_layers(
     """
     overrides = overrides or {}
     structural_helper_paths_by_layer = structural_helper_paths_by_layer or {}
+    structural_completion_paths_by_layer = structural_completion_paths_by_layer or {}
     report = PocheReport()
     if reporter is None:
         reporter = ProgressReporter(enabled=False)
@@ -370,6 +441,45 @@ def compute_polygons_for_layers(
                 bridge_strategy=bridge_strategy,
                 structural_helper_lines=structural_helper_lines,
             )
+
+            completion_paths = structural_completion_paths_by_layer.get(layer_name)
+            if completion_paths:
+                base_polys = polys if should_inject_fill(fr) else []
+                completion_polys, candidates = complete_structural_cut_polygons(
+                    layer_name,
+                    paths,
+                    completion_paths,
+                    base_polys,
+                )
+                for candidate in candidates:
+                    if candidate.accepted:
+                        _log.info(
+                            "accepted Make2D completion for %s: area=%.1f "
+                            "cut_shared=%.1f",
+                            layer_name,
+                            candidate.polygon.area,
+                            candidate.cut_shared_length,
+                        )
+                    else:
+                        _log.debug(
+                            "rejected Make2D completion for %s: %s "
+                            "area=%.1f cut_shared=%.1f",
+                            layer_name,
+                            candidate.reason,
+                            candidate.polygon.area,
+                            candidate.cut_shared_length,
+                        )
+                if completion_polys:
+                    polys = [*base_polys, *completion_polys]
+                    fr = FillResult(
+                        layer_name,
+                        "structural_visible_completion",
+                        0.88,
+                        len(polys),
+                        fr.segment_count,
+                        fr.tolerance,
+                        fr.bridge_strategy_name,
+                    )
             info.polygon_count = len(polys)
             info.strategy = fr.strategy
             info.confidence = fr.confidence
@@ -607,6 +717,7 @@ def apply_saas_with_poche(
         # glass/IGU exclusion and lives outside the regex.
         with reporter.stage("enumerate_layers", cut_filter="ClippingPlaneIntersections"):
             structural_helper_paths_by_layer: dict[str, list[list[list[float]]]] = {}
+            structural_completion_paths_by_layer: dict[str, list[list[list[float]]]] = {}
             if architectural:
                 from .architectural import classify_architectural_layer
 
@@ -631,6 +742,17 @@ def apply_saas_with_poche(
                     cut_paths,
                     all_paths,
                 )
+                if _architectural_completion_enabled():
+                    structural_completion_paths_by_layer = (
+                        structural_completion_paths_for_layers(
+                            cut_paths,
+                            all_paths,
+                            preset=preset,
+                            scale=scale,
+                            for_print=for_print,
+                            source=source,
+                        )
+                    )
             else:
                 cut_paths = enumerate_layer_paths_from_payload(
                     payload,
@@ -646,6 +768,7 @@ def apply_saas_with_poche(
                 bridge_strategy=bridge_strategy,
                 reporter=reporter,
                 structural_helper_paths_by_layer=structural_helper_paths_by_layer,
+                structural_completion_paths_by_layer=structural_completion_paths_by_layer,
             )
 
         # Step 1: rewrite stroke widths (existing B6 functionality).
@@ -662,9 +785,16 @@ def apply_saas_with_poche(
         # the *rewrite output* so any byte shift from width rewriting is
         # already accounted for.
         with reporter.stage("inject_poche_polygons", layers=len(polygons_by_layer)):
-            new_payload = inject_poche_polygons(
-                new_payload, polygons_by_layer, result=poche_result
-            )
+            if _poche_overlay_enabled():
+                new_payload = inject_poche_overlay_layer(
+                    new_payload,
+                    polygons_by_layer,
+                    result=poche_result,
+                )
+            else:
+                new_payload = inject_poche_polygons(
+                    new_payload, polygons_by_layer, result=poche_result
+                )
 
         apply_result.payload_size_out = len(new_payload)
 

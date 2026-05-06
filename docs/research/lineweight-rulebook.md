@@ -61,17 +61,18 @@ edges (`Architectural Graphics`, indexed pp. 157-160, 165).
 |---|---:|---|---|---|
 | `cut` | `1.0 pt` | Yes, structural whitelist only | Material physically sliced by the section plane: foundation, concrete, CLT slab/wall/roof, true cut timber or steel solids | AG pp. 28, 80, 172; BCI pp. 97-100, 155, 207-208, 211-212, 236; BSI pp. 33, 173, 179, 199 |
 | `structure_primary` / `profile` | `0.5 pt` | No, unless also a structural cut layer | Major load-bearing profiles seen in elevation behind the cut: CLT walls, timber beams/columns, concrete wall/slab profiles, main roof/foundation profiles | BCI pp. 155, 207, 212, 236; BSI pp. 136, 173, 179, 199 |
-| `structure_secondary` | `0.35 pt` target | No by default | Steel SHS/RHS/CHS/UC/UB members and secondary framing legible behind the cut, but quieter than the cut mass and primary profile | BCI pp. 131-132, 192, 194; BSI pp. 120, 222-223 |
+| `structure_secondary` | `0.25 pt` target | No by default | Steel SHS/RHS/CHS/UC/UB members and secondary framing legible behind the cut, but quieter than the cut mass and primary profile | BCI pp. 131-132, 192, 194; BSI pp. 120, 222-223 |
 | `frames` / `edges_secondary` | `0.3 pt` | No by default | Window frames, sash, mullions, stair risers, door/window object edges | BCI pp. 320-321, 325-326 |
-| `connectors` | `0.25 pt` | No by default | Brackets, cleats, plates, clips, straps, bolts, welded/bolted connection hardware | BCI pp. 88, 131-132, 150-151, 168, 206, 234; BSI pp. 139, 178, 189, 223 |
+| `connectors` | `0.18 pt` | No by default | Brackets, cleats, plates, clips, straps, bolts, welded/bolted connection hardware | BCI pp. 88, 131-132, 150-151, 168, 206, 234; BSI pp. 139, 178, 189, 223 |
 | `glazing` / `special` | `0.25 pt` or lighter | Never in section axon default | Transparent glass and insulated glazing. Keep legible but visually light and separate from structural mass | BCI pp. 314, 320-321, 325-328, 331; BSI pp. 194 |
 | `cladding` / `hidden` | `0.18 pt` | Never in section axon default | Facade screens, copper panels, rainscreen layers, curtain-wall infill, surface panels, punch returns | BCI pp. 263-264, 271, 325-326, 331; BSI pp. 190, 192-194 |
 | `material_minor` / `insulation` / `reference` | `0.13 pt` | Never | Membranes, EPDM, sealants, insulation, hatches, datum/grid/reference lines | AG pp. 157-160, 165; BCI pp. 252-255, 259-260 |
 | `texture` | `0.08 pt` where available | Never | Dense hatch lines, perforation texture, panel grain, background surface texture | AG pp. 97, 157-160, 165 |
 
 Implementation note: the section preset currently maps `structure_secondary`
-to `edges` in `tier_weights_for_preset("section")`, which collapses `0.35 pt`
-to `0.3 pt`. For issue #16, keep a distinct `structure_secondary` weight in
+to `edges` in `tier_weights_for_preset("section")`, which would make secondary
+steel too loud for this section axon. For issue #16, keep a distinct
+`structure_secondary` weight in
 architectural mode so steel framing can sit between primary profiles and
 window/object edges.
 
@@ -129,7 +130,7 @@ frames, beam-column action, and connection rigidity as structural load-path
 systems (BCI indexed pp. 131-132, 192, 194; BSI indexed pp. 120, 222-223).
 
 - `SHS`, `RHS`, `CHS`, `UC`, `UB`, `HSS`, and `_STL_` visible framing terms
-  map to `structure_secondary` at about `0.35 pt`.
+  map to `structure_secondary` at about `0.25 pt` in section-axon screen output.
 - A steel member on a true cut layer may be `cut` only when it is a structural
   member, not a connector, clip, or facade support bracket.
 - If the layer name is ambiguous between steel frame and hardware, prefer the
@@ -144,7 +145,7 @@ bolts, anchorages, and slotted adjustment hardware (BCI indexed pp. 88,
 
 - `TEC_STEEL_CONNECTOR`, `L-BRACKET`, `CLEAT_PLATE`, `BRACKET`, `CLIP`,
   `FASTENER`, `BOLT`, `SCREW`, `STRAP`, `ANCHOR`, and similar terms map to
-  `connectors` at `0.25 pt`.
+  `connectors` at `0.18 pt` in section-axon screen output.
 - They are not default poche targets, even when dark in the source file.
 - In detail drawings they may become heavier, but section axons should keep
   them precise and subordinate.
@@ -247,10 +248,10 @@ connector becomes `1.0 pt` and may receive black fill.
 | `axon::Visible::ClippingPlaneIntersections::03b_CLT_BACKUP_WALL` | CLT backup wall cut | `cut` | `1.0` | yes | yes |
 | `axon::Visible::Curves::TEC_TIMBER_COLUMNS` | primary timber profile | `structure_primary` | `0.5` | no | no |
 | `axon::Visible::Curves::TEC_TIMBER_BEAMS` | primary timber profile | `structure_primary` | `0.5` | no | no |
-| `axon::Visible::Curves::05_RHS_STL_FRAME` | secondary steel frame | `structure_secondary` | `0.35` | no | no |
-| `axon::Visible::Curves::06_SHS_STL_FRAME` | secondary steel frame | `structure_secondary` | `0.35` | no | no |
-| `axon::Visible::Curves::TEC_STEEL_CONNECTOR_L-BRACKET` | connector hardware | `connectors` | `0.25` | no | no |
-| `axon::Visible::Curves::CLEAT_PLATE` | connector hardware | `connectors` | `0.25` | no | no |
+| `axon::Visible::Curves::05_RHS_STL_FRAME` | secondary steel frame | `structure_secondary` | `0.25` | no | no |
+| `axon::Visible::Curves::06_SHS_STL_FRAME` | secondary steel frame | `structure_secondary` | `0.25` | no | no |
+| `axon::Visible::Curves::TEC_STEEL_CONNECTOR_L-BRACKET` | connector hardware | `connectors` | `0.18` | no | no |
+| `axon::Visible::Curves::CLEAT_PLATE` | connector hardware | `connectors` | `0.18` | no | no |
 | `axon::Visible::ClippingPlaneIntersections::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44` | copper punch return | `cladding` | `0.18` | no | no |
 | `axon::Visible::Curves::14_CU_CORR_PERF_SCREEN` | perforated copper screen | `cladding` or `texture` | `0.18`/`0.08` | no | no |
 | `axon::Visible::ClippingPlaneIntersections::11_CU_CORR_SOLID_OPAQUE` | copper cladding panel | `cladding` | `0.18` | no | no |
@@ -345,8 +346,8 @@ Add tests in a new `tests/test_architectural_mode.py` or extend
         ("axon::Visible::ClippingPlaneIntersections::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44", "cladding", 0.18, False, False),
         ("axon::Visible::ClippingPlaneIntersections::11_CU_CORR_SOLID_OPAQUE", "cladding", 0.18, False, False),
         ("axon::Visible::ClippingPlaneIntersections::23_WINDOW_FRAMES_REMAP", "frames", 0.3, False, False),
-        ("axon::Visible::Curves::TEC_STEEL_CONNECTOR_L-BRACKET", "connectors", 0.25, False, False),
-        ("axon::Visible::Curves::05_RHS_STL_FRAME", "structure_secondary", 0.35, False, False),
+        ("axon::Visible::Curves::TEC_STEEL_CONNECTOR_L-BRACKET", "connectors", 0.18, False, False),
+        ("axon::Visible::Curves::05_RHS_STL_FRAME", "structure_secondary", 0.25, False, False),
         ("axon::Visible::Curves::WP_MEMBRANE_ROOF_EPDM", "material_minor", 0.13, False, False),
         ("axon::Visible::Curves::FLOOR_DATUMS", "reference", 0.13, False, False),
     ],
@@ -369,7 +370,7 @@ def test_architectural_semantics_beat_luminance_for_connectors():
         preset="section",
     )
     assert a.tier == "connectors"
-    assert a.weight_pt == 0.25
+    assert a.weight_pt == 0.18
 ```
 
 ## Acceptance Criteria

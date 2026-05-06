@@ -209,17 +209,26 @@ Copy this for each new drawing run:
 - **Estimated hours saved vs manual**: not counted yet; poché still needs human cleanup
 - **Manual fixes needed**: structural wall/roof/foundation faces still need review; visible structural candidate fill produced false blobs in experiment
 - **Pipeline used**: `apply-saas --auto --architectural --preset section --poche --bridge-strategy=best`
-- **Output**: `iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0611.ai`
+- **Output**: best current candidate is
+  `iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0616-current-best.ai`
 - **What worked well**:
   - `35 colors mapped`; the earlier `0 colors mapped` symptom is fixed by RGB/CMYK private-payload inspection and architectural mode.
   - `bridge-best` did not hang; per-layer runtime budget kept the run bounded.
   - Semantic architectural hierarchy kept glass, cladding, connectors, and facade screens out of black poché.
   - v0.6.11 helper-assisted structural closure injected 51 polygons across 8/8 structural cut layers.
+  - v0.6.12/v0.6.13 rejected helper-only Make2D completion blobs and removed
+    the lower-left concrete-base over-expansion.
+  - `ARCH_LW_POCHE_OVERLAY=1` created a top `ARCH_LW_POCHE` layer for review.
+  - Secondary steel and connector hardware were quieted in the architectural
+    section-screen hierarchy.
 - **What didn't work / what surprised me**:
   - The output still reads too much like heavy cut bands instead of continuous poché mass.
   - Some real cut solids appear only in `Visible::Curves` / `Visible::Tangents`, not in `ClippingPlaneIntersections`.
   - Filling visible structural layers wholesale recovers missing mass but creates obvious false black blobs, so the tool needs an approval/report workflow before using that evidence aggressively.
+  - The overlay layer proves some white stripes were draw-order related, but
+    the bigger issue is still incomplete component topology.
 - **What I'd add to the tool because of this**:
+  - General Make2D completion/component graph shared by line weights and poché.
   - Per-layer architectural review report with target layer, semantic role, helper layers used, skipped visible structural candidates, inferred closure edges, confidence, and user-facing warnings.
   - A deadline-oriented manual mask/closure workflow for ambiguous faces.
   - Illustrator/Computer Use visual QA script to attach screenshots and mark known failure zones after every real run.

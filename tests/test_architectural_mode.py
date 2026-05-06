@@ -49,14 +49,14 @@ from arch_line_weights.poche_saas import _is_cut_layer
         (
             "axon::Visible::Curves::TEC_STEEL_CONNECTOR_L-BRACKET",
             "connectors",
-            0.25,
+            0.18,
             False,
             False,
         ),
         (
             "axon::Visible::Curves::05_RHS_STL_FRAME",
             "structure_secondary",
-            0.35,
+            0.25,
             False,
             False,
         ),
@@ -200,3 +200,19 @@ def test_polygonize_uses_helper_tangents_to_close_parallel_structural_edges(monk
     assert result.strategy == "structural_open_loop"
     assert result.confidence >= 0.85
     assert round(polys[0].area) == 9000
+
+
+def test_structural_helper_cannot_wildly_expand_existing_concrete_face():
+    polys = _try_structural_open_loop(
+        "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
+        [
+            LineString([(0, 0), (20, 0), (20, 100), (0, 100)]),
+        ],
+        helper_lines=[
+            LineString([(100, 0), (100, 100)]),
+        ],
+    )
+
+    assert len(polys) == 1
+    assert round(polys[0].area) == 2000
+    assert polys[0].bounds == (0.0, 0.0, 20.0, 100.0)

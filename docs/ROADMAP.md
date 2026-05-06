@@ -17,6 +17,13 @@
 > user approve ambiguous poché candidates fast. SaaS/web product work resumes
 > after the local engine can produce trusted per-layer reports.
 
+> **2026-05-05 v0.6.12/v0.6.13 follow-up:** the correct engine order is now
+> explicit: infer architectural components, complete broken Make2D geometry,
+> then feed both line-weight hierarchy and poché from that shared component
+> model. `make2d_completion.py` is the first code slice. The immediate product
+> priority is still local drawing quality for Zohar's deadline work; the web app
+> remains a distribution layer after the engine can produce trusted output.
+
 > **Status:** v1.0.0 was published to PyPI under MIT for ~15 minutes,
 > then yanked. Repo is private. Direction has shifted again — see "What
 > changed since v2 of this doc" below. **Subscription web app, not

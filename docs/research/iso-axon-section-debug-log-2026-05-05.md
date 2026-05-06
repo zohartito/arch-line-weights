@@ -304,3 +304,78 @@ Next step:
 - For immediate deadline use, run `--architectural` for hierarchy and
   high-confidence poché, then manually fill the remaining ambiguous wall/roof/
   foundation faces or add a controlled `__POCHE_CLOSE__`/manual mask workflow.
+
+## v0.6.12/v0.6.13 Make2D Completion Follow-Up
+
+The next debugging pass tested the user's proposed architecture:
+
+```text
+architectural components -> complete broken Make2D geometry -> hierarchy/poché
+```
+
+That is the right model. The old pipeline treated poché as a layer-local
+polygonization problem. The real failure is broader: Rhino Make2D can split one
+architectural component across `ClippingPlaneIntersections`,
+`Visible::Tangents`, and `Visible::Curves`, and both line hierarchy and poché
+need the same repaired component understanding.
+
+What changed:
+
+- Added `src/arch_line_weights/make2d_completion.py` as the first reusable
+  completion stage. It attaches architectural assignments, layer roles,
+  component keys, and accepted/rejected completion candidates to parsed paths.
+- Wired structural completion into `poche_saas` as bounded evidence, not as a
+  blanket visible-layer fill.
+- Added the rule learned from the false blobs:
+  helper/visible completion candidates must share meaningful boundary with the
+  real target `ClippingPlaneIntersections` layer before automatic fill.
+- Added a second guard for concrete/foundation: helper geometry cannot wildly
+  expand an already valid cut-only face.
+- Added opt-in `ARCH_LW_POCHE_OVERLAY=1`, which creates a top-stack
+  `ARCH_LW_POCHE` layer so later visible curves cannot draw over black fills.
+
+Real outputs:
+
+```text
+v0612-bounds-candidates.ai
+  better coverage, but still false helper-only blobs
+
+v0614-no-concrete-blob.ai
+  lower-left concrete-base helper expansion removed
+  still missing some true slab/roof/foundation mass
+
+v0615-overlay.ai
+  same guarded geometry, plus a top ARCH_LW_POCHE layer
+  confirms that remaining gaps are mostly missing component completion,
+  not just layer draw order
+
+v0616-current-best.ai
+  same overlay/guarded poché, with quieter secondary steel and connector
+  hierarchy after reducing section-screen secondary steel to 0.25 pt and
+  connector hardware to 0.18 pt
+```
+
+Rule learned:
+
+- The program should not "learn" implicitly from failures. Every bad run must
+  become a documented failure case, a geometric rule, and a regression test.
+  This pass added tests for helper-only rejection, anchored completion,
+  concrete over-expansion, completion env disable, and overlay injection.
+
+Still not solved:
+
+- Some real cut faces appear to have zero clipping-plane boundary support.
+  Those may be legitimate missing Make2D components, but accepting all of them
+  creates false blobs. The next stage needs a component graph/review report
+  that can say "these five candidates look like missing cut mass; these three
+  are probably facade/return artifacts" with reasons.
+
+Current best immediate output:
+
+```text
+/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/
+iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0616-current-best.ai
+```
+
+It is safer than `v0612-bounds-candidates.ai`, but still not the final bar for
+automatic poché on this drawing.

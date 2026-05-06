@@ -25,9 +25,15 @@ import pytest
 from shapely.geometry import Polygon
 
 from arch_line_weights.apply_saas import CHUNK, _read_payload
+from arch_line_weights.make2d_completion import (
+    complete_structural_cut_polygons,
+    structural_completion_paths_for_layers,
+)
 from arch_line_weights.poche import FillResult
 from arch_line_weights.poche_saas import (
     PocheSaasResult,
+    _architectural_completion_enabled,
+    _poche_overlay_enabled,
     _structural_helper_paths_for_layers,
     apply_saas_with_poche,
     compress_test_payload,
@@ -35,6 +41,7 @@ from arch_line_weights.poche_saas import (
     decompress_test_payload,
     enumerate_layer_paths_from_payload,
     find_layer_envelope,
+    inject_poche_overlay_layer,
     inject_poche_polygons,
     synthesize_polygon_block,
     synthesize_polygon_blocks,
@@ -263,6 +270,25 @@ def test_inject_multiple_layers_in_one_pass():
     assert b"\r55 60 L\r" in new_payload
 
 
+def test_inject_overlay_layer_appends_before_page_trailer():
+    payload = _build_minimal_payload(["LayerA"]) + b"%%PageTrailer\r%%EOF\r"
+    tri = Polygon([(0, 0), (10, 0), (5, 10)])
+    result = PocheSaasResult()
+
+    out = inject_poche_overlay_layer(
+        payload,
+        {"LayerA": [tri]},
+        result=result,
+    )
+
+    assert result.layers_targeted == 1
+    assert result.layers_injected == 1
+    assert result.polygons_injected == 1
+    assert b"(ARCH_LW_POCHE) Ln\r" in out
+    assert out.find(b"(ARCH_LW_POCHE) Ln\r") < out.find(b"%%PageTrailer")
+    assert out.count(b"\rf\r") == 1
+
+
 def test_round_trip_through_zstd_preserves_injected_bytes():
     """compress(inject(payload)) → decompress → identical to inject(payload)."""
     payload = _build_minimal_payload(["LayerA"])
@@ -422,6 +448,142 @@ def test_compute_polygons_can_opt_into_low_confidence_injection(monkeypatch):
 
     assert polygons_by_layer == {"LayerA": [candidate]}
     assert "LayerA" in report.polygons
+
+
+def test_structural_completion_paths_match_same_component_only():
+    cut_name = "axon::Visible::ClippingPlaneIntersections::TEC_CLT_SLABS"
+    cut_paths = {cut_name: [[[0, 0], [100, 0]]]}
+    all_paths = {
+        cut_name: [[[0, 0], [100, 0]]],
+        "axon::Visible::Curves::TEC_CLT_SLABS": [[[0, 20], [100, 20]]],
+        "axon::Visible::Tangents::TEC_CLT_SLABS": [[[100, 0], [100, 20]]],
+        "axon::Visible::Curves::TEC_STEEL_CONNECTOR 4": [[[0, 40], [100, 40]]],
+        "axon::Visible::Curves::22_WINDOW_GLASS_REMAP_49FT_V68": [
+            [[0, 60], [100, 60]]
+        ],
+    }
+
+    completion = structural_completion_paths_for_layers(cut_paths, all_paths)
+
+    assert completion == {
+        cut_name: [
+            [[0, 20], [100, 20]],
+            [[100, 0], [100, 20]],
+        ]
+    }
+
+
+def test_structural_completion_accepts_cut_anchored_missing_face():
+    accepted, candidates = complete_structural_cut_polygons(
+        "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
+        [
+            [[0, 0], [100, 0]],
+            [[100, 20], [0, 20]],
+        ],
+        [
+            [[0, 0], [0, 20]],
+            [[100, 0], [100, 20]],
+        ],
+        [],
+    )
+
+    assert len(accepted) == 1
+    assert round(accepted[0].area) == 2000
+    assert any(candidate.accepted for candidate in candidates)
+
+
+def test_structural_completion_rejects_helper_only_closed_shape():
+    accepted, candidates = complete_structural_cut_polygons(
+        "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
+        [
+            [[0, 0], [100, 0]],
+            [[100, 100], [0, 100]],
+        ],
+        [
+            [[10, 20], [60, 20], [60, 60], [10, 60], [10, 20]],
+        ],
+        [],
+    )
+
+    assert accepted == []
+    assert candidates
+    assert all(not candidate.accepted for candidate in candidates)
+    assert candidates[0].cut_shared_length == 0
+    assert "cut anchor" in candidates[0].reason
+
+
+def test_compute_polygons_can_use_anchored_completion_when_base_is_low_confidence(
+    monkeypatch,
+):
+    bbox = Polygon([(0, 0), (100, 0), (100, 20), (0, 20)])
+
+    def fake_polygonize(*_args, **_kwargs):
+        return [bbox], FillResult("LayerA", "bbox", 0.3, 1, 2)
+
+    layer = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+    monkeypatch.setattr("arch_line_weights.poche_saas.polygonize_layer", fake_polygonize)
+
+    polygons_by_layer, report = compute_polygons_for_layers(
+        {
+            layer: [
+                [[0, 0], [100, 0]],
+                [[100, 20], [0, 20]],
+            ]
+        },
+        structural_completion_paths_by_layer={
+            layer: [
+                [[0, 0], [0, 20]],
+                [[100, 0], [100, 20]],
+            ]
+        },
+    )
+
+    assert layer in polygons_by_layer
+    assert len(polygons_by_layer[layer]) == 1
+    assert report.fills[0].strategy == "structural_visible_completion"
+    assert report.fills[0].confidence >= 0.85
+
+
+def test_compute_polygons_rejects_unanchored_completion_candidates(monkeypatch):
+    bbox = Polygon([(0, 0), (100, 0), (100, 100), (0, 100)])
+
+    def fake_polygonize(*_args, **_kwargs):
+        return [bbox], FillResult("LayerA", "bbox", 0.3, 1, 2)
+
+    layer = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+    monkeypatch.setattr("arch_line_weights.poche_saas.polygonize_layer", fake_polygonize)
+
+    polygons_by_layer, report = compute_polygons_for_layers(
+        {
+            layer: [
+                [[0, 0], [100, 0]],
+                [[100, 100], [0, 100]],
+            ]
+        },
+        structural_completion_paths_by_layer={
+            layer: [
+                [[10, 20], [60, 20], [60, 60], [10, 60], [10, 20]],
+            ]
+        },
+    )
+
+    assert polygons_by_layer == {}
+    assert report.polygons == {}
+    assert report.fills[0].strategy == "bbox"
+
+
+def test_architectural_completion_env_can_disable_stage(monkeypatch):
+    monkeypatch.setenv("ARCH_LW_ARCHITECTURAL_COMPLETION", "0")
+
+    assert _architectural_completion_enabled() is False
+
+
+def test_poche_overlay_env_is_opt_in(monkeypatch):
+    monkeypatch.delenv("ARCH_LW_POCHE_OVERLAY", raising=False)
+    assert _poche_overlay_enabled() is False
+
+    monkeypatch.setenv("ARCH_LW_POCHE_OVERLAY", "1")
+    assert _poche_overlay_enabled() is True
 
 
 # --------------------------------------------------------------------------- #

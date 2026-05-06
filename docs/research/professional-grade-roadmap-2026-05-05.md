@@ -15,6 +15,23 @@ engine:
 input drawing -> semantic diagnosis -> line hierarchy -> poché/material treatment -> reviewable output
 ```
 
+After the iso axon poché failures, the engine order is sharper:
+
+```text
+input drawing
+-> parse AI/Rhino layer geometry
+-> infer architectural components
+-> complete broken Make2D topology
+-> apply line-weight hierarchy
+-> generate structural poché/material graphics
+-> visual QA + reviewable uncertainty report
+```
+
+The completion step must be shared. It is not a poché-only trick: the same
+component knowledge that says "this is a missing slab cut face" also prevents
+connectors, facade screens, and secondary steel from becoming too visually
+heavy in the hierarchy.
+
 The competitive advantage is not "make strokes thicker." The advantage is
 encoding architectural graphic judgment:
 
@@ -74,6 +91,10 @@ Goal: make Zohar's current drawings usable now.
 - [x] Add structural poché whitelist/blacklist.
 - [x] Add first-pass structural open-loop closure.
 - [x] Add semantic hierarchy override for Rhino layer names.
+- [x] Add first reusable Make2D completion module with candidate accept/reject
+  metadata.
+- [x] Add guardrails for helper-only false blobs and concrete/foundation
+  over-expansion.
 - [ ] Add a per-run report that says:
   - injected
   - skipped
