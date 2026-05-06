@@ -93,6 +93,22 @@ def test_architectural_poche_filter_uses_semantics():
     )
 
 
+@pytest.mark.parametrize(
+    "layer",
+    [
+        "axon::Visible::ClippingPlaneIntersections::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44",
+        "axon::Visible::ClippingPlaneIntersections::WINDOW_IGU_GLASS",
+        "axon::Visible::ClippingPlaneIntersections::HELPER_TANGENT_CURVE",
+        "axon::Visible::Curves::TEC_CONCRETE_BASE_HELPER_TANGENT",
+    ],
+)
+def test_cladding_glass_and_helper_layers_are_not_poche_eligible(layer):
+    assignment = classify_architectural_layer(layer, preset="section")
+
+    assert assignment.poche is False
+    assert _is_cut_layer(layer, architectural=True) is False
+
+
 def test_view_name_section_cut_does_not_make_visible_curves_poche():
     assignment = classify_architectural_layer(
         "axon iso section cut::Visible::Curves::TEC_TIMBER_BEAMS",
@@ -160,3 +176,27 @@ def test_structural_open_loop_can_add_missing_regions_to_existing_closed_loops()
 
     assert result.strategy == "structural_open_loop"
     assert len(polys) == 2
+
+
+def test_polygonize_uses_helper_tangents_to_close_parallel_structural_edges(monkeypatch):
+    monkeypatch.setattr(
+        "arch_line_weights.poche.infer_bridges_best",
+        lambda *_args, **_kwargs: ([], 0.0, "none"),
+    )
+
+    polys, result = polygonize_layer(
+        "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
+        [
+            [[0, 0], [100, 0]],
+            [[100, 90], [0, 90]],
+        ],
+        bridge_strategy="best",
+        structural_helper_lines=[
+            LineString([(100, 0), (100, 45), (100, 90)]),
+        ],
+    )
+
+    assert len(polys) == 1
+    assert result.strategy == "structural_open_loop"
+    assert result.confidence >= 0.85
+    assert round(polys[0].area) == 9000

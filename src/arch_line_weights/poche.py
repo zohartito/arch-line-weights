@@ -29,6 +29,7 @@ from __future__ import annotations
 import contextlib
 import json
 import logging
+import math
 import os
 import subprocess
 import textwrap
@@ -121,6 +122,7 @@ Strategy = Literal[
     "linemerge_snap",
     "auto_bridge",
     "structural_open_loop",
+    "structural_parallel_edges",
     "alpha_shape",
     "llm_topology",
     "concave_hull",
@@ -279,20 +281,57 @@ def _segment_lengths(lines: list[LineString]) -> list[float]:
     return lengths
 
 
-def _try_structural_open_loop(layer_name: str, lines: list[LineString]) -> list[Polygon]:
-    """Close simple open structural chains by adding the missing side.
-
-    This is deliberately narrower than alpha-shape/concave-hull/bbox rescue:
-    it only runs for architectural structural-poche layers, only closes
-    individual open chains, and rejects sprawling or invalid polygons.
-    """
-    if not _is_structural_poche_layer(layer_name) or not lines:
+def _clean_structural_polygons(polys: list[Polygon]) -> list[Polygon]:
+    """Merge overlapping inferred cut fills and drop degenerate fragments."""
+    valid = [p for p in polys if p is not None and p.is_valid and p.area > 1.0]
+    if not valid:
         return []
+    try:
+        merged = unary_union(valid)
+    except Exception:
+        merged = valid
+    if isinstance(merged, Polygon):
+        return [merged] if merged.is_valid and merged.area > 1.0 else []
+    try:
+        return [
+            p
+            for p in merged.geoms
+            if isinstance(p, Polygon) and p.is_valid and p.area > 1.0
+        ]
+    except AttributeError:
+        return valid
 
-    lengths = sorted(_segment_lengths(lines))
-    median_seg = lengths[len(lengths) // 2] if lengths else 20.0
-    max_gap = max(75.0, min(350.0, median_seg * 24.0))
 
+def _expanded_bounds_polygon(lines: list[LineString], margin: float) -> Polygon | None:
+    if not lines:
+        return None
+    minx, miny, maxx, maxy = MultiLineString(lines).bounds
+    if maxx <= minx or maxy <= miny:
+        return None
+    return box(minx - margin, miny - margin, maxx + margin, maxy + margin)
+
+
+def _polygon_uses_cut_edge(poly: Polygon, cut_lines: list[LineString]) -> bool:
+    """Return True when an inferred helper polygon is anchored to cut geometry."""
+    boundary = poly.boundary
+    for line in cut_lines:
+        if line.length <= 2.0:
+            continue
+        try:
+            shared = boundary.buffer(0.75).intersection(line).length
+            if shared >= min(8.0, line.length * 0.35):
+                return True
+        except Exception:
+            continue
+    return False
+
+
+def _structural_open_loop_candidates(
+    lines: list[LineString],
+    *,
+    max_gap: float,
+) -> list[Polygon]:
+    """Close individual open chains by joining their endpoints."""
     try:
         merged = linemerge(MultiLineString(lines))
     except Exception:
@@ -305,7 +344,7 @@ def _try_structural_open_loop(layer_name: str, lines: list[LineString]) -> list[
         except AttributeError:
             chains = []
 
-    closing_edges: list[LineString] = []
+    candidates: list[Polygon] = []
     for chain in chains:
         coords = list(chain.coords)
         if len(coords) < 3 or chain.is_ring:
@@ -328,24 +367,213 @@ def _try_structural_open_loop(layer_name: str, lines: list[LineString]) -> list[
         aspect = max(width, height) / max(1e-6, min(width, height))
         if aspect > 35.0:
             continue
-        closing_edges.append(LineString([start, end]))
+        candidates.append(candidate)
 
-    if not closing_edges:
+    return candidates
+
+
+def _segments_from_lines(lines: list[LineString]) -> list[LineString]:
+    segments: list[LineString] = []
+    for line in lines:
+        coords = list(line.coords)
+        for start, end in pairwise(coords):
+            seg = LineString([start, end])
+            if seg.length > 2.0:
+                segments.append(seg)
+    return segments
+
+
+def _normalized_direction(line: LineString) -> tuple[float, float] | None:
+    coords = list(line.coords)
+    if len(coords) < 2:
+        return None
+    start = coords[0]
+    end = coords[-1]
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    length = math.hypot(dx, dy)
+    if length <= 0:
+        return None
+    ux = dx / length
+    uy = dy / length
+    if ux < -1e-9 or (abs(ux) < 1e-9 and uy < 0):
+        ux = -ux
+        uy = -uy
+    return ux, uy
+
+
+def _try_structural_parallel_edges(
+    layer_name: str,
+    lines: list[LineString],
+    helper_lines: list[LineString] | None = None,
+) -> list[Polygon]:
+    """Recover cut faces from opposite parallel structural edges.
+
+    Rhino Make2D often emits slab/wall cut solids as two parallel cut edges
+    without reliable end caps. This infers the missing two sides, while
+    requiring at least one edge in every pair to come from the real clipping
+    intersection layer.
+    """
+    if not _is_structural_poche_layer(layer_name) or not lines:
         return []
 
-    polys = _polys_at_tolerance(lines + closing_edges, 0.0)
-    return [p for p in polys if p.is_valid and p.area > 1.0]
+    helper_lines = helper_lines or []
+    cut_segments = _segments_from_lines(lines)
+    helper_segments = _segments_from_lines(helper_lines)
+    if len(cut_segments) + len(helper_segments) > 2500:
+        helper_segments = []
+    if len(cut_segments) < 2 and not helper_segments:
+        return []
+
+    lengths = sorted(seg.length for seg in cut_segments if seg.length > 2.0)
+    median_seg = lengths[len(lengths) // 2] if lengths else 20.0
+    max_thickness = max(12.0, min(185.0, median_seg * 0.75))
+    min_overlap = max(5.0, min(30.0, median_seg * 0.08))
+    max_angle_delta = math.cos(math.radians(8.0))
+    tagged = [(seg, "cut") for seg in cut_segments] + [
+        (seg, "helper") for seg in helper_segments
+    ]
+
+    candidates: list[Polygon] = []
+    for idx, (a, a_kind) in enumerate(tagged):
+        a_dir = _normalized_direction(a)
+        if a_dir is None or a.length < 5.0:
+            continue
+        a_coords = list(a.coords)
+        a_mid = (
+            (a_coords[0][0] + a_coords[-1][0]) / 2.0,
+            (a_coords[0][1] + a_coords[-1][1]) / 2.0,
+        )
+        for b, b_kind in tagged[idx + 1 :]:
+            if a_kind == "helper" and b_kind == "helper":
+                continue
+            b_dir = _normalized_direction(b)
+            if b_dir is None or b.length < 5.0:
+                continue
+            dot = abs(a_dir[0] * b_dir[0] + a_dir[1] * b_dir[1])
+            if dot < max_angle_delta:
+                continue
+
+            u = a_dir
+            normal = (-u[1], u[0])
+            b_coords = list(b.coords)
+            b_mid = (
+                (b_coords[0][0] + b_coords[-1][0]) / 2.0,
+                (b_coords[0][1] + b_coords[-1][1]) / 2.0,
+            )
+            offset = abs(
+                (b_mid[0] - a_mid[0]) * normal[0] + (b_mid[1] - a_mid[1]) * normal[1]
+            )
+            if offset < 2.0 or offset > max_thickness:
+                continue
+
+            def _project(pt: tuple[float, float], direction: tuple[float, float] = u) -> float:
+                return pt[0] * direction[0] + pt[1] * direction[1]
+
+            a_interval = sorted(
+                [(_project(a_coords[0]), a_coords[0]), (_project(a_coords[-1]), a_coords[-1])]
+            )
+            b_interval = sorted(
+                [(_project(b_coords[0]), b_coords[0]), (_project(b_coords[-1]), b_coords[-1])]
+            )
+            overlap_start = max(a_interval[0][0], b_interval[0][0])
+            overlap_end = min(a_interval[1][0], b_interval[1][0])
+            overlap = overlap_end - overlap_start
+            min_len = min(a.length, b.length)
+            if overlap < min_overlap or overlap < 0.35 * min_len:
+                continue
+            if max(a.length, b.length) / max(1.0, min_len) > 5.0 and overlap < 0.75 * min_len:
+                continue
+
+            def _point_at_projection(line: LineString, projection: float) -> tuple[float, float]:
+                coords = list(line.coords)
+                start = coords[0]
+                end = coords[-1]
+                start_proj = _project(start)
+                end_proj = _project(end)
+                denom = end_proj - start_proj
+                if abs(denom) <= 1e-9:
+                    return start
+                t = max(0.0, min(1.0, (projection - start_proj) / denom))
+                return (
+                    start[0] + (end[0] - start[0]) * t,
+                    start[1] + (end[1] - start[1]) * t,
+                )
+
+            candidate = Polygon(
+                [
+                    _point_at_projection(a, overlap_start),
+                    _point_at_projection(a, overlap_end),
+                    _point_at_projection(b, overlap_end),
+                    _point_at_projection(b, overlap_start),
+                ]
+            )
+            if candidate.is_empty or not candidate.is_valid or candidate.area <= 10.0:
+                continue
+            minx, miny, maxx, maxy = candidate.bounds
+            width = maxx - minx
+            height = maxy - miny
+            if width <= 1.0 or height <= 1.0:
+                continue
+            aspect = max(width, height) / max(1e-6, min(width, height))
+            if aspect > 90.0:
+                continue
+            candidates.append(candidate)
+
+    return _clean_structural_polygons(candidates)
+
+
+def _try_structural_open_loop(
+    layer_name: str,
+    lines: list[LineString],
+    helper_lines: list[LineString] | None = None,
+) -> list[Polygon]:
+    """Close simple structural cut chains by adding missing sides.
+
+    This is deliberately narrower than alpha-shape/concave-hull/bbox rescue:
+    it only runs for architectural structural-poche layers and rejects
+    sprawling or invalid polygons. Same-material helper geometry may be used
+    as closure evidence, but each helper-derived polygon must remain anchored
+    to an actual clipping-plane edge.
+    """
+    if not _is_structural_poche_layer(layer_name) or not lines:
+        return []
+
+    helper_lines = helper_lines or []
+    lengths = sorted(_segment_lengths(lines))
+    median_seg = lengths[len(lengths) // 2] if lengths else 20.0
+    max_gap = max(75.0, min(350.0, median_seg * 24.0))
+
+    candidates = _structural_open_loop_candidates(lines, max_gap=max_gap)
+    candidates.extend(_try_structural_parallel_edges(layer_name, lines, helper_lines))
+
+    if helper_lines:
+        bounds_gate = _expanded_bounds_polygon(lines, max_gap)
+        helper_candidates = _structural_open_loop_candidates(
+            lines + helper_lines,
+            max_gap=max_gap,
+        )
+        for poly in helper_candidates:
+            if bounds_gate is not None and not bounds_gate.covers(poly.centroid):
+                continue
+            if not _polygon_uses_cut_edge(poly, lines):
+                continue
+            candidates.append(poly)
+
+    return _clean_structural_polygons(candidates)
 
 
 def _structural_open_loop_improves(
     layer_name: str,
     lines: list[LineString],
     current: list[Polygon],
+    helper_lines: list[LineString] | None = None,
 ) -> list[Polygon]:
     """Return structural-open-loop polygons only if they add useful coverage."""
-    structural = _try_structural_open_loop(layer_name, lines)
+    structural = _try_structural_open_loop(layer_name, lines, helper_lines)
     if not structural:
         return []
+    structural = _clean_structural_polygons(current + structural)
     current_area = sum(p.area for p in current)
     structural_area = sum(p.area for p in structural)
     if len(structural) > len(current):
@@ -388,6 +616,7 @@ def polygonize_layer(
     *,
     use_alpha_shape: bool = True,
     bridge_strategy: str | None = None,
+    structural_helper_lines: list[LineString] | None = None,
 ) -> tuple[list[Polygon], FillResult]:
     """Best-effort polygonization of one layer's segments.
 
@@ -414,6 +643,7 @@ def polygonize_layer(
     lines = _lines_from_anchors(paths)
     if closing_lines:
         lines = lines + closing_lines
+    helper_lines = structural_helper_lines or []
     n_segments = len(lines)
 
     if not lines:
@@ -443,7 +673,12 @@ def polygonize_layer(
 
     if best[0]:
         polys, tol = best
-        structural_polys = _structural_open_loop_improves(layer_name, lines, polys)
+        structural_polys = _structural_open_loop_improves(
+            layer_name,
+            lines,
+            polys,
+            helper_lines,
+        )
         if structural_polys:
             return structural_polys, FillResult(
                 layer_name,
@@ -517,6 +752,7 @@ def polygonize_layer(
                     layer_name,
                     lines,
                     polys_with_bridges,
+                    helper_lines,
                 )
                 if structural_polys:
                     return structural_polys, FillResult(
@@ -542,7 +778,7 @@ def polygonize_layer(
     # cut loops for whitelisted structural layers, without allowing facade,
     # glass, connector, membrane, or generic clipped layers into black fill.
     try:
-        structural_polys = _try_structural_open_loop(layer_name, lines)
+        structural_polys = _try_structural_open_loop(layer_name, lines, helper_lines)
         if structural_polys:
             return structural_polys, FillResult(
                 layer_name,

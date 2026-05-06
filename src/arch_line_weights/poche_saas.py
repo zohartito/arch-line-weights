@@ -53,7 +53,7 @@ from pathlib import Path
 
 import pikepdf
 import zstandard as zstd
-from shapely.geometry import Polygon
+from shapely.geometry import LineString, Polygon
 
 from .apply_saas import CHUNK, PREFIX, _read_payload, _write_payload, rewrite_payload
 from .layer_classify import Source
@@ -201,20 +201,22 @@ def find_layer_envelope(payload: bytes, layer_name: str) -> tuple[int, int, int]
     # special chars in names get backslash-escaped but Rhino exports stick to
     # alphanumerics + ``::`` + underscore so plain bytes-equality is fine.
     marker = b"(" + layer_name.encode("utf-8") + b") Ln"
-    ln_offset = payload.find(marker)
-    if ln_offset < 0:
+    for begin_match in re.finditer(re.escape(_BEGIN_LAYER), payload):
+        begin_offset = begin_match.start()
+        next_begin = payload.find(_BEGIN_LAYER, begin_match.end())
+        search_end = next_begin if next_begin >= 0 else len(payload)
+        lb_offset = payload.find(b"\rLB\r", begin_offset, search_end)
+        if lb_offset < 0:
+            continue
+        ln_offset = payload.find(marker, begin_match.end(), lb_offset)
+        if ln_offset >= 0:
+            break
+    else:
         return None
 
-    begin_offset = payload.rfind(b"%AI5_BeginLayer", 0, ln_offset)
-    if begin_offset < 0:
-        return None
-
-    # The closing LB is the next ``\rLB\r`` after the Ln marker. We anchor to
-    # ``\rLB\r`` (not bare ``LB``) so we don't hit substrings inside e.g.
-    # ``CustomLB`` plug-in markers.
-    lb_offset = payload.find(b"\rLB\r", ln_offset)
-    if lb_offset < 0:
-        return None
+    # The closing LB is the ``\rLB\r`` found inside the matching BeginLayer
+    # envelope. We anchor to ``\rLB\r`` (not bare ``LB``) so we don't hit
+    # substrings inside e.g. ``CustomLB`` plug-in markers.
     # The injection point is at the start of ``\rLB\r`` so the splice slots in
     # *before* the ``\r`` that prefixes ``LB``. The new fragment ends in ``\r``
     # which then immediately becomes the prefix of ``LB``.
@@ -304,6 +306,7 @@ def compute_polygons_for_layers(
     use_alpha_shape: bool = True,
     bridge_strategy: str | None = None,
     reporter: ProgressReporter | None = None,
+    structural_helper_paths_by_layer: dict[str, list[list[list[float]]]] | None = None,
 ) -> tuple[dict[str, list[Polygon]], PocheReport]:
     """Run :func:`poche.polygonize_layer` over every layer in ``paths_by_layer``.
 
@@ -320,6 +323,7 @@ def compute_polygons_for_layers(
     Pass ``None`` for a fast no-op.
     """
     overrides = overrides or {}
+    structural_helper_paths_by_layer = structural_helper_paths_by_layer or {}
     report = PocheReport()
     if reporter is None:
         reporter = ProgressReporter(enabled=False)
@@ -353,6 +357,10 @@ def compute_polygons_for_layers(
         # spotting a slow layer can correlate with a high segment count.
         segments = sum(max(0, len(p) - 1) for p in paths)
         with reporter.layer(idx, total_layers, layer_name, segments) as info:
+            structural_helper_lines: list[LineString] | None = None
+            helper_paths = structural_helper_paths_by_layer.get(layer_name)
+            if helper_paths:
+                structural_helper_lines = _lines_from_anchors(helper_paths)
             polys, fr = polygonize_layer(
                 layer_name,
                 paths,
@@ -360,6 +368,7 @@ def compute_polygons_for_layers(
                 ov,
                 use_alpha_shape=use_alpha_shape,
                 bridge_strategy=bridge_strategy,
+                structural_helper_lines=structural_helper_lines,
             )
             info.polygon_count = len(polys)
             info.strategy = fr.strategy
@@ -384,7 +393,8 @@ def compute_polygons_for_layers(
 
 # Match a closed cut layer's name + Ln marker. AI escapes parens inside layer
 # names but Rhino exports don't use them, so plain `(<name>) Ln` is enough.
-_LN_RE = re.compile(rb"\(([^)]+)\) Ln\r")
+_LN_RE = re.compile(rb"(?:^|\r)\(([^)\r]+)\) Ln\r")
+_BEGIN_LAYER = b"%AI5_BeginLayer"
 
 
 def enumerate_layer_paths_from_payload(
@@ -409,15 +419,23 @@ def enumerate_layer_paths_from_payload(
     :func:`compute_polygons_for_layers` expects.
     """
     out: dict[str, list[list[list[float]]]] = {}
-    for ln_match in _LN_RE.finditer(payload):
+    for begin_match in re.finditer(re.escape(_BEGIN_LAYER), payload):
+        begin = begin_match.start()
+        next_begin = payload.find(_BEGIN_LAYER, begin + len(_BEGIN_LAYER))
+        search_end = next_begin if next_begin >= 0 else len(payload)
+        lb_off = payload.find(b"\rLB\r", begin, search_end)
+        if lb_off < 0:
+            continue
+        block_start = begin_match.end()
+        header = payload[block_start:lb_off]
+        ln_match = _LN_RE.search(header)
+        if ln_match is None:
+            continue
         name = ln_match.group(1).decode("utf-8", errors="replace")
         if layer_filter and not layer_filter.search(name.encode("utf-8")):
             continue
 
-        lb_off = payload.find(b"\rLB\r", ln_match.end())
-        if lb_off < 0:
-            continue
-        block = payload[ln_match.end() : lb_off]
+        block = header[ln_match.end() :]
 
         # Walk the block and split into sub-paths terminated by S, B, b, F, f, n.
         # Each sub-path becomes one vertex list. A new sub-path starts at every `m`.
@@ -481,6 +499,46 @@ def _is_cut_layer(name: str, *, architectural: bool = False) -> bool:
 
     assignment = classify_architectural_layer(name)
     return assignment.poche
+
+
+def _layer_leaf(name: str) -> str:
+    return name.rsplit("::", 1)[-1].upper()
+
+
+def _is_structural_helper_layer(name: str) -> bool:
+    upper = name.upper()
+    if "::VISIBLE::CURVES::" not in upper and "::VISIBLE::TANGENTS::" not in upper:
+        return False
+    if "CLIPPINGPLANEINTERSECTIONS" in upper:
+        return False
+
+    from .architectural import classify_architectural_layer
+
+    assignment = classify_architectural_layer(name)
+    return assignment.tier == "structure_primary" and not assignment.poche
+
+
+def _structural_helper_paths_for_layers(
+    cut_paths: dict[str, list[list[list[float]]]],
+    all_paths: dict[str, list[list[list[float]]]],
+) -> dict[str, list[list[list[float]]]]:
+    """Find same-material visible curves/tangents to help close cut solids.
+
+    Helpers are never filled directly. They are only closure evidence for a
+    whitelisted structural clipping-plane layer with the same Rhino leaf name.
+    """
+    by_leaf: dict[str, list[list[list[float]]]] = {}
+    for name, paths in all_paths.items():
+        if not _is_structural_helper_layer(name):
+            continue
+        by_leaf.setdefault(_layer_leaf(name), []).extend(paths)
+
+    helpers: dict[str, list[list[list[float]]]] = {}
+    for name in cut_paths:
+        paths = by_leaf.get(_layer_leaf(name))
+        if paths:
+            helpers[name] = paths
+    return helpers
 
 
 def apply_saas_with_poche(
@@ -548,10 +606,16 @@ def apply_saas_with_poche(
         # immediately. The Python `_is_cut_layer` post-filter keeps the
         # glass/IGU exclusion and lives outside the regex.
         with reporter.stage("enumerate_layers", cut_filter="ClippingPlaneIntersections"):
-            cut_paths = enumerate_layer_paths_from_payload(payload, layer_filter=_CUT_LAYER_FILTER)
+            structural_helper_paths_by_layer: dict[str, list[list[list[float]]]] = {}
             if architectural:
                 from .architectural import classify_architectural_layer
 
+                all_paths = enumerate_layer_paths_from_payload(payload)
+                cut_paths = {
+                    k: v
+                    for k, v in all_paths.items()
+                    if _CUT_LAYER_FILTER.search(k.encode("utf-8"))
+                }
                 cut_paths = {
                     k: v
                     for k, v in cut_paths.items()
@@ -563,7 +627,15 @@ def apply_saas_with_poche(
                         source=source,
                     ).poche
                 }
+                structural_helper_paths_by_layer = _structural_helper_paths_for_layers(
+                    cut_paths,
+                    all_paths,
+                )
             else:
+                cut_paths = enumerate_layer_paths_from_payload(
+                    payload,
+                    layer_filter=_CUT_LAYER_FILTER,
+                )
                 cut_paths = {k: v for k, v in cut_paths.items() if _is_cut_layer(k)}
 
         with reporter.stage("polygonize", layers=len(cut_paths)):
@@ -573,6 +645,7 @@ def apply_saas_with_poche(
                 use_alpha_shape=use_alpha_shape,
                 bridge_strategy=bridge_strategy,
                 reporter=reporter,
+                structural_helper_paths_by_layer=structural_helper_paths_by_layer,
             )
 
         # Step 1: rewrite stroke widths (existing B6 functionality).

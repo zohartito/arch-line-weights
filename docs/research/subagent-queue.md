@@ -2,7 +2,7 @@
 
 > Prioritized list of what to delegate to research sub-agents next, in
 > priority order. Each item: what to find out, why it matters, expected
-> output format. Updated 2026-04-30 after the SaaS-first pivot.
+> output format. Updated 2026-05-05 after the architectural-engine pivot.
 
 ## How to read this
 
@@ -14,6 +14,23 @@
 
 When dispatching, prefer **batches of 3–5 in parallel** — they don't
 share state, results consolidate cleanly into `docs/research/*.md` files.
+
+## Current next wave (after v0.6.11)
+
+The reference-book research wave is complete and has been distilled into
+rulebooks. The iso axon run proved the next bottleneck is not more theory; it
+is reviewable, controllable geometry.
+
+| Priority | Agent | Task | Output |
+|---|---|---|---|
+| P0 | Geometry QA | Design `arch-lw diagnose-poche` / report data for target layer, semantic role, helper layers, inferred closure edges, skipped visible candidates, confidence, and warnings. | spec + fixture plan |
+| P0 | Visual QA | Build a repeatable Illustrator/Computer Use smoke-check workflow for before/after screenshots and known failure-zone notes. | issue #19 implementation plan |
+| P0 | Deadline workflow | Define the fastest user workflow for “hierarchy only”, “safe poché”, and “manual closure/mask needed” drawings. | CLI/docs patch |
+| P1 | Rulebook-to-tests | Convert the Ching/NCS-derived rules into fixture tests for real ARCH 202B/211 layer names. | tests |
+| P1 | GitHub hygiene | Close/update issues #12, #16, #18; keep #17/#19 open with v0.6.11 evidence. | issue comments |
+
+Do not make broad visible-structural poché automatic until the report/approval
+path exists; the v0.6.11 experiment recovered mass but produced false blobs.
 
 ## Status (2026-04-30, after Wave 1 + Wave 2)
 

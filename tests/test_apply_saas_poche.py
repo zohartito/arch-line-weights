@@ -28,6 +28,7 @@ from arch_line_weights.apply_saas import CHUNK, _read_payload
 from arch_line_weights.poche import FillResult
 from arch_line_weights.poche_saas import (
     PocheSaasResult,
+    _structural_helper_paths_for_layers,
     apply_saas_with_poche,
     compress_test_payload,
     compute_polygons_for_layers,
@@ -168,6 +169,27 @@ def test_find_layer_envelope_returns_none_for_missing_name():
     assert find_layer_envelope(payload, "NotPresent") is None
 
 
+def test_find_layer_envelope_ignores_matching_setup_text():
+    payload = (
+        b"%!PS-Adobe-3.0\r"
+        b"(LayerA) Ln\r"
+        b"%AI5_BeginLayer\r"
+        b"(LayerA) Ln\r"
+        b"0 0 m\r"
+        b"10 0 L\r"
+        b"S\r"
+        b"LB\r"
+        b"%AI5_EndLayer--\r"
+    )
+
+    env = find_layer_envelope(payload, "LayerA")
+
+    assert env is not None
+    begin, ln, lb = env
+    assert payload[begin : begin + 15] == b"%AI5_BeginLayer"
+    assert begin < ln < lb
+
+
 # --------------------------------------------------------------------------- #
 # 3. Injection — splice + round-trip
 # --------------------------------------------------------------------------- #
@@ -297,6 +319,73 @@ def test_enumerate_handles_curves_via_endpoint_approximation():
     paths = enumerate_layer_paths_from_payload(payload)
     layer = paths["layer::ClippingPlaneIntersections::TEC_X"]
     assert layer == [[[0.0, 0.0], [10.0, 10.0]]]
+
+
+def test_enumerate_ignores_text_setup_before_real_layer():
+    payload = (
+        b"%!PS-Adobe-3.0\r"
+        b"%%BeginSetup\r"
+        b"(unrelated text setup before %AI5_BeginLayer) Ln\r"
+        b"%%EndSetup\r"
+        b"%AI5_BeginLayer\r"
+        b"(axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE) Ln\r"
+        b"0 0 0 1 0 0 0 XA\r"
+        b"0 0 m\r"
+        b"100 0 L\r"
+        b"S\r"
+        b"LB\r"
+        b"%AI5_EndLayer--\r"
+    )
+
+    paths = enumerate_layer_paths_from_payload(payload)
+
+    assert list(paths) == [
+        "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
+    ]
+    assert all("%AI5_BeginLayer" not in layer for layer in paths)
+
+
+def test_structural_helper_paths_match_same_material_leaf_only():
+    cut_name = "axon::Visible::ClippingPlaneIntersections::TEC_CLT_SLABS"
+    cut_paths = {cut_name: [[[0, 0], [100, 0]]]}
+    all_paths = {
+        cut_name: [[[0, 0], [100, 0]]],
+        "axon::Visible::Curves::TEC_CLT_SLABS": [[[0, 10], [100, 10]]],
+        "axon::Visible::Tangents::TEC_CLT_SLABS": [[[100, 0], [100, 10]]],
+        "axon::Visible::Curves::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44": [
+            [[0, 20], [100, 20]]
+        ],
+        "axon::Visible::Curves::TEC_CONCRETE_BASE": [[[0, 30], [100, 30]]],
+    }
+
+    helpers = _structural_helper_paths_for_layers(cut_paths, all_paths)
+
+    assert helpers == {
+        cut_name: [
+            [[0, 10], [100, 10]],
+            [[100, 0], [100, 10]],
+        ]
+    }
+
+
+def test_compute_polygons_passes_structural_helper_paths(monkeypatch):
+    captured = {}
+    candidate = Polygon([(0, 0), (10, 0), (10, 10), (0, 10)])
+
+    def fake_polygonize(*_args, structural_helper_lines=None, **_kwargs):
+        captured["helper_count"] = len(structural_helper_lines or [])
+        return [candidate], FillResult("LayerA", "structural_open_loop", 0.9, 1, 3)
+
+    monkeypatch.setattr("arch_line_weights.poche_saas.polygonize_layer", fake_polygonize)
+
+    polygons_by_layer, report = compute_polygons_for_layers(
+        {"LayerA": [[[0, 0], [10, 0]]]},
+        structural_helper_paths_by_layer={"LayerA": [[[0, 10], [10, 10]]]},
+    )
+
+    assert captured == {"helper_count": 1}
+    assert polygons_by_layer == {"LayerA": [candidate]}
+    assert report.fills[0].strategy == "structural_open_loop"
 
 
 def test_compute_polygons_does_not_inject_low_confidence_fallback(monkeypatch):

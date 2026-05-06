@@ -191,6 +191,40 @@ Copy this for each new drawing run:
   - Per-layer tier breakdown could be persisted next to the output (e.g. `<output>.tiers.json`) instead of only living in the JSX report file.
 - **Decision**: ✅ **`apply-jsx` is now reliable on real corrupt-source drawings** thanks to the v0.6.1 / v0.6.3 / v0.6.4 issue cluster. The `[Converted]` + trailing-space + AppleScript-syntax fixes all engaged correctly on a real drawing for the first time.
 
+### Entry 3 — 2026-05-05 — `iso axon section  [Converted].ai` (ARCH 202B axon section)
+
+- **Source file**: `/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/iso axon section  [Converted].ai`
+- **File size MB**: 43.9
+- **Stroke count**: 63 stroke-color/width rewrite ops in the AI private payload
+- **OCG layer count**: 62
+- **Cut layers total**: 8 semantically structural poché targets under `--architectural`
+- **Cut layers polygonized cleanly**: 8/8 injected, but visual quality is partial
+- **Cut layers needing __POCHE_CLOSE__**: likely 3-5 ambiguous faces (roof, court/backup wall, foundation/concrete returns)
+- **Cut layers fully failed**: 0 runtime failures; visual completeness still fails the drawing-quality bar
+- **Hierarchy preset used**: section + `--architectural`
+- **Scale flag**: default
+- **Print flag**: no
+- **Estimated manual time it would have taken**: ~3-4 hrs
+- **Actual time spent (incl. CLI runtime + manual fixes)**: ~1 min CLI runtime + manual review/fix still needed
+- **Estimated hours saved vs manual**: not counted yet; poché still needs human cleanup
+- **Manual fixes needed**: structural wall/roof/foundation faces still need review; visible structural candidate fill produced false blobs in experiment
+- **Pipeline used**: `apply-saas --auto --architectural --preset section --poche --bridge-strategy=best`
+- **Output**: `iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0611.ai`
+- **What worked well**:
+  - `35 colors mapped`; the earlier `0 colors mapped` symptom is fixed by RGB/CMYK private-payload inspection and architectural mode.
+  - `bridge-best` did not hang; per-layer runtime budget kept the run bounded.
+  - Semantic architectural hierarchy kept glass, cladding, connectors, and facade screens out of black poché.
+  - v0.6.11 helper-assisted structural closure injected 51 polygons across 8/8 structural cut layers.
+- **What didn't work / what surprised me**:
+  - The output still reads too much like heavy cut bands instead of continuous poché mass.
+  - Some real cut solids appear only in `Visible::Curves` / `Visible::Tangents`, not in `ClippingPlaneIntersections`.
+  - Filling visible structural layers wholesale recovers missing mass but creates obvious false black blobs, so the tool needs an approval/report workflow before using that evidence aggressively.
+- **What I'd add to the tool because of this**:
+  - Per-layer architectural review report with target layer, semantic role, helper layers used, skipped visible structural candidates, inferred closure edges, confidence, and user-facing warnings.
+  - A deadline-oriented manual mask/closure workflow for ambiguous faces.
+  - Illustrator/Computer Use visual QA script to attach screenshots and mark known failure zones after every real run.
+- **Decision**: ⚠️ **use hierarchy now; use poché cautiously.** The engine is safer and faster, but this drawing still needs manual poché cleanup before pin-up/print quality.
+
 ---
 
 (Add new entries above this line)
@@ -199,7 +233,7 @@ Copy this for each new drawing run:
 
 | Drawings logged | Drawing types | Headless success | Hours saved | Decision-ready? |
 |---|---|---|---|---|
-| 3 (reference + macro + wall-section) | section, plan, section-iso | 3/3 pipelines validated | ~11 hrs | No — need ≥5 drawings |
+| 4 (reference + macro + wall-section + iso axon) | section, plan, section-iso, axon-section | 4/4 pipelines ran; 3/4 visually acceptable without major manual poché cleanup | ~11 hrs + pending iso cleanup | No — need ≥5 drawings |
 
 ## Related
 

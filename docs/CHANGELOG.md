@@ -43,6 +43,48 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Issue #14** — `[Converted]` matcher trailing-whitespace edge case
   (v0.6.3).
 
+## [0.6.11] — 2026-05-05
+
+### Added
+
+- Structural helper geometry for architectural poché. In
+  `apply-saas --architectural --poche`, whitelisted structural
+  `ClippingPlaneIntersections` layers can now use same-material
+  `Visible::Curves` / `Visible::Tangents` paths as closure evidence without
+  filling those helper layers directly.
+- Parallel-edge structural recovery for Rhino Make2D cut faces where slabs,
+  walls, or roof caps arrive as opposite cut edges with missing end caps.
+- Parser guard for AI payload layer enumeration: fake or stray `(...) Ln`
+  strings before `%AI5_BeginLayer` are no longer treated as real layer names.
+
+### Changed
+
+- Structural open-loop recovery now unions inferred candidates with existing
+  high-confidence polygons, requires helper-derived polygons to be anchored
+  to meaningful cut-edge overlap, and clips parallel-edge fills to the actual
+  overlap span instead of the full staggered segment endpoints.
+- Architectural poché remains conservative: visible structural layers are
+  treated as helper evidence by default, not automatic black-fill targets.
+
+### Validation
+
+- Real run on
+  `iso axon section  [Converted].ai`:
+  `51 polygons injected across 8/8 structural cut layers`; runtime completed
+  without bridge-best stalls and with `35 colors mapped`.
+- Computer Use visual check showed cleaner hierarchy and no low-confidence
+  facade/roof-cap bbox blob, but also confirmed a remaining limitation:
+  some true cut solids appear only as visible-curve geometry, so the output
+  can still read as thick cut bands rather than complete poché mass.
+- A visible-structural experiment filled more missing mass but produced
+  obvious false blobs, so it was not made default.
+- `pytest tests/test_architectural_mode.py tests/test_apply_saas_poche.py -q`
+  → 42 passed.
+- `pytest tests/ -q --ignore=tests/test_hatch_v05.py` → 406 passed.
+- `ruff check src/arch_line_weights/poche.py src/arch_line_weights/poche_saas.py tests/test_architectural_mode.py tests/test_apply_saas_poche.py`
+  → clean.
+- `ruff check src/ tests/ scripts/build_reference_index.py` → clean.
+
 ## [0.6.10] — 2026-05-05
 
 ### Added

@@ -9,6 +9,14 @@
 > and
 > [`docs/research/iso-axon-section-debug-log-2026-05-05.md`](research/iso-axon-section-debug-log-2026-05-05.md).
 
+> **2026-05-05 v0.6.11 follow-up:** helper-assisted structural poché and
+> parser hardening improved the iso axon run, but visual QA proved the deeper
+> issue: some real cut solids exist only as visible structural geometry, and
+> filling those layers automatically can create false blobs. The next P0 is
+> not a web app; it is an architectural review/report workflow that lets the
+> user approve ambiguous poché candidates fast. SaaS/web product work resumes
+> after the local engine can produce trusted per-layer reports.
+
 > **Status:** v1.0.0 was published to PyPI under MIT for ~15 minutes,
 > then yanked. Repo is private. Direction has shifted again — see "What
 > changed since v2 of this doc" below. **Subscription web app, not
