@@ -43,6 +43,30 @@ PYTHONPATH=src pyenv exec python -m arch_line_weights.cli apply-saas \
 Swap `--preset section` for `plan`, `elevation`, or `detail` when the drawing
 type changes.
 
+## Current Best Stair Axon Base
+
+For `stairs.ai`, the original file is old Rhino PostScript and cannot be read by
+the headless SaaS payload path. Use the Illustrator JSX path or the already
+generated deadline candidate:
+
+```text
+/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/stairs HIERARCHY-jsx-v0624-stair-path-clean.ai
+```
+
+What changed:
+
+- `FIXED_STAIR_COHESIVE` is now recognized as stair structure.
+- 30 sub-1 pt Make2D debris fragments were removed.
+- 422 short/detail paths were set to 0.18 pt.
+- 161 medium paths were set to 0.25 pt.
+- 57 long/profile paths were set to 0.5 pt.
+- All remaining stair paths were set to CMYK black.
+
+This path-level cleanup is a prototype, not yet a general CLI feature. The next
+engineering step is to turn it into a tested one-layer geometry hierarchy mode
+so stair treads, stringers, landings, and stray Make2D fragments are handled
+without a special Illustrator script.
+
 ## Hierarchy Plus Safe Poché
 
 Use this for sections where structural cut mass should become black poché.

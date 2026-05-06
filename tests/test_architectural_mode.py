@@ -65,6 +65,13 @@ from arch_line_weights.poche_saas import _is_cut_layer
             False,
         ),
         (
+            "axon iso section cut::Visible::Curves::FIXED_STAIR_COHESIVE",
+            "structure_primary",
+            0.5,
+            False,
+            False,
+        ),
+        (
             "axon::Visible::ClippingPlaneIntersections::Entourage::People",
             "entourage",
             0.13,
@@ -145,6 +152,17 @@ def test_cladding_glass_and_helper_layers_are_not_poche_eligible(layer):
 def test_view_name_section_cut_does_not_make_visible_curves_poche():
     assignment = classify_architectural_layer(
         "axon iso section cut::Visible::Curves::TEC_TIMBER_BEAMS",
+        preset="section",
+    )
+
+    assert assignment.tier == "structure_primary"
+    assert assignment.weight_pt == 0.5
+    assert assignment.poche is False
+
+
+def test_visible_fixed_stair_is_structural_but_not_poche():
+    assignment = classify_architectural_layer(
+        "axon iso section cut::Visible::Curves::FIXED_STAIR_COHESIVE",
         preset="section",
     )
 

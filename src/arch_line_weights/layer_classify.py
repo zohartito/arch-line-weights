@@ -93,7 +93,10 @@ RHINO_RULES: list[tuple[str | tuple[str, ...], TierAssignment]] = [
         TierAssignment(0.5, "structure_primary", "heavy structural assembly in elevation"),
     ),
     # 5. Stairs (excluding risers — finer)
-    ("TEC_STAIR", TierAssignment(0.5, "structure_primary", "stair structure in elevation")),
+    (
+        ("TEC_STAIR", "FIXED_STAIR"),
+        TierAssignment(0.5, "structure_primary", "stair structure in elevation"),
+    ),
     # 6. Window frames
     (("WINDOW_FRAME", "WINDOW_ALUM_FRAME"), TierAssignment(0.3, "frames", "window frame in elevation")),
     # 7. Stair risers (finer than primary structure)

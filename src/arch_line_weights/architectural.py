@@ -117,6 +117,8 @@ _STRUCTURAL_SOLID = (
     "TIMBER_BEAM",
     "TIMBER_COLUMN",
     "TIMBER",
+    "FIXED_STAIR",
+    "TEC_STAIR",
     "SLAB",
 )
 

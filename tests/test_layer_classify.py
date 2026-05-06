@@ -37,6 +37,7 @@ from arch_line_weights.layer_classify import (
         ("axon::Visible::Curves::FLOOR_DATUMS", 0.13, "reference"),
         ("axon::Visible::Curves::TEC_TIMBER_COLUMNS", 0.5, "structure_primary"),
         ("axon::Visible::Curves::TEC_STAIR", 0.5, "structure_primary"),
+        ("axon iso section cut::Visible::Curves::FIXED_STAIR_COHESIVE", 0.5, "structure_primary"),
         # NOTE: TEC_STAIR_RISERS matches the broader TEC_STAIR rule first
         # in the existing rule order (a quirk preserved as-is from pre-Phase-E5).
         ("axon::Visible::Curves::TEC_STAIR_RISERS", 0.5, "structure_primary"),
