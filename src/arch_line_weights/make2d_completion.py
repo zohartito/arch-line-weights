@@ -13,6 +13,7 @@ helper-only closed shape is diagnostic evidence, not automatic black fill.
 from __future__ import annotations
 
 import contextlib
+import warnings
 from dataclasses import dataclass
 from typing import Literal
 
@@ -199,6 +200,91 @@ def _completion_area_limit(layer_name: str) -> float:
     return 1200.0
 
 
+def _oriented_dimensions(poly: Polygon) -> tuple[float, float] | None:
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            rect = poly.minimum_rotated_rectangle
+        coords = list(rect.exterior.coords)
+    except Exception:
+        return None
+    if len(coords) < 4:
+        return None
+    lengths = [
+        LineString([coords[i], coords[i + 1]]).length
+        for i in range(min(4, len(coords) - 1))
+    ]
+    lengths = [length for length in lengths if length > 1e-6]
+    if len(lengths) < 2:
+        return None
+    short = min(lengths)
+    long = max(lengths)
+    return short, long
+
+
+def _rectangularity(poly: Polygon, short: float, long: float) -> float:
+    rect_area = short * long
+    if rect_area <= 1e-6:
+        return 0.0
+    return min(1.0, poly.area / rect_area)
+
+
+def _large_candidate_is_plausible(
+    layer_name: str,
+    poly: Polygon,
+    shared: float,
+    required: float,
+) -> bool:
+    """Allow large repairs only when they look like strongly anchored cut strips."""
+    upper = layer_name.upper()
+    if "TEC_CONCRETE_BASE" in upper or "ROOF_CAP" in upper:
+        return False
+    dims = _oriented_dimensions(poly)
+    if dims is None:
+        return False
+    short, long = dims
+    aspect = long / max(short, 1e-6)
+    rectangularity = _rectangularity(poly, short, long)
+    if "TEC_FOUNDATION" in upper:
+        return (
+            poly.area <= 5000.0
+            and aspect >= 2.0
+            and short <= 90.0
+            and rectangularity >= 0.65
+            and shared >= max(35.0, required * 1.5)
+        )
+    if "TEC_ROOF_CLT" in upper or "TEC_CLT_SLABS" in upper:
+        return (
+            poly.area <= 45000.0
+            and aspect >= 2.0
+            and short <= 260.0
+            and rectangularity >= 0.60
+            and shared >= max(200.0, required * 1.5)
+        )
+    return False
+
+
+def _timber_beam_candidate_is_plausible(
+    poly: Polygon,
+    shared: float,
+    required: float,
+) -> bool:
+    """Allow only small, repeated beam-end rectangles from helper completion."""
+    dims = _oriented_dimensions(poly)
+    if dims is None:
+        return False
+    short, long = dims
+    aspect = long / max(short, 1e-6)
+    return (
+        80.0 <= poly.area <= 450.0
+        and 4.0 <= short <= 18.0
+        and long <= 45.0
+        and 1.2 <= aspect <= 6.0
+        and _rectangularity(poly, short, long) >= 0.65
+        and shared >= max(required, 20.0)
+    )
+
+
 def _duplicates_existing(poly: Polygon, existing: list[Polygon]) -> bool:
     for current in existing:
         if current.is_empty or current.area <= 0:
@@ -316,8 +402,6 @@ def complete_structural_cut_polygons(
     assignment = classify_architectural_layer(layer_name)
     if not assignment.poche:
         return [], []
-    if "TEC_TIMBER_BEAMS" in layer_name.upper():
-        return [], []
 
     cut_lines = _lines_from_paths(cut_paths)
     helper_lines = _lines_from_paths(completion_paths)
@@ -331,6 +415,7 @@ def complete_structural_cut_polygons(
     accepted: list[Polygon] = []
     for poly in _candidate_polygons(cut_lines + helper_lines):
         shared = cut_shared_length(poly, cut_lines)
+        required = max(_CUT_ANCHOR_MIN, _CUT_ANCHOR_PERIMETER_RATIO * poly.length)
         if not bounds_gate.covers(poly.centroid):
             candidates.append(
                 _rejected_candidate(
@@ -344,20 +429,6 @@ def complete_structural_cut_polygons(
                 )
             )
             continue
-        if poly.area > limit:
-            candidates.append(
-                _rejected_candidate(
-                    target_layer=layer_name,
-                    component=component,
-                    source_role="visible_curve",
-                    polygon=poly,
-                    provenance="cut+same-component-visible/tangent",
-                    reason=f"rejected: area {poly.area:.1f} exceeds layer limit {limit:.1f}",
-                    cut_shared=shared,
-                )
-            )
-            continue
-        required = max(_CUT_ANCHOR_MIN, _CUT_ANCHOR_PERIMETER_RATIO * poly.length)
         if shared < required:
             candidates.append(
                 _rejected_candidate(
@@ -374,6 +445,23 @@ def complete_structural_cut_polygons(
                 )
             )
             continue
+        if "TEC_TIMBER_BEAMS" in layer_name.upper() and not _timber_beam_candidate_is_plausible(
+            poly,
+            shared,
+            required,
+        ):
+            candidates.append(
+                _rejected_candidate(
+                    target_layer=layer_name,
+                    component=component,
+                    source_role="visible_curve",
+                    polygon=poly,
+                    provenance="cut+same-component-visible/tangent",
+                    reason="rejected: timber beam completion is not a small cut rectangle",
+                    cut_shared=shared,
+                )
+            )
+            continue
         if _duplicates_existing(poly, existing_polygons + accepted):
             candidates.append(
                 _rejected_candidate(
@@ -383,6 +471,24 @@ def complete_structural_cut_polygons(
                     polygon=poly,
                     provenance="cut+same-component-visible/tangent",
                     reason="rejected: duplicates existing cut polygon",
+                    cut_shared=shared,
+                )
+            )
+            continue
+        if poly.area > limit and not _large_candidate_is_plausible(
+            layer_name,
+            poly,
+            shared,
+            required,
+        ):
+            candidates.append(
+                _rejected_candidate(
+                    target_layer=layer_name,
+                    component=component,
+                    source_role="visible_curve",
+                    polygon=poly,
+                    provenance="cut+same-component-visible/tangent",
+                    reason=f"rejected: area {poly.area:.1f} exceeds layer limit {limit:.1f}",
                     cut_shared=shared,
                 )
             )

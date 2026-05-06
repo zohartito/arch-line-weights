@@ -34,6 +34,7 @@ import os
 import subprocess
 import textwrap
 import time
+import warnings
 from dataclasses import dataclass, field
 from itertools import pairwise
 from pathlib import Path
@@ -358,6 +359,29 @@ def _helper_candidate_overexpands_cut(
     return False
 
 
+def _polygon_rectangularity(poly: Polygon) -> float:
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            rect = poly.minimum_rotated_rectangle
+        coords = list(rect.exterior.coords)
+    except Exception:
+        return 0.0
+    if len(coords) < 4:
+        return 0.0
+    lengths = [
+        LineString([coords[i], coords[i + 1]]).length
+        for i in range(min(4, len(coords) - 1))
+    ]
+    lengths = [length for length in lengths if length > 1e-6]
+    if len(lengths) < 2:
+        return 0.0
+    rect_area = min(lengths) * max(lengths)
+    if rect_area <= 1e-6:
+        return 0.0
+    return min(1.0, poly.area / rect_area)
+
+
 def _structural_open_loop_candidates(
     lines: list[LineString],
     *,
@@ -390,6 +414,14 @@ def _structural_open_loop_candidates(
             continue
         candidate = Polygon([*coords, start])
         if candidate.is_empty or not candidate.is_valid or candidate.area <= 1.0:
+            continue
+        unique_vertices = {
+            (round(float(x), 6), round(float(y), 6))
+            for x, y in candidate.exterior.coords[:-1]
+        }
+        if len(unique_vertices) < 4:
+            continue
+        if _polygon_rectangularity(candidate) < 0.55:
             continue
         minx, miny, maxx, maxy = candidate.bounds
         width = maxx - minx
@@ -555,6 +587,37 @@ def _try_structural_parallel_edges(
     return _clean_structural_polygons(candidates)
 
 
+def _post_filter_structural_polygons(layer_name: str, polygons: list[Polygon]) -> list[Polygon]:
+    """Apply layer-specific cleanup after union/simplification.
+
+    Candidate-level guards catch most bad faces, but ``unary_union`` can merge
+    individually plausible rectangles into an architectural nonsense shape. This
+    pass mirrors the manual Illustrator workflow: after closing shapes, inspect
+    whether the resulting face still looks like cut material.
+    """
+    upper = layer_name.upper()
+    filtered: list[Polygon] = []
+    for poly in polygons:
+        if poly.is_empty or poly.area <= 1.0:
+            continue
+        minx, miny, maxx, maxy = poly.bounds
+        width = maxx - minx
+        height = maxy - miny
+        longest = max(width, height)
+        if ("BACKUP_WALL" in upper or "CLT_BACKUP" in upper) and (
+            poly.area < 120.0 and longest < 20.0
+        ):
+            continue
+        rectangularity = _polygon_rectangularity(poly)
+        if "TEC_ROOF_CLT" in upper:
+            if poly.area > 45000.0:
+                continue
+            if poly.area > 12000.0 and rectangularity < 0.55:
+                continue
+        filtered.append(poly)
+    return filtered
+
+
 def _try_structural_open_loop(
     layer_name: str,
     lines: list[LineString],
@@ -603,7 +666,10 @@ def _try_structural_open_loop(
                 continue
             candidates.append(poly)
 
-    return _clean_structural_polygons(candidates)
+    return _post_filter_structural_polygons(
+        layer_name,
+        _clean_structural_polygons(candidates),
+    )
 
 
 def _structural_open_loop_improves(

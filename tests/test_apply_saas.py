@@ -20,6 +20,7 @@ from arch_line_weights.apply import _rewrite as pdf_rewrite
 from arch_line_weights.apply_saas import (
     PREFIX,
     ApplySaasResult,
+    _format_stroke_color,
     _format_width,
     rewrite_payload,
 )
@@ -166,6 +167,160 @@ def test_rewrite_can_override_weight_by_layer_semantics():
     assert result.weights_applied == {0.25: 1}
     assert b"\r1 J 1 j 0.25 w" in new_payload
     assert b"\r1 J 1 j 1 w" not in new_payload
+
+
+def test_rewrite_layer_semantics_ignore_stray_ln_outside_layer_block():
+    payload = (
+        b"%!PS-Adobe-3.0\r"
+        b"(Fake Layer) Ln\r"
+        b"%AI5_BeginLayer\r"
+        b"(Real Layer) Ln\r"
+        b"0 0 0 1 K\r"
+        b"1 J 1 j 1 w 4 M []0 d\r"
+        b"0 0 m\r"
+        b"10 10 L\r"
+        b"S\r"
+        b"LB\r"
+        b"%AI5_EndLayer--\r"
+    )
+    result = ApplySaasResult()
+    seen: list[str] = []
+
+    def resolve(layer_name: str) -> float | None:
+        seen.append(layer_name)
+        return 0.5 if layer_name == "Real Layer" else None
+
+    new_payload = rewrite_payload(
+        payload,
+        {(0, 0, 0): 1.0},
+        default_width=0.25,
+        result=result,
+        layer_weight_resolver=resolve,
+    )
+
+    assert seen == ["Real Layer"]
+    assert result.layer_weight_overrides == 1
+    assert b"\r1 J 1 j 0.5 w" in new_payload
+
+
+def test_rewrite_can_override_stroke_color_by_layer_semantics():
+    """Architectural mode can recolor cut linework independently of poché."""
+    payload = (
+        b"%!PS-Adobe-3.0\r"
+        b"%AI5_BeginLayer\r"
+        b"(axon::Visible::ClippingPlaneIntersections::15_CU_PUNCH_RETURNS) Ln\r"
+        b"0.2 0.3 0.4 0.1 K\r"
+        b"1 J 1 j 0.18 w 4 M []0 d\r"
+        b"0 0 m\r"
+        b"10 10 L\r"
+        b"S\r"
+        b"LB\r"
+        b"%AI5_EndLayer--\r"
+    )
+    result = ApplySaasResult()
+
+    new_payload = rewrite_payload(
+        payload,
+        {},
+        result=result,
+        layer_color_resolver=lambda _name: (0, 0, 0),
+    )
+
+    assert result.layer_color_overrides == 1
+    assert b"\r0 0 0 1 K\r" in new_payload
+    assert b"\r0.2 0.3 0.4 0.1 K\r" not in new_payload
+    assert b"\r1 J 1 j 0.18 w" in new_payload
+
+
+def test_rewrite_overrides_rgb_xa_stroke_without_touching_fills():
+    """RGB/CMYK architectural recolor must stay on stroke operators only."""
+    payload = (
+        b"%!PS-Adobe-3.0\r"
+        b"%AI5_BeginLayer\r"
+        b"(axon::Visible::ClippingPlaneIntersections::23_WINDOW_FRAMES) Ln\r"
+        b"0.1 0.2 0.3 0.4 0.5 0.6 0.7 XA\r"
+        b"0.7 0.6 0.5 0.4 k\r"
+        b"0 0 0 0 0.1 0.2 0.3 Xa\r"
+        b"1 J 1 j 0.18 w 4 M []0 d\r"
+        b"0 0 m\r"
+        b"10 10 L\r"
+        b"S\r"
+        b"LB\r"
+        b"%AI5_EndLayer--\r"
+    )
+    result = ApplySaasResult()
+
+    new_payload = rewrite_payload(
+        payload,
+        {},
+        result=result,
+        layer_color_resolver=lambda _name: (0, 76, 160),
+    )
+
+    assert result.layer_color_overrides == 1
+    assert b"\r1 0.525 0 0.372549 K\r" in new_payload
+    assert b"0.1 0.2 0.3 0.4 0.5 0.6 0.7 XA" not in new_payload
+    assert b"\r0.7 0.6 0.5 0.4 k\r" in new_payload
+    assert b"\r0 0 0 0 0.1 0.2 0.3 Xa\r" in new_payload
+
+
+def test_rewrite_can_force_cut_dash_pattern_to_solid():
+    payload = (
+        b"%!PS-Adobe-3.0\r"
+        b"%AI5_BeginLayer\r"
+        b"(axon::Visible::ClippingPlaneIntersections::TEC_ROOF_CLT) Ln\r"
+        b"0 0 0 1 K\r"
+        b"1 J 1 j 0.18 w 4 M [3 2]0 d\r"
+        b"0 0 m\r"
+        b"10 10 L\r"
+        b"S\r"
+        b"LB\r"
+        b"%AI5_EndLayer--\r"
+    )
+    result = ApplySaasResult()
+
+    new_payload = rewrite_payload(
+        payload,
+        {},
+        result=result,
+        layer_solid_line_resolver=lambda _name: True,
+    )
+
+    assert result.layer_dash_overrides == 1
+    assert b"[3 2]0 d" not in new_payload
+    assert b"[]0 d" in new_payload
+
+
+def test_rewrite_leaves_dash_pattern_when_layer_is_not_solid_cut():
+    payload = (
+        b"%!PS-Adobe-3.0\r"
+        b"%AI5_BeginLayer\r"
+        b"(axon::Visible::Curves::13_CU_FLAT_PERF_TRANSLUCENT) Ln\r"
+        b"0 0 0 1 K\r"
+        b"1 J 1 j 0.18 w 4 M [3 2]0 d\r"
+        b"0 0 m\r"
+        b"10 10 L\r"
+        b"S\r"
+        b"LB\r"
+        b"%AI5_EndLayer--\r"
+    )
+    result = ApplySaasResult()
+
+    new_payload = rewrite_payload(
+        payload,
+        {},
+        result=result,
+        layer_solid_line_resolver=lambda _name: False,
+    )
+
+    assert result.layer_dash_overrides == 0
+    assert b"[3 2]0 d" in new_payload
+    assert b"[]0 d" not in new_payload
+
+
+def test_format_stroke_color_converts_rgb_to_cmyk_k_operator():
+    assert _format_stroke_color((0, 0, 0)) == b"\r0 0 0 1 K\r"
+    assert _format_stroke_color((255, 255, 255)) == b"\r0 0 0 0 K\r"
 
 
 def test_empty_auto_mapping_is_a_cli_error(tmp_path):

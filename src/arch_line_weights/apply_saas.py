@@ -84,7 +84,9 @@ _K_RE = re.compile(
 # inline `<w> w` inside a J/j setup line second.
 _BARE_W_RE = re.compile(rb"\r([0-9.]+) w\r")
 _SETUP_W_RE = re.compile(rb"\r([0-9.]+) J ([0-9.]+) j ([0-9.]+) w")
+_DASH_RE = re.compile(rb"\[[^\]\r]*\]" + _NUM + rb" d")
 _LN_RE = re.compile(rb"\(([^)]+)\) Ln\r")
+_BEGIN_LAYER = b"%AI5_BeginLayer"
 
 
 @dataclass
@@ -102,6 +104,8 @@ class ApplySaasResult:
     output_size: int = 0
     input_size: int = 0
     layer_weight_overrides: int = 0
+    layer_color_overrides: int = 0
+    layer_dash_overrides: int = 0
 
 
 def _read_payload(pdf: pikepdf.Pdf) -> bytes:
@@ -160,6 +164,36 @@ def _format_width(w: float) -> bytes:
     return f"{w:g}".encode("ascii")
 
 
+def _format_float(v: float) -> bytes:
+    if abs(v) < 1e-9:
+        v = 0.0
+    if v == int(v):
+        return f"{int(v)}".encode("ascii")
+    return f"{v:.6g}".encode("ascii")
+
+
+def _rgb255_to_cmyk(
+    rgb: tuple[int, int, int],
+) -> tuple[float, float, float, float]:
+    r = max(0.0, min(1.0, rgb[0] / 255.0))
+    g = max(0.0, min(1.0, rgb[1] / 255.0))
+    b = max(0.0, min(1.0, rgb[2] / 255.0))
+    k = 1.0 - max(r, g, b)
+    if k >= 1.0 - 1e-9:
+        return 0.0, 0.0, 0.0, 1.0
+    denom = 1.0 - k
+    return (1.0 - r - k) / denom, (1.0 - g - k) / denom, (1.0 - b - k) / denom, k
+
+
+def _format_stroke_color(rgb: tuple[int, int, int]) -> bytes:
+    c, m, y, k = _rgb255_to_cmyk(rgb)
+    return (
+        b"\r"
+        + b" ".join(_format_float(v) for v in (c, m, y, k))
+        + b" K\r"
+    )
+
+
 def _cmyk_to_rgb255(c: float, m: float, y: float, k: float) -> tuple[int, int, int]:
     """Approximate process CMYK as RGB for the existing RGB-tier classifier."""
     return (
@@ -201,12 +235,20 @@ def _stroke_color_events(payload: bytes) -> list[tuple[int, tuple[int, int, int]
 def _layer_intervals(payload: bytes) -> list[tuple[int, int, str]]:
     """Return ``(start, end, layer_name)`` intervals for AI layer blocks."""
     intervals: list[tuple[int, int, str]] = []
-    for match in _LN_RE.finditer(payload):
+    for begin_match in re.finditer(re.escape(_BEGIN_LAYER), payload):
+        begin = begin_match.start()
+        next_begin = payload.find(_BEGIN_LAYER, begin + len(_BEGIN_LAYER))
+        search_end = next_begin if next_begin >= 0 else len(payload)
+        block = payload[begin:search_end]
+        match = _LN_RE.search(block)
+        if match is None:
+            continue
         name = match.group(1).decode("utf-8", errors="replace")
-        lb_offset = payload.find(b"\rLB\r", match.end())
+        ln_end = begin + match.end()
+        lb_offset = payload.find(b"\rLB\r", ln_end, search_end)
         if lb_offset < 0:
             continue
-        intervals.append((match.end(), lb_offset, name))
+        intervals.append((max(0, ln_end - 1), lb_offset, name))
     return intervals
 
 
@@ -217,6 +259,8 @@ def rewrite_payload(
     default_width: float = 0.25,
     result: ApplySaasResult | None = None,
     layer_weight_resolver: Callable[[str], float | None] | None = None,
+    layer_color_resolver: Callable[[str], tuple[int, int, int] | None] | None = None,
+    layer_solid_line_resolver: Callable[[str], bool] | None = None,
 ) -> bytes:
     """Track recent XA color and rewrite every following `<w> w` op per-color.
 
@@ -236,7 +280,11 @@ def rewrite_payload(
     # Collect native stroke-color events with their position + RGB.
     xa_events = _stroke_color_events(payload)
     result.xa_seen += len(xa_events)
-    layer_intervals = _layer_intervals(payload) if layer_weight_resolver else []
+    layer_intervals = (
+        _layer_intervals(payload)
+        if layer_weight_resolver or layer_color_resolver or layer_solid_line_resolver
+        else []
+    )
 
     # Helper: given the absolute payload offset of a `w` op, return the most
     # recent prior XA's RGB or None. Linear scan is fine — even on a 55 MB
@@ -253,13 +301,38 @@ def rewrite_payload(
     def _layer_weight_at(offset: int) -> float | None:
         if layer_weight_resolver is None:
             return None
+        layer_name = _layer_at(offset)
+        if layer_name is not None:
+            weight = layer_weight_resolver(layer_name)
+            if weight is not None:
+                result.layer_weight_overrides += 1
+            return weight
+        return None
+
+    def _layer_at(offset: int) -> str | None:
         for start, end, layer_name in layer_intervals:
             if start <= offset < end:
-                weight = layer_weight_resolver(layer_name)
-                if weight is not None:
-                    result.layer_weight_overrides += 1
-                return weight
+                return layer_name
         return None
+
+    def _layer_color_at(offset: int) -> tuple[int, int, int] | None:
+        if layer_color_resolver is None:
+            return None
+        layer_name = _layer_at(offset)
+        if layer_name is None:
+            return None
+        color = layer_color_resolver(layer_name)
+        if color is not None:
+            result.layer_color_overrides += 1
+        return color
+
+    def _layer_solid_at(offset: int) -> bool:
+        if layer_solid_line_resolver is None:
+            return False
+        layer_name = _layer_at(offset)
+        if layer_name is None:
+            return False
+        return layer_solid_line_resolver(layer_name)
 
     def _resolve_weight_at(offset: int) -> tuple[float | None, float]:
         layer_weight = _layer_weight_at(offset)
@@ -295,6 +368,22 @@ def rewrite_payload(
         edits.append((m.start(), m.end(), new_token))
         result.widths_rewritten += 1
         result.weights_applied[weight_used] = result.weights_applied.get(weight_used, 0) + 1
+
+    if layer_color_resolver is not None:
+        for m in _XA_RE.finditer(payload):
+            color = _layer_color_at(m.start())
+            if color is not None:
+                edits.append((m.start(), m.end(), _format_stroke_color(color)))
+        for m in _K_RE.finditer(payload):
+            color = _layer_color_at(m.start())
+            if color is not None:
+                edits.append((m.start(), m.end(), _format_stroke_color(color)))
+
+    if layer_solid_line_resolver is not None:
+        for m in _DASH_RE.finditer(payload):
+            if _layer_solid_at(m.start()) and m.group(0) != b"[]0 d":
+                edits.append((m.start(), m.end(), b"[]0 d"))
+                result.layer_dash_overrides += 1
 
     edits.sort(key=lambda e: e[0])
     # Drop any overlapping edit (defensive — should not happen since the two
@@ -345,6 +434,8 @@ def apply_to_file(
     zstd_level: int = 19,
     reporter: ProgressReporter | None = None,
     layer_weight_resolver: Callable[[str], float | None] | None = None,
+    layer_color_resolver: Callable[[str], tuple[int, int, int] | None] | None = None,
+    layer_solid_line_resolver: Callable[[str], bool] | None = None,
 ) -> ApplySaasResult:
     """Apply per-color stroke widths to the AI native payload of `src`.
 
@@ -380,6 +471,8 @@ def apply_to_file(
                 default_width=default_width,
                 result=result,
                 layer_weight_resolver=layer_weight_resolver,
+                layer_color_resolver=layer_color_resolver,
+                layer_solid_line_resolver=layer_solid_line_resolver,
             )
         result.payload_size_out = len(new_payload)
 

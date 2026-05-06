@@ -443,6 +443,14 @@ def apply_jsx_cmd(
     help='JSON of per-layer poché strategy overrides; same schema as `arch-lw poche --overrides`.',
 )
 @click.option(
+    "--poche-overlay/--inline-poche",
+    "poche_overlay",
+    default=None,
+    help="Write generated poché to a top ARCH_LW_POCHE layer instead of injecting "
+    "fills into source cut layers. Defaults ON for --architectural --poche, "
+    "otherwise follows ARCH_LW_POCHE_OVERLAY.",
+)
+@click.option(
     "--alpha-shape/--no-alpha-shape",
     default=True,
     show_default=True,
@@ -516,6 +524,7 @@ def apply_saas_cmd(
     default_width: float,
     poche: bool,
     poche_overrides_path: Path | None,
+    poche_overlay: bool | None,
     alpha_shape: bool,
     bridge_strategy: str,
     llm_fallback: bool,
@@ -583,10 +592,28 @@ def apply_saas_cmd(
         click.echo("# architectural: semantic layer rules enabled", err=True)
 
     layer_weight_resolver = None
+    layer_color_resolver = None
+    layer_solid_line_resolver = None
     if architectural:
-        from .architectural import architectural_layer_weight_resolver
+        from .architectural import (
+            architectural_layer_color_resolver,
+            architectural_layer_solid_line_resolver,
+            architectural_layer_weight_resolver,
+        )
 
         layer_weight_resolver = architectural_layer_weight_resolver(
+            preset=preset,
+            scale=scale,
+            for_print=for_print,
+            source=resolved_source,
+        )
+        layer_color_resolver = architectural_layer_color_resolver(
+            preset=preset,
+            scale=scale,
+            for_print=for_print,
+            source=resolved_source,
+        )
+        layer_solid_line_resolver = architectural_layer_solid_line_resolver(
             preset=preset,
             scale=scale,
             for_print=for_print,
@@ -621,6 +648,7 @@ def apply_saas_cmd(
         overrides = {}
         if poche_overrides_path:
             overrides = json.loads(poche_overrides_path.read_text())
+        resolved_poche_overlay = True if architectural and poche_overlay is None else poche_overlay
 
         # Surface --llm-fallback to the polygonize ladder via the env var
         # gate. The flag's lifetime is the duration of the CLI run; we
@@ -640,6 +668,9 @@ def apply_saas_cmd(
                 bridge_strategy=bridge_strategy,
                 reporter=reporter,
                 layer_weight_resolver=layer_weight_resolver,
+                layer_color_resolver=layer_color_resolver,
+                layer_solid_line_resolver=layer_solid_line_resolver,
+                poche_overlay=resolved_poche_overlay,
                 architectural=architectural,
                 preset=preset,
                 scale=scale,
@@ -652,6 +683,11 @@ def apply_saas_cmd(
         if poche_overrides_path:
             click.echo(
                 "warning: --poche-overrides has no effect without --poche",
+                err=True,
+            )
+        if poche_overlay is not None:
+            click.echo(
+                "warning: --poche-overlay/--inline-poche has no effect without --poche",
                 err=True,
             )
         if not alpha_shape:
@@ -677,6 +713,8 @@ def apply_saas_cmd(
                 default_width=default_width,
                 reporter=reporter,
                 layer_weight_resolver=layer_weight_resolver,
+                layer_color_resolver=layer_color_resolver,
+                layer_solid_line_resolver=layer_solid_line_resolver,
             )
         finally:
             reporter.close()
@@ -699,6 +737,16 @@ def apply_saas_cmd(
     if result.layer_weight_overrides:
         click.echo(
             f"  architectural layer overrides → {result.layer_weight_overrides:>7,} ops",
+            err=True,
+        )
+    if result.layer_color_overrides:
+        click.echo(
+            f"  architectural color overrides → {result.layer_color_overrides:>7,} ops",
+            err=True,
+        )
+    if result.layer_dash_overrides:
+        click.echo(
+            f"  architectural dash overrides → {result.layer_dash_overrides:>7,} ops",
             err=True,
         )
     if result.unmatched_colors:

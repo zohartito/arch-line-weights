@@ -379,3 +379,87 @@ iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0616-current-best.ai
 
 It is safer than `v0612-bounds-candidates.ai`, but still not the final bar for
 automatic poché on this drawing.
+
+## v0.6.14/v0.6.15 Research-To-Rules Pass
+
+The next pass paused more real-file trial output and converted the manual
+workflow, book-derived rulebooks, and agent findings into code rules/tests.
+
+Agent findings that became implementation:
+
+- Sagan: the hard area caps were rejecting real roof/slab/foundation completion
+  candidates. Result: large candidates can pass only when they are strongly
+  anchored and material-strip-like.
+- James: cut-line styling is separate from black poché. Result:
+  architectural mode now has weight, stroke-color, and solid-dash resolvers.
+- Erdos: the first foundation/roof gate was too permissive and tests did not
+  cover RGB stroke rewrite or fill safety. Result: RGB `XA` and CMYK `K` stroke
+  overrides are tested, lowercase fill operators stay untouched, and compact
+  foundation/triangular roof failures are regression tests.
+- Dewey: semantic-first hierarchy policy. Result: blacklist-before-whitelist
+  classification, so glazing, membranes, connectors, and cladding/rainscreen
+  layers cannot become black poché just because they also contain structural
+  tokens.
+- Raman: remaining v0618 failures point to open-loop cleanup and beam completion,
+  not just completion caps. Result: post-clean open-loop filters reject tiny
+  backup-wall fragments and large irregular roof surfaces; `TEC_TIMBER_BEAMS`
+  completion is allowed only for small cut-anchored rectangles.
+- Dirac/Locke: layer-scoped payload rewrites must anchor to real
+  `%AI5_BeginLayer` envelopes. Result: stray `Ln` text outside a layer no longer
+  steals architectural overrides.
+- Lorentz: manual Illustrator workflow now lives in
+  `docs/research/manual-illustrator-poche-workflow.md`.
+
+Manual workflow rules now treated as program rules:
+
+- Preserve original Make2D layers; generated poché/cut strokes must be auditable.
+- Classify before filling: true cut mass, strong cut line, context edge,
+  surface/texture, void/glass/air.
+- Isolate one architectural component at a time. Whole-layer filling is unsafe.
+- If a beam/slab/wall/roof/foundation is truly cut, incomplete Make2D output is
+  not an excuse to leave it blank. The program must complete it correctly or
+  report an explicit candidate/reason.
+- Strong non-poché cut elements still need solid cut strokes.
+- Every failure should become a rule, test, and issue note.
+
+New regression coverage:
+
+```text
+tests/test_apply_saas.py
+  layer intervals use %AI5_BeginLayer envelopes
+  RGB XA and CMYK K stroke recolor work
+  lowercase fill operators stay untouched
+  strong cut dashes can be normalized to solid
+
+tests/test_architectural_mode.py
+  blacklist wins over structural-looking cut tokens
+  generic clipping-plane layers become cut lines, not fills
+  tiny backup-wall fragments are rejected
+  large irregular roof open-loop surfaces are rejected
+  legitimate tall backup-wall strips and roof strips are preserved
+
+tests/test_apply_saas_poche.py
+  large anchored roof/foundation strips can pass when plausible
+  compact foundation blobs and triangular roof surfaces are rejected
+  small timber beam cut rectangles can be completed
+  large timber beam blobs are rejected
+```
+
+Focused verification:
+
+```text
+PYTHONPATH=src pyenv exec python -m pytest \
+  tests/test_apply_saas.py \
+  tests/test_architectural_mode.py \
+  tests/test_apply_saas_poche.py -q
+
+89 passed
+```
+
+Important unresolved point:
+
+- The right retaining wall/foundation candidate currently has zero cut anchor in
+  the source-derived probe. The consensus is not "leave it blank"; it is "do not
+  auto-fill helper-only geometry as black mass until a component-graph or review
+  rule can prove it is the cut concrete/foundation." That belongs in Issue #21
+  as the next component-completion problem.

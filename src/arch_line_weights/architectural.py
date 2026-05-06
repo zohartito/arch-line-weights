@@ -24,6 +24,14 @@ class ArchitecturalAssignment:
     why: str
 
 
+@dataclass(frozen=True)
+class ArchitecturalStrokeStyle:
+    weight_pt: float | None
+    stroke_rgb: tuple[int, int, int] | None
+    solid_line: bool
+    reason: str
+
+
 _CUT_MARKERS = ("CLIPPINGPLANEINTERSECTIONS", "SECTION_CUT")
 
 _ENTOURAGE = (
@@ -375,6 +383,71 @@ def classify_architectural_layer(
     )
 
 
+def architectural_stroke_style_for_layer(
+    layer_name: str,
+    *,
+    preset: str = "section",
+    scale: str = "1/4",
+    for_print: bool = False,
+    source: Source = Source.RHINO,
+) -> ArchitecturalStrokeStyle:
+    assignment = classify_architectural_layer(
+        layer_name,
+        preset=preset,
+        scale=scale,
+        for_print=for_print,
+        source=source,
+    )
+    upper = layer_name.upper()
+    cut_context = _is_cut_context(upper)
+    if not cut_context:
+        if assignment.confidence < 0.80 and assignment.tier == "default":
+            return ArchitecturalStrokeStyle(None, None, False, "unclassified layer")
+        return ArchitecturalStrokeStyle(
+            assignment.weight_pt,
+            None,
+            False,
+            assignment.why,
+        )
+
+    if assignment.poche:
+        return ArchitecturalStrokeStyle(
+            assignment.weight_pt,
+            (0, 0, 0),
+            True,
+            "structural cut solid stroke",
+        )
+    if assignment.tier == "glazing":
+        return ArchitecturalStrokeStyle(
+            0.5,
+            (0, 76, 160),
+            True,
+            "glass cut line: strong blue, no poché",
+        )
+    if assignment.tier in {"frames", "cladding", "structure_secondary"}:
+        return ArchitecturalStrokeStyle(
+            0.5,
+            (0, 0, 0),
+            True,
+            f"{assignment.semantic} cut line, no solid poché",
+        )
+    if assignment.tier == "connectors":
+        return ArchitecturalStrokeStyle(
+            0.35,
+            (0, 0, 0),
+            True,
+            "connector cut line, subordinate to solid cut mass",
+        )
+    if assignment.confidence >= 0.40:
+        return ArchitecturalStrokeStyle(
+            0.5,
+            (0, 0, 0),
+            True,
+            "generic clipping-plane cut line",
+        )
+    return ArchitecturalStrokeStyle(None, None, False, assignment.why)
+
+
 def architectural_layer_weight_resolver(
     *,
     preset: str = "section",
@@ -385,23 +458,69 @@ def architectural_layer_weight_resolver(
     """Return a callback suitable for apply_saas.rewrite_payload."""
 
     def _resolve(layer_name: str) -> float | None:
-        assignment = classify_architectural_layer(
+        style = architectural_stroke_style_for_layer(
             layer_name,
             preset=preset,
             scale=scale,
             for_print=for_print,
             source=source,
         )
-        if assignment.confidence < 0.80 and assignment.tier == "default":
-            return None
-        return assignment.weight_pt
+        return style.weight_pt
+
+    return _resolve
+
+
+def architectural_layer_color_resolver(
+    *,
+    preset: str = "section",
+    scale: str = "1/4",
+    for_print: bool = False,
+    source: Source = Source.RHINO,
+):
+    """Return architectural stroke-color overrides for the SaaS payload path."""
+
+    def _resolve(layer_name: str) -> tuple[int, int, int] | None:
+        style = architectural_stroke_style_for_layer(
+            layer_name,
+            preset=preset,
+            scale=scale,
+            for_print=for_print,
+            source=source,
+        )
+        return style.stroke_rgb
+
+    return _resolve
+
+
+def architectural_layer_solid_line_resolver(
+    *,
+    preset: str = "section",
+    scale: str = "1/4",
+    for_print: bool = False,
+    source: Source = Source.RHINO,
+):
+    """Return True for architectural cut layers whose dashes should be solid."""
+
+    def _resolve(layer_name: str) -> bool:
+        style = architectural_stroke_style_for_layer(
+            layer_name,
+            preset=preset,
+            scale=scale,
+            for_print=for_print,
+            source=source,
+        )
+        return style.solid_line
 
     return _resolve
 
 
 __all__ = [
     "ArchitecturalAssignment",
+    "ArchitecturalStrokeStyle",
+    "architectural_layer_color_resolver",
+    "architectural_layer_solid_line_resolver",
     "architectural_layer_weight_resolver",
+    "architectural_stroke_style_for_layer",
     "architectural_weight_for_tier",
     "classify_architectural_layer",
 ]

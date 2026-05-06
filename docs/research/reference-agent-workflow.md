@@ -108,3 +108,34 @@ For Zohar's current deadline drawings, the loop should stay short:
 5. Log the drawing result and the specific misses.
 
 The research is valuable only when it improves this loop.
+
+## Manual Workflow Research Loop
+
+The manual Illustrator workflow is now a required source of implementation
+truth, not just a fallback. See
+`docs/research/manual-illustrator-poche-workflow.md`.
+
+When a generated output fails, convert the human cleanup move into the same
+pipeline:
+
+```text
+manual observation
+-> architectural rule
+-> local component/completion rule
+-> unit regression
+-> real Illustrator visual check
+-> GitHub issue/update
+```
+
+Key rules from the manual workflow:
+
+- Preserve source layers; generated fills/strokes should be auditable overlays.
+- Classify before filling: true cut mass, strong cut line, context edge,
+  surface/texture, void/glass/air.
+- Isolate one component at a time. Whole-layer or whole-drawing filling is a
+  blob factory.
+- If a beam/slab/wall/roof/foundation is truly cut, incomplete Make2D geometry is
+  not an acceptable reason to leave it blank. The completion must be local,
+  material-plausible, and reviewable.
+- If the engine cannot prove a completion, it should report the candidate and
+  reason instead of silently failing or inventing a global fill.

@@ -157,15 +157,16 @@ that you want held back at a mid weight regardless of darkness.
 
 ## Limitations
 
-- Only RGB stroke colors are remapped. CMYK and Gray strokes get
-  `--default-width`. (Most Rhino exports are RGB.)
-- The PDF stream rewrite is for stroked geometry only. Filled paths are not
-  touched (Rhino exports rarely have fills).
-- Stripping `/PieceInfo` means Illustrator opens the file as if it were a
-  generic PDF — flat, single-layer. If your `.ai` had carefully organized
-  layers/groups (rare for Rhino exports), `--keep-pieceinfo` preserves them
-  but Illustrator will then ignore the new widths. Pick your poison.
-- Multi-page documents are supported; every page gets the same treatment.
+- The legacy `apply` path rewrites the visible PDF stream and can flatten
+  Illustrator layer structure when `/PieceInfo` is stripped.
+- The `apply-saas` path preserves Illustrator private layer data and supports
+  native RGB `XA` and CMYK `K` stroke colors. It rewrites stroke operators only;
+  fill operators are intentionally left alone except for generated poché fills.
+- Automatic poché is conservative. It fills only high-confidence structural cut
+  mass by default; ambiguous helper-only Make2D geometry is reported or left for
+  review rather than turned into a black blob.
+- Multi-page documents are supported by the PDF-stream path; the AI-private
+  `apply-saas` path is focused on Illustrator-saved `.ai` drawings.
 
 ---
 

@@ -114,6 +114,7 @@ def test_apply_saas_help_advertises_new_default():
     result = runner.invoke(cli, ["apply-saas", "--help"])
     assert result.exit_code == 0
     assert "HIERARCHY-saas" in _flatten_help(result.output)
+    assert "--poche-overlay" in result.output
 
 
 def test_legacy_apply_help_keeps_bare_hierarchy_suffix():

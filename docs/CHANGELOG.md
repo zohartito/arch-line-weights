@@ -21,9 +21,27 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - Opt-in top-stack poché overlay layer via `ARCH_LW_POCHE_OVERLAY=1`. This
   draws accepted black fills in an `ARCH_LW_POCHE` layer above Rhino visible
   curves so later light linework cannot stripe through cut masses.
+- Manual Illustrator cleanup workflow spec in
+  `docs/research/manual-illustrator-poche-workflow.md`, mapping architect review
+  steps to program stages: isolate components, repair Make2D locally, separate
+  poché fills from cut strokes, and print/review before accepting output.
+- `apply-saas --poche-overlay/--inline-poche` switch. Architectural poché uses
+  the top `ARCH_LW_POCHE` overlay by default, matching the manual workflow while
+  keeping inline injection available.
 
 ### Changed
 
+- `apply-saas --architectural` now has a separate cut-stroke style resolver:
+  non-poché cut elements such as cladding returns, SHS/HSS, frames, and glazing
+  can receive strong solid cut strokes without becoming black fill. The payload
+  rewrite supports both RGB `XA` and CMYK `K` stroke operators while leaving
+  fill operators untouched.
+- Architectural classification now enforces blacklist precedence before
+  structural cut promotion, so glass/window, membrane/flashing, connector, and
+  rainscreen/cladding tokens cannot be poché-filled just because a layer also
+  contains a structural word.
+- Layer-based SaaS rewrites now anchor layer intervals to real
+  `%AI5_BeginLayer` envelopes, avoiding stray `Ln` setup text.
 - Helper-derived structural completion candidates now need meaningful shared
   boundary with the real `ClippingPlaneIntersections` target before they can
   become automatic black poché. Helper-only closed shapes are kept as
@@ -32,6 +50,12 @@ versioning follows [Semantic Versioning](https://semver.org/).
   cut-only face. This specifically addresses the lower-left false blob seen in
   `iso axon section  [Converted]` while preserving conservative cut-derived
   poché.
+- Large roof/slab/foundation completions now need material-like rectangularity,
+  short-side/aspect limits, and stronger anchoring; triangular roof surfaces,
+  compact foundation blobs, and tiny backup-wall fragments are rejected by
+  default.
+- `TEC_TIMBER_BEAMS` completion is no longer a blanket skip, but it is limited
+  to small, rectangular, cut-anchored beam-end candidates.
 - Architectural section screen hierarchy now makes secondary steel and
   connector hardware quieter (`0.25 pt` and `0.18 pt`) so they do not compete
   with true cut/profile structure.
@@ -47,6 +71,16 @@ versioning follows [Semantic Versioning](https://semver.org/).
   `v0615-overlay.ai`; the overlay layer is present at the top of the
   Illustrator stack. Visual review still shows the deeper issue: missing mass
   is mostly incomplete component topology, not only draw order.
+- Real run with cut-stroke styling and dynamic completion produced
+  `v0617-cut-style-completion.ai`; it recovered additional roof/foundation
+  mass but overfilled a roof triangle, which became a rectangularity regression.
+- Real run after rectangularity guards produced `v0618-rectangular-completion.ai`;
+  the large roof overfill is gone, but the drawing is still not considered a
+  final print candidate until component-level review/reporting covers the
+  remaining missing foundation/wall/floor zones.
+- Focused regression suite:
+  `PYTHONPATH=src pyenv exec python -m pytest tests/test_apply_saas.py tests/test_architectural_mode.py tests/test_apply_saas_poche.py -q`
+  currently passes `89` tests.
 
 ### In flight
 

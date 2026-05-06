@@ -492,6 +492,119 @@ def test_structural_completion_accepts_cut_anchored_missing_face():
     assert any(candidate.accepted for candidate in candidates)
 
 
+def test_structural_completion_accepts_large_strongly_anchored_roof_strip():
+    accepted, candidates = complete_structural_cut_polygons(
+        "axon::Visible::ClippingPlaneIntersections::TEC_ROOF_CLT",
+        [
+            [[0, 0], [500, 0]],
+            [[500, 80], [0, 80]],
+        ],
+        [
+            [[0, 0], [0, 80]],
+            [[500, 0], [500, 80]],
+        ],
+        [],
+    )
+
+    assert len(accepted) == 1
+    assert round(accepted[0].area) == 40000
+    assert any(candidate.accepted for candidate in candidates)
+
+
+def test_structural_completion_accepts_slim_foundation_above_static_area_limit():
+    accepted, candidates = complete_structural_cut_polygons(
+        "axon::Visible::ClippingPlaneIntersections::TEC_FOUNDATION",
+        [
+            [[0, 0], [90, 0]],
+            [[90, 40], [0, 40]],
+        ],
+        [
+            [[0, 0], [0, 40]],
+            [[90, 0], [90, 40]],
+        ],
+        [],
+    )
+
+    assert len(accepted) == 1
+    assert round(accepted[0].area) == 3600
+    assert any(candidate.accepted for candidate in candidates)
+
+
+def test_structural_completion_rejects_compact_foundation_blob():
+    accepted, candidates = complete_structural_cut_polygons(
+        "axon::Visible::ClippingPlaneIntersections::TEC_FOUNDATION",
+        [
+            [[0, 0], [70, 0]],
+            [[70, 70], [0, 70]],
+        ],
+        [
+            [[0, 0], [0, 70]],
+            [[70, 0], [70, 70]],
+        ],
+        [],
+    )
+
+    assert accepted == []
+    assert candidates
+    assert all(not candidate.accepted for candidate in candidates)
+
+
+def test_structural_completion_rejects_large_triangular_roof_surface():
+    accepted, candidates = complete_structural_cut_polygons(
+        "axon::Visible::ClippingPlaneIntersections::TEC_ROOF_CLT",
+        [
+            [[0, 0], [900, 0]],
+            [[0, 80], [0, 0]],
+        ],
+        [
+            [[900, 0], [0, 80]],
+        ],
+        [],
+    )
+
+    assert accepted == []
+    assert candidates
+    assert all(not candidate.accepted for candidate in candidates)
+
+
+def test_structural_completion_accepts_small_timber_beam_cut_square():
+    accepted, candidates = complete_structural_cut_polygons(
+        "axon::Visible::ClippingPlaneIntersections::TEC_TIMBER_BEAMS",
+        [
+            [[0, 0], [10, 0]],
+            [[10, 26], [0, 26]],
+        ],
+        [
+            [[0, 0], [0, 26]],
+            [[10, 0], [10, 26]],
+        ],
+        [],
+    )
+
+    assert len(accepted) == 1
+    assert round(accepted[0].area) == 260
+    assert any(candidate.accepted for candidate in candidates)
+
+
+def test_structural_completion_rejects_large_timber_beam_blob():
+    accepted, candidates = complete_structural_cut_polygons(
+        "axon::Visible::ClippingPlaneIntersections::TEC_TIMBER_BEAMS",
+        [
+            [[0, 0], [120, 0]],
+            [[120, 80], [0, 80]],
+        ],
+        [
+            [[0, 0], [0, 80]],
+            [[120, 0], [120, 80]],
+        ],
+        [],
+    )
+
+    assert accepted == []
+    assert candidates
+    assert all(not candidate.accepted for candidate in candidates)
+
+
 def test_structural_completion_rejects_helper_only_closed_shape():
     accepted, candidates = complete_structural_cut_polygons(
         "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
@@ -636,6 +749,29 @@ def test_apply_saas_with_poche_end_to_end_on_synthetic_fixture():
             b"(axon::Visible::ClippingPlaneIntersections::TEST_CUT) Ln\r"
             in new_payload
         )
+
+
+def test_apply_saas_with_poche_can_write_overlay_layer_without_env():
+    with tempfile.TemporaryDirectory() as tmp:
+        src = os.path.join(tmp, "synthetic.ai")
+        dst = os.path.join(tmp, "synthetic_OVERLAY.ai")
+        cut_layer = "axon::Visible::ClippingPlaneIntersections::TEST_CUT"
+        write_synthetic_test_ai(src, layer_name=cut_layer)
+
+        _apply_res, poche_res, _poche_report = apply_saas_with_poche(
+            src,
+            dst,
+            rgb_to_weight={(0, 0, 0): 0.5},
+            default_width=0.25,
+            poche_overlay=True,
+        )
+
+        assert poche_res.layers_targeted == 1
+        assert poche_res.layers_injected == 1
+        with pikepdf.open(dst) as pdf:
+            new_payload = _read_payload(pdf)
+        assert b"(ARCH_LW_POCHE) Ln\r" in new_payload
+        assert b"0 0 0 1 1 0 0 0 Xa\r" in new_payload
 
 
 def test_inspect_falls_back_to_private_payload_cmyk_colors(tmp_path):

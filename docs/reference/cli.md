@@ -38,6 +38,35 @@ Layer-preserving via Illustrator JSX.
 arch-lw apply-jsx SRC [-o OUTPUT]
 ```
 
+## `arch-lw apply-saas`
+
+Headless AI-native payload rewrite. Preserves Illustrator layers and can also
+inject poché without opening Illustrator.
+
+```bash
+arch-lw apply-saas SRC [OPTIONS]
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `-o, --output PATH` | `<src> HIERARCHY-saas.<ext>` | Output path |
+| `--mapping FILE` | — | JSON: `{"RGB(r,g,b)": weight_pt}` |
+| `--preset {section,plan,elevation,detail}` | `section` | Tier ladder for `--auto` |
+| `--scale TEXT` | `1/4` | Plot scale for `--for-print` |
+| `--for-print` | off | Use ISO 128 print weights |
+| `--auto` | off | Auto-bucket native RGB/CMYK stroke colors |
+| `--architectural` | off | Use semantic layer rules for hierarchy, poché eligibility, cut-stroke color, and solid cut dashes |
+| `--default-width FLOAT` | `0.25` | Width for unmatched colors |
+| `--poche` | off | Inject high-confidence structural poché fills |
+| `--poche-overrides FILE` | — | Per-layer poché strategy overrides JSON |
+| `--poche-overlay / --inline-poche` | architectural: overlay | Write generated fills to a top `ARCH_LW_POCHE` layer, or inline into source cut layers |
+| `--bridge-strategy {greedy,best}` | `best` | Bridge selector for the poché auto-bridge rung |
+| `--progress / --no-progress` | auto | Stage/layer progress feedback |
+
+Architectural mode separates black poché from cut-line styling. A layer can be
+`poche=False` and still receive a strong cut stroke, for example glazing,
+frames, SHS/HSS, rainscreen returns, or panel cuts.
+
 ## `arch-lw poche`
 
 Generate poché on cut layers via shapely linemerge + polygonize + auto-bridge + fallback.

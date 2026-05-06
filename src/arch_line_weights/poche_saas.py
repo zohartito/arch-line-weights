@@ -97,6 +97,12 @@ def _poche_overlay_enabled() -> bool:
     return os.environ.get(_POCHE_OVERLAY_ENV) == "1"
 
 
+def _use_poche_overlay(value: bool | None) -> bool:
+    if value is not None:
+        return value
+    return _poche_overlay_enabled()
+
+
 @dataclass
 class PocheSaasResult:
     """Diagnostic counters from a poché-injection run.
@@ -663,6 +669,9 @@ def apply_saas_with_poche(
     bridge_strategy: str | None = None,
     reporter: ProgressReporter | None = None,
     layer_weight_resolver: Callable[[str], float | None] | None = None,
+    layer_color_resolver: Callable[[str], tuple[int, int, int] | None] | None = None,
+    layer_solid_line_resolver: Callable[[str], bool] | None = None,
+    poche_overlay: bool | None = None,
     architectural: bool = False,
     preset: str = "section",
     scale: str = "1/4",
@@ -779,13 +788,15 @@ def apply_saas_with_poche(
                 default_width=default_width,
                 result=apply_result,
                 layer_weight_resolver=layer_weight_resolver,
+                layer_color_resolver=layer_color_resolver,
+                layer_solid_line_resolver=layer_solid_line_resolver,
             )
 
         # Step 2: inject poché polygons. find_layer_envelope re-runs against
         # the *rewrite output* so any byte shift from width rewriting is
         # already accounted for.
         with reporter.stage("inject_poche_polygons", layers=len(polygons_by_layer)):
-            if _poche_overlay_enabled():
+            if _use_poche_overlay(poche_overlay):
                 new_payload = inject_poche_overlay_layer(
                     new_payload,
                     polygons_by_layer,

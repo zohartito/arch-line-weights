@@ -3,7 +3,11 @@ from __future__ import annotations
 import pytest
 from shapely.geometry import LineString
 
-from arch_line_weights.architectural import classify_architectural_layer
+from arch_line_weights.architectural import (
+    architectural_layer_color_resolver,
+    architectural_stroke_style_for_layer,
+    classify_architectural_layer,
+)
 from arch_line_weights.poche import _try_structural_open_loop, polygonize_layer
 from arch_line_weights.poche_saas import _is_cut_layer
 
@@ -94,6 +98,35 @@ def test_architectural_poche_filter_uses_semantics():
 
 
 @pytest.mark.parametrize(
+    "layer,tier",
+    [
+        (
+            "axon::Visible::ClippingPlaneIntersections::CONCRETE_RAINSCREEN_PANEL",
+            "cladding",
+        ),
+        (
+            "axon::Visible::ClippingPlaneIntersections::CLT_WINDOW_IGU_GLASS",
+            "glazing",
+        ),
+        (
+            "axon::Visible::ClippingPlaneIntersections::FOUNDATION_EPDM_FLASHING",
+            "material_minor",
+        ),
+        (
+            "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_CONNECTOR_CLIP",
+            "connectors",
+        ),
+    ],
+)
+def test_architectural_blacklist_wins_over_structural_cut_tokens(layer, tier):
+    assignment = classify_architectural_layer(layer, preset="section")
+
+    assert assignment.tier == tier
+    assert assignment.poche is False
+    assert _is_cut_layer(layer, architectural=True) is False
+
+
+@pytest.mark.parametrize(
     "layer",
     [
         "axon::Visible::ClippingPlaneIntersections::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44",
@@ -120,11 +153,60 @@ def test_view_name_section_cut_does_not_make_visible_curves_poche():
     assert assignment.poche is False
 
 
+def test_architectural_cut_color_resolver_makes_non_poche_cuts_read_as_cut():
+    resolve = architectural_layer_color_resolver(preset="section")
+
+    assert (
+        resolve(
+            "axon::Visible::ClippingPlaneIntersections::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44"
+        )
+        == (0, 0, 0)
+    )
+    assert (
+        resolve("axon::Visible::ClippingPlaneIntersections::24_SHS_100_OUTRIGGERS_REMAP")
+        == (0, 0, 0)
+    )
+    assert (
+        resolve("axon::Visible::ClippingPlaneIntersections::03c_WINDOW_IGU_GLASS")
+        == (0, 76, 160)
+    )
+    assert resolve("axon::Visible::Curves::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44") is None
+
+
+def test_architectural_cut_style_is_separate_from_poche_semantics():
+    style = architectural_stroke_style_for_layer(
+        "axon::Visible::ClippingPlaneIntersections::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44"
+    )
+
+    assert style.weight_pt == 0.5
+    assert style.stroke_rgb == (0, 0, 0)
+    assert style.solid_line is True
+
+    visible_style = architectural_stroke_style_for_layer(
+        "axon::Visible::Curves::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44"
+    )
+    assert visible_style.weight_pt == 0.18
+    assert visible_style.stroke_rgb is None
+    assert visible_style.solid_line is False
+
+
+def test_generic_clipping_plane_is_cut_line_not_poche_fill():
+    layer = "axon::Visible::ClippingPlaneIntersections::UNRESOLVED_PANEL_EDGE"
+
+    assignment = classify_architectural_layer(layer, preset="section")
+    style = architectural_stroke_style_for_layer(layer, preset="section")
+
+    assert assignment.tier == "cut"
+    assert assignment.poche is False
+    assert style.weight_pt == 0.5
+    assert style.stroke_rgb == (0, 0, 0)
+    assert style.solid_line is True
+
+
 def test_structural_open_loop_closes_three_sided_cut_chain():
     lines = [
         LineString([(0, 0), (100, 0), (100, 20), (0, 20)]),
     ]
-
     polys = _try_structural_open_loop(
         "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
         lines,
@@ -145,6 +227,75 @@ def test_structural_open_loop_rejects_cladding_layer():
     )
 
     assert polys == []
+
+
+def test_structural_open_loop_rejects_triangular_cap_blob():
+    polys = _try_structural_open_loop(
+        "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
+        [
+            LineString([(0, 0), (40, 0), (20, 25)]),
+        ],
+    )
+
+    assert polys == []
+
+
+def test_structural_open_loop_rejects_densified_triangular_cap_blob():
+    polys = _try_structural_open_loop(
+        "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
+        [
+            LineString([(0, 0), (20, 0), (40, 0), (20, 25)]),
+        ],
+    )
+
+    assert polys == []
+
+
+def test_structural_open_loop_rejects_tiny_backup_wall_fragment():
+    polys = _try_structural_open_loop(
+        "axon::Visible::ClippingPlaneIntersections::03b_CLT_BACKUP_WALL_5in",
+        [
+            LineString([(0, 0), (9, 0), (9, 12), (0, 12)]),
+        ],
+    )
+
+    assert polys == []
+
+
+def test_structural_open_loop_keeps_tall_backup_wall_strip():
+    polys = _try_structural_open_loop(
+        "axon::Visible::ClippingPlaneIntersections::03b_CLT_BACKUP_WALL_5in",
+        [
+            LineString([(0, 0), (9, 0), (9, 60), (0, 60)]),
+        ],
+    )
+
+    assert len(polys) == 1
+    assert round(polys[0].area) == 540
+
+
+def test_structural_open_loop_rejects_huge_irregular_roof_after_cleaning():
+    polys = _try_structural_open_loop(
+        "axon::Visible::ClippingPlaneIntersections::TEC_ROOF_CLT",
+        [
+            LineString([(0, 0), (900, 0), (450, 80)]),
+            LineString([(450, 80), (0, 220), (900, 220)]),
+        ],
+    )
+
+    assert polys == []
+
+
+def test_structural_open_loop_keeps_rectangular_roof_strip():
+    polys = _try_structural_open_loop(
+        "axon::Visible::ClippingPlaneIntersections::TEC_ROOF_CLT",
+        [
+            LineString([(0, 0), (500, 0), (500, 80), (0, 80)]),
+        ],
+    )
+
+    assert len(polys) == 1
+    assert round(polys[0].area) == 40000
 
 
 def test_polygonize_reports_structural_open_loop_when_bridge_fails(monkeypatch):

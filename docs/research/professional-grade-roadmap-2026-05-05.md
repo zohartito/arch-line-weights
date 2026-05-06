@@ -95,6 +95,15 @@ Goal: make Zohar's current drawings usable now.
   metadata.
 - [x] Add guardrails for helper-only false blobs and concrete/foundation
   over-expansion.
+- [x] Add cut-stroke styling separate from poché eligibility, including RGB/CMYK
+  stroke-color overrides and solid dash normalization for strong cut layers.
+- [x] Add manual Illustrator poché workflow spec and map it to engine stages.
+- [x] Add first rectangularity/fragment guards learned from v0617/v0618:
+  large roof/slab/foundation candidates must look like material strips; tiny
+  backup-wall fragments and large triangular roof surfaces are rejected.
+- [x] Re-enable timber beam completion in a narrow way: small cut-anchored
+  beam-end rectangles may be completed/pochéd, while large timber blobs remain
+  rejected.
 - [ ] Add a per-run report that says:
   - injected
   - skipped
@@ -109,7 +118,11 @@ Goal: encode the architectural graphics standard explicitly.
 - [x] Create `docs/research/lineweight-rulebook.md`.
 - [x] Create `docs/research/poche-rulebook.md`.
 - [x] Create `docs/research/entourage-rulebook.md`.
+- [x] Create `docs/research/manual-illustrator-poche-workflow.md`.
 - [x] Build first-pass layer semantic classifier independent of color.
+- [x] Enforce blacklist-before-whitelist precedence so glazing, membranes,
+  connectors, and cladding/rainscreen layers cannot become black poché because
+  they also contain structural-looking tokens.
 - [ ] Make color classifier fallback-only for known source types.
 - [ ] Add fixture tests using real layer names from ARCH 202B and ARCH 211.
 
@@ -124,6 +137,11 @@ true cut solid mass > foreground/profile > object edge > secondary structure > c
 Goal: improve coverage without false positives.
 
 - [x] Implement first-pass structural open-loop closure for simple open chains.
+- [x] Add same-component visible/tangent completion evidence with accept/reject
+  metadata.
+- [x] Add anchored strip acceptance for large real roof/slab/foundation repairs.
+- [x] Add morphology guards for triangular caps, compact foundation blobs, tiny
+  backup-wall debris, and large irregular roof surfaces.
 - [ ] Expand structural closure beyond simple open chains.
 - [ ] Reject global `bbox` except explicit overrides.
 - [ ] Add polygon plausibility scoring:
