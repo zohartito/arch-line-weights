@@ -28,6 +28,9 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - `apply-saas --poche-overlay/--inline-poche` switch. Architectural poché uses
   the top `ARCH_LW_POCHE` overlay by default, matching the manual workflow while
   keeping inline injection available.
+- Deadline workflow notes in `docs/research/deadline-workflow-2026-05-05.md`
+  for hierarchy-only, safe hierarchy + poché, report generation, and manual
+  `ARCH_LW_POCHE_CLEANUP` repair.
 
 ### Changed
 
@@ -68,6 +71,9 @@ versioning follows [Semantic Versioning](https://semver.org/).
   default.
 - `TEC_TIMBER_BEAMS` completion is no longer a blanket skip, but it is limited
   to small, rectangular, cut-anchored beam-end candidates.
+- `TEC_TIMBER_BEAMS` completion now preserves raw polygonized cells before
+  union, so repeated small beam-end rectangles can be accepted without
+  admitting one large merged timber blob.
 - Architectural section screen hierarchy now makes secondary steel and
   connector hardware quieter (`0.25 pt` and `0.18 pt`) so they do not compete
   with true cut/profile structure.
@@ -99,6 +105,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
   `v0620-lowconf-roofcap.ai`, which injected the roof-cap bbox but created a
   visible roof/rainscreen blob. That confirms low-confidence bbox fills should
   remain diagnostic-only by default.
+- Real run after timber beam cell preservation produced
+  `v0622-beam-cells.ai`; this did not change the iso axon polygon count, which
+  confirms the remaining misses on that drawing need component-graph completion
+  and/or manual deadline cleanup, not just cell preservation.
 - Focused regression suite:
   `PYTHONPATH=src pyenv exec python -m pytest tests/test_apply_saas.py tests/test_architectural_mode.py tests/test_apply_saas_poche.py -q`
   currently passes `89` tests.

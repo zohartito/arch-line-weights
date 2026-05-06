@@ -586,6 +586,33 @@ def test_structural_completion_accepts_small_timber_beam_cut_square():
     assert any(candidate.accepted for candidate in candidates)
 
 
+def test_structural_completion_splits_repeated_timber_beam_cells():
+    accepted, candidates = complete_structural_cut_polygons(
+        "axon::Visible::ClippingPlaneIntersections::TEC_TIMBER_BEAMS",
+        [
+            [[0, 0], [10, 0]],
+            [[0, 26], [10, 26]],
+            [[20, 0], [30, 0]],
+            [[20, 26], [30, 26]],
+            [[40, 0], [50, 0]],
+            [[40, 26], [50, 26]],
+        ],
+        [
+            [[0, 0], [0, 26]],
+            [[10, 0], [10, 26]],
+            [[20, 0], [20, 26]],
+            [[30, 0], [30, 26]],
+            [[40, 0], [40, 26]],
+            [[50, 0], [50, 26]],
+        ],
+        [],
+    )
+
+    assert len(accepted) == 3
+    assert sorted(round(poly.area) for poly in accepted) == [260, 260, 260]
+    assert sum(1 for candidate in candidates if candidate.accepted) == 3
+
+
 def test_structural_completion_rejects_large_timber_beam_blob():
     accepted, candidates = complete_structural_cut_polygons(
         "axon::Visible::ClippingPlaneIntersections::TEC_TIMBER_BEAMS",

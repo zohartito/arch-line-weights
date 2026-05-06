@@ -539,3 +539,44 @@ iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0619-report-hierarch
 It is not perfect poché, but it is safer than the low-confidence variant. The
 next true geometry fix should be component-graph completion and beam-cell
 decomposition, not global loosening of confidence gates.
+
+## v0621/v0622 Deadline Pass
+
+The latest safe run produced:
+
+```text
+iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0621-deadline-safe.ai
+iso-axon-v0621-deadline-safe-report.json
+```
+
+Then a narrow timber-beam cell preservation patch was tested. It changes
+`make2d_completion._candidate_polygons()` so `TEC_TIMBER_BEAMS` can evaluate
+raw polygonized cells before adjacent cells are unioned into one larger blob.
+The focused regression proves repeated small beam cells can pass while the
+large timber blob remains rejected.
+
+Real output:
+
+```text
+iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0622-beam-cells.ai
+iso-axon-v0622-beam-cells-report.json
+```
+
+Result on the iso axon:
+
+```text
+48 polygons across 7/7 injectable cut layers
+TEC_TIMBER_BEAMS remains 18 polygons
+the remaining 1,525.9 area timber candidate is still rejected as not a small
+cut rectangle
+```
+
+Conclusion:
+
+- The timber-cell patch is safe and useful for future repeated beam-end cases.
+- It does not solve this exact iso axon. The remaining true misses require
+  component-graph completion, especially for right foundation/wall and roof/slab
+  strip evidence.
+- For the 2026-05-06 9:30 a.m. deadline, the practical path is to use v0622 as
+  the automatic base and add a small `ARCH_LW_POCHE_CLEANUP` layer in
+  Illustrator for the few true cut faces the engine still cannot prove.

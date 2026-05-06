@@ -154,7 +154,11 @@ Goal: make Zohar's current drawings usable now.
 - [x] Re-enable timber beam completion in a narrow way: small cut-anchored
   beam-end rectangles may be completed/pochéd, while large timber blobs remain
   rejected.
-- [ ] Add a per-run report that says:
+- [x] Add deadline workflow notes for hierarchy-only, safe poché, report
+  generation, and manual `ARCH_LW_POCHE_CLEANUP` repair.
+- [x] Preserve raw timber beam cells before union so repeated small beam-end
+  rectangles can pass without admitting one large timber blob.
+- [x] Add a per-run report that says:
   - injected
   - skipped
   - inferred closures

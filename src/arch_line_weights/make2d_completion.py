@@ -125,7 +125,11 @@ def _expanded_bounds(lines: list[LineString], margin: float = _BOUNDS_MARGIN) ->
     return box(minx - margin, miny - margin, maxx + margin, maxy + margin)
 
 
-def _candidate_polygons(lines: list[LineString]) -> list[Polygon]:
+def _candidate_polygons(
+    lines: list[LineString],
+    *,
+    merge_adjacent: bool = True,
+) -> list[Polygon]:
     if not lines:
         return []
     try:
@@ -146,6 +150,8 @@ def _candidate_polygons(lines: list[LineString]) -> list[Polygon]:
     ]
     if not valid:
         return []
+    if not merge_adjacent:
+        return valid
     try:
         merged_polys = unary_union(valid)
     except Exception:
@@ -413,7 +419,11 @@ def complete_structural_cut_polygons(
     component = component_key(layer_name)
     candidates: list[CompletionCandidate] = []
     accepted: list[Polygon] = []
-    for poly in _candidate_polygons(cut_lines + helper_lines):
+    is_timber_beam = "TEC_TIMBER_BEAMS" in layer_name.upper()
+    for poly in _candidate_polygons(
+        cut_lines + helper_lines,
+        merge_adjacent=not is_timber_beam,
+    ):
         shared = cut_shared_length(poly, cut_lines)
         required = max(_CUT_ANCHOR_MIN, _CUT_ANCHOR_PERIMETER_RATIO * poly.length)
         if not bounds_gate.covers(poly.centroid):
@@ -445,7 +455,7 @@ def complete_structural_cut_polygons(
                 )
             )
             continue
-        if "TEC_TIMBER_BEAMS" in layer_name.upper() and not _timber_beam_candidate_is_plausible(
+        if is_timber_beam and not _timber_beam_candidate_is_plausible(
             poly,
             shared,
             required,
