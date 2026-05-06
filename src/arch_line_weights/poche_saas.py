@@ -475,6 +475,7 @@ def compute_polygons_for_layers(
                             candidate.polygon.area,
                             candidate.cut_shared_length,
                         )
+                report.completion_candidates.extend(candidates)
                 if completion_polys:
                     polys = [*base_polys, *completion_polys]
                     fr = FillResult(

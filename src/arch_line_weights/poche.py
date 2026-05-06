@@ -155,6 +155,7 @@ class FillResult:
 class PocheReport:
     fills: list[FillResult] = field(default_factory=list)
     polygons: dict[str, list[list[list[float]]]] = field(default_factory=dict)
+    completion_candidates: list[object] = field(default_factory=list)
 
     @property
     def total_polygons(self) -> int:

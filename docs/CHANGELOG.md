@@ -40,6 +40,14 @@ versioning follows [Semantic Versioning](https://semver.org/).
   can receive strong solid cut strokes without becoming black fill. The payload
   rewrite supports both RGB `XA` and CMYK `K` stroke operators while leaving
   fill operators untouched.
+- `apply-saas --report <path>` now writes a durable JSON run report with
+  filled/inferred/skipped/low-confidence layer statuses, review reasons,
+  missing payload layers, and Make2D completion candidate accept/reject
+  metadata.
+- Architectural cut-stroke styling now keeps non-solid cut layers subordinate:
+  connectors and cladding/screen returns stay at `0.18 pt`, secondary SHS/HSS
+  stays at `0.25 pt`, frames at `0.3 pt`, and generic clipped layers at
+  review-weight `0.3 pt` instead of a blanket `0.5 pt`.
 - Architectural classification now enforces blacklist precedence before
   structural cut promotion, so glass/window, membrane/flashing, connector, and
   rainscreen/cladding tokens cannot be poché-filled just because a layer also
@@ -82,6 +90,15 @@ versioning follows [Semantic Versioning](https://semver.org/).
   the large roof overfill is gone, but the drawing is still not considered a
   final print candidate until component-level review/reporting covers the
   remaining missing foundation/wall/floor zones.
+- Real run after report + hierarchy tuning produced `v0619-report-hierarchy.ai`
+  and `iso-axon-v0619-report.json`: 48 safe polygons across 7 injectable
+  structural cut layers, 8 cut layers considered, 1 low-confidence diagnostic
+  roof-cap layer, and clearer review reasons for rejected roof/foundation/beam
+  completion candidates.
+- A controlled low-confidence experiment produced
+  `v0620-lowconf-roofcap.ai`, which injected the roof-cap bbox but created a
+  visible roof/rainscreen blob. That confirms low-confidence bbox fills should
+  remain diagnostic-only by default.
 - Focused regression suite:
   `PYTHONPATH=src pyenv exec python -m pytest tests/test_apply_saas.py tests/test_architectural_mode.py tests/test_apply_saas_poche.py -q`
   currently passes `89` tests.

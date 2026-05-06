@@ -512,6 +512,13 @@ def apply_jsx_cmd(
     help=f"Override the progress-event log path (default: {DEFAULT_PROGRESS_FILE}). "
     "One tab-separated event per line. Ignored when --no-progress is set.",
 )
+@click.option(
+    "--report",
+    "report_path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=None,
+    help="Write a durable JSON run report with filled/inferred/skipped/review layers.",
+)
 def apply_saas_cmd(
     src: Path,
     output: Path | None,
@@ -532,6 +539,7 @@ def apply_saas_cmd(
     source: str,
     progress: bool | None,
     progress_file: Path | None,
+    report_path: Path | None,
 ):
     """Headless apply: modify the AI native payload directly (preserves layers).
 
@@ -779,6 +787,28 @@ def apply_saas_cmd(
                 f"conf={fr.confidence:.2f}",
                 err=True,
             )
+    if report_path is not None:
+        from .run_report import build_apply_saas_report
+
+        run_report = build_apply_saas_report(
+            input_path=src,
+            output_path=output,
+            source={
+                "mode": "apply-saas",
+                "architectural": architectural,
+                "preset": preset,
+                "scale": scale,
+                "layer_source": resolved_source.value,
+                "poche_overlay": bool(resolved_poche_overlay) if poche else False,
+                "bridge_strategy": bridge_strategy,
+                "min_inject_confidence": 0.85,
+            },
+            poche_report=poche_report,
+            poche_result=poche_result,
+        )
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(json.dumps(run_report, indent=2, sort_keys=True) + "\n")
+        click.echo(f"report: wrote {report_path}", err=True)
 
     click.echo("", err=True)
     click.echo(f"wrote {output}  ({result.output_size:,} bytes)", err=True)

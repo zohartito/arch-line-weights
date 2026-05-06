@@ -419,31 +419,38 @@ def architectural_stroke_style_for_layer(
         )
     if assignment.tier == "glazing":
         return ArchitecturalStrokeStyle(
-            0.5,
+            assignment.weight_pt,
             (0, 76, 160),
             True,
-            "glass cut line: strong blue, no poché",
+            "glass cut line: blue, no poché",
         )
-    if assignment.tier in {"frames", "cladding", "structure_secondary"}:
+    if assignment.tier in {"frames", "structure_secondary"}:
         return ArchitecturalStrokeStyle(
-            0.5,
+            assignment.weight_pt,
             (0, 0, 0),
             True,
             f"{assignment.semantic} cut line, no solid poché",
         )
+    if assignment.tier == "cladding":
+        return ArchitecturalStrokeStyle(
+            assignment.weight_pt,
+            (0, 0, 0),
+            True,
+            "cladding/screen cut return, subordinate to structural cut mass",
+        )
     if assignment.tier == "connectors":
         return ArchitecturalStrokeStyle(
-            0.35,
+            assignment.weight_pt,
             (0, 0, 0),
             True,
             "connector cut line, subordinate to solid cut mass",
         )
     if assignment.confidence >= 0.40:
         return ArchitecturalStrokeStyle(
-            0.5,
+            0.3,
             (0, 0, 0),
             True,
-            "generic clipping-plane cut line",
+            "generic clipping-plane cut line, needs review",
         )
     return ArchitecturalStrokeStyle(None, None, False, assignment.why)
 

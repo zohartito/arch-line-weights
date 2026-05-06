@@ -463,3 +463,79 @@ Important unresolved point:
   auto-fill helper-only geometry as black mass until a component-graph or review
   rule can prove it is the cut concrete/foundation." That belongs in Issue #21
   as the next component-completion problem.
+
+## v0619/v0620 Report + Hierarchy Pass
+
+The next pass incorporated the subagent findings into a safer review workflow.
+
+James found that poché eligibility was mostly safe, but the cut-stroke style
+resolver still promoted too many non-solid cut layers to `0.5 pt`. That made
+connectors, SHS/HSS, cladding returns, and generic clipping-plane fragments
+compete with true structural cut mass.
+
+Rule added:
+
+- True structural cut mass keeps `1.0 pt` black solid strokes and poché.
+- Primary visible structure keeps `0.5 pt`.
+- Secondary steel cut strokes resolve to `0.25 pt`.
+- Frames/mullions resolve to `0.3 pt`.
+- Connectors and cladding/screen cut returns resolve to `0.18 pt`.
+- Generic clipping-plane cut lines resolve to `0.3 pt` and should be reviewed.
+
+Real output:
+
+```text
+iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0619-report-hierarchy.ai
+iso-axon-v0619-report.json
+```
+
+The run stayed fast and injected the same safe poché set:
+
+```text
+48 polygons across 7/7 injectable cut layers
+8 cut layers considered
+6 inferred layers
+1 clean filled layer
+1 low-confidence diagnostic-only layer
+```
+
+The stroke distribution moved in the intended direction:
+
+```text
+0.5 pt strokes: 27 -> 15
+0.18/0.25/0.3 pt subordinate strokes increased
+```
+
+The new JSON report names the remaining risky candidates instead of hiding
+them:
+
+- `26_CLT_GAP_ROOF_CAP_REMAP_49FT_V68` remains `bbox`, `conf=0.30`,
+  diagnostic-only.
+- `TEC_ROOF_CLT` has two rejected large helper candidates, one `37,317.5`
+  area and one `11,081.2` area. Both have meaningful cut sharing but fail the
+  current large-strip plausibility rules.
+- `TEC_FOUNDATION` has rejected helper candidates with `shared=0.0` or outside
+  the target cut bounds, matching the unresolved right foundation/wall problem.
+- `TEC_TIMBER_BEAMS` still has a rejected `1,732.0` area candidate; likely next
+  rule is beam-cell decomposition rather than allowing one large timber blob.
+
+As a controlled experiment, `ARCH_LW_POCHE_ALLOW_LOW_CONFIDENCE=1` produced:
+
+```text
+iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0620-lowconf-roofcap.ai
+iso-axon-v0620-lowconf-report.json
+```
+
+It injected one additional roof-cap bbox, but Illustrator review showed a
+large black roof/rainscreen blob. That confirms the default low-confidence
+refusal is correct. `v0620` is evidence, not a print candidate.
+
+Current print-leaning candidate:
+
+```text
+iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0619-report-hierarchy.ai
+```
+
+It is not perfect poché, but it is safer than the low-confidence variant. The
+next true geometry fix should be component-graph completion and beam-cell
+decomposition, not global loosening of confidence gates.

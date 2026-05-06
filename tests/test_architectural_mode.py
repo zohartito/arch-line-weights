@@ -178,7 +178,7 @@ def test_architectural_cut_style_is_separate_from_poche_semantics():
         "axon::Visible::ClippingPlaneIntersections::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44"
     )
 
-    assert style.weight_pt == 0.5
+    assert style.weight_pt == 0.18
     assert style.stroke_rgb == (0, 0, 0)
     assert style.solid_line is True
 
@@ -198,7 +198,38 @@ def test_generic_clipping_plane_is_cut_line_not_poche_fill():
 
     assert assignment.tier == "cut"
     assert assignment.poche is False
-    assert style.weight_pt == 0.5
+    assert style.weight_pt == 0.3
+    assert style.stroke_rgb == (0, 0, 0)
+    assert style.solid_line is True
+
+
+@pytest.mark.parametrize(
+    "layer,expected_weight",
+    [
+        (
+            "axon::Visible::ClippingPlaneIntersections::TEC_STEEL_CONNECTOR_L-BRACKET",
+            0.18,
+        ),
+        (
+            "axon::Visible::ClippingPlaneIntersections::CLEAT_PLATE",
+            0.18,
+        ),
+        (
+            "axon::Visible::ClippingPlaneIntersections::24_SHS_100_OUTRIGGERS_REMAP",
+            0.25,
+        ),
+        (
+            "axon::Visible::ClippingPlaneIntersections::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44",
+            0.18,
+        ),
+    ],
+)
+def test_non_solid_cut_layers_stay_subordinate(layer, expected_weight):
+    style = architectural_stroke_style_for_layer(layer, preset="section")
+    assignment = classify_architectural_layer(layer, preset="section")
+
+    assert assignment.poche is False
+    assert style.weight_pt == expected_weight
     assert style.stroke_rgb == (0, 0, 0)
     assert style.solid_line is True
 
