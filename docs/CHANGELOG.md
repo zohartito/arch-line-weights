@@ -31,6 +31,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- GitHub Actions now conserve private-account minutes during deadline-mode
+  development: CI is PR/manual-only with a fast default Ubuntu/Python 3.12
+  path, the full OS/Python compatibility matrix is manual-only, and docs deploy
+  runs on tags/manual dispatch instead of every `main` push.
 - `apply-saas --architectural` now has a separate cut-stroke style resolver:
   non-poché cut elements such as cladding returns, SHS/HSS, frames, and glazing
   can receive strong solid cut strokes without becoming black fill. The payload
