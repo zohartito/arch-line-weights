@@ -7,7 +7,7 @@ non-destructive clean 3DM containing:
 
 - copied landing boxes
 - copied central spine
-- rebuilt treads/risers as individual valid boxes
+- rebuilt flights as one folded solid per run
 - copied stringers translated slightly down and placed on a separate layer
 
 It is intentionally a spike for the deadline workflow, not a production CLI.
@@ -21,7 +21,6 @@ from pathlib import Path
 import rhino3dm as r3
 
 TREAD_THICKNESS = 0.167
-RISER_THICKNESS = 1.0 / 12.0
 RISE_TARGET = 0.5
 STRINGER_DROP_Z = 0.35
 
@@ -71,6 +70,60 @@ def _add_translated_brep(
     model.Objects.AddBrep(brep, attr)
 
 
+def _add_folded_flight(
+    model: r3.File3dm,
+    layer_index: int,
+    name: str,
+    *,
+    minx: float,
+    maxx: float,
+    y0: float,
+    y1: float,
+    z0: float,
+    z1: float,
+    risers: int,
+) -> None:
+    """Add one valid folded stair flight as a capped extrusion.
+
+    The profile is a continuous sawtooth plate: risers and treads are not
+    separate boxes, so Make2D does not receive artificial object seams between
+    every tread/riser component.
+    """
+    rise = (z1 - z0) / float(risers)
+    tread_count = risers - 1
+    run_step = (y1 - y0) / float(tread_count)
+
+    top: list[tuple[float, float]] = [(y0, z0)]
+    for i in range(risers):
+        y = y0 + run_step * min(i, tread_count)
+        z_high = z0 + rise * (i + 1)
+        top.append((y, z_high))
+        if i < tread_count:
+            top.append((y0 + run_step * (i + 1), z_high))
+
+    bottom = [(y, z - TREAD_THICKNESS) for y, z in reversed(top)]
+    profile_points = [r3.Point3d(0, y, z) for y, z in top + bottom]
+    profile_points.append(profile_points[0])
+
+    polyline = r3.Polyline.CreateFromPoints(profile_points)
+    curve = polyline.ToPolylineCurve()
+    extrusion = r3.Extrusion.Create(curve, maxx - minx, True)
+    if extrusion is None:
+        raise RuntimeError(f"Could not create folded stair flight {name}")
+
+    brep = extrusion.ToBrep(True)
+    if brep is None:
+        raise RuntimeError(f"Could not convert folded stair flight {name} to Brep")
+
+    box = brep.GetBoundingBox()
+    brep.Translate(r3.Vector3d(minx - box.Min.X, 0, 0))
+
+    attr = r3.ObjectAttributes()
+    attr.LayerIndex = layer_index
+    attr.Name = name
+    model.Objects.AddBrep(brep, attr)
+
+
 def rebuild(src: Path, dst: Path) -> None:
     source = r3.File3dm.Read(str(src))
     if source is None:
@@ -80,8 +133,7 @@ def rebuild(src: Path, dst: Path) -> None:
     model.Settings.ModelUnitSystem = source.Settings.ModelUnitSystem
 
     layer_landings = _add_layer(model, "CLEAN_STAIR_LANDINGS", (96, 62, 32, 255))
-    layer_treads = _add_layer(model, "CLEAN_STAIR_TREADS", (120, 78, 40, 255))
-    layer_risers = _add_layer(model, "CLEAN_STAIR_RISERS", (145, 95, 48, 255))
+    layer_flights = _add_layer(model, "CLEAN_STAIR_FOLDED_FLIGHTS", (120, 78, 40, 255))
     layer_spine = _add_layer(model, "CLEAN_STAIR_SPINE", (80, 52, 28, 255))
     layer_stringers = _add_layer(
         model,
@@ -136,45 +188,18 @@ def rebuild(src: Path, dst: Path) -> None:
             continue
 
         risers = max(2, round((z1 - z0) / RISE_TARGET))
-        rise = (z1 - z0) / float(risers)
-        tread_count = risers - 1
-        run_step = (y1 - y0) / float(tread_count)
-
-        for i in range(tread_count):
-            ty0 = y0 + run_step * i
-            ty1 = y0 + run_step * (i + 1)
-            z_top = z0 + rise * (i + 1)
-            _add_box(
-                model,
-                layer_treads,
-                f"clean_tread_flight_{flight_index:02d}_{i + 1:02d}",
-                (
-                    minx,
-                    min(ty0, ty1),
-                    z_top - TREAD_THICKNESS,
-                    maxx,
-                    max(ty0, ty1),
-                    z_top,
-                ),
-            )
-
-        for i in range(risers):
-            y = y0 + run_step * i
-            z_bottom = z0 + rise * i
-            z_top = z0 + rise * (i + 1)
-            _add_box(
-                model,
-                layer_risers,
-                f"clean_riser_flight_{flight_index:02d}_{i + 1:02d}",
-                (
-                    minx,
-                    y - RISER_THICKNESS / 2.0,
-                    z_bottom,
-                    maxx,
-                    y + RISER_THICKNESS / 2.0,
-                    z_top,
-                ),
-            )
+        _add_folded_flight(
+            model,
+            layer_flights,
+            f"clean_folded_flight_{flight_index:02d}",
+            minx=minx,
+            maxx=maxx,
+            y0=y0,
+            y1=y1,
+            z0=z0,
+            z1=z1,
+            risers=risers,
+        )
 
     for name, brep in stringers:
         _add_translated_brep(
