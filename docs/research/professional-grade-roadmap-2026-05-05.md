@@ -80,6 +80,56 @@ get a file that looks like it was cleaned by a careful human draftsperson:
 - connectors are precise, not dominant
 - uncertain geometry is flagged instead of faked
 
+## Current Goal
+
+The goal at the end of the current local-engine roadmap is not merely "the
+command runs." It is:
+
+```text
+For a real Rhino/Illustrator section drawing, arch-lw produces a layer-preserved
+.ai file whose line hierarchy and poché are good enough to print, and any
+remaining uncertainty is reported clearly enough that the user can approve or
+repair only the exact disputed components.
+```
+
+That means the current roadmap is done only when all of these are true:
+
+- The engine handles RGB and CMYK Illustrator payloads.
+- Structural cut mass is filled when the section truly cuts it, including
+  beams/slabs/walls/roof/foundation with incomplete Make2D loops.
+- Incomplete cut geometry is completed locally and plausibly, or reported as a
+  specific repair candidate. Silent misses are failures.
+- Non-solid cut elements get strong cut strokes without black poché.
+- Facade texture, screens, connectors, glass, annotation, and entourage stay
+  subordinate.
+- The output has a review report: what was filled, inferred, skipped, and why.
+- A real Illustrator/Computer Use visual check agrees with the report.
+
+The web app belongs after this gate, not before it. A web app around an
+untrustworthy engine only makes the wrong answer easier to upload.
+
+## Immediate Test Gate
+
+Yes, we need to test what we have made so far, but the sequence matters:
+
+1. Unit/regression tests: already passing after the latest rules.
+2. Real-file test: rerun `iso axon section  [Converted].ai` with
+   `--architectural --poche`.
+3. Visual QA: inspect the known zones in Illustrator/Computer Use:
+   - left retaining wall blob
+   - rain screen/top roof blob
+   - first-floor beam/slab black squares
+   - right retaining wall/foundation
+   - roof cut solidity/white stripes
+   - connector/steel hierarchy
+4. If it still misses true cut material, add a new rule/test before trying the
+   same fix again.
+5. Log the result to GitHub and the debug log.
+
+The immediate acceptance target is not perfection on every possible drawing; it
+is a print-credible result on Zohar's current ARCH 202B drawings with honest
+review notes for any unresolved candidate.
+
 ## Phase 0 — Deadline-Safe Local Mode
 
 Goal: make Zohar's current drawings usable now.
@@ -225,6 +275,17 @@ Reference-library agents are described in
 `docs/research/reference-agent-workflow.md`. Their job is not to upload or
 reproduce books; it is to turn local reading into page-cited rules that the
 program can execute.
+
+Next recommended subagent wave:
+
+| Agent | Mission | Output |
+| --- | --- | --- |
+| Geometry repair | Build component-graph rules for right retaining wall/foundation and split roof/slab loops. | Tests + patch proposal for Issue #21. |
+| Visual QA | Compare v0616/v0618/next output in Illustrator with known failure zones. | Screenshot notes + pass/fail checklist for Issue #7/#19. |
+| Hierarchy standards | Convert remaining Ching/reference rulebook hooks into classifier tests. | Tests for cut mass, thin cut lines, glass, connectors, cladding, entourage. |
+| Report UX | Design `arch-lw diagnose` / run report format. | Markdown/JSON schema for filled/skipped/inferred/review candidates. |
+| Deadline workflow | Write the fastest safe user workflow for current school drawings. | CLI recipes for hierarchy-only, poché, no-poché, and review modes. |
+| Product/web | Keep web-app scope honest behind engine readiness. | Vercel/web roadmap only after local print gate passes. |
 
 ## Current Recommendation
 
