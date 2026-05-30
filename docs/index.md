@@ -12,15 +12,23 @@ hide:
 
 ## Install
 
+Current source install:
+
 ```bash
-pip install arch-line-weights
+git clone https://github.com/zohartito/arch-line-weights
+cd arch-line-weights
+python -m venv .venv
+.venv/bin/python -m pip install -e .
+.venv/bin/arch-lw --help
 ```
 
-Pre-PyPI:
+Optional global install if `pipx` is available:
 
 ```bash
 pipx install git+https://github.com/zohartito/arch-line-weights
 ```
+
+PyPI publishing is still a release checklist item.
 
 ## Pick the doc shape that matches your need
 

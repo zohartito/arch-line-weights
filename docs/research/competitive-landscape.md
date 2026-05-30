@@ -82,8 +82,8 @@ arch line weights).
                               │
                               │
   D1 AutoLineWeight  ─────────┼─────────────  ★ arch-line-weights
-  (free, basic, MIT)          │               (paid, semantic, MIT
-                              │                tier closed)
+  (free, basic, MIT)          │               (semantic, MIT core CLI;
+                              │                future services possible)
                               │
                               │
   A4 VectorWorks 2026         │     A2 Revit View Templates

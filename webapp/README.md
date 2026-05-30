@@ -1,5 +1,10 @@
 # arch-line-weights — webapp scaffold (Phase D)
 
+> **Experimental/local only.** This scaffold is not the public Day-1 install
+> path and is not hardened SaaS. The supported dogfood path is the local CLI,
+> especially `arch-lw apply-saas --architectural --poche` for submit-quality
+> board output.
+
 A working FastAPI backend + SvelteKit frontend that wraps the existing pure-Python pipeline (`apply_saas` + `poche_saas`) behind a REST API.
 
 This is a **local skeleton**, not a deployment. It runs against the filesystem, has no auth, no payments, no queue. The shape is meant to be the final shape — production swaps `storage.py` for Tigris/R2 and `compute.run_job` for a Redis+RQ task without changing any other module.

@@ -1,43 +1,20 @@
-# NOTICE — License history
+# NOTICE — Public License Posture
 
-This project's licensing has changed over time. Read this in full before
-redistributing anything.
+The core `arch-line-weights` CLI in this repository is distributed under the
+MIT License. See `LICENSE`.
 
-## v1.0.0 (2026-04-30, ~15-minute window)
+Earlier private planning notes explored proprietary licensing, paid binaries,
+and SaaS subscriptions. Those notes are historical research, not the current
+license for the public CLI.
 
-Published to PyPI under the **MIT License** (`LICENSE` at the time of
-publication). Yanked from PyPI shortly after. Anyone who downloaded
-`arch_line_weights-1.0.0` from PyPI in that window received it under MIT
-terms and retains those rights *for that exact distributed version*, in
-perpetuity.
+Future commercial services may exist around the project, such as hosted
+processing, paid support, private deployment help, or a hardened web app. Those
+future services may have separate terms. They do not change the MIT license for
+the core CLI code shipped in this repository.
 
-Yank does not revoke MIT rights for already-distributed copies. PyPI yank
-only hides the release from pip's default version resolution.
+The repository intentionally excludes large private/source drawings and
+copyrighted reference books. Those assets are not part of the MIT-licensed
+source distribution.
 
-## v1.0.1 onward (planned, post-2026-04-30)
-
-All future versions of this project — including any version published to
-PyPI, distributed as a binary, hosted as a SaaS, or shared by the author
-in any form — are licensed under proprietary terms. The current `LICENSE`
-file in this repository will be updated to reflect that.
-
-You may **not**:
-- Redistribute future versions
-- Use future versions in commercial work without a paid license
-- Copy patterns / code from future versions into other projects
-
-You may, with future versions:
-- Use them for personal evaluation if a free trial is offered
-- Use them for paid work if you've purchased the appropriate commercial license
-
-## Provenance of the v1.0.0 MIT snapshot
-
-The author is the sole contributor to v1.0.0. No third-party MIT-licensed
-code was included beyond the project's runtime dependencies (pikepdf,
-pymupdf, shapely, click, Pillow, numpy), which retain their respective
-upstream licenses.
-
-## Questions
-
-For licensing inquiries, commercial licensing, or to report a violation,
-contact: **zohartito96@gmail.com** with subject `arch-line-weights license`.
+For licensing questions, contact **zohartito96@gmail.com** with subject
+`arch-line-weights license`.

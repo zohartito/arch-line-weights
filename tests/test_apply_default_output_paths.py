@@ -115,6 +115,7 @@ def test_apply_saas_help_advertises_new_default():
     assert result.exit_code == 0
     assert "HIERARCHY-saas" in _flatten_help(result.output)
     assert "--poche-overlay" in result.output
+    assert "usc" in result.output
 
 
 def test_legacy_apply_help_keeps_bare_hierarchy_suffix():
@@ -127,6 +128,7 @@ def test_legacy_apply_help_keeps_bare_hierarchy_suffix():
     assert result.exit_code == 0
     flat = _flatten_help(result.output)
     assert "HIERARCHY" in flat
+    assert "usc" in result.output
     # Must NOT have picked up the new suffixes.
     assert "HIERARCHY-jsx" not in flat
     assert "HIERARCHY-saas" not in flat

@@ -264,6 +264,14 @@ def test_tier_weights_for_detail_preset_is_heavier():
     assert weights["structure_primary"] == pytest.approx(1.0, abs=0.01)
 
 
+def test_tier_weights_for_usc_preset_matches_reference_section_workflow():
+    """USC preset is a named studio workflow, not an unknown-preset fallback."""
+    weights = tier_weights_for_preset("usc")
+    assert weights["cut"] == pytest.approx(1.0)
+    assert weights["structure_primary"] == pytest.approx(0.5)
+    assert weights["cladding"] == pytest.approx(0.18)
+
+
 def test_as_jsx_function_with_no_preset_preserves_v051_behaviour():
     """Passing preset=None must keep the v0.5.1 hardcoded weights."""
     jsx = as_jsx_function(preset=None)
@@ -346,8 +354,8 @@ def test_cli_apply_jsx_help_shows_preset_flag():
     result = runner.invoke(cli, ["apply-jsx", "--help"])
     assert result.exit_code == 0
     assert "--preset" in result.output
-    # All four preset family names must appear in the help output.
-    for name in ("section", "plan", "elevation", "detail"):
+    # All public preset family names must appear in the help output.
+    for name in ("section", "plan", "elevation", "detail", "usc"):
         assert name in result.output
 
 

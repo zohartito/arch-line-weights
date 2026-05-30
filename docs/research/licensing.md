@@ -1,15 +1,15 @@
-# Licensing — MIT → proprietary pivot, 2026-04-30
+# Licensing — Historical Commercial-License Research, 2026-04-30
 
-> Sub-agent research, 2026-04-30. Decision context: v1.0.0 was
-> published to PyPI under MIT for ~15 minutes, then yanked. The MIT
-> snapshot of v1.0.0 is **irrevocable for that exact distributed
-> version**. All future versions need a new license.
+> **Current public posture, 2026-05-30:** this document is historical research,
+> not launch policy. The core CLI in this repository is MIT-licensed. Future
+> commercial services may exist around hosted processing, support, private
+> deployments, or a hardened web app, with separate terms if they ship.
 
 ## Recommendation
 
-**Use [PolyForm Free Trial 1.0.0](https://polyformproject.org/licenses/free-trial/1.0.0/)
-for the public source tree, paired with a custom commercial EULA for
-paid distribution.**
+**No current license change for the public core CLI.** Keep the repository's
+MIT license for the core CLI. The PolyForm/EULA options below are retained only
+as historical research for possible future commercial services.
 
 Rationale below.
 
@@ -109,25 +109,23 @@ To make v1.0.0 fully unreachable you would need to **delete** (not
 yank) the release. Deletion frees the version number for re-upload by
 anyone — a worse outcome than yank. Stay yanked.
 
-## 5-step "MIT → Commercial" checklist
+## Historical "MIT → Commercial" checklist
 
 - [x] **1. Yank old MIT releases on PyPI** — done 2026-04-30 for v1.0.0.
-- [ ] **2. Replace `LICENSE` file** with PolyForm Free Trial 1.0.0
-  + a brief project-specific notice. Commit on the repo's main branch.
-- [ ] **3. Update `pyproject.toml`** — change `license` to PEP 639
-  SPDX expression: `LicenseRef-PolyForm-Free-Trial-1.0.0` (custom
-  identifier; SPDX hasn't accepted PolyForm into its registry yet).
+- [ ] **2. Future commercial-service terms only.** Do not replace the MIT
+  `LICENSE` for the public core CLI. If a hosted/commercial service ships,
+  create separate service terms and keep them clearly scoped to that service.
+- [ ] **3. Keep `pyproject.toml` aligned with the MIT core CLI.** Any future
+  hosted/commercial service terms should live outside the core CLI package
+  metadata.
 - [x] **4. Add `NOTICE.md`** documenting the MIT history. Done.
-- [ ] **5. Strip OSS framing** from `README.md`,
-  `CONTRIBUTING.md`, `docs/announce/*`. Replace "open-source" with
-  "source-available," remove "MIT," remove contributor onboarding (we
-  aren't accepting external contributions until product-market fit).
-- [ ] **6. Add a commercial EULA** for paid distribution.
-  Template recommendation: PolyForm + an addendum specifying tier
-  rights (student / personal / studio).
+- [ ] **5. Keep public docs honest.** Core CLI is MIT; future commercial
+  services may exist with separate terms.
+- [ ] **6. Add service terms only if paid hosted/private-deployment services
+  ship.**
 
-Steps 2, 3, 5, 6 are Phase B in the roadmap — do them this week before
-re-publishing anything.
+The checklist above is retained as historical research, not a current Phase 2
+launch task.
 
 ## Custom EULA — sketch of paid-tier addendum
 

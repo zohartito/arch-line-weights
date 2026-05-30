@@ -12,14 +12,17 @@ This tutorial takes you from a freshly-exported Rhino `.ai` file to a printable 
 ## 1. Install the tool
 
 ```bash
-pip install arch-line-weights
-arch-lw --version
+git clone https://github.com/zohartito/arch-line-weights
+cd arch-line-weights
+python -m venv .venv
+.venv/bin/python -m pip install -e .
+.venv/bin/arch-lw --version
 ```
 
 ## 2. Inspect what you have
 
 ```bash
-arch-lw inspect "South Section.ai" > inspect.json
+.venv/bin/arch-lw inspect "South Section.ai" > inspect.json
 ```
 
 You'll see something like every stroke at `0.25 pt`. That's the problem we're about to fix.
@@ -29,7 +32,7 @@ You'll see something like every stroke at `0.25 pt`. That's the problem we're ab
 Use the layer-aware JSX path so every Rhino layer survives in Illustrator:
 
 ```bash
-arch-lw apply-jsx "South Section.ai"
+.venv/bin/arch-lw apply-jsx "South Section.ai"
 ```
 
 This opens Illustrator, runs a JSX that classifies each layer by its semantic name (e.g. `ClippingPlaneIntersections::TEC_CONCRETE` → cut tier → 1.0 pt), and saves `South Section HIERARCHY.ai` next to the input.
@@ -37,13 +40,21 @@ This opens Illustrator, runs a JSX that classifies each layer by its semantic na
 For ISO 128 standards-aligned weights at 1/4"=1' for plotted print:
 
 ```bash
-arch-lw apply "South Section.ai" --auto --preset section --for-print --scale 1/4
+.venv/bin/arch-lw apply "South Section.ai" --auto --preset section --for-print --scale 1/4
+```
+
+For submit-quality board work with layer-preserving stroke hierarchy and poché,
+prefer the headless AI-native path:
+
+```bash
+.venv/bin/arch-lw apply-saas "South Section.ai" \
+  --architectural --poche --preset usc --source rhino
 ```
 
 ## 4. Add solid black poché on the cut
 
 ```bash
-arch-lw poche "South Section HIERARCHY.ai" --style solid
+.venv/bin/arch-lw poche "South Section HIERARCHY.ai" --style solid
 ```
 
 Output: `South Section POCHE.ai`.
@@ -51,7 +62,7 @@ Output: `South Section POCHE.ai`.
 ## 5. Or: poché with material hatches
 
 ```bash
-arch-lw poche "South Section HIERARCHY.ai" --style material --scale 0.02
+.venv/bin/arch-lw poche "South Section HIERARCHY.ai" --style material --scale 0.02
 ```
 
 `0.02 = 1:50`.
@@ -59,7 +70,7 @@ arch-lw poche "South Section HIERARCHY.ai" --style material --scale 0.02
 ## 6. Generate a side-by-side preview
 
 ```bash
-arch-lw preview "South Section.ai" "South Section POCHE.ai" -o preview.png
+.venv/bin/arch-lw preview "South Section.ai" "South Section POCHE.ai" -o preview.png
 ```
 
 ## You now have

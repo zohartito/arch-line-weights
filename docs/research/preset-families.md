@@ -161,7 +161,8 @@ Guidelines §5.3.
 
 **Important nuance per BS 1192-2:1995 §4.3:** the offset applies uniformly
 to all tiers, but the *spacing* between tiers stays at √2. So at 1/8",
-texture goes from 0.13 → 0.10 mm (clamped to ISO 0.13 minimum).
+the theoretical texture shift would go from 0.13 → 0.10 mm, but public print
+output clamps the lightest standard hatch/surface weight at 0.13 mm.
 
 ---
 
@@ -260,8 +261,9 @@ Sampled from *Detail* 2023 issues 4–11 (timber, concrete, facade themes):
 
 - **USC School of Architecture** — teaches Ching *Architectural Graphics*
   6th ed. as the foundational graphic reference. Studio standard at 1/4"
-  is 0.70 / 0.50 / 0.35 / 0.18 / 0.10. (Confirmed via ARCH 102 reading
-  list, public syllabus.)
+  is treated here as 0.70 / 0.50 / 0.35 / 0.18 / 0.13 for public print
+  output. Earlier local notes used 0.10 mm as a screen/light-texture
+  override; the canonical public convention clamps texture/hatch to 0.13 mm.
 - **GSD (Harvard)** — Frampton/Tschumi tradition; tends to follow EU
   convention (lighter, hatch-forward). Studio reviews at 1/8" with cuts
   at 0.50 mm common.

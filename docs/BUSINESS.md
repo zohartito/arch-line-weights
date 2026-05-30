@@ -1,9 +1,12 @@
-# Business — internal notes
+# Business — Historical/Internal Notes
 
-> **PRIVATE.** This document is for the maintainer's use only. Pricing
-> thoughts, customer interviews, partnership conversations, etc.
+> **Not launch copy.** This is a historical planning note. It is kept for
+> context, but it is not the public license or product promise. The current
+> public posture is: the core CLI in this repository is MIT-licensed; future
+> commercial services may exist around hosting, support, private deployments,
+> or a hardened web app.
 
-## Status (2026-04-30)
+## Historical Status (2026-04-30)
 
 - v1.0.0 published to PyPI under MIT, yanked after ~15 min
 - Repo private on GitHub (free plan; Pages 404 as a side effect)
@@ -11,6 +14,13 @@
 - Project name `arch-line-weights` reserved on PyPI
 - No license enforcement infrastructure built yet
 - Zero customers, zero revenue
+
+## Current Public Posture (2026-05-30)
+
+- Core CLI repository: MIT.
+- Public install path: source checkout or GitHub/pipx install, not PyPI yet.
+- Webapp/frontend: experimental local scaffold only.
+- Commercial services: possible later, with separate terms if they ship.
 
 ## Target customer segments
 
@@ -86,7 +96,7 @@ Detailed competitive landscape: [`docs/research/competitive-landscape.md`](resea
 
 Detailed distribution comparison: [`docs/research/distribution-platforms.md`](research/distribution-platforms.md) and [`docs/research/saas-payments-comparison.md`](research/saas-payments-comparison.md).
 
-**v1 SaaS (Phase D, month 2):** Lemon Squeezy as Merchant of Record at monthly subscription pricing. Founder 100 tier $19 lifetime, then $9–19 personal / $49 small studio / $149 large studio per month.
+**Future hosted service concept:** Lemon Squeezy or Stripe may make sense if a hosted product ships. This is not part of the Day-1 public CLI launch.
 
 **v2 scale (Phase F, year 2+):** Migrate to Stripe + Stripe Tax once MRR clears ~$8–12k. Lemon Squeezy customers stay grandfathered.
 
@@ -102,9 +112,8 @@ Detailed distribution comparison: [`docs/research/distribution-platforms.md`](re
 - "Stop fixing line weights. Start drawing."
 
 **Anti-tagline (what NOT to lead with):**
-- "Open source" — we're not, going forward
-- "AI-powered" — we're not, and the credibility is worth more than the buzzword
-- "Free" — never was, won't be
+- "AI-powered" — the core workflow is deterministic, and the credibility is worth more than the buzzword
+- "Free SaaS" — hosted processing, if it ships, will need separate economics
 
 **Demo asset:** the user's ARCH 202B section drawing, before/after.
 

@@ -22,7 +22,7 @@ arch-lw apply SRC [OPTIONS]
 |---|---|---|
 | `-o, --output PATH` | `<src> HIERARCHY.<ext>` | Output path |
 | `--mapping FILE` | — | JSON: `{"RGB(r,g,b)": weight_pt}` |
-| `--preset {section,plan,elevation,detail}` | `section` | Tier ladder for `--auto` |
+| `--preset {section,plan,elevation,detail,usc}` | `section` | Tier ladder for `--auto` |
 | `--scale {1/16,1/8,1/4,1/2}` | `1/4` | Plot scale for ISO 128 weights |
 | `--for-print` | off | Use ISO 128 print weights |
 | `--auto` | off | Auto-bucket colors |
@@ -51,7 +51,7 @@ arch-lw apply-saas SRC [OPTIONS]
 |---|---|---|
 | `-o, --output PATH` | `<src> HIERARCHY-saas.<ext>` | Output path |
 | `--mapping FILE` | — | JSON: `{"RGB(r,g,b)": weight_pt}` |
-| `--preset {section,plan,elevation,detail}` | `section` | Tier ladder for `--auto` |
+| `--preset {section,plan,elevation,detail,usc}` | `section` | Tier ladder for `--auto` |
 | `--scale TEXT` | `1/4` | Plot scale for `--for-print` |
 | `--for-print` | off | Use ISO 128 print weights |
 | `--auto` | off | Auto-bucket native RGB/CMYK stroke colors |

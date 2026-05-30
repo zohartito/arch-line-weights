@@ -454,6 +454,10 @@ _RHINO_TIER_TO_PRESET_TIER: dict[str, dict[str, str]] = {
     },
 }
 
+# The USC studio preset uses the same tier names as the section preset, with
+# weights calibrated for the reference school workflow.
+_RHINO_TIER_TO_PRESET_TIER["usc"] = _RHINO_TIER_TO_PRESET_TIER["section"]
+
 
 def tier_weights_for_preset(
     preset_name: str = "section",

@@ -13,8 +13,12 @@ from arch_line_weights.presets import (
     ELEVATION_ISO_SCREEN,
     PLAN_ISO_PRINT,
     PLAN_ISO_SCREEN,
+    PRESETS,
     SECTION_ISO_PRINT,
     SECTION_ISO_SCREEN,
+    USC_STUDIO_PRINT,
+    USC_STUDIO_SCREEN,
+    get_preset,
     mm,
     select_preset,
 )
@@ -34,6 +38,34 @@ def test_all_four_screen_families_exist_and_nonempty():
     for fam in (SECTION_ISO_SCREEN, PLAN_ISO_SCREEN, ELEVATION_ISO_SCREEN, DETAIL_ISO_SCREEN):
         assert fam, "preset family is empty"
         assert all(t.weight_pt > 0 for t in fam), "non-positive tier weight"
+
+
+def test_usc_preset_exists_for_reference_studio_workflow():
+    """USC preset keeps the reference ARCH 202B screen-review hierarchy explicit."""
+    assert "usc" in PRESETS
+    tiers = {t.name: t.weight_pt for t in get_preset("usc")}
+    assert tiers["cut"] == 1.0
+    assert tiers["profile"] == 0.5
+    assert tiers["edges"] == 0.3
+    assert tiers["material"] == 0.18
+    assert tiers["texture"] == 0.08
+    assert tiers["special"] == 0.25
+
+
+def test_usc_print_table_documents_studio_convention():
+    """USC 1/4-inch print convention uses 0.13 mm for hatch/texture."""
+    tiers = {t.name: t.weight_pt for t in select_preset("usc", "1/4", for_print=True)}
+    assert tiers["cut"] == mm(0.70)
+    assert tiers["profile"] == mm(0.50)
+    assert tiers["edges"] == mm(0.35)
+    assert tiers["material"] == mm(0.18)
+    assert tiers["texture"] == mm(0.13)
+    assert tiers["special"] == mm(0.25)
+
+
+def test_usc_screen_and_print_families_are_routed_directly():
+    assert select_preset("usc", "1/4", for_print=False) == USC_STUDIO_SCREEN
+    assert select_preset("usc", "1/4", for_print=True) == USC_STUDIO_PRINT
 
 
 # --------------------------------------------------------------------------- #

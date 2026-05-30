@@ -5,17 +5,26 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
 
-Apply architectural line-weight hierarchy AND solid-black poché AND
-material-specific hatching to a Rhino-exported `.ai` or `.pdf`, in seconds,
-with all your original layers preserved.
+Apply architectural line-weight hierarchy, optional solid-black poché, and
+material hatching to Rhino-exported `.ai` or `.pdf` drawings.
 
 If you've ever exported a section, plan, or elevation from Rhino and watched
 all 340,000 strokes come out at a uniform 1.0 pt — and then tried to fix it
 inside Illustrator only to have ExtendScript hang for hours — this is for you.
 
+## What it does
+
+- Inspects exported `.ai`/`.pdf` drawings and reports stroke-color counts.
+- Rewrites stroke widths from a preset or hand-edited color mapping.
+- Preserves layers when you use `apply-jsx` or `apply-saas`; the fast legacy
+  `apply` command rewrites the PDF stream and can flatten Illustrator layers.
+- Adds conservative poché fills for high-confidence section-cut mass.
+- Ships explicit presets for `section`, `plan`, `elevation`, `detail`, and
+  `usc` studio workflows.
+
 ```
-$ arch-lw apply "DRAWING 4 SECTION [Converted].ai" --auto --preset section
-# 37 colors mapped using auto:section
+$ arch-lw apply "DRAWING 4 SECTION [Converted].ai" --auto --preset usc
+# 37 colors mapped using auto:usc
 --- 1.0 pt ---
   RGB( 40, 40, 40)    5,862 strokes
   ...
@@ -30,19 +39,33 @@ applied 340,323 strokes across 49 color changes
 wrote DRAWING 4 SECTION [Converted] HIERARCHY.ai  (4,081,388 bytes)
 ```
 
-Total runtime: under 2 minutes for a 24 MB / 340 K-stroke file.
+Total runtime: under 2 minutes for the original 24 MB / 340 K-stroke USC
+reference file.
 
 ---
 
 ## Install
 
+Current source install:
+
 ```
 git clone https://github.com/zohartito/arch-line-weights
 cd arch-line-weights
-pip install -e .
+python -m venv .venv
+.venv/bin/python -m pip install -e .
+.venv/bin/arch-lw --help
+```
+
+Optional global install if `pipx` is available:
+
+```
+pipx install git+https://github.com/zohartito/arch-line-weights
 ```
 
 This installs the `arch-lw` CLI.
+Do not assume `arch-lw`, `uv`, or `uvx` are globally on `PATH` in a fresh
+studio shell; use `.venv/bin/arch-lw` from a source checkout or install with
+`pipx`.
 
 To wire up the Claude Code skill:
 
@@ -82,8 +105,20 @@ should land in the lightest tier.
 arch-lw apply-jsx drawing.ai
 
 # pikepdf-fast (loses layer structure):
-arch-lw apply drawing.ai --auto --preset section
+arch-lw apply drawing.ai --auto --preset usc
 ```
+
+Day-1 submit-quality dogfood path:
+
+```
+.venv/bin/arch-lw inspect drawing.ai
+.venv/bin/arch-lw apply-saas drawing.ai \
+  --architectural --poche --preset usc --source rhino
+```
+
+Use basic `apply` for fast stroke-weight output. Use `apply-saas
+--architectural --poche` when Cursor 1 needs layer-preserving hierarchy plus
+conservative black poché for Illustrator/Acrobat inspection.
 
 `apply-jsx` uses a **semantic layer-name classifier**: anything in a
 `Visible::ClippingPlaneIntersections::*` OCG is the section cut (1.0 pt);
@@ -98,8 +133,8 @@ luminance. Good fallback for non-Rhino files where layer names don't
 encode semantics.
 
 ```
-arch-lw apply drawing.ai --auto --preset section --dry-run    # preview
-arch-lw apply drawing.ai --auto --preset section              # commit
+arch-lw apply drawing.ai --auto --preset usc --dry-run    # preview
+arch-lw apply drawing.ai --auto --preset usc              # commit
 ```
 
 Add `--dry-run` to either to print the planned mapping without writing.
@@ -116,6 +151,17 @@ arch-lw apply drawing.ai --mapping my-mapping.json
 
 A mapping file is just `{"RGB(r,g,b)": weight_pt, ...}`. Any color absent
 from the mapping gets `--default-width` (0.25 pt unless overridden).
+
+### Try the tiny repo sample
+
+From a source checkout:
+
+```
+.venv/bin/arch-lw inspect examples/sample-linework.pdf
+.venv/bin/arch-lw apply examples/sample-linework.pdf \
+  --mapping examples/sample-mapping.json \
+  -o /tmp/sample-linework-HIERARCHY.pdf
+```
 
 ---
 
@@ -141,24 +187,52 @@ work in pikepdf is a single linear pass.
 
 ---
 
-## Tier presets (pt)
+## Tier Presets
 
-| Preset    | Cut  | Profile | Edges | Material | Texture | Special |
-|-----------|------|---------|-------|----------|---------|---------|
-| section   | 1.0  | 0.5     | 0.3   | 0.18     | 0.08    | 0.25    |
-| plan      | 1.0  | 0.5     | 0.3   | 0.18     | 0.08    | 0.25    |
-| elevation | 1.0  | 0.5     | 0.3   | 0.18     | 0.08    | 0.25    |
-| detail    | 1.5  | 0.7     | 0.4   | 0.25     | 0.13    | 0.3     |
+| Preset | Use it for |
+|---|---|
+| `usc` | USC studio sections and the original ARCH 202B reference workflow. |
+| `section` | General building sections and wall sections. |
+| `plan` | Floor plans, roof plans, site plans. |
+| `elevation` | Elevations and projected views with no cut tier. |
+| `detail` | Wall details and connection details. |
+
+Default screen-review weights:
+
+| Preset | Cut / Heaviest | Profile | Edges | Material | Texture | Special |
+|---|---:|---:|---:|---:|---:|---:|
+| `usc` | 1.0 | 0.5 | 0.3 | 0.18 | 0.08 | 0.25 |
+| `section` | 1.0 | 0.5 | 0.3 | 0.18 | 0.08 | 0.25 |
+| `plan` | 0.71 | 0.5 | 0.35 | 0.25 | 0.18 | 0.35 |
+| `elevation` | 1.0 | 0.71 | 0.5 | 0.25 | 0.18 | 0.35 |
+| `detail` | 1.5 | 1.0 | 0.5 | 0.35 | 0.25 | 0.42 |
 
 The "Special" tier is for glazing / water / sky — anything not architectural
 that you want held back at a mid weight regardless of darkness.
 
+USC 1/4-inch studio print table:
+
+| Tier | mm | pt | Goes Here |
+|---|---:|---:|---|
+| `cut` | 0.70 | 1.985 | Section-cut walls, floors, roofs, ground. |
+| `profile` | 0.50 | 1.417 | Foreground profiles and primary structure. |
+| `edges` | 0.35 | 0.992 | Object edges, secondary structure, frames. |
+| `material` | 0.18 | 0.510 | Material indication and surface breaks. |
+| `texture` | 0.13 | 0.369 | Dense hatch, grain, surface texture. |
+| `special` | 0.25 | 0.709 | Glazing, water, sky, and middle-weight exceptions. |
+
+The public USC print convention uses 0.13 mm as the lightest standard
+surface/hatch weight, matching the project convention in
+[`CONVENTIONS.md`](CONVENTIONS.md). The screen-review `usc` preset still keeps
+0.08 pt for dense on-screen texture because monitor review is not print proofing.
+
 ---
 
-## Limitations
+## Honest v1 Limits
 
 - The legacy `apply` path rewrites the visible PDF stream and can flatten
   Illustrator layer structure when `/PieceInfo` is stripped.
+- `apply-jsx` requires Adobe Illustrator on the machine running the command.
 - The `apply-saas` path preserves Illustrator private layer data and supports
   native RGB `XA` and CMYK `K` stroke colors. It rewrites stroke operators only;
   fill operators are intentionally left alone except for generated poché fills.
@@ -167,6 +241,11 @@ that you want held back at a mid weight regardless of darkness.
   review rather than turned into a black blob.
 - Multi-page documents are supported by the PDF-stream path; the AI-private
   `apply-saas` path is focused on Illustrator-saved `.ai` drawings.
+- The repo includes only a tiny PDF smoke fixture. Large real USC `.ai` samples
+  are intentionally not committed.
+- PyPI publishing is not done yet; install from source or GitHub for now.
+- Bluebeam review is Windows-only and unverified for v1; use Illustrator and
+  Acrobat for the current Mac dogfood loop.
 
 ---
 

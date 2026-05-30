@@ -1,4 +1,10 @@
-# Roadmap v3 — SaaS-first, post-pivot (2026-04-30)
+# Roadmap v3 — Historical/Internal Planning Notes (2026-04-30)
+
+> **Current public posture, 2026-05-30:** this file is historical planning
+> context, not launch copy. The core CLI in this repository is MIT-licensed.
+> Future commercial services may exist around hosted processing, support,
+> private deployments, or a hardened web app, but those would use separate
+> terms and do not change the MIT core CLI.
 
 > **2026-05-05 addendum:** after the ARCH 202B iso axon debugging pass, the
 > near-term roadmap has changed. The CLI/web-app decision is now downstream of
@@ -285,10 +291,10 @@ Key findings (full report: [`docs/research/saas-architecture.md`](research/saas-
 - [ ] B8. **End-to-end SaaS prototype**: combine B6 + B7 into a single
   `arch-lw apply-saas --poche` command. Verify in Illustrator on user's
   machine that output matches `apply-jsx --poche` baseline.
-- [ ] B9. **License swap** (deferred until product is ready to publish).
-  When prototype works, replace LICENSE with PolyForm Free Trial 1.0.0
-  + add commercial EULA. See `docs/research/licensing.md` for the 5-step
-  checklist.
+- [ ] B9. **Commercial terms** (deferred until a hosted/commercial service
+  exists). Do not replace the MIT core CLI license for this public repository;
+  define separate terms only for future hosted processing, support, private
+  deployments, or a hardened web app.
 
 **Phase B exit criterion**: B6+B7 prototype produces a modified .ai
 that's visually indistinguishable from the current JSX-driven output,
@@ -475,5 +481,5 @@ single biggest unknown and gates the SaaS path.
 - [`docs/POSTMORTEM.md`](POSTMORTEM.md) — every failed approach, never repeat
 - [`docs/LESSONS_LEARNED.md`](LESSONS_LEARNED.md) — what works, kept short
 - [`docs/BUSINESS.md`](BUSINESS.md) — pricing, target customers, learnings (private)
-- [`docs/research/`](research/) — sub-agent research transcripts informing each phase
-- [`NOTICE.md`](../NOTICE.md) — license history, v1.0.0 MIT snapshot disclosure
+- `docs/research/` — sub-agent research transcripts informing each phase
+- `NOTICE.md` — license history, v1.0.0 MIT snapshot disclosure

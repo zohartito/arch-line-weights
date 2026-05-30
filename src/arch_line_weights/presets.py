@@ -41,6 +41,15 @@ SECTION = [
     Tier("special", 0.25, "Glazing, water, sky — non-architectural elements."),
 ]
 
+USC = [
+    Tier("cut", 1.0, "USC studio section cut; calibrated from the ARCH 202B reference drawing."),
+    Tier("profile", 0.5, "Foreground profile and primary structural silhouettes."),
+    Tier("edges", 0.3, "Object edges, secondary structure, frames, and plane changes."),
+    Tier("material", 0.18, "Material indication, surface breaks, cladding, and light accents."),
+    Tier("texture", 0.08, "Dense hatch, grain, surface texture, and distant context."),
+    Tier("special", 0.25, "Glazing, water, sky, and elements held at a middle weight."),
+]
+
 PLAN = [
     Tier("walls_cut", 1.0, "Walls cut by the plan slice (typically ~4' above floor)."),
     Tier("walls_full", 0.5, "Walls in full elevation behind the cut."),
@@ -70,6 +79,7 @@ DETAIL = [
 
 PRESETS: dict[str, list[Tier]] = {
     "section": SECTION,
+    "usc": USC,
     "plan": PLAN,
     "elevation": ELEVATION,
     "detail": DETAIL,
@@ -150,6 +160,17 @@ SECTION_ISO_SCREEN = [
     Tier("texture", 0.08, "Texture / hatch"),
     Tier("special", 0.25, "Glazing"),
 ]
+
+USC_STUDIO_PRINT = [
+    Tier("cut", mm(0.70), "USC 1/4\" studio cut line — Ching/Ramsey-heavy section convention"),
+    Tier("profile", mm(0.50), "Foreground profile and primary structure"),
+    Tier("edges", mm(0.35), "Object edges, secondary structure, frames, and plane changes"),
+    Tier("material", mm(0.18), "Material indication, cladding, and surface breaks"),
+    Tier("texture", mm(0.13), "Surface hatch, grain, texture, and light reference linework"),
+    Tier("special", mm(0.25), "Glazing, water, sky, and middle-weight special elements"),
+]
+
+USC_STUDIO_SCREEN = USC
 
 
 # ---------------------------------------------------------------------------- #
@@ -271,6 +292,7 @@ _SCALE_SHIFTS: dict[str, int] = {
 
 _ISO_PRINT_FAMILIES: dict[str, list[Tier]] = {
     "section": SECTION_ISO_PRINT,
+    "usc": USC_STUDIO_PRINT,
     "plan": PLAN_ISO_PRINT,
     "elevation": ELEVATION_ISO_PRINT,
     "detail": DETAIL_ISO_PRINT,
@@ -278,6 +300,7 @@ _ISO_PRINT_FAMILIES: dict[str, list[Tier]] = {
 
 _ISO_SCREEN_FAMILIES: dict[str, list[Tier]] = {
     "section": SECTION_ISO_SCREEN,
+    "usc": USC_STUDIO_SCREEN,
     "plan": PLAN_ISO_SCREEN,
     "elevation": ELEVATION_ISO_SCREEN,
     "detail": DETAIL_ISO_SCREEN,
@@ -349,6 +372,9 @@ __all__ = [
     "SECTION_ISO_PRINT",
     "SECTION_ISO_SCREEN",
     "Tier",
+    "USC",
+    "USC_STUDIO_PRINT",
+    "USC_STUDIO_SCREEN",
     "get_preset",
     "mm",
     "select_preset",

@@ -1,14 +1,4 @@
 {
-  "_comment": "Hand-edited mapping derived from the first reference run (USC ARCH 202B section drawing). Pass to `arch-lw apply <file> --mapping examples/sample-mapping.json`.",
-  "_tiers": {
-    "1.0": "Section cut",
-    "0.5": "Profile / foreground",
-    "0.3": "Object edges / structure",
-    "0.18": "Material / surface",
-    "0.08": "Texture / hatch",
-    "0.25": "Special (glazing, water, sky)"
-  },
-
   "RGB(40,40,40)":   1.0,
   "RGB(33,33,33)":   1.0,
   "RGB(38,38,38)":   1.0,
