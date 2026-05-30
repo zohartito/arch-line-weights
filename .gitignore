@@ -3,14 +3,17 @@ __pycache__/
 *.egg-info/
 *.egg
 build/
-dist/
+dist*/
+site*/
 .venv/
 .eggs/
 .pytest_cache/
+.ruff_cache/
 .DS_Store
 *.swp
 .idea/
 .vscode/
+*.ai
 
 # Local reference libraries: keep copyrighted/source books off GitHub.
 references/source-books/
@@ -18,4 +21,5 @@ references/**/*.pdf
 references/**/*.epub
 data/reference_books/
 *.sqlite
+*.sqlite-*
 *.sqlite3
