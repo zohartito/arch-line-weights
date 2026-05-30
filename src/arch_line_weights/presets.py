@@ -16,6 +16,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .line_weights import ISO_LADDER_MM, ISO_LADDER_PT
+
 
 @dataclass(frozen=True)
 class Tier:
@@ -117,9 +119,12 @@ def mm(x: float) -> float:
     return round(x * MM_TO_PT, 3)
 
 
-# ISO 128 √2 ladder (mm), used for scale-shift offsets
-_ISO_LADDER_MM = [0.13, 0.18, 0.25, 0.35, 0.50, 0.70, 1.00, 1.40, 2.00]
-_ISO_LADDER_PT = [mm(x) for x in _ISO_LADDER_MM]
+# ISO 128 √2 ladder (mm), used for scale-shift offsets.
+# Canonical source: `arch_line_weights.line_weights.LineWeight` enum.
+# These module-level aliases preserve the v0.5 names and list shape for any
+# downstream caller that imports them directly.
+_ISO_LADDER_MM = list(ISO_LADDER_MM)
+_ISO_LADDER_PT = list(ISO_LADDER_PT)
 
 
 # ---------------------------------------------------------------------------- #
