@@ -1,36 +1,64 @@
-# Show HN draft
+# Show HN Draft
 
-> Drafts from the marketing sub-agent (2026-04-30). Edit before posting.
-> Verify all install commands match the actual PyPI/GitHub state at post time.
+Current source of truth: [`LAUNCH_KIT.md`](LAUNCH_KIT.md). Use this only after
+adding real Cursor screenshots and confirming the GitHub repo is public.
 
 ## Title
 
-`Show HN: arch-line-weights – Apply architectural line hierarchy to Rhino PDF exports`
+`Show HN: arch-line-weights - Apply architectural line hierarchy to Rhino exports`
 
 ## Body
 
-Rhino exports vector PDFs/AIs with uniformly thin lines. Architects then spend
-30+ minutes per sheet in Illustrator manually thickening cut lines, lightening
-hidden geometry, and filling poché — every time the model changes.
+I built `arch-line-weights`, a Python CLI for a narrow architecture workflow:
+Rhino/Make2D exports that land in Illustrator as dense vector drawings without
+usable line-weight hierarchy.
 
-arch-line-weights does this in one command. It rewrites the PDF content stream
-directly (via pikepdf) for color-classify mode, OR drives Illustrator via JSX
-for layer-preserving mode. Layer-name semantic classification backed by ISO 128,
-Ramsey/Sleeper, and Ching gives sensible defaults; ISO-128 standards-aligned
-weights via `--scale 1/4 --for-print`.
+It inspects `.ai`/`.pdf` exports, classifies linework into architectural tiers
+like cut, profile, visible, hidden, and surface/texture, then applies a preset.
+The current Day-1 release includes a `usc` studio-board preset documented in
+`CONVENTIONS.md`.
 
-The interesting bit: detecting closed regions for poché fills. Illustrator's
-"Join" command isn't topology-aware — it joins by endpoint proximity, not
-graph connectivity, so it silently drops or mis-stitches segments. I ended up
-using shapely's `linemerge + polygonize` with a layered fallback (snap, then
-concave_hull, then bbox, with confidence scoring per fill). Every failed
-approach is documented in a public POSTMORTEM.md so others don't repeat them.
+Current status:
 
-Install (pre-PyPI): `pipx install git+https://github.com/zohartito/arch-line-weights`
+- Repo pushed at `18c589e`.
+- Tests, docs, and build were green for that pushed state.
+- Install is source/GitHub only; PyPI is not live yet.
+- The webapp is a local experimental scaffold, not a hosted product.
+- Axon stress-test passed on `macro_for_archlw.ai`: 98 MB, 1.28M strokes,
+  `apply-saas` exit 0, about 1:53 runtime.
+- That is not section/poché proof; the axon file has no
+  `ClippingPlaneIntersections`.
+- Known v1 input caveat: legacy Rhino PostScript `.ai` may need to be opened in
+  Illustrator and re-saved as modern/PDF-compatible `.ai` before rerunning.
+- Real-board dogfood is still pending.
+- `WALL SECTION [Converted].ai` has cut layers and `inspect` works, but
+  `apply-saas` fails on missing `/NumBlock` until re-saved.
+- Section poché proof is still pending on an Illustrator 2026 re-save.
 
-MIT, 23 tests, Python 3.11+. Stack: pikepdf, pymupdf, shapely, click, Pillow.
+Install:
 
-https://github.com/zohartito/arch-line-weights
+```bash
+pipx install git+https://github.com/zohartito/arch-line-weights
+```
 
-Feedback welcome — especially from anyone who's wrestled with PDF content
-stream operators or Make2D output.
+Or from a source checkout:
+
+```bash
+git clone https://github.com/zohartito/arch-line-weights
+cd arch-line-weights
+python -m venv .venv
+.venv/bin/python -m pip install -e .
+.venv/bin/arch-lw --help
+```
+
+Screenshots:
+
+- Before: `[CURSOR_SCREENSHOT_1_BEFORE]`
+- After: `[CURSOR_SCREENSHOT_2_AFTER]`
+- Terminal: `[CURSOR_SCREENSHOT_3_TERMINAL]`
+- Detail crop: `[CURSOR_SCREENSHOT_4_DETAIL]`
+
+Repo: https://github.com/zohartito/arch-line-weights
+
+Feedback welcome, especially around PDF/AI edge cases and Rhino Make2D layer
+naming conventions.

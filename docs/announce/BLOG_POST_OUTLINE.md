@@ -1,81 +1,124 @@
-# Blog post outline
+# Day-1 Blog / Listing Outline
 
-> From the marketing sub-agent (2026-04-30). Long-form, SEO-targeted writeup.
+Current source of truth: [`LAUNCH_KIT.md`](LAUNCH_KIT.md). This is Day-1 copy,
+not a SaaS launch post.
 
-## Working title
+## Working Title
 
-**Why Adobe Illustrator's Join command can't reconstruct a polygon (and how shapely can)**
+**I built a source-install CLI for Rhino-to-Illustrator line weights**
 
-## Target
+## Core Claim
 
-~1,800–2,200 words. SEO targets:
-- "illustrator join not working"
-- "detect closed polygons from line segments python"
-- "shapely polygonize tutorial"
-- "pdf content stream rewrite pikepdf"
-- "rhino make2d closed polylines"
+`arch-line-weights` is a Python CLI that applies architectural line-weight
+hierarchy to Rhino/Make2D `.ai` and `.pdf` exports. At Day 1 it is a
+source/GitHub install, with `usc` preset support landed and real-board dogfood
+pending.
+
+## Required Facts
+
+- Pushed state: `18c589e`.
+- `usc` preset landed.
+- Tests/docs/build green for the pushed state.
+- Source/GitHub install only.
+- Local webapp is experimental only.
+- Axon stress-test passed on `macro_for_archlw.ai`: 98 MB, 1.28M strokes,
+  `apply-saas` exit 0, about 1:53 runtime.
+- That is large-file/performance evidence, not section/poché proof, because
+  the axon file has no `ClippingPlaneIntersections`.
+- `wall section iso cut .ai` is legacy Rhino PostScript `.ai`, not
+  PDF-compatible Illustrator `.ai`; it needs Illustrator Save As.
+- `WALL SECTION [Converted].ai` has cut layers and `inspect` works, but
+  `apply-saas` fails on missing `/NumBlock` until re-saved.
+- v1 input-format note: if Rhino legacy `.ai` fails, open it in Illustrator,
+  Save As modern/PDF-compatible `.ai`, then rerun.
+- Section poché proof is still pending on an Illustrator 2026 re-save.
+- Do not claim PyPI, hosted SaaS, or Bluebeam support.
 
 ## Outline
 
-### 1. Hook (~100 words)
+### 1. The Workflow Problem
 
-Open with the moment it broke. A floor plan section, ten minutes before a
-pinup, where Illustrator's Join produced a poché fill that bled into the
-courtyard. Screenshot. Set the question: *why?*
+Open with the Rhino/Make2D to Illustrator workflow: exported vector drawings
+need architectural hierarchy, but students often spend deadline time assigning
+weights by hand.
 
-### 2. The problem in one paragraph (~150 words)
+Screenshot placeholder: `[CURSOR_SCREENSHOT_1_BEFORE]`.
 
-Architectural drawings need closed regions to fill (walls, columns, ground).
-Vector exports from Rhino give you line segments, not polygons. Reconstructing
-the polygons is a topology problem. Most vector editors solve it heuristically.
+### 2. What the Tool Does
 
-### 3. The naive approach (~200 words)
+Explain the hierarchy in plain architectural terms: cut/profile/visible/hidden/
+surface, optional conservative poché, and presets for common drawing types.
+Mention that `usc` is now the studio-board preset.
 
-Walk through what Illustrator's Join does: pick two endpoints within
-tolerance, connect them. Show why this works for simple cases and fails for
-branching geometry, T-intersections, and segments split mid-edge. Include a
-minimal failing example with a diagram.
+Screenshot placeholder: `[CURSOR_SCREENSHOT_2_AFTER]`.
 
-### 4. Why it fails (~250 words)
+### 3. Latest Dogfood Facts
 
-The real underlying issue: Join treats the input as a set of polylines with
-endpoints, not a planar graph. It has no concept of "this segment continues
-through this vertex". Introduce the formal framing: closed-region detection
-is finding the faces of a planar straight-line graph (PSLG). Mention CGAL and
-the academic context briefly, link to a paper.
+Say that the latest axon stress-test succeeded on `macro_for_archlw.ai`: 98 MB,
+1.28M strokes, `apply-saas` exit 0, about 1:53 runtime. Immediately qualify it:
+this is not section/poché proof because the file has no
+`ClippingPlaneIntersections`.
 
-### 5. The right approach with shapely (~400 words)
+Also note the input-format lesson: `wall section iso cut .ai` is legacy Rhino
+PostScript `.ai`, not PDF-compatible Illustrator `.ai`, and needs Illustrator
+Save As. `WALL SECTION [Converted].ai` has cut layers and `inspect` works, but
+`apply-saas` fails on missing `/NumBlock` until re-saved. For v1, if Rhino
+legacy `.ai` fails, open it in Illustrator, Save As modern/PDF-compatible
+`.ai`, then rerun.
 
-Walk through `linemerge` (combines compatible LineStrings) and `polygonize`
-(finds closed polygons from a noded line collection). Explain the layered
-fallback: snap geometries to a tolerance grid, then `unary_union` to node
-intersections, then `polygonize`. Include a working code snippet (~30 lines)
-the reader can paste.
+### 4. The Day-1 Install Story
 
-### 6. Demo: before / after (~150 words)
+Show source install only:
 
-Two images. One screenshot of Illustrator's Join silently dropping a wall
-poché. One of `polygonize` getting it right. Same input file. Link to the
-input file in the repo so readers can reproduce.
+```bash
+git clone https://github.com/zohartito/arch-line-weights
+cd arch-line-weights
+python -m venv .venv
+.venv/bin/python -m pip install -e .
+.venv/bin/arch-lw --help
+```
 
-### 7. What we learned (~200 words)
+Optional GitHub/pipx:
 
-Three takeaways:
-1. "join" in vector editors is a UX heuristic, not a geometric guarantee
-2. for any non-trivial closed-region problem, treat the input as a graph
-3. write a postmortem when something fights you for a week — link to POSTMORTEM.md
+```bash
+pipx install git+https://github.com/zohartito/arch-line-weights
+```
 
-### 8. Open source pitch (~100 words)
+### 5. The Current Dogfood Command
 
-Quick mention of arch-line-weights as the tool that grew out of this work.
-Repo link, install one-liner, invitation to contribute.
+```bash
+.venv/bin/arch-lw inspect path/to/rhino-export.ai
+.venv/bin/arch-lw apply-saas path/to/rhino-export.ai \
+  --architectural --poche --preset usc --source rhino
+```
 
-### 9. Footer
+Note: `apply-saas` is the local CLI command name, not a hosted SaaS product.
 
-Cross-links to the HN/Reddit threads, RSS, contact.
+Screenshot placeholder: `[CURSOR_SCREENSHOT_3_TERMINAL]`.
 
-## SEO notes
+### 6. What Is Not Done Yet
 
-- Use the alt-text on both diagrams for "shapely polygonize closed region detection" and "illustrator join command failure example"
-- H2 the section titles
-- Internal-link to the repo's POSTMORTEM.md for backlink juice
+Be explicit:
+
+- PyPI is not live.
+- The webapp is a local experimental scaffold, not a hosted SaaS product.
+- Bluebeam is not verified.
+- Real-board dogfood is pending.
+- Section poché proof is still pending on an Illustrator 2026 re-save.
+
+### 7. Ask
+
+Ask for real Rhino/Illustrator edge cases, layer naming examples, and feedback
+on the `usc` preset after users test on copies of their drawings.
+
+Detail screenshot placeholder: `[CURSOR_SCREENSHOT_4_DETAIL]`.
+
+## Listing Copy
+
+- **Name:** arch-line-weights
+- **Tagline:** Apply architectural line-weight hierarchy to Rhino-exported drawings.
+- **Install:** Source checkout or GitHub/pipx install only.
+- **Status:** Day-1 release at `18c589e`; tests/docs/build green; 98 MB /
+  1.28M-stroke axon stress-test passed in about 1:53; section poché proof still
+  pending on Illustrator 2026 re-save.
+- **Not yet:** PyPI, hosted SaaS, Bluebeam verification.
