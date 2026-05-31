@@ -21,7 +21,12 @@ def _default_report_dir(src: str | os.PathLike[str]) -> Path:
 
 def _default_poche_output_path(src: str | os.PathLike[str]) -> str:
     p = Path(src)
-    return str(p.with_name(f"{p.stem.replace(' HIERARCHY', '')} POCHE{p.suffix}"))
+    stem = p.stem
+    for suffix in (" HIERARCHY-jsx", " HIERARCHY-saas", " HIERARCHY"):
+        if stem.endswith(suffix):
+            stem = stem[: -len(suffix)]
+            break
+    return str(p.with_name(f"{stem} POCHE{p.suffix}"))
 
 
 def _write_json(path: Path, data: dict[str, Any]) -> None:

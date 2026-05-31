@@ -13,4 +13,7 @@ def test_export_selected_make2d_manifest_script_has_manifest_contract():
     assert "selected_object_count" in text
     assert "layer_counts" in text
     assert "orthographic" in text
+    assert "export_path" in text
+    assert "_-Export" in text
+    assert "rs.Command" in text
     assert "arch-lw layout-jsx" in text

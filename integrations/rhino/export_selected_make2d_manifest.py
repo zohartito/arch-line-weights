@@ -3,8 +3,10 @@
 Usage:
   ! _-RunPythonScript "/path/to/export_selected_make2d_manifest.py"
 
-The script records enough local evidence for the next arch-lw steps without
-embedding private drawing data in the repository:
+The script exports the currently selected Make2D curves and records enough
+local evidence for the next arch-lw steps without embedding private drawing
+data in the repository:
+  - export_path
   - selected_object_count
   - layer_counts
   - orthographic view state
@@ -19,6 +21,10 @@ from pathlib import Path
 import Rhino
 import rhinoscriptsyntax as rs
 import scriptcontext as sc
+
+DEFAULT_EXPORT_NAME = "01-rhino-make2d-export.ai"
+DEFAULT_ARTBOARD = "24x36in"
+DEFAULT_MARGIN = "0.5in"
 
 
 def _selected_objects():
@@ -42,10 +48,82 @@ def _active_view_info():
     }
 
 
-def _default_manifest_path() -> Path:
-    doc_path = Path(sc.doc.Path) if sc.doc.Path else Path.home() / "rhino-make2d"
-    stem = doc_path.stem if doc_path.suffix else doc_path.name
-    return doc_path.with_name(f"{stem}-make2d-manifest.json")
+def _model_units():
+    try:
+        return str(sc.doc.ModelUnitSystem)
+    except Exception:
+        return "unknown"
+
+
+def _default_export_folder() -> Path:
+    if sc.doc.Path:
+        return Path(sc.doc.Path).parent
+    return Path.home()
+
+
+def _choose_export_path() -> Path | None:
+    folder = str(_default_export_folder())
+    raw = rs.SaveFileName(
+        "Export Selected Make2D for arch-lw",
+        "Illustrator (*.ai)|*.ai|PDF (*.pdf)|*.pdf||",
+        folder,
+        DEFAULT_EXPORT_NAME,
+        "ai",
+    )
+    if not raw:
+        return None
+    return Path(raw)
+
+
+def _manifest_path_for(export_path: Path) -> Path:
+    return export_path.with_suffix(".manifest.json")
+
+
+def _command_quote(path: Path) -> str:
+    return '"{}"'.format(str(path).replace('"', '\\"'))
+
+
+def _export_selected(export_path: Path) -> bool:
+    export_path.parent.mkdir(parents=True, exist_ok=True)
+    command = f"_-Export {_command_quote(export_path)} _Enter"
+    return bool(rs.Command(command, echo=True))
+
+
+def _write_manifest(
+    *,
+    manifest_path: Path,
+    export_path: Path,
+    selected,
+    export_ok: bool,
+) -> dict:
+    view = _active_view_info()
+    warnings = []
+    if not view["orthographic"]:
+        warnings.append("active view is not orthographic; model scale may not be preserved")
+
+    manifest = {
+        "schema_version": 1,
+        "command": "Export Selected",
+        "export_path": str(export_path),
+        "export_exists": export_path.exists(),
+        "export_ok": bool(export_ok),
+        "selected_object_count": len(selected),
+        "layer_counts": _layer_counts(selected),
+        "units": _model_units(),
+        "view": view,
+        "warnings": warnings,
+        "next_step": (
+            "arch-lw layout-jsx {path} --artboard {artboard} --fit fit "
+            "--margin {margin} --report-json {report}"
+        ).format(
+            path=_command_quote(export_path),
+            artboard=DEFAULT_ARTBOARD,
+            margin=DEFAULT_MARGIN,
+            report=_command_quote(export_path.with_suffix(".layout-report.json")),
+        ),
+    }
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+    return manifest
 
 
 def main():
@@ -54,17 +132,24 @@ def main():
         Rhino.RhinoApp.WriteLine("[arch-lw] No selected objects; select Make2D inputs first.")
         return
 
-    manifest_path = _default_manifest_path()
-    manifest = {
-        "schema_version": 1,
-        "command": "Export Selected",
-        "selected_object_count": len(selected),
-        "layer_counts": _layer_counts(selected),
-        "view": _active_view_info(),
-        "next_step": "arch-lw layout-jsx <exported.ai> --artboard 24x36in --fit fit",
-    }
-    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
-    Rhino.RhinoApp.WriteLine("[arch-lw] wrote manifest: {}".format(manifest_path))
+    export_path = _choose_export_path()
+    if export_path is None:
+        Rhino.RhinoApp.WriteLine("[arch-lw] Export canceled.")
+        return
+
+    manifest_path = _manifest_path_for(export_path)
+    Rhino.RhinoApp.WriteLine(f"[arch-lw] exporting selected objects: {export_path}")
+    export_ok = _export_selected(export_path)
+    manifest = _write_manifest(
+        manifest_path=manifest_path,
+        export_path=export_path,
+        selected=selected,
+        export_ok=export_ok,
+    )
+    Rhino.RhinoApp.WriteLine(f"[arch-lw] wrote manifest: {manifest_path}")
+    Rhino.RhinoApp.WriteLine(f"[arch-lw] next: {manifest['next_step']}")
+    if not export_ok:
+        Rhino.RhinoApp.WriteLine("[arch-lw] export command did not report success; review Rhino output.")
 
 
 if __name__ == "__main__":

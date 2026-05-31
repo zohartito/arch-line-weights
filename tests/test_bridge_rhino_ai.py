@@ -48,6 +48,7 @@ def test_bridge_rhino_ai_dry_run_plans_layout_apply_and_poche_without_gui(tmp_pa
     assert result["stages"][0]["status"] == "dry_run"
     assert result["stages"][1]["status"] == "planned"
     assert result["stages"][2]["status"] == "planned"
+    assert result["stages"][2]["output"].endswith("02-layout POCHE.ai")
     assert (report_dir / "bridge-report.json").exists()
 
 
