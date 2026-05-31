@@ -14,6 +14,7 @@ from .apply import apply_to_file
 from .apply_jsx import apply_via_jsx
 from .apply_saas import apply_to_file as apply_to_file_saas
 from .apply_saas import default_output_path as default_output_path_saas
+from .bridge_rhino_ai import bridge_rhino_ai
 from .classify import auto_by_luminance, explain_mapping, from_user_mapping
 from .inspect import color_to_rgb255, inspect_file
 from .layer_classify import (
@@ -491,6 +492,146 @@ def layout_jsx_cmd(
     click.echo(f"layout: report {result['report_json']}", err=True)
     if result.get("report"):
         click.echo(result["report"])
+
+
+@cli.command("bridge-rhino-ai")
+@click.option(
+    "--input",
+    "input_path",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Rhino Export Selected `.ai` or `.pdf` file.",
+)
+@click.option(
+    "-o",
+    "--output",
+    "layout_output",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Layout output path. Defaults to '<input> LAYOUT-jsx.<ext>'.",
+)
+@click.option(
+    "--artboard",
+    default="24x36in",
+    show_default=True,
+    help="Target artboard size as WIDTHxHEIGHT.",
+)
+@click.option(
+    "--fit",
+    "fit_mode",
+    type=click.Choice(["center", "fit"]),
+    default="center",
+    show_default=True,
+    help="Keep scale and center, or scale down to fit within the margin.",
+)
+@click.option("--margin", default="0.5in", show_default=True, help="Margin used by --fit.")
+@click.option("--allow-enlarge", is_flag=True, help="Allow --fit to scale artwork up.")
+@click.option(
+    "--preset",
+    type=click.Choice(sorted(PRESETS)),
+    default="section",
+    show_default=True,
+    help="Preset passed to optional --apply-jsx.",
+)
+@click.option(
+    "--source",
+    type=click.Choice(_SOURCE_CHOICES),
+    default=Source.RHINO.value,
+    show_default=True,
+    help="Layer-name convention recorded for reports and optional poché.",
+)
+@click.option("--scale", default="1/4", show_default=True, help="Plot scale for optional --apply-jsx.")
+@click.option("--for-print", is_flag=True, help="Use print weights in optional --apply-jsx.")
+@click.option("--apply-jsx", "run_apply_jsx", is_flag=True, help="Run hierarchy after layout.")
+@click.option("--poche", "run_poche", is_flag=True, help="Run poché after --apply-jsx.")
+@click.option(
+    "--poche-style",
+    type=click.Choice(["solid", "material"]),
+    default="solid",
+    show_default=True,
+    help="Style passed to optional poché.",
+)
+@click.option(
+    "--bridge-strategy",
+    type=click.Choice(_BRIDGE_STRATEGY_CHOICES),
+    default=_BRIDGE_STRATEGY_DEFAULT,
+    show_default=True,
+    help="Bridge selector passed to optional poché.",
+)
+@click.option(
+    "--report-dir",
+    type=click.Path(file_okay=False, path_type=Path),
+    help="Directory for bridge/layout/poché reports and generated JSX.",
+)
+@click.option(
+    "--timeout",
+    "timeout_min",
+    type=click.IntRange(1, 240),
+    default=None,
+    help="Illustrator JSX timeout in minutes.",
+)
+@click.option("--dry-run", is_flag=True, help="Plan stages and render layout JSX/report without GUI work.")
+def bridge_rhino_ai_cmd(
+    input_path: Path,
+    layout_output: Path | None,
+    artboard: str,
+    fit_mode: str,
+    margin: str,
+    allow_enlarge: bool,
+    preset: str,
+    source: str,
+    scale: str,
+    for_print: bool,
+    run_apply_jsx: bool,
+    run_poche: bool,
+    poche_style: str,
+    bridge_strategy: str,
+    report_dir: Path | None,
+    timeout_min: int | None,
+    dry_run: bool,
+):
+    """Run the Rhino Make2D -> Illustrator layout bridge.
+
+    \b
+    The first stage always runs `layout-jsx`. Optional stages continue into
+    `apply-jsx` and `poche`, but launch-proof decisions still depend on the
+    verification reports and visual QA gates.
+    """
+    if run_poche and not run_apply_jsx:
+        raise click.UsageError("--poche requires --apply-jsx")
+    try:
+        parse_artboard_size(artboard)
+        parse_length(margin)
+    except ValueError as exc:
+        raise click.UsageError(str(exc)) from exc
+
+    try:
+        result = bridge_rhino_ai(
+            str(input_path),
+            layout_output=str(layout_output) if layout_output else None,
+            artboard=artboard,
+            fit_mode=fit_mode,
+            margin=margin,
+            allow_enlarge=allow_enlarge,
+            preset=preset,
+            source=source,
+            scale=scale,
+            for_print=for_print,
+            run_apply_jsx=run_apply_jsx,
+            run_poche=run_poche,
+            report_dir=str(report_dir) if report_dir else None,
+            timeout_min=timeout_min,
+            bridge_strategy=bridge_strategy,
+            poche_style=poche_style,
+            dry_run=dry_run,
+        )
+    except ValueError as exc:
+        raise click.UsageError(str(exc)) from exc
+
+    click.echo(f"bridge: {result['summary']['status']}", err=True)
+    click.echo(f"bridge: report {result['report_json']}", err=True)
+    for stage in result["stages"]:
+        click.echo(f"  {stage['name']}: {stage['status']} -> {stage.get('output', '')}", err=True)
+    click.echo(json.dumps(result, indent=2, sort_keys=True))
 
 
 @cli.command("apply-saas")

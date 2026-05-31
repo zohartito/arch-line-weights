@@ -279,19 +279,18 @@ def query_active_doc() -> tuple[str | None, str | None]:
     Illustrator reported.
     """
     # NB: Illustrator's AppleScript dictionary disambiguation is finicky.
-    # `name of active document` raises "expected end of line, but found
-    # class name" on Illustrator 2026 (Adobe build 30.x). Two fixes
-    # combine reliably: use `current document` instead of `active
-    # document`, AND wrap the property access in `(get ... of ...)` so
-    # the parser binds the property to the receiver explicitly.
+    # `name of active document` and `name of current document` can raise
+    # "expected end of line, but found class name" on Illustrator 2026
+    # (Adobe build 30.x). `document 1` is the active/front document in this
+    # application context and compiles reliably.
     script = (
         'tell application "Adobe Illustrator"\n'
         '  if (count of documents) is 0 then\n'
         '    return ""\n'
         '  end if\n'
-        '  set docName to (get name of current document)\n'
+        '  set docName to name of document 1\n'
         '  try\n'
-        '    set docPath to POSIX path of (file path of current document)\n'
+        '    set docPath to POSIX path of (file path of document 1)\n'
         '  on error\n'
         '    set docPath to ""\n'
         '  end try\n'
