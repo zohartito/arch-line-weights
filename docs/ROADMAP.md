@@ -98,3 +98,28 @@ layers.
   deliberately re-enabled.
 - Continue improving local preview tooling without presenting it as proof for
   native-payload edits.
+
+## Bridge Contract Follow-Up
+
+Current PR #36 has useful bridge work, but the contract still needs to be
+tightened before it becomes proof infrastructure:
+
+- The Rhino selected-export manifest should prove the export, not just describe
+  the current selection. It needs selected-only evidence, object/layer counts,
+  units, view/projection, export artifact path, file size/hash, warnings, and
+  privacy-safe source identifiers.
+- `layout-jsx` should report skipped and failed Illustrator movement work:
+  locked/hidden/unusable items, resize failures, translate failures, final
+  bounds, and whether the final artwork fits the requested margin.
+- `bridge-rhino-ai` should always write a bridge report when a stage fails.
+  If layout, hierarchy, or poché raises, the stage report should still exist,
+  mark `failed` or `no_go`, include `why` / `next_action`, and exit nonzero.
+- Dry-run and real-run reports should keep one stable top-level shape:
+  `schema_version`, `source`, `summary`, `artifacts`, `stages`, `why`, and
+  `next_action`.
+- W5 still needs real Illustrator QA for the first-run converted `.ai` path.
+  Mock tests and successful layout are useful, but they are not proof that
+  foundation/concrete poché is correct.
+
+This bridge contract supports #31 and #32. It does not change the launch gate:
+#30 remains the root proof decision, and #29 stays blocked behind W5 acceptance.

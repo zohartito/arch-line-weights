@@ -135,3 +135,61 @@ repeating the same proof, coordination, and launch mistakes.
   and the roadmap before adding more issue comments.
 - Keep ruff and test state in the merge-readiness checklist so coordination
   success cannot accidentally become technical clearance.
+
+## 2026-05-31 - Bridge Contract Follow-Up
+
+### What worked
+
+- The latest W3 commits moved the bridge toward honest report semantics:
+  failed/no-go `layout-jsx` runs no longer look like clean success in the
+  normalized runtime report path.
+- Reviewing PR #36 against its live remote head kept the audit grounded. The
+  useful conclusion is not "the bridge is bad"; it is "the bridge needs a
+  stage contract before W5 can trust it as proof infrastructure."
+- The existing issue split still helps: #31 owns fixture/provenance, #32 owns
+  report semantics, #30 owns proof truth, and #33 stays deferred.
+
+### What didn't
+
+- The Rhino export manifest on the PR head is still too thin. It records
+  selection count, layer counts, and view state, but not the selected export
+  artifact, units, object-type evidence, hashes, warnings, or privacy-safe
+  provenance needed for repeatable proof.
+- `layout-jsx` still silently drops some Illustrator movement failures. Locked,
+  hidden, unusable, resize-failed, and translate-failed items need counts and
+  reasons in the report.
+- `bridge-rhino-ai` can lose the most useful artifact when a stage raises:
+  the bridge report is written only after stages complete. A failed bridge
+  should still leave a report with `failed` / `no_go`, `why`, and
+  `next_action`.
+- Layout success kept trying to sound like proof success. Centering artwork on
+  a board is valuable, but it does not prove C2/C3 foundation/concrete poché.
+
+### Why
+
+- The implementation was growing from happy-path orchestration outward, while
+  proof QA needs failure-first contracts. The report has to survive the exact
+  moments where the command cannot finish normally.
+- Rhino, Illustrator, PDF-compatible `.ai`, converted `.ai`, and legacy
+  PostScript `.ai` are different input classes. If the manifest and report do
+  not preserve that distinction, reviewers will infer more than the evidence
+  can support.
+- Multi-stage bridge work creates multiple ways to produce a plausible output
+  and still miss the launch blocker. The only reliable answer is structured
+  stage evidence, not screenshots or exit codes alone.
+
+### What we'd do differently
+
+- Define the bridge report schema before adding more bridge stages. Every
+  stage should emit the same basic facts: input, output, artifact existence,
+  hash/size when real, status, why, and next action.
+- Treat skipped/failed Illustrator movement as first-class report data from
+  the start. Silent catches are acceptable only if they become visible counts.
+- Make the Rhino manifest prove the selected export: selected-only state,
+  object/layer/type counts, units, view/projection, export settings, artifact
+  hash/size, and redacted source identity.
+- Require an error-path artifact test for every happy-path bridge test. If a
+  command can fail, there should be a report that explains that failure.
+- Keep saying explicitly that bridge/layout progress supports the verifier but
+  does not close #30. Proof acceptance belongs to the verifier and W5, not the
+  existence of a new bridge command.
