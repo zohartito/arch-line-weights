@@ -22,6 +22,7 @@ from .layer_classify import (
     detect_source,
     explain_source_match,
 )
+from .layout_jsx import layout_via_jsx, parse_artboard_size, parse_length
 from .poche import apply_poche
 from .presets import PRESETS, select_preset
 from .progress import DEFAULT_PROGRESS_FILE, make_reporter
@@ -380,6 +381,116 @@ def apply_jsx_cmd(
         printer=lambda s: click.echo(s, err=True),
     )
     click.echo(result["report"])
+
+
+@cli.command("layout-jsx")
+@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option(
+    "-o",
+    "--output",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Output path. Defaults to '<src> LAYOUT-jsx.<ext>'.",
+)
+@click.option(
+    "--artboard",
+    default="24x36in",
+    show_default=True,
+    help="Artboard size as WIDTHxHEIGHT. Bare values are inches; 'pt' is also supported.",
+)
+@click.option(
+    "--fit",
+    "fit_mode",
+    type=click.Choice(["center", "fit"]),
+    default="center",
+    show_default=True,
+    help="'center' keeps scale and recenters; 'fit' scales down to fit within the margin.",
+)
+@click.option(
+    "--margin",
+    default="0.5in",
+    show_default=True,
+    help="Margin used by --fit. Bare values are inches; 'pt' is also supported.",
+)
+@click.option(
+    "--allow-enlarge",
+    is_flag=True,
+    help="Allow --fit to scale artwork up when it is smaller than the target artboard.",
+)
+@click.option(
+    "--report-json",
+    "report_json",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Write/read a structured JSON layout report.",
+)
+@click.option(
+    "--jsx-path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Path for the generated Illustrator JSX bridge script.",
+)
+@click.option(
+    "--timeout",
+    "timeout_min",
+    type=click.IntRange(1, 240),
+    default=None,
+    help="JSX timeout in minutes (default 30, max 240). Honors ARCH_LW_JSX_TIMEOUT_MIN when omitted.",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Render the JSX/report contract without opening Illustrator or writing output artwork.",
+)
+def layout_jsx_cmd(
+    src: Path,
+    output: Path | None,
+    artboard: str,
+    fit_mode: str,
+    margin: str,
+    allow_enlarge: bool,
+    report_json: Path | None,
+    jsx_path: Path | None,
+    timeout_min: int | None,
+    dry_run: bool,
+):
+    """Open a Rhino/Illustrator export, set artboard size, fit/center, and save.
+
+    \b
+    This is the narrow bridge for Make2D output after Rhino export and before
+    line hierarchy/poché work. It does not classify strokes or change drawing
+    content; it makes the Illustrator document inspectable and centered on a
+    known sheet size.
+    """
+    try:
+        parse_artboard_size(artboard)
+    except ValueError as exc:
+        raise click.UsageError(f"invalid artboard: {exc}") from exc
+    try:
+        parse_length(margin)
+    except ValueError as exc:
+        raise click.UsageError(f"invalid margin: {exc}") from exc
+
+    try:
+        result = layout_via_jsx(
+            str(src),
+            dst=str(output) if output else None,
+            artboard=artboard,
+            fit_mode=fit_mode,
+            margin=margin,
+            allow_enlarge=allow_enlarge,
+            report_json=str(report_json) if report_json else None,
+            jsx_path=str(jsx_path) if jsx_path else None,
+            timeout_min=timeout_min,
+            dry_run=dry_run,
+        )
+    except ValueError as exc:
+        raise click.UsageError(str(exc)) from exc
+
+    if dry_run:
+        click.echo(f"layout: dry run wrote JSX {result['jsx_path']}", err=True)
+    else:
+        click.echo(f"layout: wrote {result['output']}", err=True)
+    click.echo(f"layout: report {result['report_json']}", err=True)
+    if result.get("report"):
+        click.echo(result["report"])
 
 
 @cli.command("apply-saas")

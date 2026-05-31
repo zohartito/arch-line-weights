@@ -7,6 +7,7 @@ from arch_line_weights.poche import FillResult, PocheReport
 from arch_line_weights.poche_saas import PocheSaasResult
 from arch_line_weights.run_report import (
     build_apply_saas_report,
+    build_layout_jsx_report,
     build_poche_geometry_report,
     build_poche_report,
 )
@@ -187,6 +188,26 @@ def test_poche_report_marks_failed_when_command_error_is_supplied():
     assert data["summary"]["status"] == "failed"
     assert data["summary"]["why"] == ["Illustrator did not write geometry JSON"]
     assert data["summary"]["next_action"] == "Fix the reported command failure, then rerun arch-lw poche."
+
+
+def test_layout_jsx_report_records_sheet_and_dry_run_gate():
+    data = build_layout_jsx_report(
+        input_path="rhino-export.ai",
+        output_path="rhino-export LAYOUT-jsx.ai",
+        source={"fit_mode": "fit", "allow_enlarge": False},
+        status="dry_run",
+        artboard_width_pt=1728.0,
+        artboard_height_pt=2592.0,
+        margin_pt=36.0,
+    )
+
+    assert data["source"]["command"] == "layout-jsx"
+    assert data["source"]["stage"] == "layout"
+    assert data["source"]["fit_mode"] == "fit"
+    assert data["summary"]["status"] == "dry_run"
+    assert "rerun without --dry-run" in data["summary"]["next_action"]
+    assert data["layout"]["artboard"] == {"width_pt": 1728.0, "height_pt": 2592.0}
+    assert data["layout"]["margin_pt"] == 36.0
 
 
 def test_poche_geometry_report_summarizes_and_redacts_private_layer_geometry():

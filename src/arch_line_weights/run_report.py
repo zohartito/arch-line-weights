@@ -183,6 +183,62 @@ def build_apply_saas_report(
     }
 
 
+def build_layout_jsx_report(
+    *,
+    input_path: str | Path,
+    output_path: str | Path,
+    source: Mapping[str, Any],
+    status: str,
+    artboard_width_pt: float,
+    artboard_height_pt: float,
+    margin_pt: float,
+    selected_items: int | None = None,
+    scale: float | None = None,
+    translation: Mapping[str, float] | None = None,
+    original_visible_bounds: list[float] | None = None,
+    final_visible_bounds: list[float] | None = None,
+    why: list[str] | None = None,
+) -> dict[str, Any]:
+    """Build a JSON-serializable report for one ``layout-jsx`` run."""
+    reasons = why or []
+    if status == "passed":
+        next_action = "Continue to hierarchy, poché, or proof recapture."
+    elif status == "dry_run":
+        next_action = "Inspect the generated JSX/report contract, then rerun without --dry-run."
+    elif status == "no_go":
+        next_action = "Fix the layout input/artwork problem before proof recapture."
+    else:
+        next_action = "Fix the reported layout-jsx failure, then rerun."
+
+    return {
+        "schema_version": 1,
+        "source": {
+            "input": str(input_path),
+            "output": str(output_path),
+            "command": "layout-jsx",
+            "stage": "layout",
+            **dict(source),
+        },
+        "summary": {
+            "status": status,
+            "why": reasons,
+            "next_action": next_action,
+        },
+        "layout": {
+            "artboard": {
+                "width_pt": round(float(artboard_width_pt), 4),
+                "height_pt": round(float(artboard_height_pt), 4),
+            },
+            "margin_pt": round(float(margin_pt), 4),
+            "selected_items": selected_items,
+            "scale": None if scale is None else round(float(scale), 6),
+            "translation": dict(translation or {}),
+            "original_visible_bounds": original_visible_bounds,
+            "final_visible_bounds": final_visible_bounds,
+        },
+    }
+
+
 def _poche_summary_status(summary: Mapping[str, Any], error: str | None) -> tuple[str, list[str], str]:
     if error:
         return "failed", [error], "Fix the reported command failure, then rerun arch-lw poche."

@@ -38,6 +38,28 @@ Layer-preserving via Illustrator JSX.
 arch-lw apply-jsx SRC [-o OUTPUT]
 ```
 
+## `arch-lw layout-jsx`
+
+Illustrator layout bridge for Rhino Make2D exports. Sets the requested artboard,
+centers or fits visible unlocked artwork, saves a PDF-compatible `.ai`, and can
+write a structured layout report.
+
+```bash
+arch-lw layout-jsx SRC [OPTIONS]
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `-o, --output PATH` | `<src> LAYOUT-jsx.<ext>` | Output path |
+| `--artboard WIDTHxHEIGHT` | `24x36in` | Target artboard. Bare numbers are inches; `pt` is also supported |
+| `--fit {center,fit}` | `center` | Keep scale and center, or scale down to fit within the margin |
+| `--margin LENGTH` | `0.5in` | Margin used by `--fit` |
+| `--allow-enlarge` | off | Let `--fit` scale small artwork up |
+| `--report-json PATH` | `/tmp/arch_lw_layout_report.json` | Structured layout report |
+| `--jsx-path PATH` | `/tmp/arch_lw_layout.jsx` | Generated JSX path |
+| `--timeout MINUTES` | `30` | Illustrator JSX timeout |
+| `--dry-run` | off | Render JSX/report without opening Illustrator or writing output artwork |
+
 ## `arch-lw apply-saas`
 
 Headless AI-native payload rewrite. Preserves Illustrator layers and can also

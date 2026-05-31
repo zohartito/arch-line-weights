@@ -93,6 +93,24 @@ The JSON contains every stroke RGB and how many strokes use it. The dominant
 colors (highest counts) are almost always **material hatch / texture** — they
 should land in the lightest tier.
 
+### Put a Rhino export on a sheet
+
+If a Rhino Make2D export opens off the Illustrator artboard, normalize the
+layout before running hierarchy or poché:
+
+```
+arch-lw layout-jsx rhino-make2d.ai \
+  --artboard 24x36in \
+  --fit fit \
+  --margin 0.5in \
+  --report-json layout-report.json
+```
+
+This opens the export in Illustrator, sets the requested artboard size, centers
+or fits visible unlocked artwork, saves `<src> LAYOUT-jsx.ai`, and writes a
+layout report. Use `--dry-run --jsx-path layout.jsx` to inspect the generated
+script without contacting Illustrator or writing output artwork.
+
 ### Two apply modes — pick by what you need
 
 | Mode | Speed | Layers | Use when |
