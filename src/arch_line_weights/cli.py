@@ -1278,6 +1278,46 @@ def poche_cmd(
         click.echo(f"report: wrote {report_json}", err=True)
 
 
+@cli.command("designer-console")
+@click.option("--host", default="127.0.0.1", show_default=True, help="Host for the local console.")
+@click.option("--port", default=8765, show_default=True, type=int, help="Port for the local console.")
+@click.option(
+    "--storage-root",
+    type=click.Path(file_okay=False, path_type=Path),
+    help="Local temp/output folder for console runs.",
+)
+@click.option("--browser/--no-browser", default=True, show_default=True, help="Open the console URL.")
+def designer_console_cmd(
+    host: str,
+    port: int,
+    storage_root: Path | None,
+    browser: bool,
+):
+    """Start the local designer console prototype.
+
+    The console is a local-only browser UI around the existing inspect,
+    layout-jsx, apply-jsx, poché, and proof-packet report contracts. It is
+    not posting clearance and does not make App Store or Windows support
+    claims.
+    """
+    try:
+        from .designer_console import run_designer_console_server
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    click.echo(f"designer console: http://{host}:{port}", err=True)
+    click.echo("posting/public proof remains NO-GO unless W5/W7 accepts it.", err=True)
+    try:
+        run_designer_console_server(
+            host=host,
+            port=port,
+            storage_root=storage_root,
+            open_browser=browser,
+        )
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+
 @cli.command("preview")
 @click.argument("before", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.argument("after", type=click.Path(exists=True, dir_okay=False, path_type=Path))

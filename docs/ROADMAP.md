@@ -13,6 +13,9 @@ commitment.
   automation only; it does not change the MIT license for the source here.
 - The `webapp/` directory is a local experimental scaffold. There is no hosted
   public service for this release.
+- `arch-lw designer-console` is a local prototype only. It wraps the existing
+  engine in a browser UI, but it is not posting clearance, not App Store work,
+  and not a Windows support claim.
 - Bluebeam review is unverified. Use Illustrator and Acrobat for the validated
   Day-1 review loop.
 
@@ -40,6 +43,14 @@ because that fixture had no `ClippingPlaneIntersections` cut layers.
 
 ## Near-Term Technical Work
 
+- Local web prototype: keep improving the designer console around explicit
+  stage actions, public-safe summaries, and existing report validators.
+- Signed Mac desktop beta: future packaging/signing/notarization work after
+  the local workflow is accepted.
+- Windows desktop beta: future packaging/testing work; do not claim Windows
+  support until this path is tested on Windows.
+- Rhino plugin / Illustrator panel: later native surfaces should reuse the
+  console's stage/report contracts instead of inventing a separate proof gate.
 - Improve reports for low-confidence poché candidates.
 - Add clearer diagnostics when `/NumBlock` is missing.
 - Expand fixtures for Make2D layer naming variants.
