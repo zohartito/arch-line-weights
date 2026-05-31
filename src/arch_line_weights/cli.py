@@ -628,6 +628,8 @@ def bridge_rhino_ai_cmd(
         )
     except ValueError as exc:
         raise click.UsageError(str(exc)) from exc
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
 
     click.echo(f"bridge: {result['summary']['status']}", err=True)
     click.echo(f"bridge: report {result['report_json']}", err=True)

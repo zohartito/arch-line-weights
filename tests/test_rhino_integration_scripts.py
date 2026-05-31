@@ -1,6 +1,11 @@
 from __future__ import annotations
 
+import importlib.util
+import sys
+import types
 from pathlib import Path
+
+import pytest
 
 
 def test_export_selected_make2d_manifest_script_has_manifest_contract():
@@ -17,3 +22,67 @@ def test_export_selected_make2d_manifest_script_has_manifest_contract():
     assert "_-Export" in text
     assert "rs.Command" in text
     assert "arch-lw layout-jsx" in text
+
+
+@pytest.fixture
+def rhino_export_script(monkeypatch):
+    viewport = types.SimpleNamespace(Name="Top", IsParallelProjection=True)
+    view = types.SimpleNamespace(ActiveViewport=viewport)
+    views = types.SimpleNamespace(ActiveView=view)
+    doc = types.SimpleNamespace(
+        Path="",
+        Views=views,
+        ModelUnitSystem="Inches",
+    )
+    rs = types.SimpleNamespace(ObjectLayer=lambda object_id: f"Layer {object_id}")
+    monkeypatch.setitem(sys.modules, "Rhino", types.SimpleNamespace())
+    monkeypatch.setitem(sys.modules, "rhinoscriptsyntax", rs)
+    monkeypatch.setitem(sys.modules, "scriptcontext", types.SimpleNamespace(doc=doc))
+
+    path = Path("integrations/rhino/export_selected_make2d_manifest.py")
+    spec = importlib.util.spec_from_file_location("rhino_export_selected_make2d_manifest_test", path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_export_manifest_marks_missing_export_as_failed(tmp_path, rhino_export_script):
+    export_path = tmp_path / "missing.ai"
+    manifest_path = tmp_path / "missing.manifest.json"
+
+    manifest = rhino_export_script._write_manifest(
+        manifest_path=manifest_path,
+        export_path=export_path,
+        selected=[1, 2],
+        export_ok=True,
+    )
+
+    assert manifest["summary"]["status"] == "failed"
+    assert manifest["export_command_ok"] is True
+    assert manifest["export_ok"] is False
+    assert manifest["export_exists"] is False
+    assert manifest["export_size_bytes"] == 0
+    assert manifest["manifest_path"] == str(manifest_path)
+    assert "export file was not written" in manifest["warnings"]
+
+
+def test_export_manifest_records_written_export_size(tmp_path, rhino_export_script):
+    export_path = tmp_path / "written.ai"
+    export_path.write_bytes(b"%PDF-1.6\n")
+    manifest_path = tmp_path / "written.manifest.json"
+
+    manifest = rhino_export_script._write_manifest(
+        manifest_path=manifest_path,
+        export_path=export_path,
+        selected=[1],
+        export_ok=True,
+    )
+
+    assert manifest["summary"]["status"] == "passed"
+    assert manifest["export_command_ok"] is True
+    assert manifest["export_ok"] is True
+    assert manifest["export_exists"] is True
+    assert manifest["export_size_bytes"] == len(b"%PDF-1.6\n")
+    assert manifest["manifest_path"] == str(manifest_path)

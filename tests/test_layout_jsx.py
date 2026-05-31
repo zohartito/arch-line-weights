@@ -267,6 +267,9 @@ def test_layout_real_run_missing_report_raises(tmp_path):
         )
 
     assert not output.exists()
+    data = json.loads(report.read_text())
+    assert data["summary"]["status"] == "failed"
+    assert data["summary"]["why"] == ["did not write a report"]
 
 
 def test_cli_layout_jsx_failure_is_nonzero_without_wrote_claim(tmp_path):

@@ -97,16 +97,37 @@ def _write_manifest(
     export_ok: bool,
 ) -> dict:
     view = _active_view_info()
+    export_exists = export_path.exists()
+    export_size = export_path.stat().st_size if export_exists else 0
+    export_command_ok = bool(export_ok)
+    effective_export_ok = export_command_ok and export_exists and export_size > 0
     warnings = []
+    if export_command_ok and not export_exists:
+        warnings.append("export file was not written")
+    elif export_command_ok and export_size <= 0:
+        warnings.append("export file is empty")
+    elif not export_command_ok:
+        warnings.append("Rhino export command did not report success")
     if not view["orthographic"]:
         warnings.append("active view is not orthographic; model scale may not be preserved")
 
     manifest = {
         "schema_version": 1,
+        "summary": {
+            "status": "passed" if effective_export_ok else "failed",
+            "next_action": (
+                "Run arch-lw layout-jsx on export_path."
+                if effective_export_ok
+                else "Review Rhino export output, then rerun Export Selected."
+            ),
+        },
         "command": "Export Selected",
+        "manifest_path": str(manifest_path),
         "export_path": str(export_path),
-        "export_exists": export_path.exists(),
-        "export_ok": bool(export_ok),
+        "export_command_ok": export_command_ok,
+        "export_exists": export_exists,
+        "export_size_bytes": export_size,
+        "export_ok": effective_export_ok,
         "selected_object_count": len(selected),
         "layer_counts": _layer_counts(selected),
         "units": _model_units(),

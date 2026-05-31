@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from unittest.mock import patch
 
+import pytest
 from click.testing import CliRunner
 
 from arch_line_weights.bridge_rhino_ai import bridge_rhino_ai
@@ -50,6 +51,94 @@ def test_bridge_rhino_ai_dry_run_plans_layout_apply_and_poche_without_gui(tmp_pa
     assert result["stages"][2]["status"] == "planned"
     assert result["stages"][2]["output"].endswith("02-layout POCHE.ai")
     assert (report_dir / "bridge-report.json").exists()
+
+
+def test_cli_bridge_rhino_ai_dry_run_plans_layout_apply_and_poche(tmp_path):
+    src = tmp_path / "01-rhino-make2d-export.ai"
+    src.write_text("%PDF-1.6\n")
+    report_dir = tmp_path / "proof"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "bridge-rhino-ai",
+            "--input",
+            str(src),
+            "--artboard",
+            "24x36in",
+            "--fit",
+            "fit",
+            "--margin",
+            "0.5in",
+            "--source",
+            "rhino",
+            "--apply-jsx",
+            "--poche",
+            "--report-dir",
+            str(report_dir),
+            "--dry-run",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output[result.output.index("{") :])
+    assert payload["summary"]["status"] == "dry_run"
+    assert [stage["name"] for stage in payload["stages"]] == ["layout", "apply-jsx", "poche"]
+    assert payload["stages"][0]["output"].endswith("01-rhino-make2d-export LAYOUT-jsx.ai")
+    assert payload["stages"][1]["output"].endswith("01-rhino-make2d-export LAYOUT-jsx HIERARCHY-jsx.ai")
+    assert payload["stages"][2]["output"].endswith("01-rhino-make2d-export LAYOUT-jsx POCHE.ai")
+    assert json.loads((report_dir / "bridge-report.json").read_text()) == payload
+
+
+def test_bridge_rhino_ai_writes_failed_report_when_layout_stage_raises(tmp_path):
+    src = tmp_path / "01-rhino-make2d-export.ai"
+    src.write_text("%PDF-1.6\n")
+    report_dir = tmp_path / "proof"
+
+    with (
+        patch(
+            "arch_line_weights.bridge_rhino_ai.layout_via_jsx",
+            side_effect=RuntimeError("layout-jsx failed: output file was not written"),
+        ),
+        pytest.raises(RuntimeError, match="bridge-rhino-ai failed during layout"),
+    ):
+        bridge_rhino_ai(str(src), report_dir=str(report_dir))
+
+    payload = json.loads((report_dir / "bridge-report.json").read_text())
+    assert payload["summary"]["status"] == "failed"
+    assert payload["summary"]["next_action"] == "Fix the failed stage, then rerun bridge-rhino-ai."
+    assert payload["stages"] == [
+        {
+            "name": "layout",
+            "status": "failed",
+            "input": str(src.resolve()),
+            "output": str(src.with_name("01-rhino-make2d-export LAYOUT-jsx.ai").resolve()),
+            "report_json": str(report_dir / "layout-report.json"),
+            "jsx_path": str(report_dir / "layout.jsx"),
+            "error": "layout-jsx failed: output file was not written",
+        }
+    ]
+
+
+def test_cli_bridge_rhino_ai_failure_is_nonzero_and_points_to_report(tmp_path):
+    src = tmp_path / "01-rhino-make2d-export.ai"
+    src.write_text("%PDF-1.6\n")
+    report_dir = tmp_path / "proof"
+
+    runner = CliRunner()
+    with patch(
+        "arch_line_weights.bridge_rhino_ai.layout_via_jsx",
+        side_effect=RuntimeError("layout-jsx failed: output file was not written"),
+    ):
+        result = runner.invoke(cli, ["bridge-rhino-ai", "--input", str(src), "--report-dir", str(report_dir)])
+
+    assert result.exit_code != 0
+    assert "bridge-rhino-ai failed during layout" in result.output
+    assert "bridge-report.json" in result.output
+    assert "Traceback" not in result.output
+    payload = json.loads((report_dir / "bridge-report.json").read_text())
+    assert payload["summary"]["status"] == "failed"
 
 
 def test_bridge_rhino_ai_runs_apply_then_poche_on_layout_output(tmp_path):
@@ -102,6 +191,37 @@ def test_bridge_rhino_ai_runs_apply_then_poche_on_layout_output(tmp_path):
     assert result["summary"]["status"] == "passed"
     assert result["stages"][-1]["output"].endswith("POCHE.ai")
     assert json.loads((report_dir / "poche-report.json").read_text())["summary"]["status"] == "passed"
+
+
+def test_bridge_rhino_ai_apply_failure_writes_stage_report(tmp_path):
+    src = tmp_path / "01-rhino-make2d-export.ai"
+    src.write_text("%PDF-1.6\n")
+    layout_output = tmp_path / "01-rhino-make2d-export LAYOUT-jsx.ai"
+    report_dir = tmp_path / "proof"
+
+    with (
+        patch("arch_line_weights.bridge_rhino_ai.layout_via_jsx") as layout,
+        patch(
+            "arch_line_weights.bridge_rhino_ai.apply_via_jsx",
+            side_effect=RuntimeError("apply-jsx failed: target doc not open"),
+        ),
+        pytest.raises(RuntimeError, match="bridge-rhino-ai failed during apply-jsx"),
+    ):
+        layout.return_value = {
+            "output": str(layout_output),
+            "report_json": str(report_dir / "layout-report.json"),
+            "report": '{"summary":{"status":"passed"}}',
+            "dry_run": False,
+        }
+        bridge_rhino_ai(str(src), run_apply_jsx=True, report_dir=str(report_dir))
+
+    payload = json.loads((report_dir / "bridge-report.json").read_text())
+    assert payload["summary"]["status"] == "failed"
+    assert [stage["status"] for stage in payload["stages"]] == ["passed", "failed"]
+    assert payload["stages"][1]["name"] == "apply-jsx"
+    assert payload["stages"][1]["input"] == str(layout_output)
+    assert payload["stages"][1]["output"].endswith("01-rhino-make2d-export LAYOUT-jsx HIERARCHY-jsx.ai")
+    assert payload["stages"][1]["error"] == "apply-jsx failed: target doc not open"
 
 
 def test_bridge_rhino_ai_requires_apply_before_poche(tmp_path):
