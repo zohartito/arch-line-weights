@@ -35,6 +35,7 @@ except NameError:
 DEFAULT_EXPORT_NAME = "01-rhino-make2d-export.ai"
 DEFAULT_ARTBOARD = "24x36in"
 DEFAULT_MARGIN = "0.5in"
+EXPORT_FILE_FILTER = "Illustrator (*.ai)|*.ai|PDF (*.pdf)|*.pdf||"
 
 
 def _selected_objects():
@@ -75,7 +76,7 @@ def _choose_export_path():
     folder = _default_export_folder()
     raw = rs.SaveFileName(
         "Export Selected Make2D for arch-lw",
-        "Illustrator (*.ai)|*.ai|PDF (*.pdf)|*.pdf||",
+        EXPORT_FILE_FILTER,
         folder,
         DEFAULT_EXPORT_NAME,
         "ai",
@@ -147,6 +148,18 @@ def _write_manifest(
     if not view["orthographic"]:
         warnings.append("active view is not orthographic; model scale may not be preserved")
 
+    next_step = None
+    if effective_export_ok:
+        next_step = (
+            "arch-lw layout-jsx {path} --artboard {artboard} --fit fit "
+            "--margin {margin} --report-json {report}"
+        ).format(
+            path=_command_quote(export_path),
+            artboard=DEFAULT_ARTBOARD,
+            margin=DEFAULT_MARGIN,
+            report=_command_quote(_replace_suffix(export_path, ".layout-report.json")),
+        )
+
     manifest = {
         "schema_version": 1,
         "summary": {
@@ -160,6 +173,21 @@ def _write_manifest(
         "command": "Export Selected",
         "manifest_path": str(manifest_path),
         "export_path": str(export_path),
+        "exporter": {
+            "app": "Rhino",
+            "helper": "export_selected_make2d_manifest.py",
+            "operation": "Export Selected",
+            "selection_mode": "current_selection",
+        },
+        "export_dialog": {
+            "assisted": True,
+            "default_name": DEFAULT_EXPORT_NAME,
+            "filter": EXPORT_FILE_FILTER,
+        },
+        "export_command": {
+            "template": "_-Export <export_path> _Enter",
+            "path_quoted": True,
+        },
         "export_command_ok": export_command_ok,
         "export_exists": export_exists,
         "export_size_bytes": export_size,
@@ -169,15 +197,8 @@ def _write_manifest(
         "units": _model_units(),
         "view": view,
         "warnings": warnings,
-        "next_step": (
-            "arch-lw layout-jsx {path} --artboard {artboard} --fit fit "
-            "--margin {margin} --report-json {report}"
-        ).format(
-            path=_command_quote(export_path),
-            artboard=DEFAULT_ARTBOARD,
-            margin=DEFAULT_MARGIN,
-            report=_command_quote(_replace_suffix(export_path, ".layout-report.json")),
-        ),
+        "next_step_available": bool(next_step),
+        "next_step": next_step,
     }
     safe_manifest = _json_safe(manifest)
     with open(str(manifest_path), "w") as stream:
@@ -206,7 +227,10 @@ def main():
         export_ok,
     )
     Rhino.RhinoApp.WriteLine("[arch-lw] wrote manifest: {}".format(manifest_path))
-    Rhino.RhinoApp.WriteLine("[arch-lw] next: {}".format(manifest["next_step"]))
+    if manifest["next_step_available"]:
+        Rhino.RhinoApp.WriteLine("[arch-lw] next: {}".format(manifest["next_step"]))
+    else:
+        Rhino.RhinoApp.WriteLine("[arch-lw] next: {}".format(manifest["summary"]["next_action"]))
     if not export_ok:
         Rhino.RhinoApp.WriteLine("[arch-lw] export command did not report success; review Rhino output.")
 

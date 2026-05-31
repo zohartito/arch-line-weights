@@ -169,6 +169,46 @@ def _runtime_failure(status: str, why: list[str]) -> RuntimeError:
     return RuntimeError(f"layout-jsx {status}: {detail}")
 
 
+def _converted_doc_match_kind(
+    active_name: str | None,
+    active_path: str | None,
+    src_abs: str,
+) -> str | None:
+    if not active_name or "[Converted]" not in active_name:
+        return None
+    if not _is_converted_match(active_name, active_path, src_abs):
+        return None
+    if active_path:
+        try:
+            if os.path.realpath(active_path) == os.path.realpath(src_abs):
+                return "exact_path"
+        except OSError:
+            return None
+    return "pathless_stem"
+
+
+def _layout_source_context(
+    *,
+    jsx_abs: str,
+    fit_mode: str,
+    allow_enlarge: bool,
+    use_open_doc: bool,
+    active_name: str | None,
+    active_path: str | None,
+    converted_doc_match: str | None,
+) -> dict[str, Any]:
+    return {
+        "jsx_path": jsx_abs,
+        "fit_mode": fit_mode,
+        "allow_enlarge": allow_enlarge,
+        "use_open_doc": use_open_doc,
+        "active_doc_name": active_name,
+        "active_doc_path": active_path,
+        "converted_doc_match": converted_doc_match,
+        "converted_doc_needs_review": converted_doc_match == "pathless_stem",
+    }
+
+
 LAYOUT_JSX_TEMPLATE = r"""#target illustrator
 
 (function () {
@@ -436,16 +476,25 @@ def layout_via_jsx(
             )
         )
 
+    active_name = None
+    active_path = None
+    use_open_doc = False
+    converted_doc_match = None
+
     if dry_run:
         write_rendered_jsx(use_open_doc=False)
         dry_report = build_layout_jsx_report(
             input_path=src_abs,
             output_path=resolved_dst,
-            source={
-                "jsx_path": jsx_abs,
-                "fit_mode": fit_mode,
-                "allow_enlarge": allow_enlarge,
-            },
+            source=_layout_source_context(
+                jsx_abs=jsx_abs,
+                fit_mode=fit_mode,
+                allow_enlarge=allow_enlarge,
+                use_open_doc=False,
+                active_name=None,
+                active_path=None,
+                converted_doc_match=None,
+            ),
             status="dry_run",
             artboard_width_pt=artboard_width,
             artboard_height_pt=artboard_height,
@@ -462,10 +511,10 @@ def layout_via_jsx(
             "use_open_doc": False,
         }
 
-    use_open_doc = False
     active_name, active_path = query_active_doc()
     if active_name and "[Converted]" in active_name:
-        if _is_converted_match(active_name, active_path, src_abs):
+        converted_doc_match = _converted_doc_match_kind(active_name, active_path, src_abs)
+        if converted_doc_match:
             use_open_doc = True
         else:
             raise RuntimeError(
@@ -485,11 +534,15 @@ def layout_via_jsx(
         failed_report = build_layout_jsx_report(
             input_path=src_abs,
             output_path=resolved_dst,
-            source={
-                "jsx_path": jsx_abs,
-                "fit_mode": fit_mode,
-                "allow_enlarge": allow_enlarge,
-            },
+            source=_layout_source_context(
+                jsx_abs=jsx_abs,
+                fit_mode=fit_mode,
+                allow_enlarge=allow_enlarge,
+                use_open_doc=use_open_doc,
+                active_name=active_name,
+                active_path=active_path,
+                converted_doc_match=converted_doc_match,
+            ),
             status="failed",
             artboard_width_pt=artboard_width,
             artboard_height_pt=artboard_height,
@@ -506,11 +559,15 @@ def layout_via_jsx(
         failed_report = build_layout_jsx_report(
             input_path=src_abs,
             output_path=resolved_dst,
-            source={
-                "jsx_path": jsx_abs,
-                "fit_mode": fit_mode,
-                "allow_enlarge": allow_enlarge,
-            },
+            source=_layout_source_context(
+                jsx_abs=jsx_abs,
+                fit_mode=fit_mode,
+                allow_enlarge=allow_enlarge,
+                use_open_doc=use_open_doc,
+                active_name=active_name,
+                active_path=active_path,
+                converted_doc_match=converted_doc_match,
+            ),
             status="failed",
             artboard_width_pt=artboard_width,
             artboard_height_pt=artboard_height,
@@ -526,11 +583,15 @@ def layout_via_jsx(
         normalized_report = build_layout_jsx_report(
             input_path=src_abs,
             output_path=resolved_dst,
-            source={
-                "jsx_path": jsx_abs,
-                "fit_mode": fit_mode,
-                "allow_enlarge": allow_enlarge,
-            },
+            source=_layout_source_context(
+                jsx_abs=jsx_abs,
+                fit_mode=fit_mode,
+                allow_enlarge=allow_enlarge,
+                use_open_doc=use_open_doc,
+                active_name=active_name,
+                active_path=active_path,
+                converted_doc_match=converted_doc_match,
+            ),
             status=raw_status,
             artboard_width_pt=artboard_width,
             artboard_height_pt=artboard_height,
@@ -544,11 +605,15 @@ def layout_via_jsx(
         normalized_report = build_layout_jsx_report(
             input_path=src_abs,
             output_path=resolved_dst,
-            source={
-                "jsx_path": jsx_abs,
-                "fit_mode": fit_mode,
-                "allow_enlarge": allow_enlarge,
-            },
+            source=_layout_source_context(
+                jsx_abs=jsx_abs,
+                fit_mode=fit_mode,
+                allow_enlarge=allow_enlarge,
+                use_open_doc=use_open_doc,
+                active_name=active_name,
+                active_path=active_path,
+                converted_doc_match=converted_doc_match,
+            ),
             status="failed",
             artboard_width_pt=artboard_width,
             artboard_height_pt=artboard_height,
@@ -558,15 +623,20 @@ def layout_via_jsx(
         report_path.write_text(json.dumps(normalized_report, indent=2, sort_keys=True) + "\n")
         raise RuntimeError("layout-jsx failed: output file was not written")
 
+    converted_doc_needs_review = converted_doc_match == "pathless_stem"
     normalized_report = build_layout_jsx_report(
         input_path=src_abs,
         output_path=resolved_dst,
-        source={
-            "jsx_path": jsx_abs,
-            "fit_mode": fit_mode,
-            "allow_enlarge": allow_enlarge,
-        },
-        status="passed",
+        source=_layout_source_context(
+            jsx_abs=jsx_abs,
+            fit_mode=fit_mode,
+            allow_enlarge=allow_enlarge,
+            use_open_doc=use_open_doc,
+            active_name=active_name,
+            active_path=active_path,
+            converted_doc_match=converted_doc_match,
+        ),
+        status="needs_review" if converted_doc_needs_review else "passed",
         artboard_width_pt=artboard_width,
         artboard_height_pt=artboard_height,
         margin_pt=margin_pt,
@@ -575,6 +645,7 @@ def layout_via_jsx(
         translation=raw_report.get("translation"),
         original_visible_bounds=raw_report.get("original_visible_bounds"),
         final_visible_bounds=raw_report.get("final_visible_bounds"),
+        why=["converted document matched by pathless stem"] if converted_doc_needs_review else None,
     )
     report_text = json.dumps(normalized_report, indent=2, sort_keys=True)
     report_path.write_text(report_text + "\n")

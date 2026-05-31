@@ -165,6 +165,7 @@ def test_bridge_rhino_ai_runs_apply_then_poche_on_layout_output(tmp_path):
             "report": "ok",
             "report_path": "/tmp/arch_lw_report.txt",
         }
+        hierarchy_output.write_text("%AI\n")
         poche.return_value = PocheReport(
             fills=[FillResult(layer, "linemerge_bare", 1.0, 1, 4)],
             polygons={layer: [[[0, 0], [1, 0], [1, 1], [0, 1]]]},
@@ -222,6 +223,69 @@ def test_bridge_rhino_ai_apply_failure_writes_stage_report(tmp_path):
     assert payload["stages"][1]["input"] == str(layout_output)
     assert payload["stages"][1]["output"].endswith("01-rhino-make2d-export LAYOUT-jsx HIERARCHY-jsx.ai")
     assert payload["stages"][1]["error"] == "apply-jsx failed: target doc not open"
+
+
+def test_bridge_rhino_ai_rejects_apply_jsx_error_report_even_with_output(tmp_path):
+    src = tmp_path / "01-rhino-make2d-export.ai"
+    src.write_text("%PDF-1.6\n")
+    layout_output = tmp_path / "01-rhino-make2d-export LAYOUT-jsx.ai"
+    hierarchy_output = tmp_path / "01-rhino-make2d-export LAYOUT-jsx HIERARCHY-jsx.ai"
+    hierarchy_output.write_text("%AI\n")
+    report_dir = tmp_path / "proof"
+
+    with (
+        patch("arch_line_weights.bridge_rhino_ai.layout_via_jsx") as layout,
+        patch("arch_line_weights.bridge_rhino_ai.apply_via_jsx") as apply,
+        pytest.raises(RuntimeError, match="bridge-rhino-ai failed during apply-jsx"),
+    ):
+        layout.return_value = {
+            "output": str(layout_output),
+            "report_json": str(report_dir / "layout-report.json"),
+            "report": '{"summary":{"status":"passed"}}',
+            "dry_run": False,
+        }
+        apply.return_value = {
+            "output": str(hierarchy_output),
+            "report": "ERROR: target doc not open",
+            "report_path": "/tmp/arch_lw_report.txt",
+        }
+        bridge_rhino_ai(str(src), run_apply_jsx=True, report_dir=str(report_dir))
+
+    payload = json.loads((report_dir / "bridge-report.json").read_text())
+    assert payload["summary"]["status"] == "failed"
+    assert payload["stages"][1]["status"] == "failed"
+    assert payload["stages"][1]["error"] == "apply-jsx report contains ERROR"
+
+
+def test_bridge_rhino_ai_rejects_apply_jsx_missing_hierarchy_output(tmp_path):
+    src = tmp_path / "01-rhino-make2d-export.ai"
+    src.write_text("%PDF-1.6\n")
+    layout_output = tmp_path / "01-rhino-make2d-export LAYOUT-jsx.ai"
+    hierarchy_output = tmp_path / "01-rhino-make2d-export LAYOUT-jsx HIERARCHY-jsx.ai"
+    report_dir = tmp_path / "proof"
+
+    with (
+        patch("arch_line_weights.bridge_rhino_ai.layout_via_jsx") as layout,
+        patch("arch_line_weights.bridge_rhino_ai.apply_via_jsx") as apply,
+        pytest.raises(RuntimeError, match="bridge-rhino-ai failed during apply-jsx"),
+    ):
+        layout.return_value = {
+            "output": str(layout_output),
+            "report_json": str(report_dir / "layout-report.json"),
+            "report": '{"summary":{"status":"passed"}}',
+            "dry_run": False,
+        }
+        apply.return_value = {
+            "output": str(hierarchy_output),
+            "report": "ok",
+            "report_path": "/tmp/arch_lw_report.txt",
+        }
+        bridge_rhino_ai(str(src), run_apply_jsx=True, report_dir=str(report_dir))
+
+    payload = json.loads((report_dir / "bridge-report.json").read_text())
+    assert payload["summary"]["status"] == "failed"
+    assert payload["stages"][1]["status"] == "failed"
+    assert payload["stages"][1]["error"].startswith("apply-jsx did not write expected hierarchy output")
 
 
 def test_bridge_rhino_ai_requires_apply_before_poche(tmp_path):

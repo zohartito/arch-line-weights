@@ -109,6 +109,48 @@ def _raise_stage_failure(*, stage_name: str, bridge_report: Path, exc: Exception
     raise RuntimeError(f"bridge-rhino-ai failed during {stage_name}; see {bridge_report}: {exc}") from exc
 
 
+def _apply_jsx_report_failure(report: str) -> str | None:
+    text = report.strip()
+    if not text:
+        return "apply-jsx report was empty"
+    upper = text.upper()
+    if upper.startswith("ERROR") or "ERROR:" in upper:
+        return "apply-jsx report contains ERROR"
+    if upper.startswith("EXCEPTION") or "EXCEPTION:" in upper:
+        return "apply-jsx report contains EXCEPTION"
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
+        payload = None
+    if isinstance(payload, dict):
+        summary = payload.get("summary")
+        status = summary.get("status") if isinstance(summary, dict) else payload.get("status")
+        if str(status).lower() in {"failed", "no_go"}:
+            return f"apply-jsx report status is {status}"
+    lower = text.lower()
+    if "no_go" in lower:
+        return "apply-jsx report contains no_go"
+    if "failed" in lower:
+        return "apply-jsx report contains failed"
+    return None
+
+
+def _validate_apply_jsx_result(apply_result: dict[str, Any], *, expected_output: str) -> None:
+    reported_output = os.path.abspath(str(apply_result.get("output") or ""))
+    expected_abs = os.path.abspath(expected_output)
+    if reported_output != expected_abs:
+        raise RuntimeError(
+            f"apply-jsx reported output {reported_output!r}; expected {expected_abs!r}"
+        )
+
+    report_failure = _apply_jsx_report_failure(str(apply_result.get("report") or ""))
+    if report_failure is not None:
+        raise RuntimeError(report_failure)
+
+    if not Path(expected_abs).exists():
+        raise RuntimeError(f"apply-jsx did not write expected hierarchy output: {expected_abs}")
+
+
 def bridge_rhino_ai(
     src: str,
     *,
@@ -236,6 +278,31 @@ def bridge_rhino_ai(
                         "failed",
                         input=layout_result["output"],
                         output=planned_hierarchy_output,
+                        preset=preset,
+                        source=source,
+                        scale=scale,
+                        for_print=for_print,
+                        error=str(exc),
+                    )
+                )
+                _write_bridge_result(
+                    src_abs=src_abs,
+                    source=source,
+                    stages=stages,
+                    bridge_report=bridge_report,
+                    dry_run=dry_run,
+                )
+                _raise_stage_failure(stage_name="apply-jsx", bridge_report=bridge_report, exc=exc)
+            try:
+                _validate_apply_jsx_result(apply_result, expected_output=planned_hierarchy_output)
+            except Exception as exc:
+                stages.append(
+                    _stage(
+                        "apply-jsx",
+                        "failed",
+                        input=layout_result["output"],
+                        output=planned_hierarchy_output,
+                        report_path=apply_result.get("report_path"),
                         preset=preset,
                         source=source,
                         scale=scale,

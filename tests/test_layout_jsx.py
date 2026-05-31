@@ -188,6 +188,81 @@ def test_layout_real_run_normalizes_illustrator_report_to_stable_schema(tmp_path
     assert json.loads(report.read_text()) == data
 
 
+def test_layout_converted_doc_exact_path_reports_open_doc_without_review(tmp_path):
+    src = tmp_path / "rhino-export.ai"
+    src.write_text("%PDF-1.6\n")
+    output = tmp_path / "layout.ai"
+    report = tmp_path / "layout-report.json"
+    jsx = tmp_path / "layout.jsx"
+
+    def fake_run_jsx(_jsx_path, *, timeout):
+        output.write_text("%AI\n")
+        report.write_text(json.dumps({"status": "passed", "selected_items": 10}))
+
+    with (
+        patch(
+            "arch_line_weights.layout_jsx.query_active_doc",
+            return_value=("rhino-export [Converted].ai", str(src)),
+        ),
+        patch("arch_line_weights.layout_jsx.open_in_illustrator") as open_in_illustrator,
+        patch("arch_line_weights.layout_jsx.run_jsx_in_illustrator", side_effect=fake_run_jsx),
+    ):
+        result = layout_via_jsx(
+            str(src),
+            dst=str(output),
+            report_json=str(report),
+            jsx_path=str(jsx),
+        )
+
+    open_in_illustrator.assert_not_called()
+    data = json.loads(result["report"])
+    assert result["use_open_doc"] is True
+    assert data["summary"]["status"] == "passed"
+    assert data["source"]["use_open_doc"] is True
+    assert data["source"]["active_doc_name"] == "rhino-export [Converted].ai"
+    assert data["source"]["active_doc_path"] == str(src)
+    assert data["source"]["converted_doc_match"] == "exact_path"
+    assert data["source"]["converted_doc_needs_review"] is False
+
+
+def test_layout_converted_doc_pathless_stem_match_reports_needs_review(tmp_path):
+    src = tmp_path / "rhino-export.ai"
+    src.write_text("%PDF-1.6\n")
+    output = tmp_path / "layout.ai"
+    report = tmp_path / "layout-report.json"
+    jsx = tmp_path / "layout.jsx"
+
+    def fake_run_jsx(_jsx_path, *, timeout):
+        output.write_text("%AI\n")
+        report.write_text(json.dumps({"status": "passed", "selected_items": 10}))
+
+    with (
+        patch(
+            "arch_line_weights.layout_jsx.query_active_doc",
+            return_value=("rhino-export [Converted].ai", None),
+        ),
+        patch("arch_line_weights.layout_jsx.open_in_illustrator") as open_in_illustrator,
+        patch("arch_line_weights.layout_jsx.run_jsx_in_illustrator", side_effect=fake_run_jsx),
+    ):
+        result = layout_via_jsx(
+            str(src),
+            dst=str(output),
+            report_json=str(report),
+            jsx_path=str(jsx),
+        )
+
+    open_in_illustrator.assert_not_called()
+    data = json.loads(result["report"])
+    assert result["use_open_doc"] is True
+    assert data["summary"]["status"] == "needs_review"
+    assert data["summary"]["why"] == ["converted document matched by pathless stem"]
+    assert data["source"]["use_open_doc"] is True
+    assert data["source"]["active_doc_name"] == "rhino-export [Converted].ai"
+    assert data["source"]["active_doc_path"] is None
+    assert data["source"]["converted_doc_match"] == "pathless_stem"
+    assert data["source"]["converted_doc_needs_review"] is True
+
+
 def test_layout_real_run_failed_report_raises_and_normalizes(tmp_path):
     src = tmp_path / "rhino-export.ai"
     src.write_text("%PDF-1.6\n")

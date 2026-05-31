@@ -72,6 +72,8 @@ def test_export_manifest_marks_missing_export_as_failed(tmp_path, rhino_export_s
     assert manifest["export_size_bytes"] == 0
     assert manifest["manifest_path"] == str(manifest_path)
     assert "export file was not written" in manifest["warnings"]
+    assert manifest["next_step"] is None
+    assert manifest["next_step_available"] is False
 
 
 def test_export_manifest_records_written_export_size(tmp_path, rhino_export_script):
@@ -92,6 +94,23 @@ def test_export_manifest_records_written_export_size(tmp_path, rhino_export_scri
     assert manifest["export_exists"] is True
     assert manifest["export_size_bytes"] == len(b"%PDF-1.6\n")
     assert manifest["manifest_path"] == str(manifest_path)
+    assert manifest["next_step_available"] is True
+    assert manifest["next_step"].startswith("arch-lw layout-jsx")
+    assert manifest["exporter"] == {
+        "app": "Rhino",
+        "helper": "export_selected_make2d_manifest.py",
+        "operation": "Export Selected",
+        "selection_mode": "current_selection",
+    }
+    assert manifest["export_dialog"] == {
+        "assisted": True,
+        "default_name": "01-rhino-make2d-export.ai",
+        "filter": "Illustrator (*.ai)|*.ai|PDF (*.pdf)|*.pdf||",
+    }
+    assert manifest["export_command"] == {
+        "template": "_-Export <export_path> _Enter",
+        "path_quoted": True,
+    }
 
 
 def test_json_safe_normalizes_non_standard_values(rhino_export_script):

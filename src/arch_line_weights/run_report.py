@@ -300,6 +300,8 @@ def build_layout_jsx_report(
         next_action = "Continue to hierarchy, poché, or proof recapture."
     elif status == "dry_run":
         next_action = "Inspect the generated JSX/report contract, then rerun without --dry-run."
+    elif status == "needs_review":
+        next_action = "Review the converted-document match and output before proof recapture."
     elif status == "no_go":
         next_action = "Fix the layout input/artwork problem before proof recapture."
     else:
