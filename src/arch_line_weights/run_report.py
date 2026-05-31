@@ -25,6 +25,16 @@ def _short_name(layer: str) -> str:
     return layer.rsplit("::", 1)[-1]
 
 
+def _empty_layers_by_status() -> dict[str, list[str]]:
+    return {
+        "filled": [],
+        "inferred": [],
+        "skipped": [],
+        "low_confidence": [],
+        "failed": [],
+    }
+
+
 def _candidate_dict(candidate: object) -> dict[str, Any]:
     polygon = getattr(candidate, "polygon", None)
     bounds: list[float] = []
@@ -169,4 +179,120 @@ def build_apply_saas_report(
             _candidate_dict(candidate) for candidate in poche_report.completion_candidates
         ],
         "missing_payload_layers": poche_result.layers_missing,
+    }
+
+
+def _poche_summary_status(summary: Mapping[str, Any], error: str | None) -> tuple[str, list[str], str]:
+    if error:
+        return "failed", [error], "Fix the reported command failure, then rerun arch-lw poche."
+
+    why: list[str] = []
+    if summary["cut_layers_considered"] == 0:
+        why.append("No cut layers were considered")
+    if summary["polygons_injected"] == 0:
+        why.append("No reliable poché polygons were produced")
+    if summary["layers_failed"]:
+        why.append(f"{summary['layers_failed']} cut layer(s) failed to polygonize")
+
+    if why:
+        return "no_go", why, "Generate/review cut geometry, fix Make2D layer closure, then rerun arch-lw poche."
+
+    if summary["layers_low_confidence"] or summary["layers_skipped"]:
+        if summary["layers_low_confidence"]:
+            why.append(
+                f"{summary['layers_low_confidence']} low-confidence layer(s) were diagnostic-only."
+            )
+        if summary["layers_skipped"]:
+            why.append(f"{summary['layers_skipped']} layer(s) were skipped.")
+        return "needs_review", why, "Review low-confidence or skipped cut layers before using the output."
+
+    return "passed", [], "No action needed."
+
+
+def build_poche_report(
+    *,
+    input_path: str | Path,
+    output_path: str | Path,
+    source: Mapping[str, Any],
+    poche_report: PocheReport | None,
+    error: str | None = None,
+) -> dict[str, Any]:
+    """Build a stable JSON report for the standalone ``arch-lw poche`` command."""
+    poche_report = poche_report or PocheReport()
+    layers: list[dict[str, Any]] = []
+    layers_by_status = _empty_layers_by_status()
+    diagnostic_polygons = 0
+
+    for fill in poche_report.fills:
+        injected_count = len(poche_report.polygons.get(fill.layer, []))
+        status, action = _layer_status(
+            fill,
+            injected_count=injected_count,
+            missing_payload=False,
+        )
+        if action == "diagnostic_only":
+            diagnostic_polygons += fill.polygon_count
+        layers_by_status.setdefault(status, []).append(fill.layer)
+
+        review_reasons: list[str] = []
+        if status == "skipped":
+            review_reasons.append("skipped by override")
+        if status in {"low_confidence", "failed"}:
+            review_reasons.append(status.replace("_", " "))
+        if fill.strategy in _REVIEW_STRATEGIES:
+            review_reasons.append(f"strategy {fill.strategy} is review-only")
+        if 0 < fill.confidence < 0.85:
+            review_reasons.append(f"confidence {fill.confidence:.2f} below 0.85")
+
+        layers.append(
+            {
+                "layer": fill.layer,
+                "short_name": _short_name(fill.layer),
+                "component_key": _short_name(fill.layer).upper(),
+                "status": status,
+                "action": action,
+                "strategy": fill.strategy,
+                "confidence": round(float(fill.confidence), 4),
+                "polygon_count": fill.polygon_count,
+                "injected_polygon_count": injected_count,
+                "segment_count": fill.segment_count,
+                "tolerance": fill.tolerance,
+                "bridge_strategy_name": fill.bridge_strategy_name,
+                "review": {
+                    "needs_review": bool(review_reasons),
+                    "reasons": sorted(set(review_reasons)),
+                },
+            }
+        )
+
+    summary: dict[str, Any] = {
+        "cut_layers_considered": len(poche_report.fills),
+        "layers_filled": sum(1 for layer in layers if layer["status"] == "filled"),
+        "layers_inferred": sum(1 for layer in layers if layer["status"] == "inferred"),
+        "layers_skipped": sum(1 for layer in layers if layer["status"] == "skipped"),
+        "layers_low_confidence": sum(1 for layer in layers if layer["status"] == "low_confidence"),
+        "layers_failed": sum(1 for layer in layers if layer["status"] == "failed"),
+        "layers_needs_review": sum(1 for layer in layers if layer["review"]["needs_review"]),
+        "polygons_total": poche_report.total_polygons,
+        "polygons_injected": poche_report.injected_polygons,
+        "polygons_diagnostic_only": diagnostic_polygons,
+    }
+    status, why, next_action = _poche_summary_status(summary, error)
+    summary.update({"status": status, "why": why, "next_action": next_action})
+
+    return {
+        "schema_version": 1,
+        "source": {
+            "input": str(input_path),
+            "output": str(output_path),
+            "command": "poche",
+            "stage": "poche",
+            **dict(source),
+        },
+        "summary": summary,
+        "layers": layers,
+        "layers_by_status": layers_by_status,
+        "completion_candidates": [
+            _candidate_dict(candidate) for candidate in poche_report.completion_candidates
+        ],
     }

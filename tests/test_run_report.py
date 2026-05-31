@@ -5,7 +5,7 @@ from shapely.geometry import Polygon
 from arch_line_weights.make2d_completion import CompletionCandidate
 from arch_line_weights.poche import FillResult, PocheReport
 from arch_line_weights.poche_saas import PocheSaasResult
-from arch_line_weights.run_report import build_apply_saas_report
+from arch_line_weights.run_report import build_apply_saas_report, build_poche_report
 
 
 def _report(
@@ -113,3 +113,73 @@ def test_report_includes_completion_candidate_rejections():
     assert data["completion_candidates"][0]["cut_shared_length"] == 42.5
     assert data["completion_candidates"][0]["bounds"] == [0.0, 0.0, 100.0, 80.0]
     assert data["layers"][0]["review"]["needs_review"] is True
+
+
+def test_poche_report_marks_needs_review_and_groups_layers():
+    filled = "axon::Visible::ClippingPlaneIntersections::09_SHS_50x50x5_HORIZ"
+    skipped = "axon::Visible::ClippingPlaneIntersections::23_WINDOW_FRAMES_REMAP"
+    low_confidence = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+    data = build_poche_report(
+        input_path="section.ai",
+        output_path="section-POCHE.ai",
+        source={"style": "solid", "bridge_strategy": "best"},
+        poche_report=PocheReport(
+            fills=[
+                FillResult(filled, "linemerge_bare", 1.0, 1, 22),
+                FillResult(skipped, "skipped", 0.0, 0, 12),
+                FillResult(low_confidence, "auto_bridge", 0.69, 1, 18),
+            ],
+            polygons={filled: [[[0, 0], [10, 0], [10, 10], [0, 10]]]},
+        ),
+    )
+
+    assert data["source"]["input"] == "section.ai"
+    assert data["source"]["output"] == "section-POCHE.ai"
+    assert data["source"]["command"] == "poche"
+    assert data["source"]["stage"] == "poche"
+    assert data["summary"]["status"] == "needs_review"
+    assert data["summary"]["why"]
+    assert "Review low-confidence or skipped cut layers" in data["summary"]["next_action"]
+    assert data["summary"]["layers_filled"] == 1
+    assert data["summary"]["layers_skipped"] == 1
+    assert data["summary"]["layers_low_confidence"] == 1
+    assert data["summary"]["layers_failed"] == 0
+    assert data["summary"]["polygons_total"] == 2
+    assert data["summary"]["polygons_injected"] == 1
+    assert data["layers_by_status"]["filled"] == [filled]
+    assert data["layers_by_status"]["skipped"] == [skipped]
+    assert data["layers_by_status"]["low_confidence"] == [low_confidence]
+    assert data["layers"][0]["strategy"] == "linemerge_bare"
+    assert data["layers"][0]["confidence"] == 1.0
+
+
+def test_poche_report_marks_no_go_when_no_layers_are_injectable():
+    failed = "axon::Visible::ClippingPlaneIntersections::TEC_FOUNDATION"
+    data = build_poche_report(
+        input_path="section.ai",
+        output_path="section-POCHE.ai",
+        source={"style": "solid"},
+        poche_report=PocheReport(
+            fills=[FillResult(failed, "failed", 0.0, 0, 9)],
+            polygons={},
+        ),
+    )
+
+    assert data["summary"]["status"] == "no_go"
+    assert "No reliable poché polygons were produced" in data["summary"]["why"]
+    assert "Generate/review cut geometry" in data["summary"]["next_action"]
+    assert data["layers_by_status"]["failed"] == [failed]
+
+
+def test_poche_report_marks_failed_when_command_error_is_supplied():
+    data = build_poche_report(
+        input_path="section.ai",
+        output_path="section-POCHE.ai",
+        source={"style": "solid"},
+        poche_report=None,
+        error="Illustrator did not write geometry JSON",
+    )
+
+    assert data["summary"]["status"] == "failed"
+    assert data["summary"]["why"] == ["Illustrator did not write geometry JSON"]
+    assert data["summary"]["next_action"] == "Fix the reported command failure, then rerun arch-lw poche."

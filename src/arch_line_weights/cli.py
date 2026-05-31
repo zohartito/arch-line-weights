@@ -71,6 +71,10 @@ def _require_nonempty_auto_mapping(
     )
 
 
+def _default_poche_output_path(src: Path) -> Path:
+    return src.with_name(f"{src.stem.replace(' HIERARCHY', '')} POCHE{src.suffix}")
+
+
 @click.group()
 @click.version_option(__version__, prog_name="arch-lw")
 def cli():
@@ -886,6 +890,12 @@ def apply_saas_cmd(
     help="Layer-name convention used to identify cut layers (only Rhino "
     "ClippingPlaneIntersections is currently a poché target; AIA NCS support is preliminary).",
 )
+@click.option(
+    "--report-json",
+    "report_json",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Write a structured JSON poché report for verification gates.",
+)
 def poche_cmd(
     src: Path,
     output: Path | None,
@@ -896,6 +906,7 @@ def poche_cmd(
     bridge_strategy: str,
     llm_fallback: bool,
     source: str,
+    report_json: Path | None,
 ):
     """Generate solid-black poché on cut layers via shapely linemerge + polygonize.
 
@@ -921,7 +932,8 @@ def poche_cmd(
         }
       }
     """
-    out = str(output) if output else None
+    resolved_output = output if output else _default_poche_output_path(src)
+    out = str(resolved_output)
     over = str(overrides_path) if overrides_path else None
     if source != Source.AUTO.value:
         click.echo(f"# layer-source: {source} (forced)", err=True)
@@ -931,15 +943,37 @@ def poche_cmd(
         os.environ["ARCH_LW_LLM_FALLBACK"] = "1"
         click.echo("# llm-fallback: enabled (rung 5)", err=True)
     click.echo(f"applying poche to {src} (style={style}, scale=1:{int(1 / hatch_scale)})...", err=True)
-    report = apply_poche(
-        str(src),
-        out,
-        overrides_path=over,
-        style=style,
-        scale=hatch_scale,
-        use_alpha_shape=alpha_shape,
-        bridge_strategy=bridge_strategy,
-    )
+    try:
+        report = apply_poche(
+            str(src),
+            out,
+            overrides_path=over,
+            style=style,
+            scale=hatch_scale,
+            use_alpha_shape=alpha_shape,
+            bridge_strategy=bridge_strategy,
+        )
+    except Exception as exc:
+        if report_json is not None:
+            from .run_report import build_poche_report
+
+            run_report = build_poche_report(
+                input_path=src,
+                output_path=resolved_output,
+                source={
+                    "style": style,
+                    "scale": hatch_scale,
+                    "layer_source": source,
+                    "bridge_strategy": bridge_strategy,
+                    "min_inject_confidence": 0.85,
+                },
+                poche_report=None,
+                error=str(exc),
+            )
+            report_json.parent.mkdir(parents=True, exist_ok=True)
+            report_json.write_text(json.dumps(run_report, indent=2, sort_keys=True) + "\n")
+            click.echo(f"report: wrote {report_json}", err=True)
+        raise
     click.echo("", err=True)
     click.echo(f"polygons created: {report.total_polygons}", err=True)
     click.echo(f"  clean (linemerge):     {report.working_layers} layers", err=True)
@@ -960,6 +994,24 @@ def poche_cmd(
             f"conf={fr.confidence:.2f}{bridge_suffix}",
             err=True,
         )
+    if report_json is not None:
+        from .run_report import build_poche_report
+
+        run_report = build_poche_report(
+            input_path=src,
+            output_path=resolved_output,
+            source={
+                "style": style,
+                "scale": hatch_scale,
+                "layer_source": source,
+                "bridge_strategy": bridge_strategy,
+                "min_inject_confidence": 0.85,
+            },
+            poche_report=report,
+        )
+        report_json.parent.mkdir(parents=True, exist_ok=True)
+        report_json.write_text(json.dumps(run_report, indent=2, sort_keys=True) + "\n")
+        click.echo(f"report: wrote {report_json}", err=True)
 
 
 @cli.command("preview")
