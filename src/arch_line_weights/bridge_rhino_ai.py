@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from .apply_jsx import apply_via_jsx
+from .apply_jsx import apply_via_jsx, validate_apply_jsx_result
 from .apply_jsx import default_output_path as apply_jsx_default_output_path
 from .layout_jsx import default_output_path as layout_jsx_default_output_path
 from .layout_jsx import layout_via_jsx
@@ -107,48 +107,6 @@ def _write_bridge_result(
 
 def _raise_stage_failure(*, stage_name: str, bridge_report: Path, exc: Exception) -> None:
     raise RuntimeError(f"bridge-rhino-ai failed during {stage_name}; see {bridge_report}: {exc}") from exc
-
-
-def _apply_jsx_report_failure(report: str) -> str | None:
-    text = report.strip()
-    if not text:
-        return "apply-jsx report was empty"
-    upper = text.upper()
-    if upper.startswith("ERROR") or "ERROR:" in upper:
-        return "apply-jsx report contains ERROR"
-    if upper.startswith("EXCEPTION") or "EXCEPTION:" in upper:
-        return "apply-jsx report contains EXCEPTION"
-    try:
-        payload = json.loads(text)
-    except json.JSONDecodeError:
-        payload = None
-    if isinstance(payload, dict):
-        summary = payload.get("summary")
-        status = summary.get("status") if isinstance(summary, dict) else payload.get("status")
-        if str(status).lower() in {"failed", "no_go"}:
-            return f"apply-jsx report status is {status}"
-    lower = text.lower()
-    if "no_go" in lower:
-        return "apply-jsx report contains no_go"
-    if "failed" in lower:
-        return "apply-jsx report contains failed"
-    return None
-
-
-def _validate_apply_jsx_result(apply_result: dict[str, Any], *, expected_output: str) -> None:
-    reported_output = os.path.abspath(str(apply_result.get("output") or ""))
-    expected_abs = os.path.abspath(expected_output)
-    if reported_output != expected_abs:
-        raise RuntimeError(
-            f"apply-jsx reported output {reported_output!r}; expected {expected_abs!r}"
-        )
-
-    report_failure = _apply_jsx_report_failure(str(apply_result.get("report") or ""))
-    if report_failure is not None:
-        raise RuntimeError(report_failure)
-
-    if not Path(expected_abs).exists():
-        raise RuntimeError(f"apply-jsx did not write expected hierarchy output: {expected_abs}")
 
 
 def bridge_rhino_ai(
@@ -294,7 +252,7 @@ def bridge_rhino_ai(
                 )
                 _raise_stage_failure(stage_name="apply-jsx", bridge_report=bridge_report, exc=exc)
             try:
-                _validate_apply_jsx_result(apply_result, expected_output=planned_hierarchy_output)
+                validate_apply_jsx_result(apply_result, expected_output=planned_hierarchy_output)
             except Exception as exc:
                 stages.append(
                     _stage(

@@ -14,6 +14,8 @@ the way the JSX would, and asserting the wrapper picks up the lines.
 from __future__ import annotations
 
 import time
+from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
@@ -26,6 +28,7 @@ from arch_line_weights.apply_jsx import (
     TIMEOUT_ENV_VAR,
     _HeartbeatPoller,
     _is_converted_match,
+    apply_via_jsx,
     render_jsx,
     resolve_timeout_minutes,
 )
@@ -225,6 +228,41 @@ def test_cli_apply_jsx_rejects_timeout_above_max():
     # IntRange will reject 999 before we even hit the path resolver.
     assert result.exit_code != 0
     assert "999" in result.output or "Invalid" in result.output
+
+
+def test_apply_via_jsx_rejects_error_report(tmp_path):
+    src = tmp_path / "section.ai"
+    src.write_text("%AI\n")
+    dst = tmp_path / "section HIERARCHY-jsx.ai"
+
+    def fake_run_jsx(_jsx_path, timeout):
+        dst.write_text("%AI output\n")
+        Path("/tmp/arch_lw_report.txt").write_text("ERROR: target doc not open")
+
+    with (
+        patch("arch_line_weights.apply_jsx.query_active_doc", return_value=(None, None)),
+        patch("arch_line_weights.apply_jsx.open_in_illustrator"),
+        patch("arch_line_weights.apply_jsx.run_jsx_in_illustrator", side_effect=fake_run_jsx),
+        pytest.raises(RuntimeError, match="apply-jsx report contains ERROR"),
+    ):
+        apply_via_jsx(str(src), str(dst), printer=lambda _line: None)
+
+
+def test_apply_via_jsx_rejects_missing_output_after_report(tmp_path):
+    src = tmp_path / "section.ai"
+    src.write_text("%AI\n")
+    dst = tmp_path / "section HIERARCHY-jsx.ai"
+
+    def fake_run_jsx(_jsx_path, timeout):
+        Path("/tmp/arch_lw_report.txt").write_text("DONE\nsaved as: synthetic\n")
+
+    with (
+        patch("arch_line_weights.apply_jsx.query_active_doc", return_value=(None, None)),
+        patch("arch_line_weights.apply_jsx.open_in_illustrator"),
+        patch("arch_line_weights.apply_jsx.run_jsx_in_illustrator", side_effect=fake_run_jsx),
+        pytest.raises(RuntimeError, match="apply-jsx did not write expected hierarchy output"),
+    ):
+        apply_via_jsx(str(src), str(dst), printer=lambda _line: None)
 
 
 # --------------------------------------------------------------------------- #
