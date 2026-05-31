@@ -13,6 +13,12 @@ def test_export_selected_make2d_manifest_script_has_manifest_contract():
     text = script.read_text()
 
     compile(text, str(script), "exec")
+    assert "from __future__ import annotations" not in text
+    assert "from pathlib import Path" not in text
+    assert " -> " not in text
+    assert " | None" not in text
+    assert 'f"' not in text
+    assert "f'" not in text
     assert "Export Selected" in text
     assert "manifest_path" in text
     assert "selected_object_count" in text
@@ -86,3 +92,42 @@ def test_export_manifest_records_written_export_size(tmp_path, rhino_export_scri
     assert manifest["export_exists"] is True
     assert manifest["export_size_bytes"] == len(b"%PDF-1.6\n")
     assert manifest["manifest_path"] == str(manifest_path)
+
+
+def test_json_safe_normalizes_non_standard_values(rhino_export_script):
+    class OddValue:
+        def __str__(self):
+            return "odd"
+
+    data = rhino_export_script._json_safe(
+        {
+            123: OddValue(),
+            "nested": [OddValue(), {"x": 2}],
+        }
+    )
+
+    assert data == {
+        "123": "odd",
+        "nested": ["odd", {"x": 2}],
+    }
+
+
+def test_json_safe_coerces_rhino_long_like_values_to_int(rhino_export_script):
+    class RhinoLongLike:
+        def __int__(self):
+            return 78819
+
+        def __str__(self):
+            return "78819L"
+
+    data = rhino_export_script._json_safe(
+        {
+            "selected_object_count": RhinoLongLike(),
+            "nested": {"layer_count": RhinoLongLike()},
+        }
+    )
+
+    assert data == {
+        "selected_object_count": 78819,
+        "nested": {"layer_count": 78819},
+    }

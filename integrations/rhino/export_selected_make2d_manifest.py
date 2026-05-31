@@ -13,14 +13,24 @@ data in the repository:
   - next command hint: arch-lw layout-jsx
 """
 
-from __future__ import annotations
+# ruff: noqa: UP032 - Rhino's script runtime rejects f-strings.
 
 import json
-from pathlib import Path
+import os
 
 import Rhino
 import rhinoscriptsyntax as rs
 import scriptcontext as sc
+
+try:
+    INTEGER_TYPES = (int, long)
+except NameError:
+    INTEGER_TYPES = (int,)
+
+try:
+    STRING_TYPES = (basestring,)
+except NameError:
+    STRING_TYPES = (str,)
 
 DEFAULT_EXPORT_NAME = "01-rhino-make2d-export.ai"
 DEFAULT_ARTBOARD = "24x36in"
@@ -34,8 +44,8 @@ def _selected_objects():
 def _layer_counts(object_ids):
     counts = {}
     for object_id in object_ids:
-        layer = rs.ObjectLayer(object_id) or "<unknown>"
-        counts[layer] = counts.get(layer, 0) + 1
+        layer = str(rs.ObjectLayer(object_id) or "<unknown>")
+        counts[layer] = int(counts.get(layer, 0)) + 1
     return dict(sorted(counts.items()))
 
 
@@ -55,14 +65,14 @@ def _model_units():
         return "unknown"
 
 
-def _default_export_folder() -> Path:
+def _default_export_folder():
     if sc.doc.Path:
-        return Path(sc.doc.Path).parent
-    return Path.home()
+        return os.path.dirname(sc.doc.Path)
+    return os.path.expanduser("~")
 
 
-def _choose_export_path() -> Path | None:
-    folder = str(_default_export_folder())
+def _choose_export_path():
+    folder = _default_export_folder()
     raw = rs.SaveFileName(
         "Export Selected Make2D for arch-lw",
         "Illustrator (*.ai)|*.ai|PDF (*.pdf)|*.pdf||",
@@ -72,33 +82,59 @@ def _choose_export_path() -> Path | None:
     )
     if not raw:
         return None
-    return Path(raw)
+    return raw
 
 
-def _manifest_path_for(export_path: Path) -> Path:
-    return export_path.with_suffix(".manifest.json")
+def _replace_suffix(path, suffix):
+    root, _ext = os.path.splitext(str(path))
+    return root + suffix
 
 
-def _command_quote(path: Path) -> str:
+def _manifest_path_for(export_path):
+    return _replace_suffix(export_path, ".manifest.json")
+
+
+def _command_quote(path):
     return '"{}"'.format(str(path).replace('"', '\\"'))
 
 
-def _export_selected(export_path: Path) -> bool:
-    export_path.parent.mkdir(parents=True, exist_ok=True)
-    command = f"_-Export {_command_quote(export_path)} _Enter"
+def _json_safe(value):
+    if isinstance(value, dict):
+        return dict((str(key), _json_safe(item)) for key, item in value.items())
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(item) for item in value]
+    if value is None or isinstance(value, bool):
+        return value
+    if isinstance(value, INTEGER_TYPES):
+        return int(value)
+    if isinstance(value, float):
+        return float(value)
+    if isinstance(value, STRING_TYPES):
+        return value
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        pass
+    return str(value)
+
+
+def _export_selected(export_path):
+    folder = os.path.dirname(os.path.abspath(str(export_path)))
+    if folder and not os.path.exists(folder):
+        os.makedirs(folder)
+    command = "_-Export {} _Enter".format(_command_quote(export_path))
     return bool(rs.Command(command, echo=True))
 
 
 def _write_manifest(
-    *,
-    manifest_path: Path,
-    export_path: Path,
+    manifest_path,
+    export_path,
     selected,
-    export_ok: bool,
-) -> dict:
+    export_ok,
+):
     view = _active_view_info()
-    export_exists = export_path.exists()
-    export_size = export_path.stat().st_size if export_exists else 0
+    export_exists = os.path.exists(str(export_path))
+    export_size = int(os.path.getsize(str(export_path))) if export_exists else 0
     export_command_ok = bool(export_ok)
     effective_export_ok = export_command_ok and export_exists and export_size > 0
     warnings = []
@@ -140,11 +176,13 @@ def _write_manifest(
             path=_command_quote(export_path),
             artboard=DEFAULT_ARTBOARD,
             margin=DEFAULT_MARGIN,
-            report=_command_quote(export_path.with_suffix(".layout-report.json")),
+            report=_command_quote(_replace_suffix(export_path, ".layout-report.json")),
         ),
     }
-    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
-    return manifest
+    safe_manifest = _json_safe(manifest)
+    with open(str(manifest_path), "w") as stream:
+        stream.write(json.dumps(safe_manifest, indent=2, sort_keys=True) + "\n")
+    return safe_manifest
 
 
 def main():
@@ -159,16 +197,16 @@ def main():
         return
 
     manifest_path = _manifest_path_for(export_path)
-    Rhino.RhinoApp.WriteLine(f"[arch-lw] exporting selected objects: {export_path}")
+    Rhino.RhinoApp.WriteLine("[arch-lw] exporting selected objects: {}".format(export_path))
     export_ok = _export_selected(export_path)
     manifest = _write_manifest(
-        manifest_path=manifest_path,
-        export_path=export_path,
-        selected=selected,
-        export_ok=export_ok,
+        manifest_path,
+        export_path,
+        selected,
+        export_ok,
     )
-    Rhino.RhinoApp.WriteLine(f"[arch-lw] wrote manifest: {manifest_path}")
-    Rhino.RhinoApp.WriteLine(f"[arch-lw] next: {manifest['next_step']}")
+    Rhino.RhinoApp.WriteLine("[arch-lw] wrote manifest: {}".format(manifest_path))
+    Rhino.RhinoApp.WriteLine("[arch-lw] next: {}".format(manifest["next_step"]))
     if not export_ok:
         Rhino.RhinoApp.WriteLine("[arch-lw] export command did not report success; review Rhino output.")
 
