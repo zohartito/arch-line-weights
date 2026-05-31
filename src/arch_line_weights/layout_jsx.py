@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 from .apply_jsx import (
     _is_converted_match,
@@ -98,6 +99,74 @@ def parse_artboard_size(raw: str) -> tuple[float, float]:
 def default_output_path(src: str | os.PathLike[str]) -> str:
     p = Path(src)
     return str(p.with_name(f"{p.stem}{DEFAULT_OUTPUT_SUFFIX}{p.suffix}"))
+
+
+def _why_list(raw: Any) -> list[str]:
+    if raw is None:
+        return []
+    if isinstance(raw, list):
+        return [str(item) for item in raw]
+    return [str(raw)]
+
+
+def _raw_status(raw: dict[str, Any]) -> str:
+    summary = raw.get("summary")
+    if isinstance(summary, dict) and summary.get("status"):
+        return str(summary["status"])
+    return str(raw.get("status") or "failed")
+
+
+def _raw_why(raw: dict[str, Any]) -> list[str]:
+    summary = raw.get("summary")
+    if isinstance(summary, dict) and "why" in summary:
+        return _why_list(summary.get("why"))
+    return _why_list(raw.get("why"))
+
+
+def _raw_layout_value(raw: dict[str, Any], key: str) -> Any:
+    layout = raw.get("layout")
+    if isinstance(layout, dict) and key in layout:
+        return layout[key]
+    return raw.get(key)
+
+
+def _normalize_layout_report(
+    *,
+    input_path: str,
+    output_path: str,
+    report_path: Path,
+    raw_report: dict[str, Any],
+    source: dict[str, Any],
+    status: str,
+    why: list[str] | None,
+    artboard_width_pt: float,
+    artboard_height_pt: float,
+    margin_pt: float,
+) -> dict[str, Any]:
+    from .run_report import build_layout_jsx_report
+
+    report = build_layout_jsx_report(
+        input_path=input_path,
+        output_path=output_path,
+        source=source,
+        status=status,
+        artboard_width_pt=artboard_width_pt,
+        artboard_height_pt=artboard_height_pt,
+        margin_pt=margin_pt,
+        selected_items=_raw_layout_value(raw_report, "selected_items"),
+        scale=_raw_layout_value(raw_report, "scale"),
+        translation=_raw_layout_value(raw_report, "translation"),
+        original_visible_bounds=_raw_layout_value(raw_report, "original_visible_bounds"),
+        final_visible_bounds=_raw_layout_value(raw_report, "final_visible_bounds"),
+        why=why,
+    )
+    report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+    return report
+
+
+def _runtime_failure(status: str, why: list[str]) -> RuntimeError:
+    detail = "; ".join(why) if why else "see layout report"
+    return RuntimeError(f"layout-jsx {status}: {detail}")
 
 
 LAYOUT_JSX_TEMPLATE = r"""#target illustrator
@@ -332,6 +401,8 @@ def layout_via_jsx(
     dry_run: bool = False,
 ) -> dict:
     """Open ``src`` in Illustrator, frame artwork, save to ``dst``."""
+    from .run_report import build_layout_jsx_report
+
     src_abs = os.path.abspath(src)
     resolved_dst = os.path.abspath(dst or default_output_path(src_abs))
     if src_abs == resolved_dst:
@@ -366,8 +437,6 @@ def layout_via_jsx(
         )
 
     if dry_run:
-        from .run_report import build_layout_jsx_report
-
         write_rendered_jsx(use_open_doc=False)
         dry_report = build_layout_jsx_report(
             input_path=src_abs,
@@ -411,7 +480,104 @@ def layout_via_jsx(
     if not use_open_doc:
         open_in_illustrator(src_abs, timeout_sec=min(timeout_sec, 1800))
     run_jsx_in_illustrator(jsx_abs, timeout=timeout_sec)
-    report_text = Path(report_abs).read_text() if Path(report_abs).exists() else ""
+    report_path = Path(report_abs)
+    if not report_path.exists():
+        failed_report = build_layout_jsx_report(
+            input_path=src_abs,
+            output_path=resolved_dst,
+            source={
+                "jsx_path": jsx_abs,
+                "fit_mode": fit_mode,
+                "allow_enlarge": allow_enlarge,
+            },
+            status="failed",
+            artboard_width_pt=artboard_width,
+            artboard_height_pt=artboard_height,
+            margin_pt=margin_pt,
+            why=["did not write a report"],
+        )
+        report_path.write_text(json.dumps(failed_report, indent=2, sort_keys=True) + "\n")
+        raise RuntimeError("layout-jsx failed: did not write a report")
+
+    raw_text = report_path.read_text()
+    try:
+        raw_report = json.loads(raw_text)
+    except json.JSONDecodeError as exc:
+        failed_report = build_layout_jsx_report(
+            input_path=src_abs,
+            output_path=resolved_dst,
+            source={
+                "jsx_path": jsx_abs,
+                "fit_mode": fit_mode,
+                "allow_enlarge": allow_enlarge,
+            },
+            status="failed",
+            artboard_width_pt=artboard_width,
+            artboard_height_pt=artboard_height,
+            margin_pt=margin_pt,
+            why=["layout report was not valid JSON"],
+        )
+        report_path.write_text(json.dumps(failed_report, indent=2, sort_keys=True) + "\n")
+        raise RuntimeError("layout-jsx failed: layout report was not valid JSON") from exc
+
+    raw_status = str(raw_report.get("status") or "failed")
+    why = [str(reason) for reason in raw_report.get("why") or []]
+    if raw_status in {"failed", "no_go"}:
+        normalized_report = build_layout_jsx_report(
+            input_path=src_abs,
+            output_path=resolved_dst,
+            source={
+                "jsx_path": jsx_abs,
+                "fit_mode": fit_mode,
+                "allow_enlarge": allow_enlarge,
+            },
+            status=raw_status,
+            artboard_width_pt=artboard_width,
+            artboard_height_pt=artboard_height,
+            margin_pt=margin_pt,
+            why=why or [raw_status],
+        )
+        report_path.write_text(json.dumps(normalized_report, indent=2, sort_keys=True) + "\n")
+        raise RuntimeError(f"layout-jsx failed: {'; '.join(normalized_report['summary']['why'])}")
+
+    if not Path(resolved_dst).exists():
+        normalized_report = build_layout_jsx_report(
+            input_path=src_abs,
+            output_path=resolved_dst,
+            source={
+                "jsx_path": jsx_abs,
+                "fit_mode": fit_mode,
+                "allow_enlarge": allow_enlarge,
+            },
+            status="failed",
+            artboard_width_pt=artboard_width,
+            artboard_height_pt=artboard_height,
+            margin_pt=margin_pt,
+            why=["output file was not written"],
+        )
+        report_path.write_text(json.dumps(normalized_report, indent=2, sort_keys=True) + "\n")
+        raise RuntimeError("layout-jsx failed: output file was not written")
+
+    normalized_report = build_layout_jsx_report(
+        input_path=src_abs,
+        output_path=resolved_dst,
+        source={
+            "jsx_path": jsx_abs,
+            "fit_mode": fit_mode,
+            "allow_enlarge": allow_enlarge,
+        },
+        status="passed",
+        artboard_width_pt=artboard_width,
+        artboard_height_pt=artboard_height,
+        margin_pt=margin_pt,
+        selected_items=raw_report.get("selected_items"),
+        scale=raw_report.get("scale"),
+        translation=raw_report.get("translation"),
+        original_visible_bounds=raw_report.get("original_visible_bounds"),
+        final_visible_bounds=raw_report.get("final_visible_bounds"),
+    )
+    report_text = json.dumps(normalized_report, indent=2, sort_keys=True)
+    report_path.write_text(report_text + "\n")
     return {
         "output": resolved_dst,
         "report_json": report_abs,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from unittest.mock import patch
 
@@ -139,3 +140,147 @@ def test_layout_dry_run_does_not_probe_illustrator(tmp_path):
     assert report.exists()
     assert jsx.exists()
     assert not output.exists()
+
+
+def test_layout_real_run_normalizes_illustrator_report_to_stable_schema(tmp_path):
+    src = tmp_path / "rhino-export.ai"
+    src.write_text("%PDF-1.6\n")
+    output = tmp_path / "layout.ai"
+    report = tmp_path / "layout-report.json"
+    jsx = tmp_path / "layout.jsx"
+
+    def fake_run_jsx(_jsx_path, *, timeout):
+        output.write_text("%AI\n")
+        report.write_text(
+            json.dumps(
+                {
+                    "status": "passed",
+                    "selected_items": 922,
+                    "scale": 1,
+                    "translation": {"dx": 12.5, "dy": -4.0},
+                    "original_visible_bounds": [1, 2, 3, 4],
+                    "final_visible_bounds": [36, 1200, 1692, 36],
+                }
+            )
+        )
+
+    with (
+        patch("arch_line_weights.layout_jsx.query_active_doc", return_value=(None, None)),
+        patch("arch_line_weights.layout_jsx.open_in_illustrator"),
+        patch("arch_line_weights.layout_jsx.run_jsx_in_illustrator", side_effect=fake_run_jsx),
+    ):
+        result = layout_via_jsx(
+            str(src),
+            dst=str(output),
+            artboard="24x36in",
+            fit_mode="fit",
+            margin="0.5in",
+            report_json=str(report),
+            jsx_path=str(jsx),
+        )
+
+    data = json.loads(result["report"])
+    assert data["schema_version"] == 1
+    assert data["source"]["command"] == "layout-jsx"
+    assert data["summary"]["status"] == "passed"
+    assert data["layout"]["artboard"] == {"width_pt": 1728.0, "height_pt": 2592.0}
+    assert data["layout"]["selected_items"] == 922
+    assert data["layout"]["translation"] == {"dx": 12.5, "dy": -4.0}
+    assert json.loads(report.read_text()) == data
+
+
+def test_layout_real_run_failed_report_raises_and_normalizes(tmp_path):
+    src = tmp_path / "rhino-export.ai"
+    src.write_text("%PDF-1.6\n")
+    output = tmp_path / "layout.ai"
+    report = tmp_path / "layout-report.json"
+    jsx = tmp_path / "layout.jsx"
+
+    def fake_run_jsx(_jsx_path, *, timeout):
+        report.write_text(json.dumps({"status": "failed", "why": ["target document not open"]}))
+
+    with (
+        patch("arch_line_weights.layout_jsx.query_active_doc", return_value=(None, None)),
+        patch("arch_line_weights.layout_jsx.open_in_illustrator"),
+        patch("arch_line_weights.layout_jsx.run_jsx_in_illustrator", side_effect=fake_run_jsx),
+        pytest.raises(RuntimeError, match="target document not open"),
+    ):
+        layout_via_jsx(
+            str(src),
+            dst=str(output),
+            report_json=str(report),
+            jsx_path=str(jsx),
+        )
+
+    data = json.loads(report.read_text())
+    assert data["schema_version"] == 1
+    assert data["summary"]["status"] == "failed"
+    assert data["summary"]["why"] == ["target document not open"]
+    assert not output.exists()
+
+
+def test_layout_real_run_passed_report_without_output_raises(tmp_path):
+    src = tmp_path / "rhino-export.ai"
+    src.write_text("%PDF-1.6\n")
+    output = tmp_path / "layout.ai"
+    report = tmp_path / "layout-report.json"
+    jsx = tmp_path / "layout.jsx"
+
+    def fake_run_jsx(_jsx_path, *, timeout):
+        report.write_text(json.dumps({"status": "passed", "selected_items": 1}))
+
+    with (
+        patch("arch_line_weights.layout_jsx.query_active_doc", return_value=(None, None)),
+        patch("arch_line_weights.layout_jsx.open_in_illustrator"),
+        patch("arch_line_weights.layout_jsx.run_jsx_in_illustrator", side_effect=fake_run_jsx),
+        pytest.raises(RuntimeError, match="output file was not written"),
+    ):
+        layout_via_jsx(
+            str(src),
+            dst=str(output),
+            report_json=str(report),
+            jsx_path=str(jsx),
+        )
+
+    data = json.loads(report.read_text())
+    assert data["summary"]["status"] == "failed"
+    assert data["summary"]["why"] == ["output file was not written"]
+
+
+def test_layout_real_run_missing_report_raises(tmp_path):
+    src = tmp_path / "rhino-export.ai"
+    src.write_text("%PDF-1.6\n")
+    output = tmp_path / "layout.ai"
+    jsx = tmp_path / "layout.jsx"
+    report = tmp_path / "missing-layout-report.json"
+
+    with (
+        patch("arch_line_weights.layout_jsx.query_active_doc", return_value=(None, None)),
+        patch("arch_line_weights.layout_jsx.open_in_illustrator"),
+        patch("arch_line_weights.layout_jsx.run_jsx_in_illustrator"),
+        pytest.raises(RuntimeError, match="did not write a report"),
+    ):
+        layout_via_jsx(
+            str(src),
+            dst=str(output),
+            report_json=str(report),
+            jsx_path=str(jsx),
+        )
+
+    assert not output.exists()
+
+
+def test_cli_layout_jsx_failure_is_nonzero_without_wrote_claim(tmp_path):
+    src = tmp_path / "rhino-export.ai"
+    src.write_text("%PDF-1.6\n")
+
+    runner = CliRunner()
+    with patch(
+        "arch_line_weights.cli.layout_via_jsx",
+        side_effect=RuntimeError("layout-jsx failed: target document not open"),
+    ):
+        result = runner.invoke(cli, ["layout-jsx", str(src)])
+
+    assert result.exit_code != 0
+    assert "target document not open" in result.output
+    assert "layout: wrote" not in result.output

@@ -484,6 +484,8 @@ def layout_jsx_cmd(
         )
     except ValueError as exc:
         raise click.UsageError(str(exc)) from exc
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
 
     if dry_run:
         click.echo(f"layout: dry run wrote JSX {result['jsx_path']}", err=True)
