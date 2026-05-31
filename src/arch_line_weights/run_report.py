@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Mapping
+from itertools import pairwise
 from pathlib import Path
 from typing import Any
 
@@ -513,7 +514,7 @@ def _polygon_area(coords: list[list[float]]) -> float:
         return 0.0
     area = 0.0
     closed = coords if coords[0] == coords[-1] else [*coords, coords[0]]
-    for a, b in zip(closed, closed[1:], strict=False):
+    for a, b in pairwise(closed):
         area += float(a[0]) * float(b[1]) - float(b[0]) * float(a[1])
     return round(abs(area) / 2.0, 4)
 
@@ -578,7 +579,6 @@ def build_poche_geometry_report(
             strategy = "failed"
             confidence = 0.0
             polygon_count = 0
-            segment_count = _path_segment_count(paths)
             tolerance = None
             bridge_strategy_name = None
         else:
@@ -590,7 +590,6 @@ def build_poche_geometry_report(
             strategy = fill.strategy
             confidence = round(float(fill.confidence), 4)
             polygon_count = fill.polygon_count
-            segment_count = fill.segment_count
             tolerance = fill.tolerance
             bridge_strategy_name = fill.bridge_strategy_name
 
