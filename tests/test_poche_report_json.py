@@ -48,3 +48,29 @@ def test_cli_poche_writes_structured_report_json(tmp_path):
     assert data["summary"]["polygons_injected"] == 1
     assert data["layers_by_status"]["filled"] == [layer]
     assert "report: wrote" in result.output
+
+
+def test_cli_poche_threads_geometry_json_path(tmp_path):
+    src = tmp_path / "section.ai"
+    src.write_bytes(b"%PDF-1.6\n")
+    geometry_json = tmp_path / "reports" / "geometry.json"
+    captured = {}
+
+    def fake_apply_poche(*args, **kwargs):
+        captured["kwargs"] = kwargs
+        return PocheReport()
+
+    runner = CliRunner()
+    with patch("arch_line_weights.cli.apply_poche", side_effect=fake_apply_poche):
+        result = runner.invoke(
+            cli,
+            [
+                "poche",
+                str(src),
+                "--geometry-json",
+                str(geometry_json),
+            ],
+        )
+
+    assert result.exit_code == 0, result.output
+    assert captured["kwargs"]["geometry_report_path"] == str(geometry_json)

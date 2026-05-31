@@ -13,7 +13,11 @@ from PIL import Image, ImageChops
 from arch_line_weights.inspect import inspect_file
 from arch_line_weights.poche import FillResult, PocheReport
 from arch_line_weights.poche_saas import PocheSaasResult
-from arch_line_weights.run_report import build_apply_saas_report, build_poche_report
+from arch_line_weights.run_report import (
+    build_apply_saas_report,
+    build_poche_geometry_report,
+    build_poche_report,
+)
 
 MANIFEST_PATH = Path(__file__).with_name("fixtures") / "make2d_day1_manifest.json"
 PRIVATE_FIXTURE_ROOT_ENV = "ARCH_LW_PRIVATE_FIXTURE_ROOT"
@@ -141,11 +145,13 @@ def test_day1_manifest_records_missing_structured_truth_sources():
     case = _load_case()
 
     missing = {item["kind"]: item["relative_path"] for item in case["missing_source_files"]}
+    assert missing == {}
     assert "structured_poche_report_json" not in missing
-    assert "cut_geometry_dump_json" in missing
-    assert missing["cut_geometry_dump_json"] == "reports/arch_lw_cut_geometry.json"
     assert case["generated_outputs"]["structured_poche_report_json"]["filename"] == (
         "arch_lw_poche_report.json"
+    )
+    assert case["generated_outputs"]["cut_geometry_dump_json"]["filename"] == (
+        "arch_lw_cut_geometry.json"
     )
 
 
@@ -268,6 +274,46 @@ def test_day1_harness_can_generate_structured_poche_report_json(tmp_path):
     assert reloaded["summary"]["layers_low_confidence"] == 2
     assert "cut_layer_007" in reloaded["layers_by_status"]["low_confidence"]
     assert "cut_layer_008" in reloaded["layers_by_status"]["low_confidence"]
+
+
+def test_day1_harness_can_generate_cut_geometry_summary_json(tmp_path):
+    case = _load_case()
+    fills = []
+    polygons = {}
+    paths_by_layer = {}
+    for idx, expected in enumerate(case["poche"]["expected_fills"], start=1):
+        layer = expected["layer_id"]
+        paths_by_layer[layer] = [
+            [[0, idx], [10, idx], [10, idx + 1], [0, idx + 1], [0, idx]]
+        ]
+        fill = FillResult(
+            layer,
+            expected["strategy"],
+            expected["confidence"],
+            expected["polygons"],
+            segment_count=4,
+            bridge_strategy_name=expected.get("bridge_strategy_name"),
+        )
+        fills.append(fill)
+        if expected.get("expected_status") != "low_confidence":
+            polygons[layer] = [[[0, idx], [10, idx], [10, idx + 1], [0, idx + 1], [0, idx]]]
+
+    geometry_path = tmp_path / case["generated_outputs"]["cut_geometry_dump_json"]["filename"]
+    data = build_poche_geometry_report(
+        source={"fixture": case["id"], "style": "solid", "bridge_strategy": "best"},
+        paths_by_layer=paths_by_layer,
+        poche_report=PocheReport(fills=fills, polygons=polygons),
+        redact_layer_names=False,
+    )
+    geometry_path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")
+
+    reloaded = json.loads(geometry_path.read_text())
+    assert reloaded["source"]["stage"] == "cut_geometry"
+    assert reloaded["summary"]["layers_considered"] == 8
+    assert reloaded["summary"]["source_cut_contours_total"] == 8
+    assert reloaded["summary"]["ambiguous_regions_total"] == 2
+    assert reloaded["layers"][0]["layer_name"] == "cut_layer_001"
+    assert reloaded["layers"][0]["source_cut_contours_count"] == 1
 
 
 @pytest.mark.xfail(

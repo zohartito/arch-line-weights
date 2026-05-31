@@ -5,7 +5,11 @@ from shapely.geometry import Polygon
 from arch_line_weights.make2d_completion import CompletionCandidate
 from arch_line_weights.poche import FillResult, PocheReport
 from arch_line_weights.poche_saas import PocheSaasResult
-from arch_line_weights.run_report import build_apply_saas_report, build_poche_report
+from arch_line_weights.run_report import (
+    build_apply_saas_report,
+    build_poche_geometry_report,
+    build_poche_report,
+)
 
 
 def _report(
@@ -183,3 +187,57 @@ def test_poche_report_marks_failed_when_command_error_is_supplied():
     assert data["summary"]["status"] == "failed"
     assert data["summary"]["why"] == ["Illustrator did not write geometry JSON"]
     assert data["summary"]["next_action"] == "Fix the reported command failure, then rerun arch-lw poche."
+
+
+def test_poche_geometry_report_summarizes_and_redacts_private_layer_geometry():
+    private_foundation = "private_project::Visible::ClippingPlaneIntersections::FOUNDATION_WALL"
+    private_ambiguous = "private_project::Visible::ClippingPlaneIntersections::CONCRETE_BASE"
+    paths_by_layer = {
+        private_foundation: [
+            [[0, 0], [10, 0], [10, 3], [0, 3], [0, 0]],
+            [[20, 0], [25, 0]],
+        ],
+        private_ambiguous: [
+            [[0, 10], [10, 10], [10, 12]],
+        ],
+    }
+    data = build_poche_geometry_report(
+        source={"fixture": "synthetic_private"},
+        paths_by_layer=paths_by_layer,
+        poche_report=PocheReport(
+            fills=[
+                FillResult(private_foundation, "linemerge_bare", 1.0, 1, 5),
+                FillResult(private_ambiguous, "alpha_shape", 0.55, 1, 2),
+            ],
+            polygons={private_foundation: [[[0, 0], [10, 0], [10, 3], [0, 3], [0, 0]]]},
+        ),
+        redact_layer_names=True,
+    )
+
+    dumped = str(data)
+    assert "private_project" not in dumped
+    assert "FOUNDATION_WALL" not in dumped
+    assert "CONCRETE_BASE" not in dumped
+    assert data["source"]["command"] == "poche"
+    assert data["source"]["stage"] == "cut_geometry"
+    assert data["summary"]["layers_considered"] == 2
+    assert data["summary"]["source_cut_contours_total"] == 3
+    assert data["summary"]["generated_poche_polygons_total"] == 2
+    assert data["summary"]["ambiguous_regions_total"] == 1
+
+    filled = data["layers"][0]
+    assert filled["layer_id"].startswith("layer_")
+    assert "layer_name" not in filled
+    assert filled["source_cut_contours_count"] == 2
+    assert filled["source_segment_count"] == 5
+    assert filled["generated_poche_polygons_count"] == 1
+    assert filled["injected_polygon_count"] == 1
+    assert filled["source_bbox"] == [0.0, 0.0, 25.0, 3.0]
+    assert filled["source_bbox_area"] == 75.0
+    assert filled["generated_polygon_areas"] == [30.0]
+    assert filled["voids"]["available"] is False
+    assert filled["voids"]["count"] == 0
+
+    ambiguous = data["layers"][1]
+    assert ambiguous["ambiguous_regions"][0]["reason"] == "low confidence"
+    assert "Review Make2D source curves" in ambiguous["next_action"]

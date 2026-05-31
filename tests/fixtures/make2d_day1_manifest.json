@@ -208,15 +208,13 @@
         "structured_poche_report_json": {
           "filename": "arch_lw_poche_report.json",
           "needed_for": "machine-verifiable filled/skipped/low-confidence layer status without parsing a human log"
-        }
-      },
-      "missing_source_files": [
-        {
-          "kind": "cut_geometry_dump_json",
-          "relative_path": "reports/arch_lw_cut_geometry.json",
+        },
+        "cut_geometry_dump_json": {
+          "filename": "arch_lw_cut_geometry.json",
           "needed_for": "localizing foundation/concrete misses to source Make2D path geometry"
         }
-      ]
+      },
+      "missing_source_files": []
     }
   ]
 }

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -295,4 +296,162 @@ def build_poche_report(
         "completion_candidates": [
             _candidate_dict(candidate) for candidate in poche_report.completion_candidates
         ],
+    }
+
+
+def _stable_layer_id(layer: str) -> str:
+    return f"layer_{hashlib.sha256(layer.encode('utf-8')).hexdigest()[:12]}"
+
+
+def _points(paths: list[list[list[float]]]):
+    for path in paths:
+        for point in path:
+            if len(point) >= 2:
+                yield float(point[0]), float(point[1])
+
+
+def _bbox(paths: list[list[list[float]]]) -> list[float] | None:
+    pts = list(_points(paths))
+    if not pts:
+        return None
+    xs = [p[0] for p in pts]
+    ys = [p[1] for p in pts]
+    return [round(min(xs), 4), round(min(ys), 4), round(max(xs), 4), round(max(ys), 4)]
+
+
+def _bbox_area(bounds: list[float] | None) -> float:
+    if bounds is None:
+        return 0.0
+    return round(max(0.0, bounds[2] - bounds[0]) * max(0.0, bounds[3] - bounds[1]), 4)
+
+
+def _path_segment_count(paths: list[list[list[float]]]) -> int:
+    return sum(max(0, len(path) - 1) for path in paths)
+
+
+def _polygon_area(coords: list[list[float]]) -> float:
+    if len(coords) < 3:
+        return 0.0
+    area = 0.0
+    closed = coords if coords[0] == coords[-1] else [*coords, coords[0]]
+    for a, b in zip(closed, closed[1:], strict=False):
+        area += float(a[0]) * float(b[1]) - float(b[0]) * float(a[1])
+    return round(abs(area) / 2.0, 4)
+
+
+def _geometry_next_action(status: str, ambiguous_regions: list[dict[str, Any]]) -> str:
+    if status in {"filled", "inferred"} and not ambiguous_regions:
+        return "No action needed."
+    if status == "skipped":
+        return "Review the skip override before relying on this layer."
+    if status == "failed":
+        return "Review Make2D source curves and close or simplify this cut layer."
+    return "Review Make2D source curves for low-confidence or ambiguous cut regions."
+
+
+def build_poche_geometry_report(
+    *,
+    source: Mapping[str, Any],
+    paths_by_layer: Mapping[str, list[list[list[float]]]],
+    poche_report: PocheReport | None,
+    redact_layer_names: bool = True,
+) -> dict[str, Any]:
+    """Build a redacted, stable summary of cut geometry used by ``arch-lw poche``."""
+    poche_report = poche_report or PocheReport()
+    fills_by_layer = {fill.layer: fill for fill in poche_report.fills}
+    candidates_by_layer: dict[str, list[object]] = {}
+    for candidate in poche_report.completion_candidates:
+        target = str(getattr(candidate, "target_layer", ""))
+        candidates_by_layer.setdefault(target, []).append(candidate)
+
+    layers: list[dict[str, Any]] = []
+    for layer, paths in paths_by_layer.items():
+        if layer == "__POCHE_CLOSE__":
+            continue
+        fill = fills_by_layer.get(layer)
+        injected_polygons = poche_report.polygons.get(layer, [])
+        if fill is None:
+            status = "failed"
+            action = "missing_polygonize_result"
+            strategy = "failed"
+            confidence = 0.0
+            polygon_count = 0
+            segment_count = _path_segment_count(paths)
+            tolerance = None
+            bridge_strategy_name = None
+        else:
+            status, action = _layer_status(
+                fill,
+                injected_count=len(injected_polygons),
+                missing_payload=False,
+            )
+            strategy = fill.strategy
+            confidence = round(float(fill.confidence), 4)
+            polygon_count = fill.polygon_count
+            segment_count = fill.segment_count
+            tolerance = fill.tolerance
+            bridge_strategy_name = fill.bridge_strategy_name
+
+        ambiguous_regions: list[dict[str, Any]] = []
+        if status == "low_confidence":
+            ambiguous_regions.append({"reason": "low confidence", "confidence": confidence})
+        elif status == "skipped":
+            ambiguous_regions.append({"reason": "skipped"})
+        elif status == "failed":
+            ambiguous_regions.append({"reason": "failed"})
+        for candidate in candidates_by_layer.get(layer, []):
+            if not bool(getattr(candidate, "accepted", False)):
+                ambiguous_regions.append(
+                    {
+                        "reason": str(getattr(candidate, "reason", "rejected completion candidate")),
+                        "confidence": round(float(getattr(candidate, "confidence", 0.0)), 4),
+                    }
+                )
+
+        bounds = _bbox(paths)
+        generated_polygon_areas = [_polygon_area(poly) for poly in injected_polygons]
+        layer_data: dict[str, Any] = {
+            "layer_id": _stable_layer_id(layer) if redact_layer_names else layer,
+            "source_cut_contours_count": len(paths),
+            "source_segment_count": _path_segment_count(paths),
+            "generated_poche_polygons_count": polygon_count,
+            "injected_polygon_count": len(injected_polygons),
+            "strategy": strategy,
+            "confidence": confidence,
+            "status": status,
+            "action": action,
+            "tolerance": tolerance,
+            "bridge_strategy_name": bridge_strategy_name,
+            "source_bbox": bounds,
+            "source_bbox_area": _bbox_area(bounds),
+            "generated_polygon_areas": generated_polygon_areas,
+            "voids": {"available": False, "count": 0},
+            "ambiguous_regions": ambiguous_regions,
+            "next_action": _geometry_next_action(status, ambiguous_regions),
+        }
+        if not redact_layer_names:
+            layer_data["layer_name"] = layer
+        layers.append(layer_data)
+
+    summary = {
+        "layers_considered": len(layers),
+        "source_cut_contours_total": sum(layer["source_cut_contours_count"] for layer in layers),
+        "source_segments_total": sum(layer["source_segment_count"] for layer in layers),
+        "generated_poche_polygons_total": sum(
+            layer["generated_poche_polygons_count"] for layer in layers
+        ),
+        "injected_polygons_total": sum(layer["injected_polygon_count"] for layer in layers),
+        "ambiguous_regions_total": sum(len(layer["ambiguous_regions"]) for layer in layers),
+    }
+
+    return {
+        "schema_version": 1,
+        "source": {
+            "command": "poche",
+            "stage": "cut_geometry",
+            "layer_names_redacted": redact_layer_names,
+            **dict(source),
+        },
+        "summary": summary,
+        "layers": layers,
     }

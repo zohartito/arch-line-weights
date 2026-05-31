@@ -896,6 +896,12 @@ def apply_saas_cmd(
     type=click.Path(dir_okay=False, path_type=Path),
     help="Write a structured JSON poché report for verification gates.",
 )
+@click.option(
+    "--geometry-json",
+    "geometry_json",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Write a redacted cut-geometry summary JSON for verification gates.",
+)
 def poche_cmd(
     src: Path,
     output: Path | None,
@@ -907,6 +913,7 @@ def poche_cmd(
     llm_fallback: bool,
     source: str,
     report_json: Path | None,
+    geometry_json: Path | None,
 ):
     """Generate solid-black poché on cut layers via shapely linemerge + polygonize.
 
@@ -952,6 +959,7 @@ def poche_cmd(
             scale=hatch_scale,
             use_alpha_shape=alpha_shape,
             bridge_strategy=bridge_strategy,
+            geometry_report_path=str(geometry_json) if geometry_json else None,
         )
     except Exception as exc:
         if report_json is not None:
