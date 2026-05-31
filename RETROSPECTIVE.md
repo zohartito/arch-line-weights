@@ -86,3 +86,52 @@ repeating the same proof, coordination, and launch mistakes.
   serve the verifier, not distract from it.
 - Update GitHub issues/PRs immediately when control-plan commits or branch
   heads change. The GitHub ledger should be the source of truth, not chat.
+
+## 2026-05-31 - Live GitHub Ledger Reconciliation
+
+### What worked
+
+- W3 reacted to the proof-gate feedback with concrete follow-up commits: the
+  branch now starts encoding the foundation/concrete no-go limitation,
+  stabilizes the Rhino bridge verification path, and normalizes `layout-jsx`
+  runtime reports.
+- The issue structure kept the important decisions visible: #30 remains the
+  root proof decision, #29 stays blocked behind proof truth, #31 owns fixtures,
+  #32 owns report semantics, and #33 stays deferred.
+- Updating the roadmap and retrospective in the repo makes the program memory
+  reviewable in GitHub instead of leaving it buried in chat.
+
+### What didn't
+
+- GitHub comments and PR bodies drifted as the branch moved. Several live
+  comments still described PR #36 at the older layout-bridge head after newer
+  W3 commits landed.
+- PR #34's body also lagged its own branch by still naming the earlier research
+  head after the roadmap/retrospective commit was pushed.
+- There are too many duplicate state ledgers. The same NO-GO decision appears
+  across PR bodies, issue comments, strategy notes, roadmap text, and chat,
+  which makes stale references likely.
+- CI is still not clean on the current draft PR. A ruff failure is easy to
+  dismiss during coordination, but it must remain a merge blocker.
+
+### Why
+
+- Multiple workers were writing snapshots while the W3 branch was still moving.
+  A comment that was correct at 04:35Z became stale after later commits.
+- Comments are append-only operational notes, but we treated them like current
+  state. The PR body is the better live place for head, scope, and check status.
+- The team was trying to preserve every finding, which is good, but did not
+  clearly separate durable decisions from moment-in-time observations.
+
+### What we'd do differently
+
+- Use the PR body as the canonical live branch ledger: current head, scope,
+  check state, merge blockers, and launch blockers.
+- Use issue comments for durable decisions and acceptance criteria, not every
+  intermediate branch snapshot.
+- Every snapshot comment should include "observed at" language or avoid exact
+  heads entirely unless it will be maintained.
+- When a new W3 commit addresses a W2/W5 finding, immediately update the PR body
+  and the roadmap before adding more issue comments.
+- Keep ruff and test state in the merge-readiness checklist so coordination
+  success cannot accidentally become technical clearance.

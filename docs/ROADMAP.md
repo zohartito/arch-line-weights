@@ -37,9 +37,13 @@ Current durable GitHub coordination points:
 - Rhino export assistant: #33, deferred
 
 PR #36 is a draft savepoint, not release clearance. Its current branch includes
-structured poché report work, cut-geometry summary work, and an Illustrator
-layout JSX bridge, but CI still needs attention and the #30 product decision is
-not resolved.
+structured poché report work, cut-geometry summary work, an Illustrator layout
+JSX bridge, and follow-up work to encode the foundation/concrete no-go
+limitation, stabilize the Rhino bridge verification path, and normalize
+`layout-jsx` runtime reports. That is useful progress toward honest report
+semantics, but CI still needs attention and #30 is not closed until the
+foundation/concrete path is either fixed or documented as a limitation and
+accepted by proof QA.
 
 See `RETROSPECTIVE.md` for the current wins, failures, causes, and operating
 changes.
@@ -70,8 +74,12 @@ layers.
 ## Near-Term Technical Work
 
 - Decide #30 before any new posting: either fix foundation/concrete poché or
-  document partial foundation/concrete coverage as a known limitation.
+  document partial foundation/concrete coverage as a known limitation that is
+  visible in report JSON, tests, and public copy.
 - Keep #29 blocked until #30 has verifier-backed proof truth.
+- Treat W3's current limitation/report work as implementation evidence, not
+  acceptance. W5 still needs to re-QA the proof packet before the blocker moves.
+- Fix the current ruff failure on PR #36 before any merge-readiness decision.
 - Finish the verification report contract: changed, skipped, failed, why,
   input provenance, command manifest, stroke delta, raster diff, poché
   coverage, missed-fill detection, false-fill detection, and an exportable
@@ -82,6 +90,8 @@ layers.
   private course drawings.
 - Keep PR #36 draft until the layout/report bridge, CI, and #30 decision are
   reconciled.
+- Keep GitHub as the live ledger: PR bodies should be refreshed when the branch
+  head changes, and issue comments should say when they are snapshots.
 - Expand fixtures for Make2D layer naming variants only after the verifier can
   explain current proof failures.
 - Keep the source install path and CLI help honest until PyPI publishing is
