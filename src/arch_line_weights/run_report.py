@@ -20,10 +20,52 @@ _INFERRED_STRATEGIES = {
     "llm_topology",
 }
 _REVIEW_STRATEGIES = {"alpha_shape", "concave_hull", "bbox", "llm_topology"}
+_FOUNDATION_CONCRETE_TOKENS = (
+    "TEC_CONCRETE_BASE",
+    "CONCRETE_BASE",
+    "TEC_FOUNDATION",
+    "FOUNDATION",
+    "FOOTING",
+)
 
 
 def _short_name(layer: str) -> str:
     return layer.rsplit("::", 1)[-1]
+
+
+def _is_foundation_concrete_layer(layer: str) -> bool:
+    component = _short_name(layer).upper()
+    return any(token in component for token in _FOUNDATION_CONCRETE_TOKENS)
+
+
+def _known_limitation_dict(item: Mapping[str, Any]) -> dict[str, Any]:
+    evidence = {
+        "kind": "visual_roi_black_ratio",
+        "evidence_screenshot": item.get("evidence_screenshot"),
+        "roi": item.get("roi"),
+        "expected_min_black_ratio": item.get("expected_min_black_ratio"),
+        "current_black_ratio_observed": item.get("current_black_ratio_observed"),
+    }
+    evidence = {key: value for key, value in evidence.items() if value is not None}
+    limitation = {
+        "id": str(item.get("id") or "known_visual_proof_miss"),
+        "code": str(item.get("code") or "known_visual_proof_miss"),
+        "status": str(item.get("status") or "no_go"),
+        "scope": str(item.get("scope") or "foundation_concrete"),
+        "reason": str(item.get("reason") or "Known visual proof limitation."),
+        "next_action": str(
+            item.get("next_action")
+            or "Fix the known proof limitation and recapture proof before launch."
+        ),
+        "evidence": evidence,
+    }
+    if item.get("blocks_issue") is not None:
+        limitation["blocks_issue"] = item["blocks_issue"]
+    return limitation
+
+
+def _known_limitations(items: list[Mapping[str, Any]] | None) -> list[dict[str, Any]]:
+    return [_known_limitation_dict(item) for item in items or []]
 
 
 def _empty_layers_by_status() -> dict[str, list[str]]:
@@ -83,6 +125,43 @@ def _layer_status(
     return "filled", "injected"
 
 
+def _foundation_concrete_limitation(
+    layer: str,
+    *,
+    status: str,
+    action: str,
+    redact_layer_name: bool,
+) -> dict[str, Any] | None:
+    if not _is_foundation_concrete_layer(layer):
+        return None
+    if status in {"filled", "inferred"} and action == "injected":
+        return None
+
+    limitation: dict[str, Any] = {
+        "id": "foundation_concrete_partial_coverage",
+        "code": "foundation_concrete_partial_coverage",
+        "status": "no_go",
+        "scope": "foundation_concrete",
+        "reason": "Foundation/concrete poché coverage is incomplete or diagnostic-only.",
+        "next_action": "Review cut geometry, fix Make2D closure, and recapture proof before launch.",
+        "evidence": {
+            "kind": "poche_layer_status",
+            "layer_status": status,
+            "layer_action": action,
+        },
+    }
+    if redact_layer_name:
+        limitation["layer_id"] = _stable_layer_id(layer)
+    else:
+        limitation["layer"] = layer
+        limitation["component_key"] = _short_name(layer).upper()
+    return limitation
+
+
+def _no_go_limitations(limitations: list[Mapping[str, Any]]) -> int:
+    return sum(1 for limitation in limitations if limitation.get("status") == "no_go")
+
+
 def build_apply_saas_report(
     *,
     input_path: str | Path,
@@ -90,6 +169,7 @@ def build_apply_saas_report(
     source: Mapping[str, Any],
     poche_report: PocheReport | None,
     poche_result: PocheSaasResult | None,
+    known_limitations: list[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Build a JSON-serializable report for one ``apply-saas`` run."""
     poche_report = poche_report or PocheReport()
@@ -102,6 +182,7 @@ def build_apply_saas_report(
 
     missing_layers = set(poche_result.layers_missing)
     layers: list[dict[str, Any]] = []
+    limitations: list[dict[str, Any]] = []
     diagnostic_polygons = 0
     for fill in poche_report.fills:
         injected_count = len(poche_report.polygons.get(fill.layer, []))
@@ -126,6 +207,15 @@ def build_apply_saas_report(
             review_reasons.append("payload layer could not be located for injection")
         if any(_meaningful_rejection(candidate) for candidate in layer_candidates):
             review_reasons.append("one or more Make2D completion candidates were rejected")
+        limitation = _foundation_concrete_limitation(
+            fill.layer,
+            status=status,
+            action=action,
+            redact_layer_name=False,
+        )
+        if limitation is not None:
+            limitations.append(limitation)
+            review_reasons.append("foundation/concrete coverage is launch-blocking")
 
         layers.append(
             {
@@ -154,6 +244,7 @@ def build_apply_saas_report(
             }
         )
 
+    limitations.extend(_known_limitations(known_limitations))
     summary = {
         "cut_layers_considered": len(poche_report.fills),
         "layers_filled": sum(1 for layer in layers if layer["status"] == "filled"),
@@ -165,6 +256,8 @@ def build_apply_saas_report(
         "polygons_filled": poche_result.polygons_injected,
         "polygons_diagnostic_only": diagnostic_polygons,
         "bytes_injected": poche_result.bytes_injected,
+        "limitations_count": len(limitations),
+        "no_go_limitations": _no_go_limitations(limitations),
     }
 
     return {
@@ -180,6 +273,7 @@ def build_apply_saas_report(
             _candidate_dict(candidate) for candidate in poche_report.completion_candidates
         ],
         "missing_payload_layers": poche_result.layers_missing,
+        "limitations": limitations,
     }
 
 
@@ -244,6 +338,10 @@ def _poche_summary_status(summary: Mapping[str, Any], error: str | None) -> tupl
         return "failed", [error], "Fix the reported command failure, then rerun arch-lw poche."
 
     why: list[str] = []
+    if summary.get("no_go_limitations", 0):
+        why.append(
+            f"{summary['no_go_limitations']} launch-blocking poché coverage limitation(s) recorded"
+        )
     if summary["cut_layers_considered"] == 0:
         why.append("No cut layers were considered")
     if summary["polygons_injected"] == 0:
@@ -252,7 +350,17 @@ def _poche_summary_status(summary: Mapping[str, Any], error: str | None) -> tupl
         why.append(f"{summary['layers_failed']} cut layer(s) failed to polygonize")
 
     if why:
-        return "no_go", why, "Generate/review cut geometry, fix Make2D layer closure, then rerun arch-lw poche."
+        if summary.get("no_go_limitations", 0):
+            return (
+                "no_go",
+                why,
+                "Resolve no-go poché coverage limitations and recapture proof before launch.",
+            )
+        return (
+            "no_go",
+            why,
+            "Generate/review cut geometry, fix Make2D layer closure, then rerun arch-lw poche.",
+        )
 
     if summary["layers_low_confidence"] or summary["layers_skipped"]:
         if summary["layers_low_confidence"]:
@@ -273,11 +381,13 @@ def build_poche_report(
     source: Mapping[str, Any],
     poche_report: PocheReport | None,
     error: str | None = None,
+    known_limitations: list[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Build a stable JSON report for the standalone ``arch-lw poche`` command."""
     poche_report = poche_report or PocheReport()
     layers: list[dict[str, Any]] = []
     layers_by_status = _empty_layers_by_status()
+    limitations: list[dict[str, Any]] = []
     diagnostic_polygons = 0
 
     for fill in poche_report.fills:
@@ -300,6 +410,15 @@ def build_poche_report(
             review_reasons.append(f"strategy {fill.strategy} is review-only")
         if 0 < fill.confidence < 0.85:
             review_reasons.append(f"confidence {fill.confidence:.2f} below 0.85")
+        limitation = _foundation_concrete_limitation(
+            fill.layer,
+            status=status,
+            action=action,
+            redact_layer_name=False,
+        )
+        if limitation is not None:
+            limitations.append(limitation)
+            review_reasons.append("foundation/concrete coverage is launch-blocking")
 
         layers.append(
             {
@@ -322,6 +441,7 @@ def build_poche_report(
             }
         )
 
+    limitations.extend(_known_limitations(known_limitations))
     summary: dict[str, Any] = {
         "cut_layers_considered": len(poche_report.fills),
         "layers_filled": sum(1 for layer in layers if layer["status"] == "filled"),
@@ -333,6 +453,8 @@ def build_poche_report(
         "polygons_total": poche_report.total_polygons,
         "polygons_injected": poche_report.injected_polygons,
         "polygons_diagnostic_only": diagnostic_polygons,
+        "limitations_count": len(limitations),
+        "no_go_limitations": _no_go_limitations(limitations),
     }
     status, why, next_action = _poche_summary_status(summary, error)
     summary.update({"status": status, "why": why, "next_action": next_action})
@@ -352,6 +474,7 @@ def build_poche_report(
         "completion_candidates": [
             _candidate_dict(candidate) for candidate in poche_report.completion_candidates
         ],
+        "limitations": limitations,
     }
 
 
@@ -405,11 +528,33 @@ def _geometry_next_action(status: str, ambiguous_regions: list[dict[str, Any]]) 
     return "Review Make2D source curves for low-confidence or ambiguous cut regions."
 
 
+def _poche_geometry_summary_status(summary: Mapping[str, Any]) -> tuple[str, list[str], str]:
+    why: list[str] = []
+    if summary.get("no_go_limitations", 0):
+        why.append(
+            f"{summary['no_go_limitations']} launch-blocking poché coverage limitation(s) recorded"
+        )
+        return (
+            "no_go",
+            why,
+            "Resolve no-go poché coverage limitations and recapture proof before launch.",
+        )
+    if summary.get("ambiguous_regions_total", 0):
+        why.append(f"{summary['ambiguous_regions_total']} ambiguous cut geometry region(s) recorded")
+        return (
+            "needs_review",
+            why,
+            "Review ambiguous cut geometry before relying on the poché output.",
+        )
+    return "passed", [], "No action needed."
+
+
 def build_poche_geometry_report(
     *,
     source: Mapping[str, Any],
     paths_by_layer: Mapping[str, list[list[list[float]]]],
     poche_report: PocheReport | None,
+    known_limitations: list[Mapping[str, Any]] | None = None,
     redact_layer_names: bool = True,
 ) -> dict[str, Any]:
     """Build a redacted, stable summary of cut geometry used by ``arch-lw poche``."""
@@ -421,6 +566,7 @@ def build_poche_geometry_report(
         candidates_by_layer.setdefault(target, []).append(candidate)
 
     layers: list[dict[str, Any]] = []
+    limitations: list[dict[str, Any]] = []
     for layer, paths in paths_by_layer.items():
         if layer == "__POCHE_CLOSE__":
             continue
@@ -463,6 +609,14 @@ def build_poche_geometry_report(
                         "confidence": round(float(getattr(candidate, "confidence", 0.0)), 4),
                     }
                 )
+        limitation = _foundation_concrete_limitation(
+            layer,
+            status=status,
+            action=action,
+            redact_layer_name=redact_layer_names,
+        )
+        if limitation is not None:
+            limitations.append(limitation)
 
         bounds = _bbox(paths)
         generated_polygon_areas = [_polygon_area(poly) for poly in injected_polygons]
@@ -483,12 +637,14 @@ def build_poche_geometry_report(
             "generated_polygon_areas": generated_polygon_areas,
             "voids": {"available": False, "count": 0},
             "ambiguous_regions": ambiguous_regions,
+            "limitations": [limitation] if limitation is not None else [],
             "next_action": _geometry_next_action(status, ambiguous_regions),
         }
         if not redact_layer_names:
             layer_data["layer_name"] = layer
         layers.append(layer_data)
 
+    limitations.extend(_known_limitations(known_limitations))
     summary = {
         "layers_considered": len(layers),
         "source_cut_contours_total": sum(layer["source_cut_contours_count"] for layer in layers),
@@ -498,7 +654,11 @@ def build_poche_geometry_report(
         ),
         "injected_polygons_total": sum(layer["injected_polygon_count"] for layer in layers),
         "ambiguous_regions_total": sum(len(layer["ambiguous_regions"]) for layer in layers),
+        "limitations_count": len(limitations),
+        "no_go_limitations": _no_go_limitations(limitations),
     }
+    status, why, next_action = _poche_geometry_summary_status(summary)
+    summary.update({"status": status, "why": why, "next_action": next_action})
 
     return {
         "schema_version": 1,
@@ -510,4 +670,5 @@ def build_poche_geometry_report(
         },
         "summary": summary,
         "layers": layers,
+        "limitations": limitations,
     }

@@ -197,6 +197,9 @@
       "known_misses": [
         {
           "id": "foundation_concrete_under_wood_column_left_footing",
+          "status": "no_go",
+          "scope": "foundation_concrete",
+          "blocks_issue": 30,
           "evidence_screenshot": "known_miss_closeup",
           "roi": [300, 6200, 1600, 6760],
           "expected_min_black_ratio": 0.15,

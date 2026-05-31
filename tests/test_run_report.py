@@ -62,6 +62,17 @@ def test_report_marks_alpha_shape_as_low_confidence_diagnostic_only():
     assert data["summary"]["polygons_diagnostic_only"] == 1
 
 
+def test_apply_saas_report_marks_partial_foundation_concrete_coverage_no_go():
+    layer = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+    data = _report([FillResult(layer, "auto_bridge", 0.69, 1, 18)])
+
+    assert data["summary"]["no_go_limitations"] == 1
+    assert data["limitations"][0]["code"] == "foundation_concrete_partial_coverage"
+    assert data["limitations"][0]["status"] == "no_go"
+    assert data["limitations"][0]["scope"] == "foundation_concrete"
+    assert data["layers"][0]["review"]["needs_review"] is True
+
+
 def test_report_marks_bbox_as_review_only():
     layer = "LayerA"
     data = _report([FillResult(layer, "bbox", 0.3, 1, 3)])
@@ -123,7 +134,7 @@ def test_report_includes_completion_candidate_rejections():
 def test_poche_report_marks_needs_review_and_groups_layers():
     filled = "axon::Visible::ClippingPlaneIntersections::09_SHS_50x50x5_HORIZ"
     skipped = "axon::Visible::ClippingPlaneIntersections::23_WINDOW_FRAMES_REMAP"
-    low_confidence = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+    low_confidence = "axon::Visible::ClippingPlaneIntersections::TEC_TIMBER_BEAMS"
     data = build_poche_report(
         input_path="section.ai",
         output_path="section-POCHE.ai",
@@ -158,6 +169,41 @@ def test_poche_report_marks_needs_review_and_groups_layers():
     assert data["layers"][0]["confidence"] == 1.0
 
 
+def test_poche_report_marks_partial_foundation_concrete_coverage_no_go():
+    layer = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+    data = build_poche_report(
+        input_path="section.ai",
+        output_path="section-POCHE.ai",
+        source={"style": "solid", "bridge_strategy": "best"},
+        poche_report=PocheReport(
+            fills=[FillResult(layer, "auto_bridge", 0.69, 1, 18)],
+            polygons={},
+        ),
+    )
+
+    assert data["summary"]["status"] == "no_go"
+    assert data["summary"]["no_go_limitations"] == 1
+    assert data["limitations"] == [
+        {
+            "id": "foundation_concrete_partial_coverage",
+            "code": "foundation_concrete_partial_coverage",
+            "status": "no_go",
+            "scope": "foundation_concrete",
+            "layer": layer,
+            "component_key": "TEC_CONCRETE_BASE",
+            "reason": "Foundation/concrete poché coverage is incomplete or diagnostic-only.",
+            "next_action": "Review cut geometry, fix Make2D closure, and recapture proof before launch.",
+            "evidence": {
+                "kind": "poche_layer_status",
+                "layer_status": "low_confidence",
+                "layer_action": "diagnostic_only",
+            },
+        }
+    ]
+    assert data["layers"][0]["review"]["needs_review"] is True
+    assert "foundation/concrete coverage is launch-blocking" in data["layers"][0]["review"]["reasons"]
+
+
 def test_poche_report_marks_no_go_when_no_layers_are_injectable():
     failed = "axon::Visible::ClippingPlaneIntersections::TEC_FOUNDATION"
     data = build_poche_report(
@@ -172,7 +218,8 @@ def test_poche_report_marks_no_go_when_no_layers_are_injectable():
 
     assert data["summary"]["status"] == "no_go"
     assert "No reliable poché polygons were produced" in data["summary"]["why"]
-    assert "Generate/review cut geometry" in data["summary"]["next_action"]
+    assert "Resolve no-go poché coverage limitations" in data["summary"]["next_action"]
+    assert data["summary"]["no_go_limitations"] == 1
     assert data["layers_by_status"]["failed"] == [failed]
 
 
@@ -188,6 +235,44 @@ def test_poche_report_marks_failed_when_command_error_is_supplied():
     assert data["summary"]["status"] == "failed"
     assert data["summary"]["why"] == ["Illustrator did not write geometry JSON"]
     assert data["summary"]["next_action"] == "Fix the reported command failure, then rerun arch-lw poche."
+
+
+def test_poche_report_includes_known_visual_no_go_limitation():
+    layer = "axon::Visible::ClippingPlaneIntersections::TEC_TIMBER_BEAMS"
+    data = build_poche_report(
+        input_path="section.ai",
+        output_path="section-POCHE.ai",
+        source={"style": "solid"},
+        poche_report=PocheReport(
+            fills=[FillResult(layer, "linemerge_bare", 1.0, 1, 4)],
+            polygons={layer: [[[0, 0], [10, 0], [10, 10], [0, 10]]]},
+        ),
+        known_limitations=[
+            {
+                "id": "foundation_concrete_under_wood_column_left_footing",
+                "scope": "foundation_concrete",
+                "status": "no_go",
+                "evidence_screenshot": "known_miss_closeup",
+                "roi": [300, 6200, 1600, 6760],
+                "expected_min_black_ratio": 0.15,
+                "current_black_ratio_observed": 0.0,
+                "reason": "The left foundation/concrete mass below the wood column is outline-only.",
+            }
+        ],
+    )
+
+    assert data["summary"]["status"] == "no_go"
+    assert data["summary"]["no_go_limitations"] == 1
+    assert data["limitations"][0]["id"] == "foundation_concrete_under_wood_column_left_footing"
+    assert data["limitations"][0]["code"] == "known_visual_proof_miss"
+    assert data["limitations"][0]["scope"] == "foundation_concrete"
+    assert data["limitations"][0]["evidence"] == {
+        "kind": "visual_roi_black_ratio",
+        "evidence_screenshot": "known_miss_closeup",
+        "roi": [300, 6200, 1600, 6760],
+        "expected_min_black_ratio": 0.15,
+        "current_black_ratio_observed": 0.0,
+    }
 
 
 def test_layout_jsx_report_records_sheet_and_dry_run_gate():
@@ -241,10 +326,16 @@ def test_poche_geometry_report_summarizes_and_redacts_private_layer_geometry():
     assert "CONCRETE_BASE" not in dumped
     assert data["source"]["command"] == "poche"
     assert data["source"]["stage"] == "cut_geometry"
+    assert data["summary"]["status"] == "no_go"
+    assert data["summary"]["no_go_limitations"] == 1
     assert data["summary"]["layers_considered"] == 2
     assert data["summary"]["source_cut_contours_total"] == 3
     assert data["summary"]["generated_poche_polygons_total"] == 2
     assert data["summary"]["ambiguous_regions_total"] == 1
+    assert data["limitations"][0]["code"] == "foundation_concrete_partial_coverage"
+    assert data["limitations"][0]["layer_id"].startswith("layer_")
+    assert "layer" not in data["limitations"][0]
+    assert "component_key" not in data["limitations"][0]
 
     filled = data["layers"][0]
     assert filled["layer_id"].startswith("layer_")
