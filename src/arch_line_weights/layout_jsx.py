@@ -528,6 +528,36 @@ def layout_via_jsx(
     Path(report_abs).parent.mkdir(parents=True, exist_ok=True)
     if not use_open_doc:
         open_in_illustrator(src_abs, timeout_sec=min(timeout_sec, 1800))
+        active_name, active_path = query_active_doc()
+        if active_name and "[Converted]" in active_name:
+            converted_doc_match = _converted_doc_match_kind(active_name, active_path, src_abs)
+            if converted_doc_match:
+                use_open_doc = True
+                write_rendered_jsx(use_open_doc=True)
+            else:
+                failed_report = build_layout_jsx_report(
+                    input_path=src_abs,
+                    output_path=resolved_dst,
+                    source=_layout_source_context(
+                        jsx_abs=jsx_abs,
+                        fit_mode=fit_mode,
+                        allow_enlarge=allow_enlarge,
+                        use_open_doc=False,
+                        active_name=active_name,
+                        active_path=active_path,
+                        converted_doc_match=None,
+                    ),
+                    status="failed",
+                    artboard_width_pt=artboard_width,
+                    artboard_height_pt=artboard_height,
+                    margin_pt=margin_pt,
+                    why=["Illustrator opened converted document that does not match requested source"],
+                )
+                Path(report_abs).write_text(json.dumps(failed_report, indent=2, sort_keys=True) + "\n")
+                raise RuntimeError(
+                    f"Illustrator opened '{active_name}' as a [Converted] document, "
+                    "but it does not match the requested source."
+                )
     run_jsx_in_illustrator(jsx_abs, timeout=timeout_sec)
     report_path = Path(report_abs)
     if not report_path.exists():
