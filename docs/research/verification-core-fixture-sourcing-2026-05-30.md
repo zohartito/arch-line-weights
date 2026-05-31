@@ -329,9 +329,189 @@ For this project:
 - Bluebeam proof assets until Bluebeam behavior is actually verified and the
   source fixture is legal to publish.
 
+## License Closure Notes
+
+### BlockTool `Demo_Site.3dm`
+
+Status: conditionally usable for public fixtures.
+
+Evidence:
+
+- The repository README instructs users to open
+  `demo/3D Model/Demo_Site.3dm`.
+  <https://github.com/BlockTool/BlockTool>
+- GitHub labels the repository with the MIT license.
+  <https://github.com/BlockTool/BlockTool>
+- GitHub's own license API documentation warns that repository license
+  detection matches a root license file and does not account for dependencies
+  or other ways a project may document license terms.
+  <https://docs.github.com/en/rest/licenses/licenses?apiVersion=2022-11-28>
+
+Interpretation: the best available public signal is that BlockTool is MIT and
+the demo `.3dm` is part of the same repository. That is good enough for a
+small public fixture after a final checkout-level review confirms there is no
+asset-specific license or third-party data notice under `demo/` or `media/`.
+Keep the source URL, repository license, commit SHA, and attribution in the
+fixture manifest. Do not claim this is legal advice.
+
+### NYC 3D Building Model
+
+Status: usable for a public real fixture with attribution and size control.
+
+Evidence:
+
+- The NYC metadata describes the model as a public dataset and says it was
+  converted into `.3dm` format compatible with Rhino.
+  <https://www.nyc.gov/assets/planning/download/pdf/data-maps/open-data/nyc-3d-model-metadata.pdf>
+- The same metadata identifies credits/stewards and use limitations.
+  <https://www.nyc.gov/assets/planning/download/pdf/data-maps/open-data/nyc-3d-model-metadata.pdf>
+- NYC Open Data FAQ says Open Data has no restrictions on use, while pointing
+  readers to the Terms of Use.
+  <https://opendata.cityofnewyork.us/faq/>
+- NYC's open data technical standards say public datasets should be available
+  without registration, license, or usage restrictions except as provided, and
+  that republishers may need to identify source, version, and modifications.
+  <https://cityofnewyork.github.io/opendatatsm/publicpolicies.html>
+
+Interpretation: NYC is the best public real-model candidate. Use the smallest
+possible clipped extract and manifest the source as NYC Planning / NYC Open
+Data, including dataset name, source URL, download date, source version/date,
+modification notes, and no-warranty/use-limitation text. Prefer generated
+Make2D/PDF outputs over committing full community-district `.3dm` files.
+
+### WikiHouse Wren
+
+Status: usable but not recommended for the first public corpus.
+
+Evidence:
+
+- The Wren README says the repository's Grasshopper file was developed by
+  Architecture 00 and is licensed under MPL 2.0.
+  <https://github.com/wikihouseproject/Wren>
+- MPL 2.0 grants rights to use, reproduce, make available, modify, display,
+  perform, distribute, and otherwise exploit contributions, but its conditions
+  include source-form distribution and notice obligations for covered software.
+  <https://www.mozilla.org/en-US/MPL/2.0/>
+
+Interpretation: Wren can be used if the project is ready to carry MPL notices
+and source-availability obligations for any covered files that are distributed.
+It is a good second-wave architectural fixture, especially for section-like
+building geometry, but the first public corpus should avoid MPL complexity
+unless BlockTool/NYC fall through.
+
+### McNeel Sample And Training Files
+
+Status: local-only unless explicit permission is obtained.
+
+Evidence:
+
+- McNeel's Bongo page provides official sample `.3dm` downloads but shows
+  McNeel copyright and no broad redistribution license on the visible page.
+  <https://www.rhino3d.com/plugins/bongo/docs/sample-models/>
+- Rhino's Section Styles page links `SectionStyles-Demo.3dm`, but the visible
+  page shows McNeel copyright and no open redistribution license.
+  <https://www.rhino3d.com/en/features/clipping/section-styles/>
+- The Rhino in Architecture course provides class materials and source files.
+  <https://wiki.mcneel.com/training/rhino_for_arch/rhino_in_architecture_course>
+- The course PDF's visible copyright notice allows personal/classroom copying
+  without profit but requires prior permission for republishing, server posting,
+  or redistribution to lists.
+  <https://wiki.mcneel.com/_media/training/rhino_for_arch/rhinoceros_in_architecture_course.pdf>
+
+Interpretation: McNeel files are good local reference material for learning how
+official sample models export through Rhino/Make2D. They should not be
+committed, nor should derived visual baselines be committed, without a written
+license or permission that explicitly allows public redistribution in this
+repository.
+
+### rhino3dm Synthetic Fixture Path
+
+Status: safe and recommended for synthetic source fixtures.
+
+Evidence:
+
+- `rhino3dm` is MIT-licensed.
+  <https://github.com/mcneel/rhino3dm>
+- Its README says it can create, interrogate, store, read, and write Rhino
+  geometry and non-geometry classes such as layers, object attributes,
+  transforms, and viewports independent of Rhino.
+  <https://github.com/mcneel/rhino3dm>
+
+Interpretation: use `rhino3dm` for authored `.3dm` source fixtures where the
+test does not need Rhino's Make2D implementation itself. For Make2D-specific
+fixtures, still generate the exported `.ai` or `.pdf` deterministically and
+commit only tiny project-authored outputs.
+
+## Public Fixture Go/No-Go
+
+| Candidate | Public commit decision | Notes |
+| --- | --- | --- |
+| Project-authored synthetic `.ai` / `.pdf` / tiny `.3dm` | GO | Safest path. MIT with this repo. |
+| BlockTool `Demo_Site.3dm` derived Make2D output | GO after final asset-license check | Repo-level MIT signal is strong; still verify no asset-specific exception before adding. |
+| NYC 3D Building Model clipped extract or derived output | GO with attribution | Best public real-model source. Keep it tiny and document source/version/modifications. |
+| WikiHouse Wren derived output | DEFER | Usable under MPL 2.0, but not first corpus because of notice/source obligations. |
+| McNeel Bongo / Section Styles / Architecture course files | NO-GO for public repo | Local-only unless McNeel grants redistribution permission. |
+| USC/private real drawings and derivatives | NO-GO for public repo | Local-only. Publish only redacted aggregate metrics. |
+| Forum/Food4Rhino/tutorial attachments with unclear terms | NO-GO | Use only with explicit permission. |
+
+## Recommended First Public Corpus
+
+Build the first public corpus in this order:
+
+1. `syn-internal-ai-native-section-poche-numblock`
+   - Project-authored native Illustrator `.ai` with `/NumBlock`.
+   - Covers `apply-saas --poche` on native payload inputs.
+
+2. `syn-internal-ai-converted-section-poche-no-numblock`
+   - Project-authored converted/PDF-backed `.ai`.
+   - Covers `apply-jsx`, then `arch-lw poche` on the bridge output.
+
+3. `syn-internal-pdf-axon-line-hierarchy-layered`
+   - Project-authored vector PDF.
+   - Covers line-weight hierarchy without section/poché claims.
+
+4. `syn-internal-ai-ps-unsupported-legacy`
+   - Tiny `%!PS-Adobe` legacy `.ai` fixture.
+   - Covers clean unsupported-input diagnostics.
+
+5. `syn-internal-pdf-poche-ambiguous-helper-geometry`
+   - Project-authored broken-loop section fixture.
+   - Covers conservative poché confidence boundaries.
+
+6. `pub-nyc-3dm-axon-line-hierarchy-clipped`
+   - Tiny NYC Open Data-derived extract or Make2D output.
+   - Covers real public urban/massing linework and layer robustness.
+
+7. `pub-blocktool-3dm-elevation-line-hierarchy-demo-site`
+   - Small BlockTool-derived Make2D output after final asset-license check.
+   - Covers real public architectural/facade geometry.
+
+This keeps the first corpus legal-first while still including two public real
+fixtures. Wren remains a second-wave candidate if stronger architectural
+section geometry is needed and MPL handling is acceptable.
+
+## Private Fixture Handling Rules
+
+- Keep private fixtures under a local gitignored path, not under
+  `tests/fixtures/public`.
+- Do not record private source filenames in committed manifests. Use stable
+  local aliases such as `private-section-proof-a`, `private-axon-stress-a`, and
+  `private-legacy-ai-a`.
+- Do not commit rendered images, PDFs, `.ai` outputs, layer dumps, title blocks,
+  or screenshots from private drawings.
+- Only commit aggregate metrics that are already public-safe: file size class,
+  stroke count, command path, exit code, timing, number of modified paths,
+  layer count, poché polygon count, and failed-layer count.
+- If hashes are useful, keep full hashes local. Public docs may use short
+  redacted identifiers only when they cannot be linked back to a private file.
+- Private verification should run on copies or dry-run outputs where possible.
+- Public claims must say "validated on private fixtures" only at the aggregate
+  level and must not imply those fixtures are available in the repo.
+
 ## Follow-Up Checklist
 
-- Confirm whether BlockTool's MIT license covers `demo/3D Model/Demo_Site.3dm`.
+- Perform a checkout-level BlockTool review for any asset-specific license or
+  third-party data notice before adding a derived public fixture.
 - Pick one NYC community district and create the smallest legally attributable
   clipped public fixture if size is reasonable.
 - Draft synthetic fixture generators before importing any third-party model.
