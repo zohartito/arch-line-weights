@@ -25,8 +25,7 @@ new `usc` preset is tuned for studio-board output and documented in
 
 Current status:
 
-- Repo pushed at `18c589e`.
-- Tests/docs/build were green for that pushed state.
+- Release-gate checks were green for the source/GitHub handoff.
 - Install is source/GitHub only right now; PyPI is not live.
 - The webapp is local experimental only, not a hosted app.
 - Axon stress-test passed on `macro_for_archlw.ai`: 98 MB, 1.28M strokes,
@@ -35,13 +34,18 @@ Current status:
   `ClippingPlaneIntersections`.
 - `wall section iso cut .ai` is legacy Rhino PostScript `.ai`, not
   PDF-compatible Illustrator `.ai`; it needs Illustrator Save As.
-- `WALL SECTION [Converted].ai` has cut layers and `inspect` works, but
-  `apply-saas` fails on missing `/NumBlock` until re-saved.
+- Section proof passed via Illustrator bridge on `WALL SECTION [Converted].ai`:
+  `apply-jsx --preset usc --source rhino --for-print`, then
+  `arch-lw poche --source rhino --style solid --bridge-strategy best`.
+- `apply-jsx` hierarchy: 25 leaf layers, 512 paths modified, 0 errors,
+  Illustrator opens the output.
+- Poché (`arch-lw poche`): 30 poché polygons, 8 cut layers, 0 failed layers,
+  Illustrator opens the final output.
+- `apply-saas --poche` is not usable on this PDF-only/converted lineage because
+  there is no `/NumBlock`; use the Illustrator bridge path for those files.
 - v1 input note: if a Rhino legacy `.ai` fails, open it in Illustrator, Save As
   modern/PDF-compatible `.ai`, then rerun.
-- Real-board dogfood is next, so this is not a "trust it five minutes before
-  pinup" claim yet.
-- Section poché proof is still pending on an Illustrator 2026 re-save.
+- Proof screenshots captured in `docs/img/day1-proof/`.
 
 Install from source:
 
@@ -53,12 +57,12 @@ python -m venv .venv
 .venv/bin/arch-lw --help
 ```
 
-Screenshots:
+Screenshots (in `docs/img/day1-proof/`):
 
-- Before: `[CURSOR_SCREENSHOT_1_BEFORE]`
-- After: `[CURSOR_SCREENSHOT_2_AFTER]`
-- Terminal: `[CURSOR_SCREENSHOT_3_TERMINAL]`
-- Detail crop: `[CURSOR_SCREENSHOT_4_DETAIL]`
+![Before — raw Rhino export, uniform line weights](../img/day1-proof/01-before-raw.png)
+![After poché — solid-black section-cut mass](../img/day1-proof/03-after-poche-full.png)
+![Layers preserved with black poché fills](../img/day1-proof/04-layers-panel-clipping-poche.png)
+![Close-up — cut mass solid, openings white](../img/day1-proof/05-closeup-cut-mass-windows-white.png)
 
 Repo: https://github.com/zohartito/arch-line-weights
 

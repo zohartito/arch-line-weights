@@ -20,20 +20,25 @@ The current Day-1 release includes a `usc` studio-board preset documented in
 
 Current status:
 
-- Repo pushed at `18c589e`.
-- Tests, docs, and build were green for that pushed state.
+- Release-gate checks were green for the source/GitHub handoff.
 - Install is source/GitHub only; PyPI is not live yet.
 - The webapp is a local experimental scaffold, not a hosted product.
 - Axon stress-test passed on `macro_for_archlw.ai`: 98 MB, 1.28M strokes,
   `apply-saas` exit 0, about 1:53 runtime.
 - That is not section/poché proof; the axon file has no
   `ClippingPlaneIntersections`.
+- Section proof passed via Illustrator bridge on `WALL SECTION [Converted].ai`:
+  `apply-jsx --preset usc --source rhino --for-print`, then
+  `arch-lw poche --source rhino --style solid --bridge-strategy best`.
+- `apply-jsx` hierarchy: 25 leaf layers, 512 paths modified, 0 errors,
+  Illustrator opens the output.
+- Poché (`arch-lw poche`): 30 poché polygons, 8 cut layers, 0 failed layers,
+  Illustrator opens the final output.
 - Known v1 input caveat: legacy Rhino PostScript `.ai` may need to be opened in
   Illustrator and re-saved as modern/PDF-compatible `.ai` before rerunning.
-- Real-board dogfood is still pending.
-- `WALL SECTION [Converted].ai` has cut layers and `inspect` works, but
-  `apply-saas` fails on missing `/NumBlock` until re-saved.
-- Section poché proof is still pending on an Illustrator 2026 re-save.
+- `apply-saas --poche` is not usable on this PDF-only/converted lineage because
+  there is no `/NumBlock`; use the Illustrator bridge path for those files.
+- Proof screenshots captured in `docs/img/day1-proof/`.
 
 Install:
 
@@ -51,12 +56,12 @@ python -m venv .venv
 .venv/bin/arch-lw --help
 ```
 
-Screenshots:
+Screenshots (in `docs/img/day1-proof/`):
 
-- Before: `[CURSOR_SCREENSHOT_1_BEFORE]`
-- After: `[CURSOR_SCREENSHOT_2_AFTER]`
-- Terminal: `[CURSOR_SCREENSHOT_3_TERMINAL]`
-- Detail crop: `[CURSOR_SCREENSHOT_4_DETAIL]`
+![Before — raw Rhino export, uniform line weights](../img/day1-proof/01-before-raw.png)
+![After poché — solid-black section-cut mass](../img/day1-proof/03-after-poche-full.png)
+![Layers preserved with black poché fills](../img/day1-proof/04-layers-panel-clipping-poche.png)
+![Close-up — cut mass solid, openings white](../img/day1-proof/05-closeup-cut-mass-windows-white.png)
 
 Repo: https://github.com/zohartito/arch-line-weights
 

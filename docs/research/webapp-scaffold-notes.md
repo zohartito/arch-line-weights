@@ -46,7 +46,7 @@ webapp/
 Rationale:
 
 - The main package stays free of FastAPI / uvicorn / pydantic-settings deps
-  — keeps the CLI install surface lean for users who don't want the SaaS
+  — keeps the CLI install surface lean for users who don't want the webapp
   layer.
 - The webapp can iterate on FastAPI versions independently.
 - A single `pip install -e webapp/` brings the editable parent in too,

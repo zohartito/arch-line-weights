@@ -52,7 +52,7 @@ and a typo shouldn't break the pipeline.
 
 The wiring threads through `polygonize_dump`, `apply_poche`,
 `compute_polygons_for_layers`, and `apply_saas_with_poche`, so both the
-JSX and SaaS paths honour the flag.
+JSX and native-payload paths honour the flag.
 
 ### CLI: `--bridge-strategy {greedy,best}`
 

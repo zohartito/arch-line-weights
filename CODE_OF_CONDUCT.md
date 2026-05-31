@@ -30,9 +30,11 @@ Examples of unacceptable behavior:
 
 ## Enforcement
 
-Instances of abusive or otherwise unacceptable behavior may be reported by
-emailing **zohartito96@gmail.com**. All complaints will be reviewed and
-investigated. The maintainer is obligated to maintain confidentiality.
+Instances of abusive or otherwise unacceptable behavior may be reported
+privately to the maintainer through [GitHub Security
+Advisories](https://github.com/zohartito/arch-line-weights/security/advisories/new).
+All complaints will be reviewed and investigated. The maintainer is obligated
+to maintain confidentiality.
 
 The maintainer reserves the right to remove, edit, or reject comments,
 commits, code, issues, and other contributions that are not aligned to this

@@ -174,13 +174,9 @@ of a different segment; never start-to-start (that would invert winding);
 the resulting graph should produce {expected_polygon_count} closed loops.
 ```
 
-**Cost estimate.** Haiku 3.5: $0.80 / 1M input tokens, $4.00 / 1M output.
-
-A typical call: ~2,000 input tokens (layer name + 30 endpoints + prompt
-boilerplate) + ~300 output tokens. Per-call cost ≈ `2000 × 0.8e-6 + 300 ×
-4e-6` = `0.0016 + 0.0012` ≈ **$0.003 per stubborn layer**. With 3 stubborn
-layers per drawing → **~$0.01 per drawing** of LLM cost. (Well under
-the user's mental price ceiling.)
+**Runtime estimate.** A typical call would send a layer name, a bounded list of
+endpoints, and a strict schema prompt. Keep this opt-in and cache the static
+prompt text if implemented.
 
 **Effort.** ~6-10 hours. Anthropic SDK call, prompt-template assembly,
 JSON-schema validation of the response, integration as a fallback after
@@ -214,7 +210,7 @@ Python rhino3dm bindings only read geometry, they don't run section ops).
 
 **Expected success on the three:** **almost certainly all 3** — but only when
 the user uploads `.3dm`. Doesn't help the .ai-only case (which is the v0.4
-ICP for paying customers per `docs/research/saas-architecture.md`).
+common source release workflow).
 
 **Pros.** Highest fidelity. **Cons.** Massive scope creep; rhino3dm can't run
 ClippingPlane operations server-side. Park as a future feature.
@@ -320,8 +316,8 @@ LLM only fires on the ~3-out-of-21 layers that exhaust the ladder.
 - DBSCAN + backtracking alone: probably **2/3** (`11_CU_CORR` fixed,
   `26_CLT_GAP` fixed by α-shape, `23_WINDOW_FRAMES` still requires
   `__POCHE_CLOSE__`).
-- Adding LLM topology inference: probably **3/3**, with ~$0.01 per drawing in
-  inference cost.
+- Adding LLM topology inference: probably **3/3**, if provider latency and
+  schema reliability are acceptable.
 - Confidence: medium. The "LLM fixes WINDOW_FRAMES" claim is plausible from
   Haiku's known strengths on small structured-reasoning tasks but not yet
   empirically tested. Worth a 60-minute spike.
@@ -417,7 +413,7 @@ the implementation in `bridge_llm.py` (a new module).
 | Phase | Task | Days |
 |---|---|---|
 | 1 | Land Approach #7 (backtracking bridger). Pure geometry, no new deps, unblocks `11_CU_CORR`. Includes test fixture in `tests/fixtures/cu_corr_*.json`. | 1.0 |
-| 2 | Land Approach #1 (DBSCAN endpoint collapse). Add `scikit-learn` as opt dep (`pip install arch-line-weights[ml]`). Hand-rolled DBSCAN if dep is unwelcome. | 1.0 |
+| 2 | Land Approach #1 (DBSCAN endpoint collapse). Add `scikit-learn` as an optional `ml` extra after packaging is re-enabled. Hand-rolled DBSCAN if dep is unwelcome. | 1.0 |
 | 3 | Land Approach #4 (α-shape sweep). Replaces `concave_hull` fallback with a graded α-shape selection. Improves fidelity for `26_CLT_GAP`. | 0.5 |
 | 4 | Land Approach #5 (LLM topology inference) behind feature flag `ARCH_LW_LLM_FALLBACK=1`. Requires `anthropic` opt dep + prompt caching per `claude-api` skill. Ship a 30-prompt regression suite (real layer dumps, golden polygon counts). | 1.5 |
 | 5 | Add per-layer JSON override schema for "force strategy X" so users can pin the choice when the cascade picks wrong. | 0.5 |

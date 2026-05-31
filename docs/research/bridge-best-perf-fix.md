@@ -10,7 +10,7 @@ showing up at once:
 1. `bridge_strategy=best` could spend unbounded time in the depth-first
    backtracking rung on one small but pathological layer:
    `15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44`.
-2. The SaaS output drew low-confidence fallback geometry as solid black fills.
+2. The native-payload output drew low-confidence fallback geometry as solid black fills.
    On this file, that meant an `alpha_shape` fallback on facade returns and a
    `bbox` fallback on a roof-cap layer were injected as if they were real cut
    poche.
@@ -131,7 +131,7 @@ ARCH_LW_POCHE_ALLOW_LOW_CONFIDENCE=1
 
 ### RGB and CMYK native color support
 
-The SaaS native payload parser now recognizes both:
+The native-payload parser now recognizes both:
 
 - RGB `XA`
 - CMYK `K`
@@ -168,4 +168,3 @@ arch-lw apply-saas "/path/to/drawing.ai" --auto --preset section
 If a layer is missing legitimate cut fill after the conservative default, add a
 specific per-layer override rather than allowing every low-confidence fallback
 globally.
-

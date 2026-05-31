@@ -43,7 +43,8 @@ test = ["pytest>=8"]
 lint = ["ruff>=0.7", "mypy>=1.13"]
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.26"]
 # LLM topology-inference rung (rescue rung 5 in poche.polygonize_layer).
-# Opt-in only: install via `pip install arch-line-weights[llm]` and set
+# Opt-in only: from a source checkout, install via
+# `.venv/bin/python -m pip install -e '.[llm]'` and set
 # ANTHROPIC_API_KEY. See docs/research/llm-topology-impl-notes.md.
 llm  = ["anthropic>=0.40"]
 

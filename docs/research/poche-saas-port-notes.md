@@ -125,7 +125,7 @@ processed.
 `enumerate_layer_paths_from_payload(payload)` walks the decompressed
 payload directly and dumps `{layer_name: [[[x, y], ...], ...]}` — exactly
 the shape `polygonize_layer()` expects. This replaces the JSX-side
-`dump_cut_geometry.jsx` for the SaaS code path. Implementation:
+`dump_cut_geometry.jsx` for the native-payload code path. Implementation:
 
 * Match every `(<name>) Ln\r` marker via regex
 * For each match, take the bytes from the marker to the next `\rLB\r`

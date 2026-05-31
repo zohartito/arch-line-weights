@@ -46,7 +46,7 @@ type changes.
 ## Current Best Stair Axon Base
 
 For `stairs.ai`, the original file is old Rhino PostScript and cannot be read by
-the headless SaaS payload path. Use the Illustrator JSX path or the already
+the headless native-payload path. Use the Illustrator JSX path or the already
 generated deadline candidate:
 
 ```text

@@ -29,7 +29,7 @@ You'll see something like every stroke at `0.25 pt`. That's the problem we're ab
 
 ## 3. Apply a weight hierarchy
 
-Use the layer-aware JSX path so every Rhino layer survives in Illustrator:
+Use the layer-aware JSX path so your Rhino layers are preserved in Illustrator:
 
 ```bash
 .venv/bin/arch-lw apply-jsx "South Section.ai"
@@ -43,8 +43,8 @@ For ISO 128 standards-aligned weights at 1/4"=1' for plotted print:
 .venv/bin/arch-lw apply "South Section.ai" --auto --preset section --for-print --scale 1/4
 ```
 
-For submit-quality board work with layer-preserving stroke hierarchy and poché,
-prefer the headless AI-native path:
+For layer-preserving stroke hierarchy plus poché in one pass, prefer the
+headless AI-native path:
 
 ```bash
 .venv/bin/arch-lw apply-saas "South Section.ai" \

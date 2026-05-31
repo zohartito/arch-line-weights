@@ -1,20 +1,15 @@
-# NOTICE — Public License Posture
+# NOTICE
 
-The core `arch-line-weights` CLI in this repository is distributed under the
-MIT License. See `LICENSE`.
+The `arch-line-weights` CLI in this repository is distributed under the MIT
+License. See [`LICENSE`](LICENSE) for the full text.
 
-Earlier private planning notes explored proprietary licensing, paid binaries,
-and SaaS subscriptions. Those notes are historical research, not the current
-license for the public CLI.
+Current public install is source/GitHub only. Deferred or disabled PyPI
+auto-publish automation does not change the MIT license of the core CLI source
+in this repository.
 
-Future commercial services may exist around the project, such as hosted
-processing, paid support, private deployment help, or a hardened web app. Those
-future services may have separate terms. They do not change the MIT license for
-the core CLI code shipped in this repository.
-
-The repository intentionally excludes large private/source drawings and
+The repository intentionally excludes large private source drawings and
 copyrighted reference books. Those assets are not part of the MIT-licensed
 source distribution.
 
-For licensing questions, contact **zohartito96@gmail.com** with subject
-`arch-line-weights license`.
+For licensing questions, open an issue at
+<https://github.com/zohartito/arch-line-weights/issues>.

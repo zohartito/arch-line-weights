@@ -95,10 +95,9 @@ This is more robust than:
 
 - **Plain text + `json.loads`** — drifts on quote escaping, trailing
   commas, model thinking out loud.
-- **`output_config.format`** — works on Opus 4.7 / Sonnet 4.6 but the
-  spec calls for Haiku 3.5 / 4.5 to keep cost down (~$0.003 / call),
-  and `tool_use` is the most portable strict-JSON path across the
-  Haiku family.
+- **`output_config.format`** — works on larger models, but `tool_use` is the
+  most portable strict-JSON path across the smaller model family targeted for
+  this experiment.
 
 A second-pass schema check in `_validate_plan_schema` enforces the
 constraints JSON Schema can't express — index bounds (`end_idx <
@@ -110,40 +109,24 @@ n_anchors`) and self-loop rejection (`start_idx == end_idx`).
 already gated behind a four-rung geometric pipeline that filters out
 ~95% of cases. When the LLM fails (network blip, malformed plan,
 hallucinated indices), the right move is to skip to the next rung
-(concave_hull, then bbox) — not to burn another $0.003 retrying.
+(concave_hull, then bbox) instead of repeating a provider call.
 
 The Anthropic SDK already retries 429 and 5xx errors automatically
 (`max_retries=2` by default), so transient failures are absorbed
 upstream. Anything that bubbles out is real (auth error, malformed
 schema, timeout) and not worth re-issuing.
 
-## Cost reasoning
+## Runtime Reasoning
 
-From `docs/research/stubborn-layers-deep-dive.md` §5 / `ai-augmented-
-mode.md` §3, validated with current Anthropic pricing
-(2026-04-30 snapshot):
-
-| Model | Input $/MTok | Output $/MTok | Cache hit $/MTok | Per-call cost |
-|---|---|---|---|---|
-| Claude Haiku 3.5 (default) | $0.80 | $4.00 | $0.08 | ~$0.003 |
-| Claude Haiku 4.5 | $1.00 | $5.00 | $0.10 | ~$0.004 |
-| Claude Sonnet 4.6 | $3.00 | $15.00 | $0.30 | ~$0.012 (overkill) |
-| Claude Opus 4.7 | $5.00 | $25.00 | $0.50 | ~$0.020 (don't) |
-
-Assumptions: ~2,000 input tokens (system + user) on the first call,
-~500 cache-read tokens on subsequent calls within a 5-min cache
-window, ~300 output tokens (closure plan with rationale).
-
-A typical drawing has ~3 stubborn layers that exhaust the geometric
-ladder → ~$0.01 / drawing of LLM cost. At a $9/mo personal-tier
-subscription with 30 drawings/mo, this is ~3% of revenue — well below
-any concerning fraction. See `ai-augmented-mode.md` §3 for the full
-headroom analysis.
+Assumptions: a bounded prompt with roughly one layer name, a compact endpoint
+list, and a strict closure-plan schema. A typical drawing should hit this rung
+only after deterministic geometric rungs fail, so the feature must remain
+opt-in and easy to disable.
 
 DEBUG mode (`ARCH_LW_DEBUG=1`) prints the actual cost of every call
 to stderr in the form
 `[arch-lw llm] model=claude-haiku-3-5 in=1234 out=156 cache_read=512
-cache_write=0 cost=$0.000312`.
+cache_write=0 provider_call_id=abc123`.
 
 ## Error handling philosophy
 
@@ -224,6 +207,7 @@ Per the analysis in `stubborn-layers-deep-dive.md` §5:
 - Algorithm proposal: `docs/research/stubborn-layers-deep-dive.md` §5
 - Anthropic integration recommendation:
   `docs/research/ai-augmented-mode.md` §4–6
-- Privacy stance: `docs/research/saas-privacy.md` §Subprocessors
-- Roadmap context: `docs/ROADMAP.md` Phase F7 / G4
+- Public release stance: deterministic-only core path unless an opt-in model
+  fallback is added later.
+- Roadmap context: `docs/ROADMAP.md`
 - POSTMORTEM Attempt 5: the three stubborn cut layers context

@@ -9,7 +9,7 @@ arch-lw apply drawing.ai --auto --preset usc
 ```
 
 Writes `drawing HIERARCHY.ai`. Buckets every color into the `usc` studio tier ladder by luminance + frequency.
-This is the fast stroke-weight output path; it is not the submit-quality path
+This is the fast stroke-weight output path; it is not the path to use
 when you need layer preservation or poché.
 
 ## Standards-aligned — print, ISO 128
@@ -20,7 +20,7 @@ arch-lw apply drawing.ai --auto --preset section --for-print --scale 1/4
 
 Selects the ISO-128 weight set (0.13, 0.18, 0.25, 0.35, 0.50, 0.70, 1.00 mm) for a printed quarter-inch section.
 
-## Submit-quality — layer-preserving hierarchy plus poché
+## Layer-preserving hierarchy plus poché
 
 ```bash
 arch-lw apply-saas drawing.ai --architectural --poche --preset usc --source rhino
@@ -38,7 +38,8 @@ When Rhino layer names matter (and they usually do):
 arch-lw apply-jsx drawing.ai
 ```
 
-Slower (Illustrator must open) but **every layer survives**. Use this default for any Rhino export that you'll continue editing.
+Slower (Illustrator must open) but **the layer structure is preserved**. Use
+this default for most Rhino exports that you'll continue editing.
 
 ## With a hand-edited mapping
 

@@ -22,8 +22,8 @@ all run on the default `apply-saas`/`apply-saas --poche` pipeline:
 * **LLM topology rescue rung** (v0.6.3) — opt-in LLM-driven rung;
   default off, no runtime cost when disabled.
 * **`[Converted]` state detection** (v0.6.3) — apply-jsx-only; no
-  measurable cost on the SaaS pipeline.
-* **JSX heartbeat** (v0.6.x) — apply-jsx-only; no SaaS cost.
+  measurable runtime cost on the native-payload pipeline.
+* **JSX heartbeat** (v0.6.x) — apply-jsx-only; no native-payload runtime cost.
 
 So the only stages with real runtime impact at default settings are
 **bridge-best** (apply-saas + --poche, all layers) and **alpha-shape**
@@ -89,7 +89,7 @@ Platform: `macOS-26.4.1-arm64-arm-64bit` — Python 3.11.7. arch-line-weights v0
 First-ever benchmark on the 98 MB macro plan. Only 1 iteration to
 stay inside the 30 min wall-clock budget — earlier real-world
 runs reported "~5 min" but those were likely cold-cache + apply-jsx;
-in steady-state the SaaS pipeline is much faster (~80–90 s).
+in steady-state the native-payload pipeline is much faster (~80–90 s).
 
 | file | input | layers | cut | apply-saas | apply-saas --poche | apply-jsx | output (poche) | polygons | success |
 |------|------:|-------:|----:|-----------|--------------------|----------|---------------:|---------:|--------:|

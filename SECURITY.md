@@ -15,9 +15,10 @@ the latest two minor versions will be supported.
 
 **Do not open a public GitHub issue for security reports.**
 
-Email security reports to **zohartito96@gmail.com** with subject
-`arch-line-weights security`. You'll get an acknowledgement within 5
-business days.
+Report security issues privately through [GitHub Security
+Advisories](https://github.com/zohartito/arch-line-weights/security/advisories/new)
+(repo **Security → Report a vulnerability**). You'll get an acknowledgement
+within 5 business days.
 
 For the kinds of bugs likely to matter:
 - malicious `.ai`/`.pdf` input that crashes / hangs / OOMs the tool

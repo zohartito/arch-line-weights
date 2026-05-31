@@ -97,7 +97,7 @@ should land in the lightest tier.
 
 | Mode | Speed | Layers | Use when |
 |---|---|---|---|
-| `apply-jsx` (default for `.ai`) | 3–15 min on 340K paths | **preserves all** original Rhino layers as Illustrator layers | You'll keep editing the file in Illustrator (almost always the right choice for studio work). |
+| `apply-jsx` (default for `.ai`) | 3–15 min on 340K paths | **preserves** the original Rhino layers as Illustrator layers | You'll keep editing the file in Illustrator (almost always the right choice for studio work). |
 | `apply` | ~2 min on 340K paths | **flattens to 1 layer** (PieceInfo gets stripped) | You only need a final render and don't care about layer structure. |
 
 ```
@@ -108,7 +108,7 @@ arch-lw apply-jsx drawing.ai
 arch-lw apply drawing.ai --auto --preset usc
 ```
 
-Day-1 submit-quality dogfood path:
+Day-1 layer-preserving dogfood path:
 
 ```
 .venv/bin/arch-lw inspect drawing.ai
@@ -162,6 +162,20 @@ From a source checkout:
   --mapping examples/sample-mapping.json \
   -o /tmp/sample-linework-HIERARCHY.pdf
 ```
+
+### Day-1 proof images
+
+The section proof uses the Illustrator bridge path (`apply-jsx` followed by
+`arch-lw poche`) on `WALL SECTION [Converted].ai`.
+
+![Day-1 section proof close-up: solid cut mass, openings left white](docs/img/day1-proof/05-closeup-cut-mass-windows-white.png)
+
+Proof assets:
+
+- [Before: raw Rhino/Make2D export](docs/img/day1-proof/01-before-raw.png)
+- [After: hierarchy + solid-black poché](docs/img/day1-proof/03-after-poche-full.png)
+- [Layers panel: preserved `ClippingPlaneIntersections` layers](docs/img/day1-proof/04-layers-panel-clipping-poche.png)
+- [Final poché PDF](docs/img/day1-proof/section-HIERARCHY-jsx-POCHE.pdf)
 
 ---
 
@@ -258,7 +272,7 @@ surface/hatch weight, matching the project convention in
 - [ ] Phase 4 — Per-drawing-type defaults; preview generator
 - [ ] Phase 5 — SVG support; native PDF input alongside .ai
 - [ ] Phase 6 — Batch + watch mode for live Rhino-export workflows
-- [ ] Phase 7 — `pip install arch-line-weights` from PyPI
+- [ ] Phase 7 — plain PyPI install once publishing is deliberately re-enabled
 
 ---
 

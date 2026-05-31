@@ -56,7 +56,14 @@ import pikepdf
 import zstandard as zstd
 from shapely.geometry import LineString, Polygon
 
-from .apply_saas import CHUNK, PREFIX, _read_payload, _write_payload, rewrite_payload
+from .apply_saas import (
+    CHUNK,
+    PREFIX,
+    _read_payload,
+    _require_native_private,
+    _write_payload,
+    rewrite_payload,
+)
 from .layer_classify import Source
 from .make2d_completion import (
     complete_structural_cut_polygons,
@@ -707,8 +714,7 @@ def apply_saas_with_poche(
     poche_result = PocheSaasResult()
 
     with pikepdf.open(src, allow_overwriting_input=False) as pdf:
-        page = pdf.pages[0]
-        priv = page.obj["/PieceInfo"]["/Illustrator"]["/Private"]
+        priv = _require_native_private(pdf)
         chunks_in = int(priv["/NumBlock"])
         apply_result.chunks_in = chunks_in
 

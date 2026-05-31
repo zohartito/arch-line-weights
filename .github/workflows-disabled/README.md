@@ -6,10 +6,12 @@ to re-enable.
 ## release.yml.disabled
 
 Was the PyPI auto-publish workflow. Disabled 2026-04-30 because:
-- Project pivoted from open-source MIT (v1.0.0 was published, then yanked)
-  to private/monetization-pending.
-- PyPI Trusted Publisher was removed; running this workflow now produces
-  failure emails for nothing.
+- PyPI publishing is deferred for the Day-1 source/GitHub release.
+- PyPI Trusted Publisher was removed, so running this workflow now produces
+  failure emails for no useful release outcome.
+
+This does not change the license posture of the repository. The core CLI source
+is MIT-licensed; only the automated PyPI publish path is disabled.
 
 To re-enable later (when ready to publish to PyPI again):
 1. Re-add the Trusted Publisher on PyPI (https://pypi.org/manage/project/arch-line-weights/settings/publishing/)

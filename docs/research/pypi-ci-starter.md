@@ -22,7 +22,7 @@ description = "Architectural line-weight tooling"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
-authors = [{ name = "Zohar Tito", email = "zohartito96@gmail.com" }]
+authors = [{ name = "Zohar Tito", email = "zohartito@users.noreply.github.com" }]
 classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -189,8 +189,8 @@ nav:
 
 ## macOS code-signing
 
-No hobbyist tier. **Apple Developer Program: $99/year** is the only path. Use
-`notarytool` (Xcode 13+). Cheaper alternative for a CLI: skip the `.pkg`
+No hobbyist tier. **Apple Developer Program membership** is the only path. Use
+`notarytool` (Xcode 13+). Simpler alternative for a CLI: skip the `.pkg`
 entirely, ship via Homebrew (no Gatekeeper friction).
 
 ## Sources

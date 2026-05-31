@@ -55,7 +55,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
   structural cut promotion, so glass/window, membrane/flashing, connector, and
   rainscreen/cladding tokens cannot be poché-filled just because a layer also
   contains a structural word.
-- Layer-based SaaS rewrites now anchor layer intervals to real
+- Layer-based native-payload rewrites now anchor layer intervals to real
   `%AI5_BeginLayer` envelopes, avoiding stray `Ln` setup text.
 - Helper-derived structural completion candidates now need meaningful shared
   boundary with the real `ClippingPlaneIntersections` target before they can
@@ -602,9 +602,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 Published to PyPI under MIT via OIDC Trusted Publishing; build verified;
 clean-venv install confirmed (`arch-lw, version 1.0.0`). Yanked ~15
-minutes later when the project pivoted to a SaaS-first commercial model.
-Repository made private. Trusted Publisher removed; release workflow
-disabled. The yank semantics keep `pip install arch-line-weights==1.0.0`
-working for anyone who explicitly pins it; it's hidden from plain
-`pip install`. The MIT license on that exact version is irrevocable. See
+minutes later when the project direction changed.
+Trusted Publisher removed; release workflow disabled. Yank semantics keep the
+explicitly pinned `1.0.0` artifact installable by version while hiding it from
+plain package discovery. The MIT license on that exact version is irrevocable. See
 `docs/POSTMORTEM.md` Attempt 7 and `docs/LESSONS_LEARNED.md` #22–#26.

@@ -23,7 +23,7 @@ limitation that affects what the demo PNGs show.
 Adobe Illustrator stores its **authoritative** drawing data inside
 `/PieceInfo /Illustrator /Private`. When Illustrator opens an `.ai` file,
 it prefers this payload over the legacy PDF content stream. The headless
-SaaS path (`apply_saas.apply_to_file`) edits this payload in place — that
+native-payload path (`apply_saas.apply_to_file`) edits this payload in place — that
 is what makes line-weight changes visible inside Illustrator and what
 allows OCG layers to be preserved.
 

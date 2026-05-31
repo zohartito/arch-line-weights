@@ -1,12 +1,12 @@
 # Why this tool exists
 
-Every architecture student spends one weekend per drawing fixing line weights by hand in Illustrator. Multiply that by every section, plan, elevation, and detail in a final review, and you've burned a week on something a computer should do.
+Many architecture students spend the better part of a weekend per drawing fixing line weights by hand in Illustrator. Multiply that across the sections, plans, elevations, and details in a final review, and you've burned days on something a computer should do.
 
 ## The Rhino-to-Illustrator pipeline pain
 
 Rhino is a great modeller. `Make2D` produces clean hidden-line vector output. The problem is what comes after:
 
-1. `Make2D` emits every stroke at uniform `0.25 pt`.
+1. `Make2D` emits strokes at a uniform `0.25 pt`.
 2. Layers carry semantic meaning (`TEC_CONCRETE_WALL`, `STR_BEAM_PRIMARY`) but no graphic distinction.
 3. Cut elements aren't filled. They're just outlines.
 
@@ -16,7 +16,7 @@ In Illustrator, the manual recovery pipeline is:
 2. For each cut layer: `Object > Path > Join`, watch it fail, manually trace closed regions, fill black.
 3. Save. Print. The cut isn't black, it's striped because the join failed silently.
 
-This is one section. A studio review needs ten. Every Rhino re-export starts the cycle over.
+This is one section. A studio review needs ten. And a Rhino re-export starts the cycle over.
 
 ## Line weight conventions
 

@@ -158,21 +158,20 @@ Plus emit per-fill metadata so the UI can flag low-confidence with warnings.
 Publishing. Build verified; clean-venv install confirmed; CLI returned
 "arch-lw, version 1.0.0".
 
-**Result:** Working publish. Anyone could `pip install arch-line-weights`
-for ~15 minutes.
+**Result:** Working publish. The package was discoverable from PyPI for
+~15 minutes.
 
-**Failure:** I had committed to MIT before deciding the business model.
-The user wanted to monetize. MIT distribution is irrevocable for
-distributed copies. We yanked v1.0.0 (hides from `pip install`,
-preserves project name, still legally MIT for anyone who downloaded it).
-Removed the Trusted Publisher to cut the OIDC pipeline. Disabled the
-release workflow. Made the repo private.
+**Failure:** The release posture changed after a public MIT upload. MIT
+distribution is irrevocable for distributed copies. We yanked v1.0.0, which
+hides it from plain package discovery while preserving the project name and the
+MIT license on any downloaded copy. Removed the Trusted Publisher to cut the
+OIDC pipeline and disabled the release workflow.
 
 **Side effects:**
 - GitHub Pages site went 404 (private repos need GH Pro for Pages)
 - Marketing drafts in `docs/announce/` are now stale (they pitch open-source)
-- v1.0.0 still installable via explicit `pip install arch-line-weights==1.0.0`
-  (yank semantics, not deletion)
+- v1.0.0 remains retrievable by explicit version pin because yanking is not
+  deletion.
 
 **Lesson kept:** **Pick the license BEFORE you publish to a public
 registry.** Once a version is on PyPI under any license, that exact
@@ -188,12 +187,12 @@ now."
 same day is a foot-gun. Pages 404'd within 5 minutes of the visibility
 flip. Always check what depends on the visibility before changing it.
 
-## Attempt 8 (2026-04-30) — pikepdf-only .ai modification (the SaaS unlock)
+## Attempt 8 (2026-04-30) — pikepdf-only .ai modification (native payload unlock)
 
 **What:** Investigate whether pikepdf alone can modify a Rhino-exported
 `.ai` file's `/PieceInfo /Illustrator /Private` payload such that
 Illustrator opens the result with all 62 OCG layers intact and the
-modifications applied. This was the make-or-break question for the SaaS
+modifications applied. This was the make-or-break question for the headless
 pivot.
 
 **Result:** **Worked, end-to-end.** Eight spike scripts in
@@ -222,11 +221,11 @@ streams.
 - The hybrid local-helper path (Attempt-3-style) is no longer needed as
   primary architecture; reserved for "Pro Privacy" upsells.
 
-**Lesson kept:** The format we'd been treating as proprietary all along
+**Lesson kept:** The format we'd been treating as opaque all along
 **was actually a documented PostScript dialect wrapped in modern
 compression**. Future-us: when a format looks closed, check if it's
 just an old format wearing modern packaging before assuming it's
-proprietary.
+closed.
 
 **Lesson kept:** A 60-minute time-boxed feasibility spike resolved a
 question that v0.1 (Attempt 1, "strip PieceInfo") tried to dodge by
@@ -266,7 +265,7 @@ prototype that ports the apply / poché pipelines to pure Python.
 - **Detect `[Converted]` Illustrator state explicitly in `apply-jsx`.** Either work on the open document directly or fail with a clear "save-as first" message.
 - **JSX timeout must be configurable + heartbeat-driven.** Hardcoded 60 min is wrong both ways — too long for small files (waste), too short for big ones (false abort).
 - **Different default output paths for the two pipelines.** `HIERARCHY-saas.ai` vs `HIERARCHY-jsx.ai` prevents the race entirely.
-- **The headless apply-saas pipeline is genuinely production-ready.** v0.5's plan/elevation/detail preset families work as designed on a 4× larger drawing than the reference.
+- **The headless apply-saas pipeline held up on a much larger file.** v0.5's plan/elevation/detail preset families work as designed on a 4× larger drawing than the reference.
 
 **Filed as GitHub Issues:** #9 (PyMuPDF replacement), #10 (Converted state), #11 (JSX timeout config), #12 (output path collision), #13 (apply-jsx --preset).
 
