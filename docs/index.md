@@ -30,6 +30,21 @@ pipx install git+https://github.com/zohartito/arch-line-weights
 
 PyPI publishing is still a release checklist item.
 
+## Current Release Notes
+
+- MIT-licensed core CLI.
+- Source/GitHub install only for now; there is no PyPI package for this
+  release.
+- Local CLI workflow, not a hosted service. The `webapp/` directory is a local
+  experimental scaffold.
+- Bluebeam is unverified; use Illustrator and Acrobat for the validated review
+  loop.
+- Native `apply-saas --poche` requires an Illustrator `.ai` with `/NumBlock`.
+- PDF-only or `[Converted]` `.ai` files use `apply-jsx`, then `arch-lw poche`
+  on the `HIERARCHY-jsx` output.
+- Legacy Rhino PostScript `.ai` exports may need Illustrator File > Save As /
+  re-save before v1 can process them.
+
 ## Pick the doc shape that matches your need
 
 <div class="grid cards" markdown>

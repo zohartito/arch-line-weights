@@ -1,7 +1,7 @@
 # r/architecture Draft
 
-Current source of truth: [`LAUNCH_KIT.md`](LAUNCH_KIT.md). Add screenshots
-before posting.
+Current source of truth: [`LAUNCH_KIT.md`](LAUNCH_KIT.md). Proof screenshots
+are captured and committed under `docs/img/day1-proof/`.
 
 ## Title
 

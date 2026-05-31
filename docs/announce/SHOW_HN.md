@@ -1,7 +1,7 @@
 # Show HN Draft
 
-Current source of truth: [`LAUNCH_KIT.md`](LAUNCH_KIT.md). Use this only after
-adding real Cursor screenshots and confirming the GitHub repo is public.
+Current source of truth: [`LAUNCH_KIT.md`](LAUNCH_KIT.md). Proof assets are
+committed; repo visibility is the remaining publish step.
 
 ## Title
 

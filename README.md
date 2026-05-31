@@ -120,6 +120,14 @@ Use basic `apply` for fast stroke-weight output. Use `apply-saas
 --architectural --poche` when Cursor 1 needs layer-preserving hierarchy plus
 conservative black poché for Illustrator/Acrobat inspection.
 
+Input caveats for that path:
+
+- `apply-saas --poche` requires a native Illustrator `.ai` with `/NumBlock`.
+- PDF-only or `[Converted]` `.ai` files use `apply-jsx`, then `arch-lw poche`
+  on the `HIERARCHY-jsx` output.
+- Legacy Rhino PostScript `.ai` exports may need Illustrator File > Save As /
+  re-save before v1 can process them.
+
 `apply-jsx` uses a **semantic layer-name classifier**: anything in a
 `Visible::ClippingPlaneIntersections::*` OCG is the section cut (1.0 pt);
 `TEC_TIMBER_*`, `TEC_CLT_*`, `TEC_FOUNDATION` etc. are structure (0.5 pt);
