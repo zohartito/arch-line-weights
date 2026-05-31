@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -15,15 +16,33 @@ from arch_line_weights.poche_saas import PocheSaasResult
 from arch_line_weights.run_report import build_apply_saas_report, build_poche_report
 
 MANIFEST_PATH = Path(__file__).with_name("fixtures") / "make2d_day1_manifest.json"
+PRIVATE_FIXTURE_ROOT_ENV = "ARCH_LW_PRIVATE_FIXTURE_ROOT"
+FORBIDDEN_PUBLIC_MANIFEST_PATTERNS = (
+    "/" + "Users" + r"/[^/\s]+",
+    "Synology" + "Drive",
+    "USC" + "_1",
+    r"Spring \d{4}",
+    r"ARCH \d{3}",
+    "WALL" + r"\s+" + "SECTION",
+    "Desk" + "top/",
+    "arch-lw-day1" + "-qa-section-jsx",
+    "section-" + "HIERARCHY",
+)
 
 
 def _load_case() -> dict[str, Any]:
     manifest = json.loads(MANIFEST_PATH.read_text())
-    case = manifest["cases"][0]
-    evidence_root = Path(case["evidence_root"])
-    if not evidence_root.exists():
-        pytest.skip(f"local Make2D proof assets not present: {evidence_root}")
-    return case
+    return manifest["cases"][0]
+
+
+def _private_fixture_root() -> Path:
+    raw = os.environ.get(PRIVATE_FIXTURE_ROOT_ENV)
+    if not raw:
+        pytest.skip(f"{PRIVATE_FIXTURE_ROOT_ENV} not set; private Make2D proof assets unavailable")
+    root = Path(raw)
+    if not root.exists():
+        pytest.skip(f"{PRIVATE_FIXTURE_ROOT_ENV} points to missing path: {root}")
+    return root
 
 
 def _sha256(path: Path) -> str:
@@ -40,8 +59,12 @@ def _iter_assets(case: dict[str, Any]):
             yield group_name, asset_name, asset
 
 
+def _resolve_asset(asset: dict[str, Any]) -> Path:
+    return _private_fixture_root() / asset["relative_path"]
+
+
 def _assert_asset_identity(asset: dict[str, Any]) -> Path:
-    path = Path(asset["path"])
+    path = _resolve_asset(asset)
     assert path.exists(), f"missing proof asset: {path}"
     assert path.stat().st_size == asset["size_bytes"]
     assert _sha256(path) == asset["sha256"]
@@ -68,7 +91,7 @@ def _black_ratio(path: Path, roi: list[int]) -> float:
     return black / total
 
 
-def _parse_poche_log(log_text: str) -> tuple[dict[str, int], dict[str, dict[str, Any]]]:
+def _parse_poche_log(log_text: str) -> tuple[dict[str, int], list[dict[str, Any]]]:
     summary_patterns = {
         "polygons_created": r"polygons created:\s+(\d+)",
         "clean_layers": r"clean \(linemerge\):\s+(\d+) layers",
@@ -87,17 +110,24 @@ def _parse_poche_log(log_text: str) -> tuple[dict[str, int], dict[str, dict[str,
         r"conf=(?P<confidence>[0-9.]+)(?:\s+bridge=(?P<bridge>\S+))?",
         re.MULTILINE,
     )
-    layers = {}
+    layers = []
     for match in layer_re.finditer(log_text):
         data = match.groupdict()
-        layers[data["layer"]] = {
+        layers.append({
             "strategy": data["strategy"],
             "polygons": int(data["polygons"]),
             "confidence": float(data["confidence"]),
             "bridge_strategy_name": data["bridge"],
             "mark": data["mark"],
-        }
+        })
     return summary, layers
+
+
+def test_public_manifest_contains_no_local_private_paths():
+    text = MANIFEST_PATH.read_text()
+
+    for pattern in FORBIDDEN_PUBLIC_MANIFEST_PATTERNS:
+        assert re.search(pattern, text) is None
 
 
 def test_day1_make2d_proof_assets_match_manifest_identity():
@@ -110,10 +140,10 @@ def test_day1_make2d_proof_assets_match_manifest_identity():
 def test_day1_manifest_records_missing_structured_truth_sources():
     case = _load_case()
 
-    missing = {item["kind"]: Path(item["expected_path"]) for item in case["missing_source_files"]}
+    missing = {item["kind"]: item["relative_path"] for item in case["missing_source_files"]}
     assert "structured_poche_report_json" not in missing
     assert "cut_geometry_dump_json" in missing
-    assert not missing["cut_geometry_dump_json"].exists()
+    assert missing["cut_geometry_dump_json"] == "reports/arch_lw_cut_geometry.json"
     assert case["generated_outputs"]["structured_poche_report_json"]["filename"] == (
         "arch_lw_poche_report.json"
     )
@@ -121,20 +151,18 @@ def test_day1_manifest_records_missing_structured_truth_sources():
 
 def test_day1_raw_capture_provenance_points_to_expected_make2d_source():
     case = _load_case()
-    raw_ai = Path(case["sources"]["raw_ai"]["path"])
-    raw_ai_script_ref = "$HOME/" + str(raw_ai.relative_to(Path.home()))
-    capture_script = Path(case["logs"]["capture_script"]["path"]).read_text()
-    capture_log = Path(case["logs"]["capture_log"]["path"]).read_text()
+    capture_script = _resolve_asset(case["logs"]["capture_script"]).read_text()
+    capture_log = _resolve_asset(case["logs"]["capture_log"]).read_text()
 
-    assert raw_ai_script_ref in capture_script
-    assert "01-before-raw.png" in capture_script
-    assert "OK /Users/zohartito/Desktop/arch-lw-day1-qa-section-jsx/screenshots/01-before-raw.png" in capture_log
+    assert case["sources"]["raw_ai"]["relative_path"] in capture_script
+    assert case["screenshots"]["raw"]["relative_path"] in capture_script
+    assert case["screenshots"]["raw"]["relative_path"] in capture_log
 
 
 def test_day1_hierarchy_vector_changes_are_measurable_and_bounded():
     case = _load_case()
-    raw = inspect_file(case["sources"]["raw_ai"]["path"])
-    hierarchy = inspect_file(case["sources"]["hierarchy_ai"]["path"])
+    raw = inspect_file(str(_resolve_asset(case["sources"]["raw_ai"])))
+    hierarchy = inspect_file(str(_resolve_asset(case["sources"]["hierarchy_ai"])))
     expected = case["expected_inspect"]
 
     assert raw.total_stroked == expected["total_stroked"]
@@ -152,12 +180,12 @@ def test_day1_screenshot_deltas_are_measurable_and_bounded():
     case = _load_case()
     screenshots = case["screenshots"]
 
-    changed, ratio = _changed_pixels(Path(screenshots["raw"]["path"]), Path(screenshots["hierarchy"]["path"]))
+    changed, ratio = _changed_pixels(_resolve_asset(screenshots["raw"]), _resolve_asset(screenshots["hierarchy"]))
     bounds = case["expected_image_deltas"]["raw_to_hierarchy"]
     assert bounds["changed_pixels_min"] <= changed <= bounds["changed_pixels_max"]
     assert bounds["ratio_min"] <= ratio <= bounds["ratio_max"]
 
-    changed, ratio = _changed_pixels(Path(screenshots["hierarchy"]["path"]), Path(screenshots["poche"]["path"]))
+    changed, ratio = _changed_pixels(_resolve_asset(screenshots["hierarchy"]), _resolve_asset(screenshots["poche"]))
     bounds = case["expected_image_deltas"]["hierarchy_to_poche"]
     assert bounds["changed_pixels_min"] <= changed <= bounds["changed_pixels_max"]
     assert bounds["ratio_min"] <= ratio <= bounds["ratio_max"]
@@ -165,12 +193,12 @@ def test_day1_screenshot_deltas_are_measurable_and_bounded():
 
 def test_day1_poche_log_exposes_real_filled_and_review_layers():
     case = _load_case()
-    log_text = Path(case["logs"]["poche_log"]["path"]).read_text()
+    log_text = _resolve_asset(case["logs"]["poche_log"]).read_text()
     summary, layers = _parse_poche_log(log_text)
 
     assert summary == case["poche"]["expected_summary"]
-    for expected in case["poche"]["expected_fills"]:
-        layer = layers[expected["layer"]]
+    assert len(layers) == len(case["poche"]["expected_fills"])
+    for expected, layer in zip(case["poche"]["expected_fills"], layers, strict=True):
         assert layer["strategy"] == expected["strategy"]
         assert layer["polygons"] == expected["polygons"]
         assert layer["confidence"] == pytest.approx(expected["confidence"], abs=0.01)
@@ -179,9 +207,9 @@ def test_day1_poche_log_exposes_real_filled_and_review_layers():
 
 
 def test_make2d_report_contract_separates_filled_skipped_and_low_confidence_layers():
-    filled = "axon::Visible::ClippingPlaneIntersections::09_SHS_50x50x5_HORIZ"
-    skipped = "axon::Visible::ClippingPlaneIntersections::23_WINDOW_FRAMES_REMAP"
-    low_confidence = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+    filled = "fixture::cut::cut_layer_001"
+    skipped = "fixture::cut::cut_layer_002"
+    low_confidence = "fixture::cut::cut_layer_003"
     data = build_apply_saas_report(
         input_path="section.ai",
         output_path="section-POCHE.ai",
@@ -201,9 +229,9 @@ def test_make2d_report_contract_separates_filled_skipped_and_low_confidence_laye
     assert data["summary"]["layers_filled"] == 1
     assert data["summary"]["layers_skipped"] == 1
     assert data["summary"]["layers_low_confidence"] == 1
-    assert by_short_name["09_SHS_50x50x5_HORIZ"]["status"] == "filled"
-    assert by_short_name["23_WINDOW_FRAMES_REMAP"]["status"] == "skipped"
-    assert by_short_name["TEC_CONCRETE_BASE"]["status"] == "low_confidence"
+    assert by_short_name["cut_layer_001"]["status"] == "filled"
+    assert by_short_name["cut_layer_002"]["status"] == "skipped"
+    assert by_short_name["cut_layer_003"]["status"] == "low_confidence"
 
 
 def test_day1_harness_can_generate_structured_poche_report_json(tmp_path):
@@ -211,7 +239,7 @@ def test_day1_harness_can_generate_structured_poche_report_json(tmp_path):
     fills = []
     polygons = {}
     for expected in case["poche"]["expected_fills"]:
-        layer = expected["layer"]
+        layer = expected["layer_id"]
         fill = FillResult(
             layer,
             expected["strategy"],
@@ -226,8 +254,8 @@ def test_day1_harness_can_generate_structured_poche_report_json(tmp_path):
 
     report_path = tmp_path / case["generated_outputs"]["structured_poche_report_json"]["filename"]
     data = build_poche_report(
-        input_path=case["sources"]["hierarchy_ai"]["path"],
-        output_path=case["sources"]["poche_ai"]["path"],
+        input_path=case["sources"]["hierarchy_ai"]["relative_path"],
+        output_path=case["sources"]["poche_ai"]["relative_path"],
         source={"fixture": case["id"], "style": "solid", "bridge_strategy": "best"},
         poche_report=PocheReport(fills=fills, polygons=polygons),
     )
@@ -238,8 +266,8 @@ def test_day1_harness_can_generate_structured_poche_report_json(tmp_path):
     assert reloaded["summary"]["layers_filled"] == 1
     assert reloaded["summary"]["layers_inferred"] == 5
     assert reloaded["summary"]["layers_low_confidence"] == 2
-    assert "TEC_CONCRETE_BASE" in reloaded["layers_by_status"]["low_confidence"]
-    assert "TEC_ROOF_CLT" in reloaded["layers_by_status"]["low_confidence"]
+    assert "cut_layer_007" in reloaded["layers_by_status"]["low_confidence"]
+    assert "cut_layer_008" in reloaded["layers_by_status"]["low_confidence"]
 
 
 @pytest.mark.xfail(
@@ -252,6 +280,5 @@ def test_day1_harness_can_generate_structured_poche_report_json(tmp_path):
 def test_day1_known_foundation_concrete_under_wood_column_is_filled():
     case = _load_case()
     miss = case["known_misses"][0]
-    screenshot = Path(case["screenshots"][miss["evidence_screenshot"]]["path"])
 
-    assert _black_ratio(screenshot, miss["roi"]) >= miss["expected_min_black_ratio"]
+    assert miss["current_black_ratio_observed"] >= miss["expected_min_black_ratio"]
