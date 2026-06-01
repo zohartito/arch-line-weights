@@ -1,7 +1,9 @@
+import copy
 import json
 import zipfile
 from pathlib import Path
 
+import pytest
 from PIL import Image
 
 from arch_line_weights.poche import FillResult, PocheReport
@@ -11,6 +13,7 @@ from arch_line_weights.proof import (
     ManifestValidationError,
     ReviewRegion,
     build_proof_packet_plan,
+    assert_handoff_is_public_safe,
     build_w5_w7_acceptance_handoff,
     find_handoff_public_safety_violations,
     has_dark_pixels_in_region,
@@ -1041,6 +1044,77 @@ def test_w5_w7_handoff_stays_no_go_when_packet_passed_but_not_public_safe(tmp_pa
     )
     assert handoff_json["public_clearance"] == "NO-GO"
     assert handoff_json["public_safe"] is False
+
+
+def _baseline_safe_handoff() -> dict:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=Path("/tmp/synthetic-proof"),
+        commands=["arch-lw apply-jsx in.pdf"],
+    )
+    validation = validate_proof_packet(plan)
+    handoff_json, _ = build_w5_w7_acceptance_handoff(
+        fixture_id="stair_section",
+        public_summary=validation.public_summary,
+    )
+    return handoff_json
+
+
+@pytest.mark.parametrize(
+    ("mutator", "expected_substring"),
+    [
+        (lambda h: h.update({"public_clearance": "GO"}), "public_clearance must be NO-GO"),
+        (lambda h: h.update({"public_safe": True}), "public_safe must be false"),
+        (lambda h: h.update({"posting_ready": True}), "posting_ready must be false"),
+        (lambda h: h.update({"acceptance_recorded": True}), "acceptance_recorded must be false"),
+        (
+            lambda h: h.update({"fixture_id": "/Users/reviewer/private-fixture"}),
+            "local/private path references",
+        ),
+        (
+            lambda h: h.update({"fixture_id": "macro_for_archlw_section"}),
+            "private fixture tokens",
+        ),
+        (
+            lambda h: h["local_only_overlay_template"]["review_acceptance"]["visual_layer_gates"][0].update(
+                {"accepted": True}
+            ),
+            "overlay template must not claim visual acceptance",
+        ),
+    ],
+)
+def test_find_handoff_public_safety_violations_rejects_overclaims(
+    mutator,
+    expected_substring: str,
+) -> None:
+    handoff = copy.deepcopy(_baseline_safe_handoff())
+    mutator(handoff)
+    violations = find_handoff_public_safety_violations(handoff)
+    assert violations
+    assert any(expected_substring in item for item in violations)
+
+
+def test_assert_handoff_is_public_safe_rejects_local_path_in_json() -> None:
+    handoff = copy.deepcopy(_baseline_safe_handoff())
+    handoff["next_steps"] = ["Review at /private/tmp/local-report.json"]
+    with pytest.raises(ValueError, match="not public-safe"):
+        assert_handoff_is_public_safe(handoff)
+
+
+def test_write_w5_w7_handoff_to_zip_rejects_local_path_in_markdown(tmp_path: Path) -> None:
+    handoff = copy.deepcopy(_baseline_safe_handoff())
+    _, handoff_md = build_w5_w7_acceptance_handoff(
+        fixture_id="stair_section",
+        public_summary={"status": "needs_review", "public_safe": False},
+    )
+    packet_path = tmp_path / "proof-packet.zip"
+    with zipfile.ZipFile(packet_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        with pytest.raises(ValueError, match="handoff markdown is not public-safe"):
+            write_w5_w7_acceptance_handoff_to_zip(
+                zf,
+                handoff_json=handoff,
+                handoff_md=handoff_md + "\n/private/tmp/leaked-report.json\n",
+            )
 
 
 def _strict_review_region(
