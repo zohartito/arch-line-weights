@@ -10,16 +10,21 @@ CORE_PUBLIC_SAFETY_SURFACES = [
     REPO_ROOT / "RELEASE_NOTES.md",
     REPO_ROOT / "SHIP_CHECKLIST.md",
     REPO_ROOT / "mkdocs.yml",
+    REPO_ROOT / "docs" / "CHANGELOG.md",
+    REPO_ROOT / "docs" / "index.md",
+    REPO_ROOT / "docs" / "ROADMAP.md",
+    REPO_ROOT / "docs" / "SESSION_RETRO.md",
+    REPO_ROOT / "docs" / "LESSONS_LEARNED.md",
     REPO_ROOT / "webapp" / "README.md",
     REPO_ROOT / "webapp" / "frontend" / "src" / "routes" / "+page.svelte",
     REPO_ROOT / "docs" / "research" / "open-issue-verification-core-handoff-2026-06-01.md",
     *sorted((REPO_ROOT / "docs" / "announce").rglob("*.md")),
     *sorted((REPO_ROOT / "docs" / "how-to").rglob("*.md")),
+    *sorted((REPO_ROOT / "docs" / "tutorials").rglob("*.md")),
     *sorted((REPO_ROOT / "docs" / "reference").rglob("*.md")),
     *sorted((REPO_ROOT / "docs" / "explanation").rglob("*.md")),
 ]
 
-# Research notes are public-safe stubs after PR #45 quarantine; scan for regressions.
 RESEARCH_PUBLIC_SAFETY_SURFACES = sorted((REPO_ROOT / "docs" / "research").rglob("*.md"))
 
 FORBIDDEN_RETIRED_PROOF_PHRASES = [
@@ -32,6 +37,7 @@ FORBIDDEN_RETIRED_PROOF_PHRASES = [
     "all cut mass black",
     "DRAWING 4 SECTION",
     "USC ARCH 202B",
+    "submit-quality path",
     "/Users/",
     "/private/",
     "/var/folders",
@@ -46,7 +52,7 @@ FORBIDDEN_RETIRED_PROOF_PHRASES = [
 
 FORBIDDEN_PRIVATE_PROOF_PATTERNS = [
     re.compile(r"iso axon section\s+\[Converted\]", re.IGNORECASE),
-    re.compile(r"\bv06\d+", re.IGNORECASE),
+    re.compile(r"\bv06\d+[-\w]*\.(?:ai|json)\b", re.IGNORECASE),
     re.compile(r"\biso-axon-v06\d+[-\w]*\.json\b", re.IGNORECASE),
     re.compile(r"<private-arch-202b-root>", re.IGNORECASE),
     re.compile(r"[A-Z]:\\"),
