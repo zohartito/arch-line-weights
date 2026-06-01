@@ -6,6 +6,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 CORE_PUBLIC_SAFETY_SURFACES = [
+    REPO_ROOT / "CHANGELOG.md",
+    REPO_ROOT / "RETROSPECTIVE.md",
     REPO_ROOT / "README.md",
     REPO_ROOT / "RELEASE_NOTES.md",
     REPO_ROOT / "SHIP_CHECKLIST.md",
