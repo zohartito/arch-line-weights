@@ -44,6 +44,8 @@
   $: selectedStage = run?.stages.find((stage) => stage.key === activeStageKey) ?? stageFor(activeStageKey);
   $: canStart = workflow === 'synthetic_proof_demo' || chosenFile !== null;
   $: proofArtifact = run?.artifacts.find((artifact) => artifact.key === 'proof_packet') ?? null;
+  $: publicProofLabel = run?.public_safe ? 'Accepted' : 'NO-GO';
+  $: publicAcceptanceLabel = acceptanceLabel(run);
 
   function stageFor(key: ConsoleStageKey): ConsoleStage {
     const label = stageDefinitions.find((stage) => stage.key === key)?.label ?? key;
@@ -128,6 +130,13 @@
     if (status === 'failed') return 'border-red-600 bg-red-50 text-red-800';
     if (status === 'no_go') return 'border-zinc-950 bg-zinc-950 text-white';
     return 'border-ink-300 bg-white text-ink-500';
+  }
+
+  function acceptanceLabel(summary: ConsoleSummary | null): string {
+    if (!summary) return 'W5/W7 not recorded';
+    if (!summary.public_acceptance?.accepted) return 'W5/W7 not recorded';
+    const reviewers = summary.public_acceptance.accepted_by ?? [];
+    return reviewers.length ? reviewers.join(', ') : 'Accepted';
   }
 
   function stageStatus(key: ConsoleStageKey): ConsoleStatus {
@@ -281,6 +290,22 @@
             </dd>
           </div>
           <div>
+            <dt class="text-ink-500">Public proof</dt>
+            <dd>
+              <span
+                class="inline-flex rounded border px-2 py-1 text-xs font-semibold {run?.public_safe
+                  ? statusClass('passed')
+                  : statusClass('no_go')}"
+              >
+                {publicProofLabel}
+              </span>
+            </dd>
+          </div>
+          <div>
+            <dt class="text-ink-500">Acceptance</dt>
+            <dd class="font-medium text-ink-900">{publicAcceptanceLabel}</dd>
+          </div>
+          <div>
             <dt class="text-ink-500">Run ID</dt>
             <dd class="break-all font-mono text-xs text-ink-700">{run?.run_id ?? 'Not started'}</dd>
           </div>
@@ -309,13 +334,13 @@
               class="inline-flex w-full justify-center rounded bg-ink-900 px-3 py-2 font-medium text-white hover:bg-ink-700"
               href={artifactHref(proofArtifact)}
             >
-              Download proof packet
+              Download local review packet
             </a>
           {:else}
             <p class="text-ink-500">No proof packet exported.</p>
           {/if}
           <p class="text-xs text-ink-500">
-            Raw local reports stay in local storage and are not included in the public-safe packet.
+            Public proof status: {publicProofLabel}. Raw local reports stay in local storage and are not included.
           </p>
         </div>
       </section>

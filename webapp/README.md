@@ -71,8 +71,10 @@ local Vite fallback ports by default.
   or `no_go`.
 - Show a readable report: what changed, what skipped, what failed, why, and the
   next step.
-- Keep raw local reports under the local storage root while proof packets only
-  include public-safe summaries.
+- Keep raw local reports under the local storage root while local review packets
+  only include sanitized summaries.
+- Mark proof summaries as `public_safe: false` until explicit W5/W7 acceptance
+  is recorded by a future acceptance workflow.
 
 ### What it cannot claim
 
@@ -85,7 +87,7 @@ The console always shows these guardrails:
 This prototype does not close #29 or #30. It does not mean public launch is
 ready. It does not mean App Store, Microsoft Store, or Windows desktop support
 is ready. Windows remains future work until it is packaged and tested on
-Windows.
+Windows. Exported proof packets are local review packets, not posting clearance.
 
 ### Roadmap
 

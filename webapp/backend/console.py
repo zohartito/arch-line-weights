@@ -38,6 +38,7 @@ CONSOLE_GUARDRAILS = [
     "Synthetic proof does not close #30.",
     "Private USC regression stays private.",
 ]
+PUBLIC_ACCEPTANCE_MISSING = "W5/W7 public proof acceptance is not recorded."
 
 WORKFLOW_LABELS = {
     "section": "Section",
@@ -140,6 +141,8 @@ class ConsoleRun:
             for key, _label in STAGE_DEFINITIONS
             if key in self.stages
         ]
+        overall_status = _overall_status(self.stages)
+        public_acceptance = _public_acceptance()
         return {
             "schema_version": 1,
             "run_id": self.run_id,
@@ -147,7 +150,9 @@ class ConsoleRun:
             "workflow_label": WORKFLOW_LABELS.get(self.workflow, self.workflow),
             "original_filename": self.original_filename,
             "created_at": self.created_at,
-            "overall_status": _overall_status(self.stages),
+            "overall_status": overall_status,
+            "public_safe": overall_status == "passed" and bool(public_acceptance["accepted"]),
+            "public_acceptance": public_acceptance,
             "guardrails": list(self.guardrails),
             "stages": stage_rows,
             "report": _rollup_report(stage_rows),
@@ -541,7 +546,7 @@ class DesignerConsoleStore:
         prior_status = _overall_status(
             {key: prior for key, prior in run.stages.items() if key != "export_proof_packet"}
         )
-        status = prior_status if prior_status in TERMINAL_BAD_STATUSES else "passed"
+        status = prior_status if prior_status in TERMINAL_BAD_STATUSES else "needs_review"
         if prior_status == "needs_review":
             status = "needs_review"
         if not any(key in run.artifacts for key in ("layout_output", "hierarchy_output", "poche_output")):
@@ -551,16 +556,16 @@ class DesignerConsoleStore:
             status=status,
             what_changed=[f"Created local proof packet {packet_path.name}."],
             what_skipped=[
-                "Raw local reports and source drawings were not included in the public-safe packet."
+                "Raw local reports and source drawings were not included in the sanitized packet."
             ],
             why=[
-                "Public-safe summary contains no local path patterns.",
-                "Posting/public proof still requires W5/W7 acceptance.",
+                "Sanitized summary contains no local path patterns.",
+                PUBLIC_ACCEPTANCE_MISSING,
             ],
             next_step=(
-                "Review the packet with W5/W7 before any public proof claim."
-                if status == "passed"
-                else "Resolve failed, no-go, missing, or review stages before using this packet."
+                "Get explicit W5/W7 acceptance before treating this packet as public proof."
+                if status == "needs_review"
+                else "Resolve failed or no-go stages before using this packet."
             ),
             output_path=str(packet_path),
         )
@@ -691,6 +696,10 @@ def _rollup_report(stage_rows: list[dict[str, Any]]) -> dict[str, Any]:
         "why": _flatten_stage_list(stage_rows, "why"),
         "next_step": _next_step(stage_rows),
     }
+
+
+def _public_acceptance() -> dict[str, Any]:
+    return {"accepted": False, "accepted_by": []}
 
 
 def _flatten_stage_list(stage_rows: list[dict[str, Any]], key: str) -> list[str]:
@@ -867,6 +876,7 @@ def _write_proof_packet(packet_path: Path, summary: dict[str, Any]) -> None:
         f"Run ID: {summary['run_id']}",
         f"Workflow: {summary['workflow_label']}",
         f"Overall status: {summary['overall_status']}",
+        f"Public safe: {summary['public_safe']}",
         "",
         "Next step:",
         summary["report"]["next_step"],
@@ -881,5 +891,6 @@ def _write_proof_packet(packet_path: Path, summary: dict[str, Any]) -> None:
         zf.writestr(
             "README-NOT-PUBLIC-CLEARANCE.txt",
             "\n".join(CONSOLE_GUARDRAILS)
-            + "\n\nThis packet is local review material only. It is not posting clearance.\n",
+            + f"\n\n{PUBLIC_ACCEPTANCE_MISSING}\n"
+            + "This packet is local review material only. It is not posting clearance.\n",
         )

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import zipfile
 from pathlib import Path
 
 
@@ -41,6 +42,8 @@ def test_console_create_run_has_guardrails_and_required_stage_statuses(
     assert body["workflow_label"] == "Section"
     assert body["original_filename"] == synthetic_ai.name
     assert body["overall_status"] == "needs_review"
+    assert body["public_safe"] is False
+    assert body["public_acceptance"] == {"accepted": False, "accepted_by": []}
     assert [stage["status"] for stage in body["stages"]] == ["not_run"] * 5
     assert [stage["key"] for stage in body["stages"]] == [
         "inspect_file",
@@ -146,3 +149,55 @@ def test_console_export_packet_blocks_private_path_leak(
     assert stage["status"] == "no_go"
     assert any("private/local path" in item for item in stage["what_failed"])
     assert not any(artifact["key"] == "proof_packet" for artifact in body["artifacts"])
+
+
+def test_console_export_packet_is_review_gated_without_w5_w7_acceptance(
+    app_client,
+    synthetic_ai: Path,
+) -> None:
+    client, app = app_client
+    with synthetic_ai.open("rb") as f:
+        created = client.post(
+            "/api/console/runs",
+            files={"file": (synthetic_ai.name, f, "application/postscript")},
+            data={"workflow": "section"},
+        ).json()
+
+    run = app.state.console_store.load(created["run_id"])
+    output = Path(run.root) / "synthetic-output.ai"
+    output.write_bytes(b"synthetic output")
+    run.artifacts["hierarchy_output"] = str(output)
+    for key, stage in run.stages.items():
+        if key == "export_proof_packet":
+            continue
+        stage.finish(
+            status="passed",
+            what_changed=[f"{stage.label} passed."],
+            next_step="Continue.",
+            output_path=str(output),
+        )
+    app.state.console_store.save(run)
+
+    resp = client.post(f"/api/console/runs/{created['run_id']}/stages/export_proof_packet")
+
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    stage = next(s for s in body["stages"] if s["key"] == "export_proof_packet")
+    assert stage["status"] == "needs_review"
+    assert "W5/W7 public proof acceptance is not recorded." in stage["why"]
+    assert "Get explicit W5/W7 acceptance" in stage["next_step"]
+    assert body["overall_status"] == "needs_review"
+    assert body["public_safe"] is False
+    assert body["public_acceptance"] == {"accepted": False, "accepted_by": []}
+    proof_artifact = next(artifact for artifact in body["artifacts"] if artifact["key"] == "proof_packet")
+
+    run = app.state.console_store.load(created["run_id"])
+    packet_path = Path(run.artifacts[proof_artifact["key"]])
+    with zipfile.ZipFile(packet_path) as packet:
+        packet_summary = json.loads(packet.read("public-summary.json"))
+        readme = packet.read("README-NOT-PUBLIC-CLEARANCE.txt").decode("utf-8")
+
+    assert packet_summary["public_safe"] is False
+    assert packet_summary["public_acceptance"] == {"accepted": False, "accepted_by": []}
+    assert packet_summary["overall_status"] == "needs_review"
+    assert "W5/W7 public proof acceptance is not recorded." in readme

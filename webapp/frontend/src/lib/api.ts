@@ -105,6 +105,13 @@ export interface ConsoleReport {
   next_step: string;
 }
 
+export interface PublicAcceptance {
+  accepted: boolean;
+  accepted_by: string[];
+  accepted_at?: string;
+  scope?: string;
+}
+
 export interface ConsoleSummary {
   schema_version: number;
   run_id: string;
@@ -113,6 +120,8 @@ export interface ConsoleSummary {
   original_filename: string;
   created_at: string;
   overall_status: ConsoleStatus;
+  public_safe: boolean;
+  public_acceptance: PublicAcceptance;
   guardrails: string[];
   stages: ConsoleStage[];
   report: ConsoleReport;
