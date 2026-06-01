@@ -3,6 +3,7 @@ from pathlib import Path
 
 from PIL import Image
 
+from arch_line_weights.poche import FillResult, PocheReport
 from arch_line_weights.proof import (
     ManifestValidationError,
     build_proof_packet_plan,
@@ -11,6 +12,7 @@ from arch_line_weights.proof import (
     load_manifest,
     validate_proof_packet,
 )
+from arch_line_weights.run_report import build_poche_report
 
 
 def test_load_manifest_validates_compact_make2d_fixture_schema(tmp_path: Path) -> None:
@@ -403,6 +405,41 @@ def test_validate_proof_packet_needs_review_for_visual_acceptance_gate(tmp_path:
 
     assert validation.status == "needs_review"
     assert "layer needs review" in validation.public_summary["why"][0]
+
+
+def test_helper_backed_concrete_poche_report_stays_review_gated_in_proof(
+    tmp_path: Path,
+) -> None:
+    layer = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+    report = build_poche_report(
+        input_path="public-foundation-window-section.ai",
+        output_path="public-foundation-window-section-poche.ai",
+        source={"mode": "poche", "style": "solid", "fixture": "synthetic"},
+        poche_report=PocheReport(
+            fills=[FillResult(layer, "structural_open_loop", 0.88, 1, 8)],
+            polygons={layer: [[[100, 0], [130, 0], [130, 160], [100, 160], [100, 0]]]},
+        ),
+        command="arch-lw poche public-foundation-window-section.ai --report report.json",
+        visual_artifacts=_safe_visual_artifacts(),
+    )
+    plan = build_proof_packet_plan(
+        fixture_id="public_foundation_window_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw poche public-foundation-window-section.ai --report report.json"],
+    )
+    _write_packet_artifacts(plan, report=report)
+
+    validation = validate_proof_packet(plan)
+
+    assert report["summary"]["layers_inferred"] == 1
+    assert report["summary"]["layers_needs_review"] == 1
+    assert report["layers"][0]["status"] == "inferred"
+    assert report["layers"][0]["review"]["visual_acceptance_required"] is True
+    assert validation.status == "needs_review"
+    assert validation.public_summary["public_safe"] is False
+    assert "1 layer needs review" in validation.public_summary["why"]
+    assert "1 layer inferred" in validation.public_summary["what_changed"]
+    assert validation.public_summary["what_failed"] == []
 
 
 def test_images_effectively_unchanged_uses_pixel_ratio_threshold() -> None:
