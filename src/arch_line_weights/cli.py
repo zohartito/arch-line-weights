@@ -1075,6 +1075,21 @@ def preview_cmd(before: Path, after: Path, output: Path, mode: str, dpi: int, gh
     click.echo(f"wrote {output}", err=True)
 
 
+@cli.command("diagnose")
+@click.argument("report", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--json", "as_json", is_flag=True, help="Emit the diagnosis as JSON.")
+def diagnose_cmd(report: Path, as_json: bool):
+    """Summarize an arch-lw JSON run report for review."""
+    from .diagnose_report import format_diagnosis, summarize_report
+
+    data = json.loads(report.read_text())
+    summary = summarize_report(data)
+    if as_json:
+        click.echo(json.dumps(summary, indent=2, sort_keys=True))
+    else:
+        click.echo(format_diagnosis(summary))
+
+
 @cli.command("explain-layer")
 @click.argument("layer_name")
 @click.option(
