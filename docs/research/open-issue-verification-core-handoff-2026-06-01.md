@@ -31,7 +31,7 @@ npm --prefix webapp/frontend run check && npm run build  → pass
 
 - **#29** / **#30** open; posting **NO-GO**.
 - PR **#45** still needed to quarantine `docs/announce/*` and remove committed
-  `docs/img/day1-proof/*` binaries from public history when ready.
+  committed Day-1 proof image binaries from public history when ready.
 
 ## Update — 2026-06-01 (handoff violation regressions, `374b458`)
 
@@ -60,7 +60,31 @@ git diff --check  → pass
   `public_proof` acceptance.
 - No PR merges.
 
-## Integration rehearsal — 2026-06-01 (`codex/tmp-full-stack-rehearsal`)
+## Integration rehearsal — 2026-06-01 (`codex/tmp-full-stack-rehearsal-20260601`)
+
+Archival no-merge branch pushed from worktree at `ed62657` base.
+
+Clean merges into rehearsal:
+
+1. `codex/open-issue-verification-core` (`ed62657`)
+2. `codex/endgame-delivery-ledger` — adds `endgame-delivery-plan-2026-06-01.md`
+3. `codex/issue30-concrete-base-synthetic-regression`
+4. `codex/issue19-diagnose-report`
+5. `codex/issue20-entourage-assets`
+
+Blocked merges (conflicts — resolve after #37 lands, before stack merge):
+
+- `v0.2-verification-core` — `cli.py`, `run_report.py`, `test_run_report.py`
+- `codex/issue23-single-layer-cleanup` — `cli.py`
+- `w2-verification-fixture-sourcing` — `docs/ROADMAP.md`
+
+Rehearsal pytest (partial stack):
+
+```text
+pytest --ignore=tests/test_hatch_v05.py -q  → 589 passed, 1 failed (launch safety: handoff path string; fixed on #37)
+```
+
+## Integration rehearsal — 2026-06-01 (`codex/tmp-full-stack-rehearsal`) [superseded notes]
 
 Archival no-merge branch; not release clearance.
 
