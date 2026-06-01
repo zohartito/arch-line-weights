@@ -10,8 +10,8 @@ Business planning notes were removed before the Day-1 source release.
    but still lack `/NumBlock`, so `apply-saas --poche` is not the right path.
 3. Poché should fail conservatively. A missing fill is easier to repair than an
    incorrect black mass.
-4. Real fixtures matter. The section proof and axon stress proof validate
-   different parts of the system.
+4. Real fixtures matter. Private section dogfood and large-file stress dogfood
+   exercise different parts of the system; neither is public proof clearance.
 5. Native Illustrator payloads can contain structured, inspectable drawing
    commands. Verify the bytes before assuming an opaque format cannot be
    handled.

@@ -55,7 +55,7 @@ published to PyPI and then yanked, so install from source or GitHub as above.
 |---|---|---|
 | **PDF-only export** (`.pdf`, or PDF with no Illustrator native data) | `inspect`, then `apply` | Fastest. Stroke-weight rewrite only; `apply` can flatten Illustrator layers. |
 | **Native Illustrator `.ai`** (has the AI private payload `/NumBlock`) | `apply-saas` (optionally `--poche`) | Headless, layer-preserving. This is the path the 98 MB axon stress-test ran on. |
-| **Converted / section `.ai`** (`[Converted]`, PDF-only lineage, **no** `/NumBlock`) | `apply-jsx`, then `arch-lw poche` | The Illustrator-bridge path. This is the path the section proof ran on. |
+| **Converted / section `.ai`** (`[Converted]`, PDF-only lineage, **no** `/NumBlock`) | `apply-jsx`, then `arch-lw poche` | The Illustrator-bridge path for local review. It is not public proof clearance. |
 
 Converted-section example (synthetic public-safe filenames):
 
@@ -69,11 +69,11 @@ Converted-section example (synthetic public-safe filenames):
 - **`apply-saas --poche` needs a native `/NumBlock`.** On a PDF-only or
   `[Converted]` `.ai` there is no `/NumBlock`, so `apply-saas` cannot edit it —
   use the `apply-jsx` → `arch-lw poche` bridge for those files instead.
-- **Legacy Rhino PostScript `.ai` must be re-saved first.** Files like
-  `wall section iso cut .ai` / `wall section cut make2d.ai` fail to open in both
-  pikepdf and PyMuPDF ("unable to find trailer dictionary"). Open the file in
-  Adobe Illustrator, use **File → Save As** to write a modern / PDF-compatible
-  `.ai`, then rerun `arch-lw`. The CLI prints this hint on the failure.
+- **Legacy Rhino PostScript `.ai` must be re-saved first.** Some older Rhino
+  exports fail to open in both pikepdf and PyMuPDF ("unable to find trailer
+  dictionary"). Open the file in Adobe Illustrator, use **File → Save As** to
+  write a modern / PDF-compatible `.ai`, then rerun `arch-lw`. The CLI prints
+  this hint on the failure.
 - **`apply` can flatten layers.** If you need the original layer structure
   preserved, use `apply-jsx` or `apply-saas`, not the fast `apply` path.
 - The Illustrator-bridge paths (`apply-jsx`, `arch-lw poche` with
@@ -81,11 +81,15 @@ Converted-section example (synthetic public-safe filenames):
 
 ### Dogfood results (2026-05-30)
 
-- Large-file stress runs and section-bridge runs have been exercised locally.
-  Public proof assets are not committed. Posting remains **NO-GO** unless W5/W7
-  explicitly accepts a proof packet.
-- Release-gate checks passed for the source/GitHub handoff at the time of the
-  release notes snapshot.
+- Prior private dogfood produced useful bridge, poché, and large-file signals.
+  Those filenames, screenshots, PDFs, and raw proof assets are intentionally not
+  public release evidence.
+- The large-file stress signal is performance evidence only; it is not
+  section/poché proof.
+- Engineering checks passed for the source/GitHub handoff. Public posting proof
+  remains **NO-GO** unless W5/W7 explicitly accepts a public-safe proof packet.
+- Synthetic proof can exercise the harness, but it does not close #30. The
+  private USC regression stays private.
 
 ### What to file issues for
 
@@ -108,5 +112,7 @@ characteristics (source app, export type, layer names) if:
   native-payload rewrite path; the `webapp/` directory is a local experimental
   scaffold, not a deployed service.
 - No workflow tested in Bluebeam.
-- Not yet proven on a real studio pin-up board, and not validated on every
-  Rhino/Illustrator export shape. Public proof screenshots are not committed.
+- Public proof assets are not committed in this branch. The retired Day-1
+  screenshots/PDFs are internal failure evidence only, and not posting
+  clearance.
+- Not yet validated on every Rhino/Illustrator export shape.

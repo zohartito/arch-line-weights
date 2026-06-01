@@ -13,13 +13,14 @@ CORE_PUBLIC_SAFETY_SURFACES = [
     REPO_ROOT / "webapp" / "README.md",
     REPO_ROOT / "webapp" / "frontend" / "src" / "routes" / "+page.svelte",
     REPO_ROOT / "docs" / "research" / "open-issue-verification-core-handoff-2026-06-01.md",
+    *sorted((REPO_ROOT / "docs" / "announce").rglob("*.md")),
     *sorted((REPO_ROOT / "docs" / "how-to").rglob("*.md")),
     *sorted((REPO_ROOT / "docs" / "reference").rglob("*.md")),
     *sorted((REPO_ROOT / "docs" / "explanation").rglob("*.md")),
 ]
 
-# Announce/launch-kit drafts still carry retired Day-1 asset paths until PR #45 lands.
-ANNOUNCE_PUBLIC_SAFETY_SURFACES = sorted((REPO_ROOT / "docs" / "announce").rglob("*.md"))
+# Research notes are public-safe stubs after PR #45 quarantine; scan for regressions.
+RESEARCH_PUBLIC_SAFETY_SURFACES = sorted((REPO_ROOT / "docs" / "research").rglob("*.md"))
 
 FORBIDDEN_RETIRED_PROOF_PHRASES = [
     "docs/img/day1-proof",
@@ -70,10 +71,14 @@ def test_core_public_surfaces_keep_posting_gate_visible() -> None:
     assert "Private USC regression stays private" in combined
 
 
-def test_announce_surfaces_still_need_pr45_quarantine() -> None:
-    """Track announce/launch-kit debt; remove this test when PR #45 merges."""
-    combined = _combined_public_surface_text(ANNOUNCE_PUBLIC_SAFETY_SURFACES)
-    assert "docs/img/day1-proof" in combined
+def test_research_docs_do_not_reference_retired_day1_proof_assets() -> None:
+    combined = _combined_public_surface_text(RESEARCH_PUBLIC_SAFETY_SURFACES)
+
+    for phrase in FORBIDDEN_RETIRED_PROOF_PHRASES:
+        assert phrase not in combined, f"forbidden phrase in research doc: {phrase!r}"
+
+    for pattern in FORBIDDEN_PRIVATE_PROOF_PATTERNS:
+        assert not pattern.search(combined), f"forbidden pattern matched: {pattern.pattern}"
 
 
 def _combined_public_surface_text(paths: list[Path]) -> str:
