@@ -21,7 +21,9 @@
 
   async function tick() {
     try {
-      detail = await getJob($page.params.id);
+      const jobId = $page.params.id;
+      if (!jobId) throw new Error('missing job id');
+      detail = await getJob(jobId);
       if (detail.status === 'done' || detail.status === 'failed') {
         return; // stop polling — terminal state reached
       }

@@ -22,6 +22,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .compute import JobStore
 from .config import get_settings
+from .console import DesignerConsoleStore, default_console_root
+from .routes.console import router as console_router
 from .routes.health import router as health_router
 from .routes.jobs import router as jobs_router
 from .storage import LocalStorage
@@ -41,6 +43,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.settings = settings
     app.state.storage = LocalStorage(settings.storage_root)
     app.state.job_store = JobStore()
+    app.state.console_store = DesignerConsoleStore(default_console_root(settings.storage_root))
     logger.info(
         "archlw webapp ready: storage_root=%s job_runner=%s",
         settings.storage_root,
@@ -83,6 +86,7 @@ def create_app() -> FastAPI:
 
     app.include_router(health_router, prefix="/api")
     app.include_router(jobs_router)
+    app.include_router(console_router)
 
     return app
 

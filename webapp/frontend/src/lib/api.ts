@@ -13,6 +13,14 @@ const API_BASE_URL =
     ?.VITE_API_BASE_URL ?? 'http://localhost:8000';
 
 export type JobStatus = 'pending' | 'running' | 'done' | 'failed';
+export type ConsoleStatus = 'not_run' | 'running' | 'passed' | 'needs_review' | 'failed' | 'no_go';
+export type ConsoleWorkflow = 'section' | 'plan' | 'detail' | 'synthetic_proof_demo';
+export type ConsoleStageKey =
+  | 'inspect_file'
+  | 'run_layout'
+  | 'apply_line_weights'
+  | 'generate_poche'
+  | 'export_proof_packet';
 
 export interface JobOptions {
   preset: string;
@@ -68,12 +76,101 @@ export interface JobCreated {
   status: JobStatus;
 }
 
+export interface ConsoleStage {
+  key: ConsoleStageKey;
+  label: string;
+  status: ConsoleStatus;
+  what_changed: string[];
+  what_skipped: string[];
+  what_failed: string[];
+  why: string[];
+  next_step: string;
+  output_file: string | null;
+  raw_report_available: boolean;
+  updated_at: string | null;
+}
+
+export interface ConsoleArtifact {
+  key: string;
+  filename: string;
+  available: boolean;
+  download_url: string;
+}
+
+export interface ConsoleReport {
+  what_changed: string[];
+  what_skipped: string[];
+  what_failed: string[];
+  why: string[];
+  next_step: string;
+}
+
+export interface ConsoleSummary {
+  schema_version: number;
+  run_id: string;
+  workflow: ConsoleWorkflow;
+  workflow_label: string;
+  original_filename: string;
+  created_at: string;
+  overall_status: ConsoleStatus;
+  guardrails: string[];
+  stages: ConsoleStage[];
+  report: ConsoleReport;
+  artifacts: ConsoleArtifact[];
+}
+
 /** Build an absolute URL pointing at the backend, joining the path
  *  cleanly regardless of whether the base ends in `/`. */
 export function apiUrl(path: string): string {
   const base = API_BASE_URL.replace(/\/$/, '');
   const suffix = path.startsWith('/') ? path : `/${path}`;
   return `${base}${suffix}`;
+}
+
+export async function createConsoleRun(
+  file: File | null,
+  workflow: ConsoleWorkflow
+): Promise<ConsoleSummary> {
+  const form = new FormData();
+  form.append('workflow', workflow);
+  if (file) form.append('file', file);
+  const resp = await fetch(apiUrl('/api/console/runs'), {
+    method: 'POST',
+    body: form
+  });
+  if (!resp.ok) {
+    const body = await safeJson(resp);
+    throw new Error(readDetail(body?.detail) ?? `HTTP ${resp.status}`);
+  }
+  return (await resp.json()) as ConsoleSummary;
+}
+
+export async function getConsoleRun(runId: string): Promise<ConsoleSummary> {
+  const resp = await fetch(apiUrl(`/api/console/runs/${encodeURIComponent(runId)}`));
+  if (!resp.ok) {
+    const body = await safeJson(resp);
+    throw new Error(readDetail(body?.detail) ?? `HTTP ${resp.status}`);
+  }
+  return (await resp.json()) as ConsoleSummary;
+}
+
+export async function runConsoleStage(
+  runId: string,
+  stageKey: ConsoleStageKey
+): Promise<ConsoleSummary> {
+  const resp = await fetch(
+    apiUrl(`/api/console/runs/${encodeURIComponent(runId)}/stages/${stageKey}`),
+    { method: 'POST' }
+  );
+  if (!resp.ok) {
+    const body = await safeJson(resp);
+    throw new Error(readDetail(body?.detail) ?? `HTTP ${resp.status}`);
+  }
+  return (await resp.json()) as ConsoleSummary;
+}
+
+export function consoleArtifactUrl(artifact: ConsoleArtifact): string {
+  return apiUrl(artifact.download_url);
 }
 
 /** POST /api/jobs — multipart upload + run. Optional progress callback
@@ -123,7 +220,7 @@ export async function getJob(jobId: string): Promise<JobDetail> {
   const resp = await fetch(apiUrl(`/api/jobs/${encodeURIComponent(jobId)}`));
   if (!resp.ok) {
     const body = await safeJson(resp);
-    throw new Error(body?.detail ?? `HTTP ${resp.status}`);
+    throw new Error(readDetail(body?.detail) ?? `HTTP ${resp.status}`);
   }
   return (await resp.json()) as JobDetail;
 }
@@ -134,10 +231,17 @@ export function downloadUrl(detail: JobDetail): string | null {
   return apiUrl(detail.download_url);
 }
 
-async function safeJson(resp: Response): Promise<{ detail?: string } | null> {
+async function safeJson(resp: Response): Promise<{ detail?: unknown } | null> {
   try {
-    return (await resp.json()) as { detail?: string };
+    return (await resp.json()) as { detail?: unknown };
   } catch {
     return null;
   }
+}
+
+function readDetail(detail: unknown): string | null {
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) return detail.map((item) => JSON.stringify(item)).join('; ');
+  if (detail && typeof detail === 'object') return JSON.stringify(detail);
+  return null;
 }

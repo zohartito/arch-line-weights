@@ -5,7 +5,12 @@
 > especially `arch-lw apply-saas --architectural --poche` for submit-quality
 > board output.
 
-A working FastAPI backend + SvelteKit frontend that wraps the existing pure-Python pipeline (`apply_saas` + `poche_saas`) behind a REST API.
+A working FastAPI backend + SvelteKit frontend that wraps the existing arch-line-weights pipeline behind a REST API.
+
+The current first screen is the **local designer console prototype**. It is a
+quiet workstation tool for selecting a Rhino / Illustrator / PDF export,
+running staged checks, reading a report, and exporting a local proof packet.
+It is not posting clearance and not desktop packaging.
 
 This is a **local skeleton**, not a deployment. It runs against the filesystem, has no auth, no payments, no queue. The shape is meant to be the final shape — production swaps `storage.py` for Tigris/R2 and `compute.run_job` for a Redis+RQ task without changing any other module.
 
@@ -17,8 +22,10 @@ webapp/
 │   ├── main.py          # FastAPI factory + lifespan
 │   ├── routes/
 │   │   ├── health.py    # GET /api/health
-│   │   └── jobs.py      # POST /api/jobs, GET /api/jobs/{id}, /download
+│   │   ├── jobs.py      # Legacy one-shot POST /api/jobs flow
+│   │   └── console.py   # Designer console staged workflow API
 │   ├── compute.py       # Wires apply_saas + poche_saas behind a job runner
+│   ├── console.py       # Local console run state, stages, proof packet export
 │   ├── storage.py       # LocalStorage (filesystem) — swap with S3 later
 │   ├── schemas.py       # Pydantic models
 │   └── config.py        # ARCHLW_* env-var settings
@@ -28,7 +35,62 @@ webapp/
     └── test_routes.py   # FastAPI TestClient on /api/jobs
 ```
 
-## Run the backend
+## Open the Designer Console
+
+Run the backend and frontend in two terminals:
+
+```bash
+cd webapp
+PYTHONPATH=../src:. uvicorn backend.main:app --reload --port 8000
+```
+
+```bash
+cd webapp/frontend
+npm install
+npm run dev    # http://localhost:5173
+```
+
+The frontend talks to the backend at `http://localhost:8000` by default
+(`VITE_API_BASE_URL` can override it).
+
+### What it can do
+
+- Choose or drag a `.ai` / `.pdf` export.
+- Choose workflow type: Section, Plan, Detail, or Synthetic proof / demo.
+- Run explicit actions: Inspect File, Run Layout, Apply Line Weights, Generate
+  Poché, Export Proof Packet.
+- Show each stage as `not_run`, `running`, `passed`, `needs_review`, `failed`,
+  or `no_go`.
+- Show a readable report: what changed, what skipped, what failed, why, and the
+  next step.
+- Keep raw local reports under the local storage root while proof packets only
+  include public-safe summaries.
+
+### What it cannot claim
+
+The console always shows these guardrails:
+
+- Posting/public proof is NO-GO unless W5/W7 explicitly accepts it.
+- Synthetic proof does not close #30.
+- Private USC regression stays private.
+
+This prototype does not close #29 or #30. It does not mean public launch is
+ready. It does not mean App Store, Microsoft Store, or Windows desktop support
+is ready. Windows remains future work until it is packaged and tested on
+Windows.
+
+### Roadmap
+
+1. Local web prototype: keep improving the FastAPI + SvelteKit console around
+   the existing engine and report contracts.
+2. Signed Mac desktop beta: package the same local console/engine with signing,
+   notarization, update notes, and a tested local-file permission story.
+3. Windows desktop beta: package and test on Windows before making any Windows
+   support claim.
+4. Rhino plugin / Illustrator panel: later, wrap the same staged workflow inside
+   native design-tool surfaces once the local console proves the workflow.
+
+## Run the backend directly
 
 The webapp depends on the parent `arch-line-weights` package (installed editable from `..`). Install both at once:
 
@@ -90,6 +152,18 @@ npm run dev    # http://localhost:5173
 The frontend talks to the backend at `http://localhost:8000` (configurable via `VITE_API_BASE_URL` in `frontend/.env`).
 
 ## REST API
+
+Designer console:
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/console/guardrails` | Local no-go notices |
+| POST | `/api/console/runs` | Create a console run from upload or synthetic demo |
+| GET | `/api/console/runs/{id}` | Public-safe run summary |
+| POST | `/api/console/runs/{id}/stages/{stage}` | Run one console action |
+| GET | `/api/console/runs/{id}/artifacts/{key}` | Download proof packet artifact |
+
+Legacy one-shot job flow:
 
 | Method | Path | Purpose |
 |---|---|---|
