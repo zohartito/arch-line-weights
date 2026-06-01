@@ -27,6 +27,8 @@
     { key: 'export_proof_packet', label: 'Export Proof Packet' }
   ];
 
+  type StageButton = { key: ConsoleStageKey; label: string; status: ConsoleStatus };
+
   const guardrails = [
     'Posting/public proof is NO-GO unless W5/W7 explicitly accepts it.',
     'Synthetic proof does not close #30.',
@@ -42,6 +44,10 @@
   let activeStageKey: ConsoleStageKey = 'inspect_file';
 
   $: selectedStage = run?.stages.find((stage) => stage.key === activeStageKey) ?? stageFor(activeStageKey);
+  $: stageButtons = stageDefinitions.map((stage): StageButton => {
+    const current = run?.stages.find((candidate) => candidate.key === stage.key);
+    return { ...stage, status: current?.status ?? 'not_run' };
+  });
   $: canStart = workflow === 'synthetic_proof_demo' || chosenFile !== null;
   $: proofArtifact = run?.artifacts.find((artifact) => artifact.key === 'proof_packet') ?? null;
   $: publicProofLabel = run?.public_safe ? 'Accepted' : 'NO-GO';
@@ -139,10 +145,6 @@
     return reviewers.length ? reviewers.join(', ') : 'Accepted';
   }
 
-  function stageStatus(key: ConsoleStageKey): ConsoleStatus {
-    return run?.stages.find((stage) => stage.key === key)?.status ?? 'not_run';
-  }
-
   function artifactHref(artifact: ConsoleArtifact): string {
     return consoleArtifactUrl(artifact);
   }
@@ -216,7 +218,7 @@
         </label>
 
         <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5">
-          {#each stageDefinitions as stage}
+          {#each stageButtons as stage}
             <button
               type="button"
               class="min-h-16 border px-3 py-2 text-left text-sm font-semibold transition hover:border-ink-900 disabled:cursor-not-allowed disabled:opacity-45 {activeStageKey ===
@@ -230,10 +232,10 @@
               <span class="block">{stage.label}</span>
               <span
                 class="mt-2 inline-flex rounded border px-1.5 py-0.5 text-[11px] font-medium {statusClass(
-                  stageStatus(stage.key)
+                  stage.status
                 )}"
               >
-                {statusLabel(stageStatus(stage.key))}
+                {statusLabel(stage.status)}
               </span>
             </button>
           {/each}

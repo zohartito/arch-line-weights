@@ -31,6 +31,20 @@ ScaleName = Literal["1/16", "1/8", "1/4", "1/2", "1", "3", "full"]
 BridgeStrategy = Literal["greedy", "best"]
 SourceName = Literal["auto", "rhino", "autocad"]
 
+PUBLIC_PROOF_GUARDRAILS = [
+    "Posting/public proof is NO-GO unless W5/W7 explicitly accepts it.",
+    "Synthetic proof does not close #30.",
+    "Private USC regression stays private.",
+]
+LEGACY_JOB_PROOF_NOTICE = (
+    "Legacy job outputs are local processing artifacts, not public proof clearance."
+)
+
+
+class PublicAcceptance(BaseModel):
+    accepted: bool = False
+    accepted_by: list[str] = Field(default_factory=list)
+
 
 class JobOptions(BaseModel):
     """Per-request pipeline knobs. Mirror the ``arch-lw apply-saas`` flags.
@@ -95,6 +109,10 @@ class JobCreated(BaseModel):
 
     job_id: str
     status: JobStatus
+    public_safe: bool = False
+    public_acceptance: PublicAcceptance = Field(default_factory=PublicAcceptance)
+    guardrails: list[str] = Field(default_factory=lambda: list(PUBLIC_PROOF_GUARDRAILS))
+    proof_notice: str = LEGACY_JOB_PROOF_NOTICE
 
 
 class JobDetail(BaseModel):
@@ -117,3 +135,7 @@ class JobDetail(BaseModel):
     flags_applied: dict[str, Any] = Field(default_factory=dict)
     download_url: str | None = None
     error: str | None = None
+    public_safe: bool = False
+    public_acceptance: PublicAcceptance = Field(default_factory=PublicAcceptance)
+    guardrails: list[str] = Field(default_factory=lambda: list(PUBLIC_PROOF_GUARDRAILS))
+    proof_notice: str = LEGACY_JOB_PROOF_NOTICE

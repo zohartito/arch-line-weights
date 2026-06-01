@@ -94,6 +94,10 @@ def test_full_upload_run_poll_download(app_client, synthetic_ai: Path) -> None:
     assert "job_id" in created
     job_id = created["job_id"]
     assert created["status"] in ("done", "pending", "running")
+    assert created["public_safe"] is False
+    assert created["public_acceptance"] == {"accepted": False, "accepted_by": []}
+    assert "Posting/public proof is NO-GO unless W5/W7 explicitly accepts it." in created["guardrails"]
+    assert created["proof_notice"] == "Legacy job outputs are local processing artifacts, not public proof clearance."
 
     # 2. Poll status
     detail = client.get(f"/api/jobs/{job_id}").json()
@@ -101,6 +105,10 @@ def test_full_upload_run_poll_download(app_client, synthetic_ai: Path) -> None:
     # Sync runner means the job is already done.
     assert detail["status"] == "done", detail
     assert detail["original_filename"] == synthetic_ai.name
+    assert detail["public_safe"] is False
+    assert detail["public_acceptance"] == {"accepted": False, "accepted_by": []}
+    assert "Synthetic proof does not close #30." in detail["guardrails"]
+    assert detail["proof_notice"] == "Legacy job outputs are local processing artifacts, not public proof clearance."
     assert detail["apply_summary"] is not None
     assert detail["poche_summary"] is not None
     assert detail["download_url"] is not None

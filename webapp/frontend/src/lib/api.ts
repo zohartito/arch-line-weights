@@ -69,11 +69,19 @@ export interface JobDetail {
   fills: FillSummary[];
   download_url: string | null;
   error: string | null;
+  public_safe: boolean;
+  public_acceptance: PublicAcceptance;
+  guardrails: string[];
+  proof_notice: string;
 }
 
 export interface JobCreated {
   job_id: string;
   status: JobStatus;
+  public_safe: boolean;
+  public_acceptance: PublicAcceptance;
+  guardrails: string[];
+  proof_notice: string;
 }
 
 export interface ConsoleStage {
