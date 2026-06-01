@@ -72,7 +72,8 @@ local Vite fallback ports by default.
 - Show a readable report: what changed, what skipped, what failed, why, and the
   next step.
 - Keep raw local reports under the local storage root while local review packets
-  only include sanitized summaries.
+  only include sanitized summaries plus a redacted W5/W7 acceptance handoff
+  template.
 - Mark proof summaries as `public_safe: false` until explicit W5/W7 acceptance
   is recorded by a future acceptance workflow.
 
@@ -88,6 +89,9 @@ This prototype does not close #29 or #30. It does not mean public launch is
 ready. It does not mean App Store, Microsoft Store, or Windows desktop support
 is ready. Windows remains future work until it is packaged and tested on
 Windows. Exported proof packets are local review packets, not posting clearance.
+They include `public-summary.json`, `README-NOT-PUBLIC-CLEARANCE.txt`, and
+W5/W7 handoff templates for recording a redacted accept/reject decision while
+keeping private review inputs local.
 
 ### Roadmap
 

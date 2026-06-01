@@ -26,6 +26,10 @@ from arch_line_weights.inspect import inspect_file
 from arch_line_weights.poche import PocheReport, apply_poche
 from arch_line_weights.poche_saas import apply_saas_with_poche
 from arch_line_weights.presets import select_preset
+from arch_line_weights.proof import (
+    build_w5_w7_acceptance_handoff,
+    write_w5_w7_acceptance_handoff_to_zip,
+)
 
 try:  # PR #36 branches provide these; older branches honestly degrade.
     from arch_line_weights.apply_jsx import validate_apply_jsx_result
@@ -675,7 +679,8 @@ class DesignerConsoleStore:
                 PUBLIC_ACCEPTANCE_MISSING,
             ],
             next_step=(
-                "Get explicit W5/W7 acceptance before treating this packet as public proof."
+                "Open W5-W7-ACCEPTANCE-HANDOFF.md locally, then get explicit W5/W7 acceptance "
+                "before treating this packet as public proof."
                 if status == "needs_review"
                 else "Resolve failed or no-go stages before using this packet."
             ),
@@ -1021,8 +1026,39 @@ def _poche_why(report: dict[str, Any]) -> list[str]:
     return ["Poché report indicates injectable cut geometry."]
 
 
+def _public_summary_for_handoff(console_summary: dict[str, Any]) -> dict[str, Any]:
+    """Map designer-console rollup fields to proof public_summary shape."""
+
+    public_acceptance = console_summary.get("public_acceptance")
+    if not isinstance(public_acceptance, dict):
+        public_acceptance = {"accepted": False, "accepted_by": []}
+    visual_acceptance = console_summary.get("visual_acceptance")
+    if not isinstance(visual_acceptance, dict):
+        visual_acceptance = {"accepted_layer_count": 0, "accepted_by": []}
+    return {
+        "status": console_summary.get("overall_status"),
+        "public_safe": console_summary.get("public_safe"),
+        "public_acceptance": public_acceptance,
+        "visual_acceptance": visual_acceptance,
+    }
+
+
+def _handoff_fixture_id(console_summary: dict[str, Any]) -> str:
+    run_id = console_summary.get("run_id")
+    if isinstance(run_id, str) and run_id.strip():
+        return run_id.strip()
+    workflow = console_summary.get("workflow")
+    if isinstance(workflow, str) and workflow.strip():
+        return workflow.strip()
+    return "designer-console"
+
+
 def _write_proof_packet(packet_path: Path, summary: dict[str, Any]) -> None:
     packet_path.parent.mkdir(parents=True, exist_ok=True)
+    handoff_json, handoff_md = build_w5_w7_acceptance_handoff(
+        fixture_id=_handoff_fixture_id(summary),
+        public_summary=_public_summary_for_handoff(summary),
+    )
     text_lines = [
         "arch-line-weights designer console proof packet",
         "",
@@ -1036,11 +1072,19 @@ def _write_proof_packet(packet_path: Path, summary: dict[str, Any]) -> None:
         "Next step:",
         summary["report"]["next_step"],
         "",
+        "Review handoff:",
+        "Open W5-W7-ACCEPTANCE-HANDOFF.md in this zip before recording acceptance.",
+        "",
     ]
     with zipfile.ZipFile(packet_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr(
             "public-summary.json",
             json.dumps(summary, indent=2, sort_keys=True) + "\n",
+        )
+        write_w5_w7_acceptance_handoff_to_zip(
+            zf,
+            handoff_json=handoff_json,
+            handoff_md=handoff_md,
         )
         zf.writestr("designer-console-report.txt", "\n".join(text_lines))
         zf.writestr(

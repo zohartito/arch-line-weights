@@ -1,17 +1,23 @@
 import json
+import zipfile
 from pathlib import Path
 
 from PIL import Image
 
 from arch_line_weights.poche import FillResult, PocheReport
 from arch_line_weights.proof import (
+    W5_W7_HANDOFF_JSON_NAME,
+    W5_W7_HANDOFF_MD_NAME,
     ManifestValidationError,
     ReviewRegion,
     build_proof_packet_plan,
+    build_w5_w7_acceptance_handoff,
+    find_handoff_public_safety_violations,
     has_dark_pixels_in_region,
     images_effectively_unchanged,
     load_manifest,
     validate_proof_packet,
+    write_w5_w7_acceptance_handoff_to_zip,
 )
 from arch_line_weights.run_report import build_poche_report
 
@@ -972,6 +978,69 @@ def _safe_visual_artifacts() -> dict:
             },
         ],
     }
+
+
+def test_w5_w7_handoff_zip_contains_public_safe_files(tmp_path: Path) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    _write_packet_artifacts(plan, report=_safe_pass_report())
+    validation = validate_proof_packet(plan)
+    handoff_json, handoff_md = build_w5_w7_acceptance_handoff(
+        fixture_id="stair_section",
+        public_summary=validation.public_summary,
+    )
+    packet_path = tmp_path / "proof-packet.zip"
+    with zipfile.ZipFile(packet_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        write_w5_w7_acceptance_handoff_to_zip(
+            zf,
+            handoff_json=handoff_json,
+            handoff_md=handoff_md,
+        )
+
+    with zipfile.ZipFile(packet_path) as zf:
+        names = set(zf.namelist())
+        loaded = json.loads(zf.read(W5_W7_HANDOFF_JSON_NAME))
+        md_text = zf.read(W5_W7_HANDOFF_MD_NAME).decode("utf-8")
+
+    assert W5_W7_HANDOFF_JSON_NAME in names
+    assert W5_W7_HANDOFF_MD_NAME in names
+    assert loaded["public_clearance"] == "NO-GO"
+    assert loaded["public_safe"] is False
+    assert loaded["posting_ready"] is False
+    assert loaded["acceptance_recorded"] is False
+    assert "NO-GO" in md_text
+    assert "acceptance has not occurred" in md_text.lower()
+    gates = loaded["local_only_overlay_template"]["review_acceptance"]["visual_layer_gates"]
+    assert gates[0]["accepted"] is False
+    assert find_handoff_public_safety_violations(loaded) == []
+    dumped = json.dumps(loaded) + md_text
+    assert "/Users/" not in dumped
+    assert "/private/" not in dumped
+    assert "/var/folders/" not in dumped
+    assert "macro_for_archlw" not in dumped.lower()
+    assert "synologydrive" not in dumped.lower()
+
+
+def test_w5_w7_handoff_stays_no_go_when_packet_passed_but_not_public_safe(tmp_path: Path) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf"],
+    )
+    _write_packet_artifacts(plan, report=_safe_pass_report())
+    validation = validate_proof_packet(plan)
+    assert validation.status == "passed"
+    assert validation.public_summary["public_safe"] is False
+
+    handoff_json, _handoff_md = build_w5_w7_acceptance_handoff(
+        fixture_id="stair_section",
+        public_summary=validation.public_summary,
+    )
+    assert handoff_json["public_clearance"] == "NO-GO"
+    assert handoff_json["public_safe"] is False
 
 
 def _strict_review_region(

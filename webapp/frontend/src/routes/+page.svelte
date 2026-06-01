@@ -342,7 +342,8 @@
             <p class="text-ink-500">No proof packet exported.</p>
           {/if}
           <p class="text-xs text-ink-500">
-            Public proof status: {publicProofLabel}. Raw local reports stay in local storage and are not included.
+            Public proof status: {publicProofLabel}. The packet includes a redacted W5/W7 handoff template;
+            raw local reports stay in local storage.
           </p>
         </div>
       </section>
