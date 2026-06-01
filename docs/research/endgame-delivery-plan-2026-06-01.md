@@ -31,8 +31,12 @@ product. It is an engineering control document, not a public launch claim.
 - #39 is green and draft: conservative single-layer cleanup mode.
 - #40 is green and draft: run-report diagnose command.
 - #41 is draft: this control plan.
-- #42 is draft: a public-safe synthetic concrete-base poché regression. It is
-  confidence evidence only and does not close #30.
+- #42 is draft: a public-safe synthetic concrete-base poché regression plus a
+  JSX-poche runtime helper-path fix. The latest local private USC probe moved
+  `TEC_CONCRETE_BASE` from low-confidence `auto_bridge` evidence to
+  `structural_open_loop` at confidence 0.88, with output created. This is
+  Exit-A progress, but it is still not W5 visual acceptance and does not close
+  #30.
 - #43 is draft and stacked on #36: the local designer-console prototype. It has
   local full-test verification, but no GitHub checks are reported on the
   stacked branch yet.
