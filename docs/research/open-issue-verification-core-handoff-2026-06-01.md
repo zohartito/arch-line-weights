@@ -13,7 +13,7 @@ This branch preserves the WIP implementation and investigation for the open-issu
 ### What changed
 
 - Cherry-picked PR #45 announce/research quarantine onto `codex/open-issue-verification-core`.
-- Removed committed `docs/img/day1-proof/*` binaries from the branch.
+- Removed committed retired proof-image binaries from the branch.
 - Replaced `docs/announce/*` launch-kit copy with NO-GO stubs (no private assets or claims).
 - Expanded `tests/test_launch_safety_docs.py`: core surfaces + research doc regression scan.
 - Removed the temporary `test_announce_surfaces_still_need_pr45_quarantine` debt test.

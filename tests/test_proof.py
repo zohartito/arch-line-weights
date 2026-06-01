@@ -96,9 +96,10 @@ fixtures:
     assert manifest.fixtures[0].status == "pass"
 
 
-def test_committed_make2d_manifest_is_repo_safe_synthetic_fixture() -> None:
+def test_committed_make2d_manifest_tracks_public_and_private_review_lanes() -> None:
     manifest = load_manifest(Path("tests/fixtures/make2d/manifest.yml"))
-    fixture = manifest.fixtures[0]
+    fixtures = {fixture.id: fixture for fixture in manifest.fixtures}
+    fixture = fixtures["public_foundation_window_section_synthetic"]
 
     assert fixture.id == "public_foundation_window_section_synthetic"
     assert fixture.status == "pass"
@@ -117,6 +118,20 @@ def test_committed_make2d_manifest_is_repo_safe_synthetic_fixture() -> None:
     assert fixture.review_regions[0].min_dark_delta == 0.12
     assert any("does not close issue #30" in caveat for caveat in fixture.caveats)
     assert any("Private USC regression stays private" in caveat for caveat in fixture.caveats)
+
+    private_fixture = fixtures["private_usc_wall_section_regression"]
+    assert private_fixture.status == "needs_manual_review"
+    assert not private_fixture.source_path.is_absolute()
+    assert private_fixture.expected_report.status == "needs_manual_review"
+    assert private_fixture.expected_report.counts["cut_layers_considered"] == 8
+    assert private_fixture.expected_report.counts["visual_acceptance_gated_layers"] == 2
+    assert {view.kind for view in private_fixture.visual_artifacts.rendered_views} == {
+        "full_board",
+        "cut_mass_closeup",
+    }
+    assert private_fixture.review_regions[0].kind == "poche_presence"
+    assert any("source drawings and rendered artifacts stay out of git" in caveat for caveat in private_fixture.caveats)
+    assert any("W5/W7 visual acceptance" in caveat for caveat in private_fixture.caveats)
 
 
 def test_load_manifest_rejects_invalid_fixture_status(tmp_path: Path) -> None:
