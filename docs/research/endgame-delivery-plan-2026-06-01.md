@@ -20,14 +20,25 @@ product. It is an engineering control document, not a public launch claim.
 
 - #34 is green: verification fixture sourcing research.
 - #36 is green and draft: W3 verification core, layout-jsx reports, Rhino bridge.
-- #37 is green and draft: input diagnostics and proof report harness.
+- #37 is green and draft at the last completed check: input diagnostics and
+  proof report harness. It now includes proof-packet validation that fails
+  closed on missing artifacts, failed/no-go raw reports, review layers, missing
+  payloads, and raw local/private path references.
 - #38 is green and draft: entourage SVG asset generator.
 - #39 is green and draft: conservative single-layer cleanup mode.
 - #40 is green and draft: run-report diagnose command.
+- #41 is draft: this control plan.
+- #42 is draft: a public-safe synthetic concrete-base poché regression. It is
+  confidence evidence only and does not close #30.
 
 The repo has an existing local `webapp/` scaffold: FastAPI backend, SvelteKit
 frontend, local filesystem storage, and tests. Designer-console work should
 prefer this shape unless a smaller CLI-served page is demonstrably safer.
+
+Safety scan note: inherited Day-1 proof media and README links remain a
+posting-clearance risk. They were not newly introduced by the focused PRs, but
+they must be removed, quarantined, or replaced with explicit no-go/synthetic
+language before any public proof or launch posting.
 
 ## Phase Stack
 
