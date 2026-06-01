@@ -530,6 +530,25 @@ def test_structural_completion_accepts_slim_foundation_above_static_area_limit()
     assert any(candidate.accepted for candidate in candidates)
 
 
+def test_structural_completion_accepts_slim_concrete_base_above_static_area_limit():
+    accepted, candidates = complete_structural_cut_polygons(
+        "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
+        [
+            [[0, 0], [140, 0]],
+            [[140, 40], [0, 40]],
+        ],
+        [
+            [[0, 0], [0, 40]],
+            [[140, 0], [140, 40]],
+        ],
+        [],
+    )
+
+    assert len(accepted) == 1
+    assert round(accepted[0].area) == 5600
+    assert any(candidate.accepted for candidate in candidates)
+
+
 def test_structural_completion_rejects_compact_foundation_blob():
     accepted, candidates = complete_structural_cut_polygons(
         "axon::Visible::ClippingPlaneIntersections::TEC_FOUNDATION",
