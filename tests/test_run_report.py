@@ -79,6 +79,7 @@ def test_report_marks_structural_helper_evidence_from_poche_report():
     )
 
     assert data["layers"][0]["evidence"]["used_structural_helpers"] is True
+    assert data["layers"][0]["evidence"]["structural_helper_count"] == 2
 
 
 def test_poche_report_marks_structural_helper_evidence_from_poche_report():
@@ -95,6 +96,7 @@ def test_poche_report_marks_structural_helper_evidence_from_poche_report():
     )
 
     assert data["layers"][0]["evidence"]["used_structural_helpers"] is True
+    assert data["layers"][0]["evidence"]["structural_helper_count"] == 2
 
 
 def test_report_marks_alpha_shape_as_low_confidence_diagnostic_only():

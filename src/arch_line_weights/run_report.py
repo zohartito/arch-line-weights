@@ -136,6 +136,7 @@ def build_apply_saas_report(
             review_reasons.append(
                 "inferred concrete/foundation fill requires W5/W7 visual acceptance"
             )
+        structural_helper_count = int(structural_helper_counts.get(fill.layer, 0) or 0)
 
         layers.append(
             {
@@ -155,7 +156,8 @@ def build_apply_saas_report(
                     "used_cut_layer": True,
                     "used_poche_close_layer": False,
                     "used_structural_helpers": bool(layer_candidates)
-                    or bool(structural_helper_counts.get(fill.layer)),
+                    or bool(structural_helper_count),
+                    "structural_helper_count": structural_helper_count,
                     "used_visible_completion": fill.strategy == "structural_visible_completion",
                 },
                 "review": {
@@ -243,6 +245,7 @@ def build_poche_report(
             review_reasons.append(
                 "inferred concrete/foundation fill requires W5/W7 visual acceptance"
             )
+        structural_helper_count = int(structural_helper_counts.get(fill.layer, 0) or 0)
 
         layers.append(
             {
@@ -261,7 +264,8 @@ def build_poche_report(
                 "evidence": {
                     "used_cut_layer": True,
                     "used_poche_close_layer": False,
-                    "used_structural_helpers": bool(structural_helper_counts.get(fill.layer)),
+                    "used_structural_helpers": bool(structural_helper_count),
+                    "structural_helper_count": structural_helper_count,
                     "used_visible_completion": False,
                 },
                 "review": {

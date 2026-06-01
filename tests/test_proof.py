@@ -436,6 +436,7 @@ def test_helper_backed_concrete_poche_report_stays_review_gated_in_proof(
     assert report["summary"]["layers_needs_review"] == 1
     assert report["layers"][0]["status"] == "inferred"
     assert report["layers"][0]["evidence"]["used_structural_helpers"] is True
+    assert report["layers"][0]["evidence"]["structural_helper_count"] == 2
     assert report["layers"][0]["review"]["visual_acceptance_required"] is True
     assert validation.status == "needs_review"
     assert validation.public_summary["public_safe"] is False
