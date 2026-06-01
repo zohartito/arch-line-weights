@@ -110,6 +110,18 @@ arch-lw preview BEFORE AFTER -o OUTPUT [OPTIONS]
 | `--dpi INT` | `96` | Render DPI |
 | `--ghostscript` | off | Ghostscript fallback for hairline accuracy |
 
+## `arch-lw diagnose`
+
+Summarize an `arch-lw --report` JSON file into a review checklist.
+
+```bash
+arch-lw diagnose run-report.json [--json]
+```
+
+The text output groups filled, inferred, low-confidence, skipped, failed, and
+missing-payload layers, lists review reasons, and reminds the user that PDF
+preview is not authoritative for AI-native Illustrator payloads.
+
 ## `arch-lw proof-check`
 
 Read a Make2D proof manifest and emit proof-packet plan or validation JSON.
