@@ -15,6 +15,8 @@ from .apply_jsx import apply_via_jsx
 from .apply_saas import apply_to_file as apply_to_file_saas
 from .apply_saas import default_output_path as default_output_path_saas
 from .classify import auto_by_luminance, explain_mapping, from_user_mapping
+from .cleanup import cleanup_file
+from .cleanup import default_output_path as default_output_path_cleanup
 from .inspect import color_to_rgb255, inspect_file
 from .layer_classify import (
     Source,
@@ -812,6 +814,55 @@ def apply_saas_cmd(
         click.echo(f"report: wrote {report_path}", err=True)
 
     click.echo("", err=True)
+    click.echo(f"wrote {output}  ({result.output_size:,} bytes)", err=True)
+
+
+@cli.command("cleanup")
+@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option(
+    "-o",
+    "--output",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Output path. Defaults to '<src> CLEANUP.<ext>'.",
+)
+@click.option(
+    "--report",
+    "report_path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Write a JSON cleanup report with deleted/lightened/medium/heavy counts.",
+)
+def cleanup_cmd(src: Path, output: Path | None, report_path: Path | None):
+    """Conservatively clean up a low-semantic one-layer AI drawing."""
+    if output is None:
+        output = Path(default_output_path_cleanup(src))
+
+    try:
+        result = cleanup_file(str(src), str(output))
+    except Exception as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    report = result.report.to_dict()
+    report["source"] = {
+        "mode": "cleanup",
+        "input": src.name,
+        "output": output.name,
+    }
+    if report_path is not None:
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+        click.echo(f"report: wrote {report_path}", err=True)
+
+    summary = report["summary"]
+    click.echo(
+        "cleanup: "
+        f"deleted={summary['deleted']} "
+        f"lightened={summary['lightened']} "
+        f"medium={summary['medium']} "
+        f"heavy={summary['heavy']}",
+        err=True,
+    )
+    for warning in report["warnings"]:
+        click.echo(f"warning: {warning}", err=True)
     click.echo(f"wrote {output}  ({result.output_size:,} bytes)", err=True)
 
 
