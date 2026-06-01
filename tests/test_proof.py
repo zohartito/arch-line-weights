@@ -281,7 +281,9 @@ def test_validate_proof_packet_requires_full_board_and_closeup_views(tmp_path: P
     assert any("visual artifacts missing close-up rendered view" in reason for reason in validation.reasons)
 
 
-def test_validate_proof_packet_passes_public_safe_report_with_expected_artifacts(tmp_path: Path) -> None:
+def test_validate_proof_packet_passes_clean_report_but_is_not_public_safe_without_acceptance(
+    tmp_path: Path,
+) -> None:
     plan = build_proof_packet_plan(
         fixture_id="stair_section",
         output_dir=tmp_path / "proof",
@@ -295,6 +297,8 @@ def test_validate_proof_packet_passes_public_safe_report_with_expected_artifacts
     validation = validate_proof_packet(plan)
 
     assert validation.status == "passed"
+    assert validation.public_summary["public_safe"] is False
+    assert "W5/W7 public proof acceptance is not recorded" in validation.public_summary["why"]
     assert "1 layer filled" in validation.public_summary["what_changed"]
     assert "4 polygons filled" in validation.public_summary["what_changed"]
     assert validation.public_summary["what_failed"] == []
@@ -315,6 +319,43 @@ def test_validate_proof_packet_passes_public_safe_report_with_expected_artifacts
             "diff": "cut-mass-diff.png",
         },
     ]
+    assert validation.public_summary["public_acceptance"] == {
+        "accepted": False,
+        "accepted_by": [],
+    }
+    assert "Get explicit W5/W7 acceptance" in validation.public_summary["next_step"]
+
+
+def test_validate_proof_packet_is_public_safe_only_with_w5_w7_acceptance(tmp_path: Path) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    _write_packet_artifacts(
+        plan,
+        report=_safe_pass_report(
+            review_acceptance={
+                "public_proof": {
+                    "accepted": True,
+                    "accepted_by": "W5",
+                    "date": "2026-06-01",
+                    "scope": "synthetic proof only",
+                }
+            }
+        ),
+    )
+
+    validation = validate_proof_packet(plan)
+
+    assert validation.status == "passed"
+    assert validation.public_summary["public_safe"] is True
+    assert validation.public_summary["public_acceptance"] == {
+        "accepted": True,
+        "accepted_by": ["W5"],
+        "date": "2026-06-01",
+        "scope": "synthetic proof only",
+    }
     assert "Attach the public summary only" in validation.public_summary["next_step"]
 
 
@@ -424,7 +465,11 @@ def _write_packet_artifacts(
                 path.write_bytes(b"synthetic rendered view")
 
 
-def _safe_pass_report(*, visual_artifacts: dict | None = None) -> dict:
+def _safe_pass_report(
+    *,
+    visual_artifacts: dict | None = None,
+    review_acceptance: dict | None = None,
+) -> dict:
     return {
         "schema_version": 2,
         "source": {
@@ -445,6 +490,7 @@ def _safe_pass_report(*, visual_artifacts: dict | None = None) -> dict:
             {"layer": "LayerA", "status": "filled", "review": {"needs_review": False}},
             {"layer": "LayerB", "status": "inferred", "review": {"needs_review": False}},
         ],
+        **({"review_acceptance": review_acceptance} if review_acceptance is not None else {}),
     }
 
 

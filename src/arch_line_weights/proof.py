@@ -24,6 +24,7 @@ _CLOSEUP_RENDERED_VIEW_KINDS = {"cut_mass_closeup", "openings_closeup", "detail_
 _LOCAL_PATH_RE = re.compile(
     r"(?i)(?:file://)?(?:/Users/|/private/|/var/folders/|/tmp/|/Volumes/|[A-Z]:\\|\\\\)"
 )
+_PUBLIC_ACCEPTANCE_REVIEWERS = {"W5", "W7"}
 
 
 class ManifestValidationError(ValueError):
@@ -356,18 +357,24 @@ def _build_public_summary(
     failed = _failed_messages(report_summary, missing_artifacts)
     if not failed and status == "no_go":
         failed = ["raw report status is no_go"]
+    public_acceptance = _public_acceptance(report)
+    public_safe = status == "passed" and bool(public_acceptance["accepted"])
+    public_reasons = list(reasons)
+    if status == "passed" and not public_safe:
+        public_reasons.append("W5/W7 public proof acceptance is not recorded")
 
     return {
         "fixture_id": fixture_id,
         "status": status,
-        "public_safe": status == "passed",
+        "public_safe": public_safe,
         "what_changed": changed,
         "what_skipped": skipped,
         "what_failed": failed,
-        "why": list(reasons),
-        "next_step": _next_step(status, reasons),
+        "why": public_reasons,
+        "next_step": _next_step(status, reasons, public_safe=public_safe),
         "proof_identity": _public_proof_identity(report),
         "rendered_views": _public_rendered_views(report),
+        "public_acceptance": public_acceptance,
     }
 
 
@@ -505,7 +512,40 @@ def _failed_messages(summary: dict[str, Any], missing_artifacts: tuple[str, ...]
     return messages
 
 
-def _next_step(status: str, reasons: tuple[str, ...]) -> str:
+def _public_acceptance(report: dict[str, Any]) -> dict[str, Any]:
+    raw = report.get("review_acceptance")
+    if not isinstance(raw, dict):
+        return {"accepted": False, "accepted_by": []}
+
+    public_proof = raw.get("public_proof") if isinstance(raw.get("public_proof"), dict) else raw
+    accepted_by = _accepted_reviewers(public_proof.get("accepted_by"))
+    accepted = public_proof.get("accepted") is True and bool(
+        set(accepted_by) & _PUBLIC_ACCEPTANCE_REVIEWERS
+    )
+    acceptance: dict[str, Any] = {
+        "accepted": accepted,
+        "accepted_by": accepted_by,
+    }
+    for key in ("date", "scope"):
+        value = public_proof.get(key)
+        if isinstance(value, str) and value.strip() and not _LOCAL_PATH_RE.search(value):
+            acceptance[key] = value
+    return acceptance
+
+
+def _accepted_reviewers(value: Any) -> list[str]:
+    raw_reviewers = value if isinstance(value, list) else [value]
+    reviewers: list[str] = []
+    for reviewer in raw_reviewers:
+        if not isinstance(reviewer, str):
+            continue
+        normalized = reviewer.strip().upper()
+        if normalized in _PUBLIC_ACCEPTANCE_REVIEWERS and normalized not in reviewers:
+            reviewers.append(normalized)
+    return reviewers
+
+
+def _next_step(status: str, reasons: tuple[str, ...], *, public_safe: bool = False) -> str:
     if status == "no_go" and any("local/private path references" in reason for reason in reasons):
         return (
             "Remove local/private references from raw proof, regenerate a public-safe summary, "
@@ -519,6 +559,8 @@ def _next_step(status: str, reasons: tuple[str, ...]) -> str:
         return "Fix failed proof stages, then rerun the proof packet."
     if status == "needs_review":
         return "Review flagged layers or regions before accepting the packet."
+    if status == "passed" and not public_safe:
+        return "Get explicit W5/W7 acceptance before treating this packet as public proof."
     return "Attach the public summary only; keep raw local reports out of committed/public proof."
 
 
