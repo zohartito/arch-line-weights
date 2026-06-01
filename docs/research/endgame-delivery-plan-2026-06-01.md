@@ -153,7 +153,15 @@ product. It is an engineering control document, not a public launch claim.
   backend root while Vite failed to bind. Rendered smoke on the fixed launcher
   showed the console at the requested local URL, the required no-go guardrails,
   and Synthetic proof/demo -> Inspect File reaching `passed` with no browser
-  console warnings or errors.
+  console warnings or errors. A later update at `a47963c` routes native
+  synthetic `.ai` Apply Line Weights and Generate Poché stages through the
+  existing pure-Python `apply-saas` / `poche-saas` engine before falling back
+  to the validated JSX paths for non-native payloads. Rendered Chrome/CDP QA
+  completed the full Synthetic proof/demo stage chain through Export Proof
+  Packet: Inspect File `passed`, Run Layout `needs_review`, Apply Line Weights
+  `passed`, Generate Poché `passed`, Export Proof Packet `needs_review`, proof
+  packet CTA visible, Public proof still `NO-GO`, and W5/W7 acceptance still
+  not recorded.
 - #45 is draft: launch-safety quarantine for private proof assets and public
   posting drafts. It removes committed Day-1 proof media from the public tree
   and redacts inherited local/private paths. A later update also quarantines
