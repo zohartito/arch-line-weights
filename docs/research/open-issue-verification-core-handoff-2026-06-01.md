@@ -4,36 +4,39 @@ This branch preserves the WIP implementation and investigation for the open-issu
 
 ## Branch
 
-- Branch: `codex/open-issue-verification-core` (PR **#37**, draft, head `bea0ded`)
-- Integration rehearsal: `codex/tmp-integration-rehearsal-20260601b` (head `aadde55`)
+- Branch: `codex/open-issue-verification-core` (PR **#37**, draft, redaction head `49f4932`; this handoff note follows)
+- Integration rehearsal: `codex/tmp-integration-rehearsal-20260601b` (pushed head `d457acb`)
 - Remote: `origin` (`git@github.com:zohartito/arch-line-weights.git`)
 - Goal status: in progress; not launch-ready.
 
-## Update — 2026-06-01 (full integration rehearsal `aadde55`)
+## Update — 2026-06-01 (full integration rehearsal refreshed through `d457acb`)
 
-Worktree: disposable `archlw-integration-rehearsal-20260601b` (local only, **no merge**).
+Worktree: disposable `archlw-integration-rehearsal-20260601b` (**no PR merge**).
 
 ### Merge order (all completed on rehearsal)
 
-1. Fast-forward `origin/codex/open-issue-verification-core` → `bea0ded` (proof-check, console, PR #45 quarantine)
+1. Fast-forward `origin/codex/open-issue-verification-core` → `bea0ded` (proof-check, console, PR #45 quarantine), then sync latest #37 doc head `1a87e13`
 2. `origin/v0.2-verification-core` → merge `a482934` (conflicts: `cli.py`, `run_report.py`, `test_run_report.py` — resolved favoring #37 proof + #36 reports)
 3. `origin/codex/issue23-single-layer-cleanup` → merge `d802065` (`cleanup.py`, `tests/test_cleanup.py`; `cli.md` documents cleanup)
 4. `origin/codex/issue19-diagnose-report` → merge `36f4d49` (`diagnose_report.py`, `arch-lw diagnose`)
 5. `origin/codex/issue30-concrete-base-synthetic-regression` → merge `1385f39` (`run_report.py` conflicts — kept foundation/concrete launch-blocking limitations)
 6. `origin/codex/issue20-entourage-assets` → merge (clean)
 7. `origin/w2-verification-fixture-sourcing` → merge `6ffa75c` (`docs/ROADMAP.md` — combined NO-GO posture + verifier gate)
-8. PR #45 quarantine — already ancestor via #37 (`30b6951`); not re-merged
-9. `origin/codex/endgame-delivery-ledger` → merge `aadde55` (`endgame-delivery-plan-2026-06-01.md`)
+8. `origin/codex/endgame-delivery-ledger` → merge `aadde55`, then sync latest ledger head `e76d6db`
+9. `origin/codex/quarantine-day1-proof-assets` → merge `e8a5ac4` (conflicts: public docs + safety test — resolved toward the stricter #37/rehearsal surfaces while preserving #45 ancestry)
+10. Rehearsal safety hardening: `b758f55` redacts private proof tokens from helper scripts; `12e78cb` adds the root changelog to the launch-safety scan and redacts its private reference phrase.
+11. Ported that safety hardening back to #37 as `63f451e` and `49f4932`.
 
-### Verification (rehearsal `aadde55`)
+### Verification (rehearsal `d457acb`)
 
 ```text
-PYTHONPATH=src pytest --ignore=tests/test_hatch_v05.py -q  → 651 passed, 6 skipped, 1 xfailed
+PYTHONPATH=src pytest --ignore=tests/test_hatch_v05.py -q  → 652 passed, 6 skipped, 1 xfailed
 PYTHONPATH=src pytest webapp/tests/test_console_routes.py …  → 36 passed
-pytest tests/test_launch_safety_docs.py -q  → 3 passed
+pytest tests/test_launch_safety_docs.py -q  → 4 passed
 ruff check src/ tests/ webapp/backend/ webapp/tests/  → pass
 git diff --check  → pass
-npm ci && npm run check && npm run build (webapp/frontend)  → pass (after npm ci in worktree)
+npm --prefix webapp/frontend run check && npm --prefix webapp/frontend run build  → pass
+tracked-file private path / retired proof / premature claim scan  → no matches outside guardrail regex tests
 ```
 
 ### Boundaries (unchanged)
@@ -45,7 +48,7 @@ npm ci && npm run check && npm run build (webapp/frontend)  → pass (after npm 
 ### Remains before shipping stack to main
 
 - Land #37 (and dependent PRs) via human review; rehearsal branch is archival integration signal only.
-- Optional: port non-conflicting rehearsal-only doc fixes back to #37 / #41 ledger.
+- Helper-script/root-changelog launch-safety hardening is now present on #37.
 - Real W5/W7 acceptance still required for any public-proof GO.
 
 ## Update — 2026-06-01 (PR #45 quarantine integrated on #37)
