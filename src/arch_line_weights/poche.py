@@ -47,6 +47,7 @@ from shapely.ops import linemerge, polygonize, snap, unary_union
 
 from .bridge import infer_bridges, infer_bridges_best
 from .hatch import hatch_polygon, material_for_layer
+from .input_format import raise_if_unsupported
 
 _log = logging.getLogger(__name__)
 
@@ -156,6 +157,7 @@ class PocheReport:
     fills: list[FillResult] = field(default_factory=list)
     polygons: dict[str, list[list[list[float]]]] = field(default_factory=dict)
     completion_candidates: list[object] = field(default_factory=list)
+    structural_helper_counts: dict[str, int] = field(default_factory=dict)
 
     @property
     def total_polygons(self) -> int:
@@ -1321,6 +1323,7 @@ def apply_poche(
     dst = os.path.abspath(dst)
     if dst == src:
         raise ValueError("dst must differ from src")
+    raise_if_unsupported(src, "poche")
 
     overrides = {}
     if overrides_path:

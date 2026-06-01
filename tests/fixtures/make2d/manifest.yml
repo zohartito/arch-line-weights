@@ -1,0 +1,40 @@
+fixtures:
+  - id: public_foundation_window_section_synthetic
+    fixture_path: public-foundation-window-section.pdf
+    commands:
+      - arch-lw apply-jsx public-foundation-window-section.pdf --preset section --source rhino
+      - arch-lw poche public-foundation-window-section HIERARCHY-jsx.ai --source rhino --style solid --report report.json
+    expected_report:
+      status: pass
+      counts:
+        cut_layers_considered: 3
+        layers_failed: 0
+        polygons_filled: 4
+    visual_artifacts:
+      before: proof/public-foundation-window-section/before.png
+      after: proof/public-foundation-window-section/after.png
+      diff: proof/public-foundation-window-section/diff.png
+      rendered_views:
+        - id: full_board
+          kind: full_board
+          before: proof/public-foundation-window-section/before.png
+          after: proof/public-foundation-window-section/after.png
+          diff: proof/public-foundation-window-section/diff.png
+        - id: foundation_window_cut_mass
+          kind: cut_mass_closeup
+          before: proof/public-foundation-window-section/foundation-window-before.png
+          after: proof/public-foundation-window-section/foundation-window-after.png
+          diff: proof/public-foundation-window-section/foundation-window-diff.png
+    geometry_artifacts:
+      cut_dump: proof/public-foundation-window-section/cut-geometry.json
+      layer_audit: proof/public-foundation-window-section/layer-audit.json
+    review_regions:
+      - id: foundation_window_cut_mass
+        kind: poche_presence
+        rect: [120, 160, 620, 460]
+        min_dark_ratio: 0.20
+        min_dark_delta: 0.12
+    caveats:
+      - "Synthetic fixture only; it does not close issue #30."
+      - "Private USC regression stays private and remains separate from public proof."
+    status: pass

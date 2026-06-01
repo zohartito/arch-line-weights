@@ -15,6 +15,7 @@ from .apply_jsx import apply_via_jsx
 from .apply_saas import apply_to_file as apply_to_file_saas
 from .apply_saas import default_output_path as default_output_path_saas
 from .classify import auto_by_luminance, explain_mapping, from_user_mapping
+from .input_format import UnsupportedInputError, raise_if_unsupported
 from .inspect import color_to_rgb255, inspect_file
 from .layer_classify import (
     Source,
@@ -71,6 +72,29 @@ def _require_nonempty_auto_mapping(
     )
 
 
+def _require_supported_input(src: Path, command: str):
+    try:
+        return raise_if_unsupported(src, command)
+    except UnsupportedInputError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+
+def _command_summary(command: str, src: Path) -> str:
+    return f"arch-lw {command} {src}"
+
+
+def _require_rewriteable_inspection(rep, *, src: Path, command: str) -> None:
+    input_format = getattr(rep, "input_format", None) or {}
+    if getattr(rep, "total_stroked", 0) > 0:
+        return
+    reason = input_format.get("no_drawing_reason") or ("No rewriteable stroked geometry was found.")
+    raise click.UsageError(
+        f"{command} found no rewriteable stroke geometry in {src.name!r}. "
+        f"{reason} Nothing was written; run `arch-lw inspect` to confirm "
+        "that this is a drawing export rather than a reference/report PDF."
+    )
+
+
 @click.group()
 @click.version_option(__version__, prog_name="arch-lw")
 def cli():
@@ -98,8 +122,12 @@ def cli():
 )
 def inspect(src: Path, pretty: bool, source: str):
     """Report the color / stroke-width distribution of a .ai or .pdf file."""
-    rep = inspect_file(str(src))
     indent = 2 if pretty else None
+    try:
+        rep = inspect_file(str(src))
+    except UnsupportedInputError as exc:
+        click.echo(json.dumps({"input_format": exc.diagnostic.to_dict()}, indent=indent))
+        raise click.ClickException(str(exc)) from exc
     click.echo(json.dumps(rep.to_dict(), indent=indent))
 
     # Layer-source detection (Phase E5). Print to stderr so JSON on stdout
@@ -193,12 +221,14 @@ def apply(
     source: str,
 ):
     """Rewrite the file with per-color stroke widths."""
+    _require_supported_input(src, "apply")
     if not (auto or mapping_file):
         raise click.UsageError("provide --mapping FILE or --auto (with optional --preset)")
     if auto and mapping_file:
         raise click.UsageError("--auto and --mapping are mutually exclusive")
 
     rep = inspect_file(str(src))
+    _require_rewriteable_inspection(rep, src=src, command="apply")
 
     # Layer-source resolution. Print so users see what convention drove the
     # classifier; lets them re-run with `--source autocad` if detection is wrong.
@@ -279,15 +309,13 @@ def apply(
     type=click.Choice(sorted(PRESETS)),
     default="section",
     show_default=True,
-    help="Tier ladder used by the embedded JSX classifier. Matches "
-    "`apply-saas --preset`. Issue #13.",
+    help="Tier ladder used by the embedded JSX classifier. Matches `apply-saas --preset`. Issue #13.",
 )
 @click.option(
     "--scale",
     default="1/4",
     show_default=True,
-    help="Plot scale for ISO 128 weight selection (1/16, 1/8, 1/4, 1/2). "
-    "Used with --for-print.",
+    help="Plot scale for ISO 128 weight selection (1/16, 1/8, 1/4, 1/2). Used with --for-print.",
 )
 @click.option(
     "--for-print",
@@ -344,6 +372,7 @@ def apply_jsx_cmd(
     structure into 1 Illustrator layer. 'apply-jsx' is the right default for
     Rhino-exported drawings with meaningful OCG layer names.
     """
+    _require_supported_input(src, "apply-jsx")
     out = str(output) if output else None
     if source != Source.AUTO.value:
         click.echo(f"# layer-source: {source} (forced)", err=True)
@@ -440,7 +469,7 @@ def apply_jsx_cmd(
     "--poche-overrides",
     "poche_overrides_path",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
-    help='JSON of per-layer poché strategy overrides; same schema as `arch-lw poche --overrides`.',
+    help="JSON of per-layer poché strategy overrides; same schema as `arch-lw poche --overrides`.",
 )
 @click.option(
     "--poche-overlay/--inline-poche",
@@ -555,14 +584,14 @@ def apply_saas_cmd(
     Best for SaaS / batch workflows on Rhino-exported `.ai` files. For
     plain `.pdf` files (no PieceInfo), use `apply` instead.
     """
+    input_diag = _require_supported_input(src, "apply-saas")
     if not (auto or mapping_file or architectural):
-        raise click.UsageError(
-            "provide --mapping FILE, --auto (with optional --preset), or --architectural"
-        )
+        raise click.UsageError("provide --mapping FILE, --auto (with optional --preset), or --architectural")
     if auto and mapping_file:
         raise click.UsageError("--auto and --mapping are mutually exclusive")
 
     rep = inspect_file(str(src))
+    _require_rewriteable_inspection(rep, src=src, command="apply-saas")
 
     pdf_metadata = getattr(rep, "pdf_metadata", None) or {}
     layer_names = getattr(rep, "layer_names", None) or []
@@ -732,8 +761,7 @@ def apply_saas_cmd(
 
     click.echo("", err=True)
     click.echo(
-        f"rewrote {result.widths_rewritten:,} stroke-width ops across "
-        f"{result.xa_seen:,} stroke-color sets",
+        f"rewrote {result.widths_rewritten:,} stroke-width ops across {result.xa_seen:,} stroke-color sets",
         err=True,
     )
     click.echo(
@@ -806,6 +834,8 @@ def apply_saas_cmd(
             },
             poche_report=poche_report,
             poche_result=poche_result,
+            input_format=input_diag.to_dict(),
+            command=_command_summary("apply-saas", src),
         )
         report_path.parent.mkdir(parents=True, exist_ok=True)
         report_path.write_text(json.dumps(run_report, indent=2, sort_keys=True) + "\n")
@@ -886,6 +916,13 @@ def apply_saas_cmd(
     help="Layer-name convention used to identify cut layers (only Rhino "
     "ClippingPlaneIntersections is currently a poché target; AIA NCS support is preliminary).",
 )
+@click.option(
+    "--report",
+    "report_path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=None,
+    help="Write a durable JSON run report with filled/skipped/failed/why layer status.",
+)
 def poche_cmd(
     src: Path,
     output: Path | None,
@@ -896,6 +933,7 @@ def poche_cmd(
     bridge_strategy: str,
     llm_fallback: bool,
     source: str,
+    report_path: Path | None,
 ):
     """Generate solid-black poché on cut layers via shapely linemerge + polygonize.
 
@@ -921,6 +959,7 @@ def poche_cmd(
         }
       }
     """
+    input_diag = _require_supported_input(src, "poche")
     out = str(output) if output else None
     over = str(overrides_path) if overrides_path else None
     if source != Source.AUTO.value:
@@ -940,6 +979,29 @@ def poche_cmd(
         use_alpha_shape=alpha_shape,
         bridge_strategy=bridge_strategy,
     )
+    output_path = (
+        Path(out) if out else src.with_name(f"{src.stem.replace(' HIERARCHY', '')} POCHE{src.suffix}")
+    )
+    if report_path is not None:
+        from .run_report import build_poche_report
+
+        run_report = build_poche_report(
+            input_path=src,
+            output_path=output_path,
+            source={
+                "mode": "poche",
+                "style": style,
+                "scale": hatch_scale,
+                "layer_source": source,
+                "bridge_strategy": bridge_strategy,
+            },
+            poche_report=report,
+            input_format=input_diag.to_dict(),
+            command=_command_summary("poche", src),
+        )
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(json.dumps(run_report, indent=2, sort_keys=True) + "\n")
+        click.echo(f"report: wrote {report_path}", err=True)
     click.echo("", err=True)
     click.echo(f"polygons created: {report.total_polygons}", err=True)
     click.echo(f"  clean (linemerge):     {report.working_layers} layers", err=True)
@@ -952,9 +1014,7 @@ def poche_cmd(
         marker = "✓" if fr.confidence >= 0.85 else ("~" if fr.confidence > 0 else "✗")
         # Surface bridge_strategy_name when set (only the auto_bridge rung
         # populates it, and only when bridge_strategy="best" was selected).
-        bridge_suffix = (
-            f"  bridge={fr.bridge_strategy_name}" if fr.bridge_strategy_name else ""
-        )
+        bridge_suffix = f"  bridge={fr.bridge_strategy_name}" if fr.bridge_strategy_name else ""
         click.echo(
             f"  {marker} {short:50}  {fr.strategy:18}  polys={fr.polygon_count:>3}  "
             f"conf={fr.confidence:.2f}{bridge_suffix}",

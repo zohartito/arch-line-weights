@@ -19,6 +19,12 @@ _INFERRED_STRATEGIES = {
     "llm_topology",
 }
 _REVIEW_STRATEGIES = {"alpha_shape", "concave_hull", "bbox", "llm_topology"}
+_VISUAL_ACCEPTANCE_COMPONENTS = (
+    "TEC_CONCRETE_BASE",
+    "TEC_FOUNDATION",
+    "FOUNDATION",
+    "FOOTING",
+)
 
 
 def _short_name(layer: str) -> str:
@@ -53,6 +59,13 @@ def _meaningful_rejection(candidate: object) -> bool:
     return "duplicates existing" not in reason
 
 
+def _requires_visual_acceptance(result: FillResult) -> bool:
+    if result.strategy not in _INFERRED_STRATEGIES:
+        return False
+    upper = _short_name(result.layer).upper()
+    return any(component in upper for component in _VISUAL_ACCEPTANCE_COMPONENTS)
+
+
 def _layer_status(
     result: FillResult,
     *,
@@ -79,10 +92,14 @@ def build_apply_saas_report(
     source: Mapping[str, Any],
     poche_report: PocheReport | None,
     poche_result: PocheSaasResult | None,
+    input_format: Mapping[str, Any] | None = None,
+    command: str | None = None,
+    visual_artifacts: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build a JSON-serializable report for one ``apply-saas`` run."""
     poche_report = poche_report or PocheReport()
     poche_result = poche_result or PocheSaasResult()
+    structural_helper_counts = getattr(poche_report, "structural_helper_counts", {})
 
     candidates_by_layer: dict[str, list[object]] = {}
     for candidate in poche_report.completion_candidates:
@@ -104,6 +121,7 @@ def build_apply_saas_report(
             diagnostic_polygons += fill.polygon_count
 
         layer_candidates = candidates_by_layer.get(fill.layer, [])
+        structural_helper_count = int(structural_helper_counts.get(fill.layer, 0) or 0)
         review_reasons: list[str] = []
         if status in {"low_confidence", "failed", "missing_payload"}:
             review_reasons.append(status.replace("_", " "))
@@ -115,7 +133,10 @@ def build_apply_saas_report(
             review_reasons.append("payload layer could not be located for injection")
         if any(_meaningful_rejection(candidate) for candidate in layer_candidates):
             review_reasons.append("one or more Make2D completion candidates were rejected")
-
+        if _requires_visual_acceptance(fill):
+            review_reasons.append(
+                "inferred concrete/foundation fill requires W5/W7 visual acceptance"
+            )
         layers.append(
             {
                 "layer": fill.layer,
@@ -133,11 +154,14 @@ def build_apply_saas_report(
                 "evidence": {
                     "used_cut_layer": True,
                     "used_poche_close_layer": False,
-                    "used_structural_helpers": bool(layer_candidates),
+                    "used_structural_helpers": bool(layer_candidates)
+                    or bool(structural_helper_count),
+                    "structural_helper_count": structural_helper_count,
                     "used_visible_completion": fill.strategy == "structural_visible_completion",
                 },
                 "review": {
                     "needs_review": bool(review_reasons),
+                    "visual_acceptance_required": _requires_visual_acceptance(fill),
                     "reasons": sorted(set(review_reasons)),
                 },
             }
@@ -156,12 +180,20 @@ def build_apply_saas_report(
         "bytes_injected": poche_result.bytes_injected,
     }
 
-    return {
-        "schema_version": 1,
+    source_payload: dict[str, Any] = {
+        "input": str(input_path),
+        "output": str(output_path),
+        **dict(source),
+    }
+    if input_format is not None:
+        source_payload["input_format"] = dict(input_format)
+    if command is not None:
+        source_payload["command"] = command
+
+    report = {
+        "schema_version": 2,
         "source": {
-            "input": str(input_path),
-            "output": str(output_path),
-            **dict(source),
+            **source_payload,
         },
         "summary": summary,
         "layers": layers,
@@ -170,3 +202,111 @@ def build_apply_saas_report(
         ],
         "missing_payload_layers": poche_result.layers_missing,
     }
+    if visual_artifacts is not None:
+        report["visual_artifacts"] = dict(visual_artifacts)
+    return report
+
+
+def build_poche_report(
+    *,
+    input_path: str | Path,
+    output_path: str | Path,
+    source: Mapping[str, Any],
+    poche_report: PocheReport | None,
+    input_format: Mapping[str, Any] | None = None,
+    command: str | None = None,
+    visual_artifacts: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build a JSON-serializable report for the Illustrator-backed ``poche`` path."""
+    poche_report = poche_report or PocheReport()
+    structural_helper_counts = getattr(poche_report, "structural_helper_counts", {})
+
+    layers: list[dict[str, Any]] = []
+    diagnostic_polygons = 0
+    for fill in poche_report.fills:
+        injected_count = len(poche_report.polygons.get(fill.layer, []))
+        status, action = _layer_status(
+            fill,
+            injected_count=injected_count,
+            missing_payload=False,
+        )
+        if action == "diagnostic_only":
+            diagnostic_polygons += fill.polygon_count
+
+        structural_helper_count = int(structural_helper_counts.get(fill.layer, 0) or 0)
+        review_reasons: list[str] = []
+        if status in {"low_confidence", "failed"}:
+            review_reasons.append(status.replace("_", " "))
+        if fill.strategy in _REVIEW_STRATEGIES:
+            review_reasons.append(f"strategy {fill.strategy} is review-only")
+        if 0 < fill.confidence < 0.85:
+            review_reasons.append(f"confidence {fill.confidence:.2f} below 0.85")
+        if _requires_visual_acceptance(fill):
+            review_reasons.append(
+                "inferred concrete/foundation fill requires W5/W7 visual acceptance"
+            )
+        layers.append(
+            {
+                "layer": fill.layer,
+                "short_name": _short_name(fill.layer),
+                "component_key": _short_name(fill.layer).upper(),
+                "status": status,
+                "action": action,
+                "strategy": fill.strategy,
+                "confidence": round(float(fill.confidence), 4),
+                "polygon_count": fill.polygon_count,
+                "injected_polygon_count": injected_count,
+                "segment_count": fill.segment_count,
+                "tolerance": fill.tolerance,
+                "bridge_strategy_name": fill.bridge_strategy_name,
+                "evidence": {
+                    "used_cut_layer": True,
+                    "used_poche_close_layer": False,
+                    "used_structural_helpers": bool(structural_helper_count),
+                    "structural_helper_count": structural_helper_count,
+                    "used_visible_completion": False,
+                },
+                "review": {
+                    "needs_review": bool(review_reasons),
+                    "visual_acceptance_required": _requires_visual_acceptance(fill),
+                    "reasons": sorted(set(review_reasons)),
+                },
+            }
+        )
+
+    summary = {
+        "cut_layers_considered": len(poche_report.fills),
+        "layers_filled": sum(1 for layer in layers if layer["status"] == "filled"),
+        "layers_inferred": sum(1 for layer in layers if layer["status"] == "inferred"),
+        "layers_skipped": sum(1 for layer in layers if layer["status"] == "skipped"),
+        "layers_low_confidence": sum(1 for layer in layers if layer["status"] == "low_confidence"),
+        "layers_failed": sum(1 for layer in layers if layer["status"] == "failed"),
+        "layers_needs_review": sum(1 for layer in layers if layer["review"]["needs_review"]),
+        "polygons_filled": sum(len(polys) for polys in poche_report.polygons.values()),
+        "polygons_diagnostic_only": diagnostic_polygons,
+        "bytes_injected": 0,
+    }
+
+    source_payload: dict[str, Any] = {
+        "input": str(input_path),
+        "output": str(output_path),
+        **dict(source),
+    }
+    if input_format is not None:
+        source_payload["input_format"] = dict(input_format)
+    if command is not None:
+        source_payload["command"] = command
+
+    report: dict[str, Any] = {
+        "schema_version": 2,
+        "source": source_payload,
+        "summary": summary,
+        "layers": layers,
+        "completion_candidates": [
+            _candidate_dict(candidate) for candidate in poche_report.completion_candidates
+        ],
+        "missing_payload_layers": [],
+    }
+    if visual_artifacts is not None:
+        report["visual_artifacts"] = dict(visual_artifacts)
+    return report

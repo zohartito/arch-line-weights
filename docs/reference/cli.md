@@ -2,6 +2,18 @@
 
 `arch-lw` is the entry point. All subcommands accept `--help`.
 
+## Supported input paths
+
+The command to use depends on the input kind, not only the file extension.
+Native Illustrator `.ai` files with `/NumBlock` use the headless
+`apply-saas` path. PDF-only or converted `.ai` files use the Illustrator bridge
+with `apply-jsx`, followed by `poche` when section poché is needed. Plain PDFs
+use `inspect` and `apply`. Legacy Rhino PostScript `.ai` files should be opened
+in Illustrator and saved as a modern `.ai` copy before processing.
+
+See [Supported inputs](../how-to/supported-inputs.md) for the full matrix and
+conversion guidance.
+
 ## `arch-lw inspect`
 
 Report color / stroke-width distribution of a `.ai` or `.pdf`.
@@ -62,6 +74,7 @@ arch-lw apply-saas SRC [OPTIONS]
 | `--poche-overlay / --inline-poche` | architectural: overlay | Write generated fills to a top `ARCH_LW_POCHE` layer, or inline into source cut layers |
 | `--bridge-strategy {greedy,best}` | `best` | Bridge selector for the poché auto-bridge rung |
 | `--progress / --no-progress` | auto | Stage/layer progress feedback |
+| `--report PATH` | — | Durable JSON report with input kind, command path, and filled/skipped/failed/why layer status |
 
 Architectural mode separates black poché from cut-line styling. A layer can be
 `poche=False` and still receive a strong cut stroke, for example glazing,
@@ -81,6 +94,7 @@ arch-lw poche SRC [OPTIONS]
 | `--overrides FILE` | — | Per-layer strategy overrides JSON |
 | `--style {solid,material}` | `solid` | Solid black or material hatch |
 | `--scale FLOAT` | `0.02` | Plot scale (1/N as decimal) for material mode |
+| `--report PATH` | — | Durable JSON report for the Illustrator-backed poché pass |
 
 ## `arch-lw preview`
 
