@@ -8,13 +8,38 @@ This branch preserves the WIP implementation and investigation for the open-issu
 - Remote: `origin` (`git@github.com:zohartito/arch-line-weights.git`)
 - Goal status: in progress on PR #37; not launch-ready.
 
+## Update — 2026-06-01 (PR #45 quarantine integrated on #37)
+
+### What changed
+
+- Cherry-picked PR #45 announce/research quarantine onto `codex/open-issue-verification-core`.
+- Removed committed `docs/img/day1-proof/*` binaries from the branch.
+- Replaced `docs/announce/*` launch-kit copy with NO-GO stubs (no private assets or claims).
+- Expanded `tests/test_launch_safety_docs.py`: core surfaces + research doc regression scan.
+- Removed the temporary `test_announce_surfaces_still_need_pr45_quarantine` debt test.
+
+### Verification
+
+```text
+pytest tests/test_launch_safety_docs.py -q  → 3 passed
+pytest --ignore=tests/test_hatch_v05.py -q  → 571 passed, 1 skipped
+ruff check src/ tests/ webapp/backend/ webapp/tests/  → pass
+webapp/tests (console + routes + dev_console)  → 36 passed
+git diff --check  → pass
+```
+
+### Remains
+
+- **#29** / **#30** open; posting/public proof **NO-GO**.
+- PR **#45** can be closed as superseded by this integration once reviewed (no merge by agent).
+- Integration rehearsal still blocked on `v0.2-verification-core`, `issue23`, `w2` conflicts.
+
 ## Update — 2026-06-01 (public-surface launch safety + doc quarantine)
 
 ### What changed
 
 - Added `tests/test_launch_safety_docs.py` for core public surfaces (README, RELEASE,
-  SHIP, webapp UI, handoff doc) with a separate debt test tracking `docs/announce/*`
-  until PR #45 merges.
+  SHIP, webapp UI, handoff doc).
 - Redacted committed Day-1 proof asset links and private filenames from README,
   RELEASE_NOTES, ROADMAP, SESSION_RETRO, and SHIP_CHECKLIST.
 
@@ -30,8 +55,6 @@ npm --prefix webapp/frontend run check && npm run build  → pass
 ### Remains
 
 - **#29** / **#30** open; posting **NO-GO**.
-- PR **#45** still needed to quarantine `docs/announce/*` and remove committed
-  committed Day-1 proof image binaries from public history when ready.
 
 ## Update — 2026-06-01 (handoff violation regressions, `374b458`)
 

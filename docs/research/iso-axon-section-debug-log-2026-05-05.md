@@ -5,7 +5,7 @@ Date: 2026-05-05
 Source file:
 
 ```text
-<private-arch-202b-root>/iso axon section  [Converted].ai
+<local-regression-root>/private section regression drawing.ai
 ```
 
 ## User-Visible Symptoms
@@ -81,7 +81,7 @@ This requires structural open-loop closure, not global `bbox`.
 Output:
 
 ```text
-iso axon section  [Converted] HIERARCHY-saas-PATCHED.ai
+private section regression drawing HIERARCHY-saas-PATCHED.ai
 ```
 
 Run summary:
@@ -147,7 +147,7 @@ Behavior:
 Output:
 
 ```text
-<private-arch-202b-root>/iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL.ai
+<local-regression-root>/private section regression drawing HIERARCHY-saas-ARCHITECTURAL.ai
 ```
 
 Command:
@@ -155,8 +155,8 @@ Command:
 ```bash
 ARCH_LW_BRIDGE_BEST_LAYER_BUDGET_SEC=5 \
 PYTHONPATH=src pyenv exec python -m arch_line_weights.cli apply-saas \
-  "iso axon section  [Converted].ai" \
-  -o "iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL.ai" \
+  "private section regression drawing.ai" \
+  -o "private section regression drawing HIERARCHY-saas-ARCHITECTURAL.ai" \
   --auto --architectural --preset section --poche --bridge-strategy=best --no-progress
 ```
 
@@ -260,8 +260,8 @@ Actual v0.6.11 patch:
 Real run:
 
 ```text
-arch-lw apply-saas "iso axon section  [Converted].ai" \
-  -o "iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0611.ai" \
+arch-lw apply-saas "private section regression drawing.ai" \
+  -o "private section regression drawing HIERARCHY-saas-ARCHITECTURAL-private-regression-output.ai" \
   --auto --architectural --preset section --poche --bridge-strategy=best
 ```
 
@@ -337,19 +337,19 @@ What changed:
 Real outputs:
 
 ```text
-v0612-bounds-candidates.ai
+private-regression-output.ai
   better coverage, but still false helper-only blobs
 
-v0614-no-concrete-blob.ai
+private-regression-output.ai
   lower-left concrete-base helper expansion removed
   still missing some true slab/roof/foundation mass
 
-v0615-overlay.ai
+private-regression-output.ai
   same guarded geometry, plus a top ARCH_LW_POCHE layer
   confirms that remaining gaps are mostly missing component completion,
   not just layer draw order
 
-v0616-current-best.ai
+private-regression-output.ai
   same overlay/guarded poché, with quieter secondary steel and connector
   hierarchy after reducing section-screen secondary steel to 0.25 pt and
   connector hardware to 0.18 pt
@@ -373,11 +373,11 @@ Still not solved:
 Current best immediate output:
 
 ```text
-<private-arch-202b-root>/
-iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0616-current-best.ai
+<local-regression-root>/
+private section regression drawing HIERARCHY-saas-ARCHITECTURAL-private-regression-output.ai
 ```
 
-It is safer than `v0612-bounds-candidates.ai`, but still not the final bar for
+It is safer than `private-regression-output.ai`, but still not the final bar for
 automatic poché on this drawing.
 
 ## v0.6.14/v0.6.15 Research-To-Rules Pass
@@ -400,7 +400,7 @@ Agent findings that became implementation:
   classification, so glazing, membranes, connectors, and cladding/rainscreen
   layers cannot become black poché just because they also contain structural
   tokens.
-- Raman: remaining v0618 failures point to open-loop cleanup and beam completion,
+- Raman: remaining prior private run failures point to open-loop cleanup and beam completion,
   not just completion caps. Result: post-clean open-loop filters reject tiny
   backup-wall fragments and large irregular roof surfaces; `TEC_TIMBER_BEAMS`
   completion is allowed only for small cut-anchored rectangles.
@@ -464,7 +464,7 @@ Important unresolved point:
   rule can prove it is the cut concrete/foundation." That belongs in Issue #21
   as the next component-completion problem.
 
-## v0619/v0620 Report + Hierarchy Pass
+## prior private run/prior private run Report + Hierarchy Pass
 
 The next pass incorporated the subagent findings into a safer review workflow.
 
@@ -485,8 +485,8 @@ Rule added:
 Real output:
 
 ```text
-iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0619-report-hierarchy.ai
-iso-axon-v0619-report.json
+private section regression drawing HIERARCHY-saas-ARCHITECTURAL-private-regression-output.ai
+private-regression-report.json
 ```
 
 The run stayed fast and injected the same safe poché set:
@@ -522,31 +522,31 @@ them:
 As a controlled experiment, `ARCH_LW_POCHE_ALLOW_LOW_CONFIDENCE=1` produced:
 
 ```text
-iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0620-lowconf-roofcap.ai
-iso-axon-v0620-lowconf-report.json
+private section regression drawing HIERARCHY-saas-ARCHITECTURAL-private-regression-output.ai
+private-regression-report.json
 ```
 
 It injected one additional roof-cap bbox, but Illustrator review showed a
 large black roof/rainscreen blob. That confirms the default low-confidence
-refusal is correct. `v0620` is evidence, not a print candidate.
+refusal is correct. `prior private run` is evidence, not a print candidate.
 
 Current print-leaning candidate:
 
 ```text
-iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0619-report-hierarchy.ai
+private section regression drawing HIERARCHY-saas-ARCHITECTURAL-private-regression-output.ai
 ```
 
 It is not perfect poché, but it is safer than the low-confidence variant. The
 next true geometry fix should be component-graph completion and beam-cell
 decomposition, not global loosening of confidence gates.
 
-## v0621/v0622 Deadline Pass
+## prior private run/prior private run Deadline Pass
 
 The latest safe run produced:
 
 ```text
-iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0621-deadline-safe.ai
-iso-axon-v0621-deadline-safe-report.json
+private section regression drawing HIERARCHY-saas-ARCHITECTURAL-private-regression-output.ai
+private-regression-report.json
 ```
 
 Then a narrow timber-beam cell preservation patch was tested. It changes
@@ -558,8 +558,8 @@ large timber blob remains rejected.
 Real output:
 
 ```text
-iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0622-beam-cells.ai
-iso-axon-v0622-beam-cells-report.json
+private section regression drawing HIERARCHY-saas-ARCHITECTURAL-private-regression-output.ai
+private-regression-report.json
 ```
 
 Result on the iso axon:
@@ -577,6 +577,6 @@ Conclusion:
 - It does not solve this exact iso axon. The remaining true misses require
   component-graph completion, especially for right foundation/wall and roof/slab
   strip evidence.
-- For the 2026-05-06 9:30 a.m. deadline, the practical path is to use v0622 as
+- For the 2026-05-06 9:30 a.m. deadline, the practical path is to use prior private run as
   the automatic base and add a small `ARCH_LW_POCHE_CLEANUP` layer in
   Illustrator for the few true cut faces the engine still cannot prove.
