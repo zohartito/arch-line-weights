@@ -18,13 +18,16 @@ commitment.
 
 ## Current Launch Gate
 
-Public posting is **NO-GO** until proof QA is verifier-backed.
+Posting/public proof is **NO-GO** unless W5/W7 explicitly accepts the packet.
+Synthetic proof can exercise the harness, but it does not close #30. The
+private USC regression stays private and is not represented by committed
+screenshots, PDFs, raw reports, or local file paths.
 
-The Day-1 proof pack is now treated as internal failure evidence, not public
-promotion material. The earlier screenshots exposed a real quality gap:
-foundation/concrete cut mass can remain unfilled while other poché evidence
-looks plausible. That failure is tracked as the root launch blocker in
-GitHub issue #30. Issue #29 remains blocked behind #30 and proof-truth review.
+The retired Day-1 proof pack is internal failure evidence, not public promotion
+material. It exposed a real quality gap: foundation/concrete cut mass can remain
+unfilled while other poché evidence looks plausible. That failure is tracked as
+the root launch blocker in GitHub issue #30. Issue #29 remains blocked behind
+#30 and proof-truth review.
 
 Current durable GitHub coordination points:
 
@@ -45,21 +48,10 @@ semantics, but it does not close #30: the foundation/concrete path still needs
 either a real visual fix or a documented limitation that proof QA explicitly
 accepts.
 
-See `RETROSPECTIVE.md` for the current wins, failures, causes, and operating
-changes.
-
-## Evidence That Still Holds
-
-- The Illustrator bridge path can modify a converted section file and preserve
-  enough layer structure for review.
-- The poché path can produce fills on high-confidence cut layers and now has
-  a structured reporting direction.
-- The private axon stress proof passed on a local-only 98 MB / 1.28M-stroke
-  fixture: `apply-saas` exit 0, about 1:53 runtime.
-
-The axon run remains large-file performance evidence. It is not section or
-poché evidence, because that fixture had no `ClippingPlaneIntersections` cut
-layers.
+Prior private dogfood showed useful bridge and large-file signals, but those
+private filenames, counts, timings, and artifacts are intentionally not public
+proof claims. See `RETROSPECTIVE.md` for the current wins, failures, causes,
+and operating changes.
 
 ## Known Input Caveats
 

@@ -1,8 +1,8 @@
 #target illustrator
 
 (function () {
-    var TARGET   = "/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/DRAWING 4 SECTION [Converted] HIERARCHY.ai";
-    var OUTPUT   = "/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/DRAWING 4 SECTION [Converted] POCHE.ai";
+    var TARGET   = "<private-arch-202b-root>/DRAWING 4 SECTION [Converted] HIERARCHY.ai";
+    var OUTPUT   = "<private-arch-202b-root>/DRAWING 4 SECTION [Converted] POCHE.ai";
     var PROGRESS = "/tmp/poche_progress.txt";
     var REPORT   = "/tmp/poche_report.txt";
 

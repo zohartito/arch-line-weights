@@ -5,7 +5,7 @@ Date: 2026-05-05
 Source file:
 
 ```text
-/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/iso axon section  [Converted].ai
+<private-arch-202b-root>/iso axon section  [Converted].ai
 ```
 
 ## User-Visible Symptoms
@@ -147,7 +147,7 @@ Behavior:
 Output:
 
 ```text
-/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL.ai
+<private-arch-202b-root>/iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL.ai
 ```
 
 Command:
@@ -373,7 +373,7 @@ Still not solved:
 Current best immediate output:
 
 ```text
-/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/
+<private-arch-202b-root>/
 iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0616-current-best.ai
 ```
 
