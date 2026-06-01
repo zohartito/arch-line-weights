@@ -99,6 +99,7 @@ def build_apply_saas_report(
     """Build a JSON-serializable report for one ``apply-saas`` run."""
     poche_report = poche_report or PocheReport()
     poche_result = poche_result or PocheSaasResult()
+    structural_helper_counts = getattr(poche_report, "structural_helper_counts", {})
 
     candidates_by_layer: dict[str, list[object]] = {}
     for candidate in poche_report.completion_candidates:
@@ -153,7 +154,8 @@ def build_apply_saas_report(
                 "evidence": {
                     "used_cut_layer": True,
                     "used_poche_close_layer": False,
-                    "used_structural_helpers": bool(layer_candidates),
+                    "used_structural_helpers": bool(layer_candidates)
+                    or bool(structural_helper_counts.get(fill.layer)),
                     "used_visible_completion": fill.strategy == "structural_visible_completion",
                 },
                 "review": {
@@ -216,6 +218,7 @@ def build_poche_report(
 ) -> dict[str, Any]:
     """Build a JSON-serializable report for the Illustrator-backed ``poche`` path."""
     poche_report = poche_report or PocheReport()
+    structural_helper_counts = getattr(poche_report, "structural_helper_counts", {})
 
     layers: list[dict[str, Any]] = []
     diagnostic_polygons = 0
@@ -258,7 +261,7 @@ def build_poche_report(
                 "evidence": {
                     "used_cut_layer": True,
                     "used_poche_close_layer": False,
-                    "used_structural_helpers": False,
+                    "used_structural_helpers": bool(structural_helper_counts.get(fill.layer)),
                     "used_visible_completion": False,
                 },
                 "review": {

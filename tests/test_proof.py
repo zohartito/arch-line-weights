@@ -418,6 +418,7 @@ def test_helper_backed_concrete_poche_report_stays_review_gated_in_proof(
         poche_report=PocheReport(
             fills=[FillResult(layer, "structural_open_loop", 0.88, 1, 8)],
             polygons={layer: [[[100, 0], [130, 0], [130, 160], [100, 160], [100, 0]]]},
+            structural_helper_counts={layer: 2},
         ),
         command="arch-lw poche public-foundation-window-section.ai --report report.json",
         visual_artifacts=_safe_visual_artifacts(),
@@ -434,6 +435,7 @@ def test_helper_backed_concrete_poche_report_stays_review_gated_in_proof(
     assert report["summary"]["layers_inferred"] == 1
     assert report["summary"]["layers_needs_review"] == 1
     assert report["layers"][0]["status"] == "inferred"
+    assert report["layers"][0]["evidence"]["used_structural_helpers"] is True
     assert report["layers"][0]["review"]["visual_acceptance_required"] is True
     assert validation.status == "needs_review"
     assert validation.public_summary["public_safe"] is False
