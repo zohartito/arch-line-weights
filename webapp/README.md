@@ -35,6 +35,14 @@ webapp/
     └── test_routes.py   # FastAPI TestClient on /api/jobs
 ```
 
+## Vercel PR previews (UI only)
+
+To get a **preview link on each pull request** (Vercel bot comment), connect
+[github.com/apps/vercel](https://github.com/apps/vercel) to `zohartito/arch-line-weights` and set the project **Root Directory** to
+`webapp/frontend`. See `docs/how-to/vercel-pr-previews.md`.
+
+Previews deploy the SvelteKit console shell only — not the Python pipeline.
+
 ## Open the Designer Console
 
 Install once, then use the one-command launcher:

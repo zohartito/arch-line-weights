@@ -3,6 +3,10 @@
   // above every page. No authentication state to thread yet, so this is
   // intentionally bare.
   import '../app.css';
+
+  const isVercelUiPreview =
+    (import.meta as unknown as { env: Record<string, string> }).env?.VITE_DEPLOY_TARGET ===
+    'vercel';
 </script>
 
 <div class="min-h-screen flex flex-col">
@@ -26,7 +30,13 @@
 
   <footer class="border-t border-ink-300 text-xs text-ink-500">
     <div class="mx-auto max-w-6xl px-6 py-4">
-      Local designer-console prototype — no public proof clearance, no desktop packaging claim.
+      {#if isVercelUiPreview}
+        Vercel UI preview — FastAPI console API not on this host; use local
+        <code class="text-ink-700">arch-lw-web-console</code> for full runs. Posting NO-GO.
+      {:else}
+        Local designer-console prototype — no public proof clearance, no desktop packaging
+        claim.
+      {/if}
     </div>
   </footer>
 </div>
