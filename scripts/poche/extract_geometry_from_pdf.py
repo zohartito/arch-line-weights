@@ -15,7 +15,7 @@ from pikepdf import parse_content_stream
 from shapely.geometry import LineString, MultiLineString
 from shapely.ops import linemerge, polygonize
 
-SRC = "/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/DRAWING 4 SECTION [Converted] BACKUP.ai"
+SRC = "<private-arch-202b-root>/DRAWING 4 SECTION [Converted] BACKUP.ai"
 OUT = "/tmp/poche_polygons.json"
 TOLERANCE = 0.05  # pt — Make2D output is exact, but be safe
 

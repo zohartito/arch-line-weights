@@ -1,12 +1,21 @@
 #!/usr/bin/env python3
-"""Build a JSX file with the polygons baked in and the apply logic."""
+"""Build a JSX file with the polygons baked in and the apply logic.
+
+Set POCHE_POLYGONS_JSON, POCHE_TARGET_AI, and POCHE_OUTPUT_AI to point at
+local private files before running this spike helper.
+"""
 import json
+import os
 
-with open("/tmp/poche_polygons.json") as f:
+POLYGONS_JSON = os.environ.get("POCHE_POLYGONS_JSON", "/tmp/poche_polygons.json")
+TARGET = os.environ.get("POCHE_TARGET_AI")
+OUTPUT = os.environ.get("POCHE_OUTPUT_AI")
+
+if not TARGET or not OUTPUT:
+    raise SystemExit("set POCHE_TARGET_AI and POCHE_OUTPUT_AI before running")
+
+with open(POLYGONS_JSON) as f:
     polygons = json.load(f)
-
-TARGET = "/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/DRAWING 4 SECTION [Converted] HIERARCHY.ai"
-OUTPUT = "/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/DRAWING 4 SECTION [Converted] POCHE.ai"
 
 def js_str(s):
     return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
