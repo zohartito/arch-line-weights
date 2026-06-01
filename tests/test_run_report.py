@@ -58,9 +58,9 @@ def test_report_marks_injected_structural_open_loop_as_inferred():
     assert data["layers"][0]["action"] == "injected"
     assert data["layers"][0]["review"]["needs_review"] is True
     assert data["layers"][0]["review"]["visual_acceptance_required"] is True
-    assert any(
-        "W5/W7 visual acceptance" in reason
-        for reason in data["layers"][0]["review"]["reasons"]
+    assert (
+        "inferred concrete/foundation fill requires W5/W7 visual acceptance"
+        in data["layers"][0]["review"]["reasons"]
     )
 
 
@@ -216,7 +216,14 @@ def test_poche_report_marks_inferred_foundation_concrete_as_needing_visual_accep
     assert data["layers"][0]["status"] == "inferred"
     assert data["layers"][0]["review"]["needs_review"] is True
     assert data["layers"][0]["review"]["visual_acceptance_required"] is True
+    assert (
+        "inferred concrete/foundation fill requires W5/W7 visual acceptance"
+        in data["layers"][0]["review"]["reasons"]
+    )
+    assert data["summary"]["status"] == "needs_review"
     assert data["summary"]["layers_needs_review"] == 1
+    assert "1 poché layer(s) require review." in data["summary"]["why"]
+    assert "Review gated poché layers" in data["summary"]["next_action"]
 
 
 def test_poche_cli_writes_durable_report(monkeypatch, tmp_path):

@@ -40,6 +40,13 @@ def _is_foundation_concrete_layer(layer: str) -> bool:
     return any(token in component for token in _FOUNDATION_CONCRETE_TOKENS)
 
 
+def _requires_visual_acceptance(result: FillResult) -> bool:
+    if result.strategy not in _INFERRED_STRATEGIES:
+        return False
+    component = _short_name(result.layer).upper()
+    return any(token in component for token in _VISUAL_ACCEPTANCE_COMPONENTS)
+
+
 def _known_limitation_dict(item: Mapping[str, Any]) -> dict[str, Any]:
     evidence = {
         "kind": "visual_roi_black_ratio",
@@ -106,13 +113,6 @@ def _meaningful_rejection(candidate: object) -> bool:
         return False
     reason = str(getattr(candidate, "reason", "")).lower()
     return "duplicates existing" not in reason
-
-
-def _requires_visual_acceptance(result: FillResult) -> bool:
-    if result.strategy not in _INFERRED_STRATEGIES:
-        return False
-    upper = _short_name(result.layer).upper()
-    return any(component in upper for component in _VISUAL_ACCEPTANCE_COMPONENTS)
 
 
 def _layer_status(
@@ -217,14 +217,14 @@ def build_apply_saas_report(
             review_reasons.append(f"strategy {fill.strategy} is review-only")
         if 0 < fill.confidence < 0.85:
             review_reasons.append(f"confidence {fill.confidence:.2f} below 0.85")
-        if missing_payload:
-            review_reasons.append("payload layer could not be located for injection")
-        if any(_meaningful_rejection(candidate) for candidate in layer_candidates):
-            review_reasons.append("one or more Make2D completion candidates were rejected")
         if _requires_visual_acceptance(fill):
             review_reasons.append(
                 "inferred concrete/foundation fill requires W5/W7 visual acceptance"
             )
+        if missing_payload:
+            review_reasons.append("payload layer could not be located for injection")
+        if any(_meaningful_rejection(candidate) for candidate in layer_candidates):
+            review_reasons.append("one or more Make2D completion candidates were rejected")
         limitation = _foundation_concrete_limitation(
             fill.layer,
             status=status,
@@ -403,6 +403,14 @@ def _poche_summary_status(summary: Mapping[str, Any], error: str | None) -> tupl
         if summary["layers_skipped"]:
             why.append(f"{summary['layers_skipped']} layer(s) were skipped.")
         return "needs_review", why, "Review low-confidence or skipped cut layers before using the output."
+
+    if summary.get("layers_needs_review", 0):
+        why.append(f"{summary['layers_needs_review']} poché layer(s) require review.")
+        return (
+            "needs_review",
+            why,
+            "Review gated poché layers before using the output as proof.",
+        )
 
     return "passed", [], "No action needed."
 
