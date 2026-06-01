@@ -16,18 +16,29 @@ product. It is an engineering control document, not a public launch claim.
 - Do not claim App Store, Windows, Rhino plugin, or Illustrator panel readiness
   until those surfaces are actually implemented and tested.
 
-## Integration Rehearsal Checkpoint - 2026-06-01 (evening)
+## Integration Rehearsal Checkpoint - 2026-06-01 (evening, refreshed)
 
-Archival branch `codex/tmp-integration-rehearsal-20260601b` at `aadde55` merges the
-full intended stack on top of PR #37 head `bea0ded`:
+Archival branch `codex/tmp-integration-rehearsal-20260601b` has now rehearsed the
+full intended stack on top of PR #37 through head `1a87e13`; verified content
+head before this note is `12e78cb`.
 
 - #36 `v0.2-verification-core` (layout-jsx, bridge-rhino-ai reports)
 - #23 cleanup, #19 diagnose, #30 concrete-base synthetic regression
 - #20 entourage assets, w2 fixture-sourcing docs, endgame ledger plan
+- #45 quarantine recorded by ancestry after conflicts were resolved toward the
+  stricter #37/rehearsal safety surfaces.
 
-Rehearsal verification: **651** pytest passed (excluding hatch v05), **36** webapp
-tests, launch-safety docs **3** passed, ruff clean. **No merge. #29/#30 open.
-Posting NO-GO.**
+Rehearsal verification: **652** pytest passed (excluding hatch v05), **36** webapp
+tests, launch-safety docs **4** passed, ruff clean, frontend check/build clean,
+tracked-file private-path/retired-proof/unsafe-claim scan clean outside guardrail
+regex tests. **No merge. #29/#30 open. Posting NO-GO.**
+
+Additional safety hardening found during the rehearsal:
+
+- Legacy helper scripts still referenced a private drawing token through
+  placeholder paths. They were redacted to generic `sample-*` names.
+- The launch-safety test now scans committed helper scripts and the root
+  changelog in addition to docs/research and core public surfaces.
 
 ## Pause Checkpoint - 2026-06-01 08:09 PDT
 
