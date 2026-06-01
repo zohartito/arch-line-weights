@@ -116,6 +116,7 @@ def build_apply_saas_report(
             review_reasons.append("payload layer could not be located for injection")
         if any(_meaningful_rejection(candidate) for candidate in layer_candidates):
             review_reasons.append("one or more Make2D completion candidates were rejected")
+        structural_helper_count = int(structural_helper_counts.get(fill.layer, 0) or 0)
 
         layers.append(
             {
@@ -135,7 +136,8 @@ def build_apply_saas_report(
                     "used_cut_layer": True,
                     "used_poche_close_layer": False,
                     "used_structural_helpers": bool(layer_candidates)
-                    or bool(structural_helper_counts.get(fill.layer)),
+                    or bool(structural_helper_count),
+                    "structural_helper_count": structural_helper_count,
                     "used_visible_completion": fill.strategy == "structural_visible_completion",
                 },
                 "review": {
