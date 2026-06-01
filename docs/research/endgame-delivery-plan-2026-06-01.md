@@ -202,7 +202,12 @@ Resume from here:
   Packet: Inspect File `passed`, Run Layout `needs_review`, Apply Line Weights
   `passed`, Generate Poché `passed`, Export Proof Packet `needs_review`, proof
   packet CTA visible, Public proof still `NO-GO`, and W5/W7 acceptance still
-  not recorded.
+  not recorded. A later update at `86fca6a` adds redacted W5/W7 acceptance
+  handoff templates to exported console proof packets
+  (`W5-W7-ACCEPTANCE-HANDOFF.json` and `.md`) and updates the artifact panel
+  and README to say the packet includes the handoff while raw local reports
+  remain in local storage. The handoff is a template only: it does not record
+  acceptance, does not make `public_safe` true, and does not clear #29/#30.
 - #45 is draft: launch-safety quarantine for private proof assets and public
   posting drafts. It removes committed Day-1 proof media from the public tree
   and redacts inherited local/private paths. A later update also quarantines
@@ -288,6 +293,31 @@ same disposable rehearsal branch:
 - `npm run check` in `webapp/frontend` -> 0 Svelte errors, 0 warnings.
 - `npm run build` in `webapp/frontend` -> pass; Vite/SvelteKit emitted
   dependency export warnings but exited successfully.
+
+Latest #44 standalone refresh after `86fca6a`:
+
+- New proof-packet handoff regression:
+  `webapp/tests/test_console_routes.py::test_console_synthetic_demo_runs_full_headless_review_packet`
+  -> 1 passed, 1 Starlette/httpx deprecation warning.
+- Console/backend route tests:
+  `webapp/tests/test_console_routes.py webapp/tests/test_routes.py
+  webapp/tests/test_dev_console.py` -> 36 passed, 1 warning.
+- Native apply/poche/report/console slice:
+  `tests/test_apply_saas.py tests/test_apply_saas_poche.py
+  tests/test_apply_saas_no_payload.py tests/test_run_report.py
+  webapp/tests/test_console_routes.py` -> 75 passed, 1 warning.
+- Feasible full Python suite:
+  `pytest --ignore=tests/test_hatch_v05.py -q` -> 506 passed, 1 skipped,
+  5 warnings.
+- `ruff check src/ tests/ webapp/backend webapp/tests` -> pass.
+- `npm run check` in `webapp/frontend` -> 0 Svelte errors, 0 warnings.
+- `npm run build` in `webapp/frontend` -> pass.
+- `git diff --check` -> clean.
+- changed-diff private-path/name/claim scan -> no hits.
+- Local launcher smoke at a non-default local URL rendered the main Designer
+  Console screen, required no-go notices, and updated W5/W7 handoff copy.
+- #44 GitHub CI at `86fca6a` -> Python tests passed; ruff passed;
+  compatibility matrix skipped.
 
 Latest refresh after #37 `d72ecec` and #41 `750cd45` were merged into the same
 disposable rehearsal branch:
