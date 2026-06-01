@@ -49,7 +49,12 @@ def test_report_marks_injected_structural_open_loop_as_inferred():
     assert data["summary"]["polygons_filled"] == 2
     assert data["layers"][0]["status"] == "inferred"
     assert data["layers"][0]["action"] == "injected"
-    assert data["layers"][0]["review"]["needs_review"] is False
+    assert data["layers"][0]["review"]["needs_review"] is True
+    assert data["layers"][0]["review"]["visual_acceptance_required"] is True
+    assert (
+        "inferred concrete/foundation fill requires W5/W7 visual acceptance"
+        in data["layers"][0]["review"]["reasons"]
+    )
 
 
 def test_report_marks_alpha_shape_as_low_confidence_diagnostic_only():
@@ -202,6 +207,33 @@ def test_poche_report_marks_partial_foundation_concrete_coverage_no_go():
     ]
     assert data["layers"][0]["review"]["needs_review"] is True
     assert "foundation/concrete coverage is launch-blocking" in data["layers"][0]["review"]["reasons"]
+
+
+def test_poche_report_marks_inferred_foundation_concrete_as_needing_visual_acceptance():
+    layer = "axon::Visible::ClippingPlaneIntersections::TEC_FOUNDATION"
+    data = build_poche_report(
+        input_path="section.ai",
+        output_path="section-POCHE.ai",
+        source={"style": "solid", "bridge_strategy": "best"},
+        poche_report=PocheReport(
+            fills=[FillResult(layer, "structural_open_loop", 0.88, 1, 18)],
+            polygons={layer: [[[0, 0], [10, 0], [10, 10], [0, 10]]]},
+        ),
+    )
+
+    assert data["summary"]["status"] == "needs_review"
+    assert data["summary"]["layers_inferred"] == 1
+    assert data["summary"]["layers_needs_review"] == 1
+    assert "1 poché layer(s) require review." in data["summary"]["why"]
+    assert "Review gated poché layers" in data["summary"]["next_action"]
+    assert data["layers"][0]["status"] == "inferred"
+    assert data["layers"][0]["action"] == "injected"
+    assert data["layers"][0]["review"]["needs_review"] is True
+    assert data["layers"][0]["review"]["visual_acceptance_required"] is True
+    assert (
+        "inferred concrete/foundation fill requires W5/W7 visual acceptance"
+        in data["layers"][0]["review"]["reasons"]
+    )
 
 
 def test_poche_report_marks_no_go_when_no_layers_are_injectable():
