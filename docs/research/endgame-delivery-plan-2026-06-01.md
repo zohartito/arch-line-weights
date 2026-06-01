@@ -16,6 +16,36 @@ product. It is an engineering control document, not a public launch claim.
 - Do not claim App Store, Windows, Rhino plugin, or Illustrator panel readiness
   until those surfaces are actually implemented and tested.
 
+## Pause Checkpoint - 2026-06-01 08:09 PDT
+
+The long-running endgame goal is paused, not complete. All work that should be
+preserved has been pushed to GitHub or recorded in this control ledger.
+
+Pushed preservation points:
+
+- #37 `codex/open-issue-verification-core` at `d72ecec`: explicit W5/W7
+  `review_acceptance.visual_layer_gates` support, proof tests, PR body update,
+  #29/#30 safe comments, and green CI.
+- #41 `codex/endgame-delivery-ledger` through `ae86a08`: control-plan updates,
+  refreshed full-stack rehearsal evidence, and W5/W7 private-acceptance handoff.
+- `codex/tmp-full-stack-rehearsal` pushed as a remote backup branch containing
+  the latest no-merge integration rehearsal. This is an archival rehearsal
+  branch, not a merge request and not release clearance.
+- Existing active draft PR branches remain pushed and green where GitHub checks
+  exist: #36, #37, #38, #39, #40, #41, #42, #44, and #45. #43 remains an older
+  stacked designer-console draft with no checks and is superseded in practice by
+  #44.
+
+Resume from here:
+
+- Treat #29 and #30 as open launch blockers.
+- Use the W5/W7 handoff below to make the private #30 visual decision without
+  committing private evidence.
+- Keep #44 as the preferred designer-console prototype path.
+- Preserve #45 before any public-surface clearance.
+- Do not merge PRs or make posting/App Store/Windows readiness claims from this
+  checkpoint.
+
 ## Current Baseline
 
 - #34 is green: verification fixture sourcing research. It was refreshed at
