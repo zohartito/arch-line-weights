@@ -5,11 +5,35 @@ This branch preserves the WIP implementation and investigation for the open-issu
 ## Branch
 
 - Branch: `codex/open-issue-verification-core` (PR **#37**, draft; includes #19 diagnose and #36 bridge/report integration)
-- Integration rehearsal: `codex/tmp-integration-rehearsal-20260601b` (pushed head `d457acb`)
-- Endgame ledger: `codex/endgame-delivery-ledger` (PR **#41**, head `a86d268`)
+- **Current-head rehearsal (authoritative):** `codex/tmp-current-head-landing-rehearsal-20260601` @ `88a2157` — see `docs/research/reviewer-packet-current-head-2026-06-01.md`
+- Prior archival rehearsal: `codex/tmp-integration-rehearsal-20260601b` @ `d457acb` (stale; predates `f281604`)
+- Endgame ledger: `codex/endgame-delivery-ledger` (PR **#41**, head `6362d79`)
 - Human landing map: `docs/research/human-landing-plan-2026-06-01.md`
 - Remote: `origin` (`git@github.com:zohartito/arch-line-weights.git`)
 - Goal status: in progress; not launch-ready.
+
+## Update — 2026-06-01 (current-head landing rehearsal)
+
+Fresh stack rehearsal from `origin/main` on branch
+`codex/tmp-current-head-landing-rehearsal-20260601` (head `88a2157`). Full packet:
+`docs/research/reviewer-packet-current-head-2026-06-01.md`.
+
+| Step | PR | Rehearsal result |
+|------|-----|------------------|
+| 1 | #37 | Fast-forward `f281604` |
+| 2 | #39 | Merged; `cli.py` + `README.md` conflicts resolved |
+| 3 | #38 | Clean merge |
+| 4 | #42 | Cherry-pick + reconcile (not plain merge — #37 diverged poche) |
+| 5 | #34 | Merged; `ROADMAP.md` combined |
+| 6 | #41 | Merged; kept #37 launch-safety surfaces |
+
+**Verification (rehearsal head `5ac29aa` + reviewer doc `88a2157`):** 652 pytest passed;
+webapp 43 passed; launch-safety 4 passed; ruff + frontend check/build pass.
+
+**Superseded (close without merge):** #36, #40, #44, #45 — 0 unique commits vs rehearsal.
+
+**Boundaries unchanged:** no GitHub PR merges by agents; #29/#30 open; posting NO-GO;
+synthetic proof does not close #30; private USC stays private.
 
 ## Update — 2026-06-01 (PR #36 bridge/report integration)
 

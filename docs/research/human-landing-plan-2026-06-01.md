@@ -5,6 +5,7 @@ not posting clearance and not a merge instruction for agents.
 
 **Companion docs:**
 
+- **Reviewer packet (current-head rehearsal):** `docs/research/reviewer-packet-current-head-2026-06-01.md`
 - Overlap audit: `docs/research/pr-overlap-audit-2026-06-01.md`
 - Merge checklist: `docs/research/merge-readiness-packet-2026-06-01.md`
 - Private dogfood (path-free): `docs/how-to/private-studio-dogfood-runbook.md`
