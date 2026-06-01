@@ -4,7 +4,7 @@ This branch preserves the WIP implementation and investigation for the open-issu
 
 ## Branch
 
-- Branch: `codex/open-issue-verification-core` (PR **#37**, draft; head `c2c1500`)
+- Branch: `codex/open-issue-verification-core` (PR **#37**, draft; includes `c2c1500` #19 diagnose slice)
 - Integration rehearsal: `codex/tmp-integration-rehearsal-20260601b` (pushed head `d457acb`)
 - Endgame ledger: `codex/endgame-delivery-ledger` (PR **#41**, head `a86d268`)
 - Human landing map: `docs/research/human-landing-plan-2026-06-01.md`
