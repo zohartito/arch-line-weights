@@ -67,8 +67,8 @@ repeating the same proof, coordination, and launch mistakes.
   raster diff, poché coverage, missed-fill detection, false-fill detection, and
   an exportable review packet.
 - Keep social/posting copy locked until the verifier is green or explicitly
-  reports known limitations. No "full section poché" language without C2/C3
-  evidence.
+  reports known limitations. Do not imply complete cut-mass coverage without
+  C2/C3 evidence.
 - Split proof lanes earlier:
   - public gallery from a repo-safe synthetic Make2D fixture;
   - private USC wall section as regression evidence until it passes or is
