@@ -259,6 +259,23 @@ same disposable rehearsal branch:
 - `npm run build` in `webapp/frontend` -> pass; Vite/SvelteKit emitted
   dependency export warnings but exited successfully.
 
+Latest refresh after #37 `d72ecec` and #41 `750cd45` were merged into the same
+disposable rehearsal branch:
+
+- Focused report/proof/webapp integration tests:
+  `tests/test_run_report.py tests/test_proof.py webapp/tests/test_console_routes.py
+  webapp/tests/test_routes.py webapp/tests/test_dev_console.py` -> 82 passed,
+  1 Starlette/httpx deprecation warning.
+- `ruff check src/ tests/ webapp/backend webapp/tests` -> pass.
+- `git diff --check` -> clean.
+- changed-diff private-path/name/claim scan -> no hits.
+- Feasible full Python suite:
+  `pytest --ignore=tests/test_hatch_v05.py -q` -> 633 passed, 6 skipped,
+  1 xfailed, 5 warnings.
+- `npm run check` in `webapp/frontend` -> 0 Svelte errors, 0 warnings.
+- `npm run build` in `webapp/frontend` -> pass; Vite/SvelteKit emitted
+  dependency export warnings but exited successfully.
+
 Result: the current active green stack has no unresolvable integration blocker,
 but it has real sequencing requirements. #45 must be included before any
 public-surface clearance, and the #36/#37/#42 report-contract overlaps need an
