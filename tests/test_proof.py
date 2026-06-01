@@ -244,6 +244,46 @@ def test_validate_proof_packet_passes_public_safe_report_with_expected_artifacts
     assert "Attach the public summary only" in validation.public_summary["next_step"]
 
 
+def test_validate_proof_packet_needs_review_for_visual_acceptance_gate(tmp_path: Path) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    _write_packet_artifacts(
+        plan,
+        report={
+            "schema_version": 2,
+            "summary": {
+                "layers_filled": 1,
+                "layers_inferred": 1,
+                "layers_failed": 0,
+                "layers_needs_review": 1,
+                "polygons_filled": 2,
+            },
+            "layers": [
+                {"layer": "LayerA", "status": "filled", "review": {"needs_review": False}},
+                {
+                    "layer": "TEC_CONCRETE_BASE",
+                    "status": "inferred",
+                    "review": {
+                        "needs_review": True,
+                        "visual_acceptance_required": True,
+                        "reasons": [
+                            "inferred concrete/foundation fill requires W5/W7 visual acceptance"
+                        ],
+                    },
+                },
+            ],
+        },
+    )
+
+    validation = validate_proof_packet(plan)
+
+    assert validation.status == "needs_review"
+    assert "layer needs review" in validation.public_summary["why"][0]
+
+
 def test_images_effectively_unchanged_uses_pixel_ratio_threshold() -> None:
     before = Image.new("RGB", (10, 10), "white")
     almost_same = before.copy()

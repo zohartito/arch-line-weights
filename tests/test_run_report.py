@@ -49,7 +49,22 @@ def test_report_marks_injected_structural_open_loop_as_inferred():
     assert data["summary"]["polygons_filled"] == 2
     assert data["layers"][0]["status"] == "inferred"
     assert data["layers"][0]["action"] == "injected"
+    assert data["layers"][0]["review"]["needs_review"] is True
+    assert data["layers"][0]["review"]["visual_acceptance_required"] is True
+    assert any("W5/W7 visual acceptance" in reason for reason in data["layers"][0]["review"]["reasons"])
+
+
+def test_report_keeps_non_foundation_inferred_fill_as_inferred_without_visual_gate():
+    layer = "axon::Visible::ClippingPlaneIntersections::TEC_CLT_SLABS"
+    data = _report(
+        [FillResult(layer, "structural_open_loop", 0.88, 1, 12)],
+        polygons={layer: [[[0, 0], [10, 0], [10, 10], [0, 10]]]},
+        injected=1,
+    )
+
+    assert data["layers"][0]["status"] == "inferred"
     assert data["layers"][0]["review"]["needs_review"] is False
+    assert data["layers"][0]["review"]["visual_acceptance_required"] is False
 
 
 def test_report_marks_alpha_shape_as_low_confidence_diagnostic_only():
@@ -164,6 +179,24 @@ def test_poche_report_uses_same_changed_skipped_failed_shape():
     assert data["layers"][0]["status"] == "filled"
     assert data["layers"][0]["action"] == "injected"
     assert data["layers"][1]["status"] == "failed"
+
+
+def test_poche_report_marks_inferred_foundation_concrete_as_needing_visual_acceptance():
+    layer = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+    data = build_poche_report(
+        input_path="hierarchy.ai",
+        output_path="poche.ai",
+        source={"mode": "poche", "style": "solid"},
+        poche_report=PocheReport(
+            fills=[FillResult(layer, "structural_open_loop", 0.88, 1, 8)],
+            polygons={layer: [[[0, 0], [10, 0], [10, 10], [0, 10]]]},
+        ),
+    )
+
+    assert data["layers"][0]["status"] == "inferred"
+    assert data["layers"][0]["review"]["needs_review"] is True
+    assert data["layers"][0]["review"]["visual_acceptance_required"] is True
+    assert data["summary"]["layers_needs_review"] == 1
 
 
 def test_poche_cli_writes_durable_report(monkeypatch, tmp_path):

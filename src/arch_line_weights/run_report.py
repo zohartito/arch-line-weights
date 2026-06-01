@@ -19,6 +19,12 @@ _INFERRED_STRATEGIES = {
     "llm_topology",
 }
 _REVIEW_STRATEGIES = {"alpha_shape", "concave_hull", "bbox", "llm_topology"}
+_VISUAL_ACCEPTANCE_COMPONENTS = (
+    "TEC_CONCRETE_BASE",
+    "TEC_FOUNDATION",
+    "FOUNDATION",
+    "FOOTING",
+)
 
 
 def _short_name(layer: str) -> str:
@@ -51,6 +57,13 @@ def _meaningful_rejection(candidate: object) -> bool:
         return False
     reason = str(getattr(candidate, "reason", "")).lower()
     return "duplicates existing" not in reason
+
+
+def _requires_visual_acceptance(result: FillResult) -> bool:
+    if result.strategy not in _INFERRED_STRATEGIES:
+        return False
+    upper = _short_name(result.layer).upper()
+    return any(component in upper for component in _VISUAL_ACCEPTANCE_COMPONENTS)
 
 
 def _layer_status(
@@ -118,6 +131,10 @@ def build_apply_saas_report(
             review_reasons.append("payload layer could not be located for injection")
         if any(_meaningful_rejection(candidate) for candidate in layer_candidates):
             review_reasons.append("one or more Make2D completion candidates were rejected")
+        if _requires_visual_acceptance(fill):
+            review_reasons.append(
+                "inferred concrete/foundation fill requires W5/W7 visual acceptance"
+            )
 
         layers.append(
             {
@@ -141,6 +158,7 @@ def build_apply_saas_report(
                 },
                 "review": {
                     "needs_review": bool(review_reasons),
+                    "visual_acceptance_required": _requires_visual_acceptance(fill),
                     "reasons": sorted(set(review_reasons)),
                 },
             }
@@ -218,6 +236,10 @@ def build_poche_report(
             review_reasons.append(f"strategy {fill.strategy} is review-only")
         if 0 < fill.confidence < 0.85:
             review_reasons.append(f"confidence {fill.confidence:.2f} below 0.85")
+        if _requires_visual_acceptance(fill):
+            review_reasons.append(
+                "inferred concrete/foundation fill requires W5/W7 visual acceptance"
+            )
 
         layers.append(
             {
@@ -241,6 +263,7 @@ def build_poche_report(
                 },
                 "review": {
                     "needs_review": bool(review_reasons),
+                    "visual_acceptance_required": _requires_visual_acceptance(fill),
                     "reasons": sorted(set(review_reasons)),
                 },
             }
