@@ -47,6 +47,7 @@ from shapely.ops import linemerge, polygonize, snap, unary_union
 
 from .bridge import infer_bridges, infer_bridges_best
 from .hatch import hatch_polygon, material_for_layer
+from .make2d_completion import structural_completion_paths_for_layers
 
 _log = logging.getLogger(__name__)
 
@@ -262,6 +263,13 @@ def _bbox(lines: list[LineString]) -> Polygon | None:
     if maxx - minx < 1 or maxy - miny < 1:
         return None
     return box(minx, miny, maxx, maxy)
+
+
+def _is_poche_cut_layer_name(layer_name: str) -> bool:
+    upper = layer_name.upper()
+    if "CLIPPINGPLANEINTERSECTIONS" not in upper:
+        return False
+    return "GLASS" not in upper and "IGU" not in upper
 
 
 def _is_structural_poche_layer(layer_name: str) -> bool:
@@ -809,6 +817,24 @@ def polygonize_layer(
         conf = 0.95 if tol <= 0.5 else (0.85 if tol <= 1.0 else 0.7)
         return polys, FillResult(layer_name, "linemerge_snap", conf, len(polys), n_segments, tol)
 
+    # Same-component visible/tangent helper geometry is stronger architectural
+    # evidence than a blind low-confidence endpoint bridge. Try it before the
+    # auto-bridge rung so real Make2D helper edges can close cut mass without
+    # being downgraded to diagnostic-only bridge output.
+    if helper_lines:
+        try:
+            structural_polys = _try_structural_open_loop(layer_name, lines, helper_lines)
+            if structural_polys:
+                return structural_polys, FillResult(
+                    layer_name,
+                    "structural_open_loop",
+                    0.88,
+                    len(structural_polys),
+                    n_segments,
+                )
+        except Exception:
+            pass
+
     # Auto-bridge: infer missing connecting segments and re-run
     # linemerge+polygonize. Default strategy (v0.6.7+) is ``"best"``, which
     # dispatches to the 4-way strategy selector. ``"greedy"`` retains the
@@ -984,7 +1010,12 @@ def polygonize_dump(
 
     overrides = overrides or {}
     report = PocheReport()
-    for layer_name, paths in data.items():
+    cut_data = {name: paths for name, paths in data.items() if _is_poche_cut_layer_name(name)}
+    structural_completion_paths_by_layer = structural_completion_paths_for_layers(
+        cut_data,
+        data,
+    )
+    for layer_name, paths in cut_data.items():
         # Match override: exact layer name or fnmatch-style suffix
         ov = overrides.get(layer_name)
         if ov is None:
@@ -1000,6 +1031,9 @@ def polygonize_dump(
             ov,
             use_alpha_shape=use_alpha_shape,
             bridge_strategy=bridge_strategy,
+            structural_helper_lines=_lines_from_anchors(
+                structural_completion_paths_by_layer.get(layer_name, [])
+            ),
         )
         report.fills.append(result)
         if polys and should_inject_fill(result):
@@ -1036,9 +1070,24 @@ DUMP_JSX_TEMPLATE = r"""#target illustrator
     function shouldDump(name) {
         var n = String(name).toUpperCase();
         if (n.indexOf("__POCHE_CLOSE__") !== -1) return true;
-        if (n.indexOf("CLIPPINGPLANEINTERSECTIONS") === -1) return false;
-        if (n.indexOf("GLASS") !== -1 || n.indexOf("IGU") !== -1) return false;
-        return true;
+        if (n.indexOf("CLIPPINGPLANEINTERSECTIONS") !== -1) {
+            if (n.indexOf("GLASS") !== -1 || n.indexOf("IGU") !== -1) return false;
+            return true;
+        }
+        if (n.indexOf("::VISIBLE::CURVES::") === -1 && n.indexOf("::VISIBLE::TANGENTS::") === -1) return false;
+        return (
+            n.indexOf("FOUNDATION") !== -1 ||
+            n.indexOf("CONCRETE") !== -1 ||
+            n.indexOf("CLT") !== -1 ||
+            n.indexOf("TIMBER") !== -1 ||
+            n.indexOf("STEEL") !== -1 ||
+            n.indexOf("STRUCT") !== -1 ||
+            n.indexOf("SLAB") !== -1 ||
+            n.indexOf("ROOF") !== -1 ||
+            n.indexOf("WALL") !== -1 ||
+            n.indexOf("BEAM") !== -1 ||
+            n.indexOf("COLUMN") !== -1
+        );
     }
 
     var doc = null;

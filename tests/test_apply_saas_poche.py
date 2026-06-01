@@ -17,6 +17,7 @@ Covers four scopes:
 
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 
@@ -29,7 +30,7 @@ from arch_line_weights.make2d_completion import (
     complete_structural_cut_polygons,
     structural_completion_paths_for_layers,
 )
-from arch_line_weights.poche import FillResult
+from arch_line_weights.poche import FillResult, polygonize_dump, render_dump_jsx
 from arch_line_weights.poche_saas import (
     PocheSaasResult,
     _architectural_completion_enabled,
@@ -471,6 +472,44 @@ def test_structural_completion_paths_match_same_component_only():
             [[100, 0], [100, 20]],
         ]
     }
+
+
+def test_jsx_poche_dump_collects_visible_helper_layers():
+    jsx = render_dump_jsx("/tmp/in.ai", "/tmp/out.json")
+
+    assert "::VISIBLE::CURVES::" in jsx
+    assert "::VISIBLE::TANGENTS::" in jsx
+    assert "CLIPPINGPLANEINTERSECTIONS" in jsx
+
+
+def test_polygonize_dump_uses_same_component_helpers_without_filling_them(tmp_path):
+    cut_name = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+    helper_name = "axon::Visible::Curves::TEC_CONCRETE_BASE"
+    unrelated_helper = "axon::Visible::Curves::TEC_CLT_SLABS"
+    geometry = {
+        cut_name: [
+            [[0, 0], [140, 0]],
+            [[140, 40], [0, 40]],
+        ],
+        helper_name: [
+            [[0, 0], [0, 40]],
+            [[140, 0], [140, 40]],
+        ],
+        unrelated_helper: [
+            [[0, 90], [140, 90]],
+        ],
+    }
+    geometry_path = tmp_path / "geometry.json"
+    geometry_path.write_text(json.dumps(geometry))
+
+    report = polygonize_dump(str(geometry_path))
+
+    assert [fill.layer for fill in report.fills] == [cut_name]
+    assert report.fills[0].strategy == "structural_open_loop"
+    assert report.fills[0].confidence >= 0.85
+    assert cut_name in report.polygons
+    assert helper_name not in report.polygons
+    assert unrelated_helper not in report.polygons
 
 
 def test_structural_completion_accepts_cut_anchored_missing_face():
