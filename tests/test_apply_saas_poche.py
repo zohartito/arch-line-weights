@@ -601,6 +601,37 @@ def test_polygonize_dump_recovers_c2_c3_shaped_foundation_concrete_only(tmp_path
     assert unrelated_cut not in report.polygons
 
 
+def test_polygonize_dump_recovers_fragmented_c2_c3_concrete_edges(tmp_path):
+    concrete_stem = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+    geometry = {
+        concrete_stem: [
+            [[0, 0], [48, 0]],
+            [[52, 0], [100, 0]],
+            [[100, 22], [52, 22]],
+            [[48, 22], [0, 22]],
+        ],
+        "axon::Visible::Curves::TEC_CONCRETE_BASE": [
+            [[0, 0], [0, 22]],
+            [[100, 0], [100, 22]],
+        ],
+    }
+    geometry_path = tmp_path / "geometry.json"
+    geometry_path.write_text(json.dumps(geometry))
+
+    report = polygonize_dump(str(geometry_path))
+    by_layer = {fill.layer: fill for fill in report.fills}
+
+    assert by_layer[concrete_stem].strategy == "structural_open_loop"
+    assert by_layer[concrete_stem].polygon_count == 1
+    assert report.polygons[concrete_stem][0] == [
+        [0.0, 0.0],
+        [0.0, 22.0],
+        [100.0, 22.0],
+        [100.0, 0.0],
+        [0.0, 0.0],
+    ]
+
+
 def test_structural_completion_accepts_cut_anchored_missing_face():
     accepted, candidates = complete_structural_cut_polygons(
         "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",

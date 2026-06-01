@@ -402,6 +402,49 @@ def test_polygonize_uses_helper_tangents_to_close_parallel_structural_edges(monk
     assert round(polys[0].area) == 9000
 
 
+def test_structural_open_loop_closes_tiny_collinear_fragment_gaps():
+    polys, result = polygonize_layer(
+        "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
+        [
+            [[0, 0], [48, 0]],
+            [[52, 0], [100, 0]],
+            [[100, 22], [52, 22]],
+            [[48, 22], [0, 22]],
+        ],
+        bridge_strategy="greedy",
+        structural_helper_lines=[
+            LineString([(0, 0), (0, 22)]),
+            LineString([(100, 0), (100, 22)]),
+        ],
+    )
+
+    assert result.strategy == "structural_open_loop"
+    assert len(polys) == 1
+    assert round(polys[0].area) == 2200
+    assert polys[0].bounds == (0.0, 0.0, 100.0, 22.0)
+
+
+def test_structural_open_loop_keeps_larger_collinear_void_open():
+    polys, result = polygonize_layer(
+        "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
+        [
+            [[0, 0], [40, 0]],
+            [[60, 0], [100, 0]],
+            [[100, 22], [60, 22]],
+            [[40, 22], [0, 22]],
+        ],
+        bridge_strategy="greedy",
+        structural_helper_lines=[
+            LineString([(0, 0), (0, 22)]),
+            LineString([(100, 0), (100, 22)]),
+        ],
+    )
+
+    assert result.strategy == "structural_open_loop"
+    assert len(polys) == 2
+    assert [round(poly.area) for poly in polys] == [880, 880]
+
+
 def test_structural_helper_cannot_wildly_expand_existing_concrete_face():
     polys = _try_structural_open_loop(
         "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
