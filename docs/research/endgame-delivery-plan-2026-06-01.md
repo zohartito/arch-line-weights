@@ -70,6 +70,24 @@ against live GitHub state:
 This refresh does not close #29 or #30, does not merge any PR, and does not
 change posting/public proof from NO-GO.
 
+## Resume Refresh - 2026-06-01 16:55 PDT
+
+Cursor verification-core worker continued on #37 and the archival rehearsal branch:
+
+- #37 `codex/open-issue-verification-core` is now at `c549ba2`. Added parametrized
+  `find_handoff_public_safety_violations` regressions (local paths, private fixture
+  tokens, `posting_ready`, overlay `accepted: true`) plus JSON/Markdown leak guards.
+- #37-only feasible suite: `pytest --ignore=tests/test_hatch_v05.py -q` -> 568 passed,
+  1 skipped; webapp console/route tests -> 36 passed; ruff -> pass; frontend
+  `npm run check` / `npm run build` -> pass.
+- `codex/tmp-full-stack-rehearsal` at `fee38d8`: merged latest #37 plus prior stack;
+  `pytest --ignore=tests/test_hatch_v05.py -q` -> 644 passed, 6 skipped, 1 xfailed.
+  Archival rehearsal only; not release clearance.
+- Handoff ledger on #37 documents merge order and counts in
+  `docs/research/open-issue-verification-core-handoff-2026-06-01.md`.
+
+Still NO-GO for posting/public proof. #29/#30 remain open. No PR merges.
+
 ## Current Baseline
 
 - #34 is green: verification fixture sourcing research. It was refreshed at
@@ -85,7 +103,7 @@ change posting/public proof from NO-GO.
   `review.visual_acceptance_required` is true and standalone `arch-lw poche`
   summaries report `needs_review` instead of `passed` while any such layer is
   review-gated.
-- #37 is green and draft at the last completed check: input diagnostics and
+- #37 is green and draft: input diagnostics and
   proof report harness. It now includes proof-packet validation that fails
   closed on missing artifacts, failed/no-go raw reports, review layers, missing
   payloads, missing report identity, incomplete rendered-view evidence, and raw
@@ -109,10 +127,9 @@ change posting/public proof from NO-GO.
   matching eligible visual-review layer gate, while failed, no-go,
   missing-payload, needs-review, and low-confidence layer statuses still win.
   This does not make proof public-safe; `public_safe` still requires separate
-  W5/W7 public-proof acceptance metadata. The current #37 head `d8bdd3d`
-  additionally ships shared W5/W7 handoff builders and zip writers in
-  `proof.py`, so proof packets and the merged designer console use one
-  public-safe handoff contract.
+  W5/W7 public-proof acceptance metadata.   The current #37 head `c549ba2` ships shared W5/W7 handoff builders and zip
+  writers in `proof.py`, parametrized handoff violation regressions, and
+  console proof-packet export through one public-safe handoff contract.
 - #38 is green and draft: entourage SVG asset generator.
 - #39 is green and draft: conservative single-layer cleanup mode.
 - #40 is green and draft: run-report diagnose command.
