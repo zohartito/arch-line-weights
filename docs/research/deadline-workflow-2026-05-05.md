@@ -7,22 +7,22 @@ base sheet but not yet good enough to finish every poché face automatically.
 
 ## Current Best Iso Axon Base
 
-For `iso axon section  [Converted].ai`, use:
+For `private section regression drawing.ai`, use:
 
 ```text
-<private-arch-202b-root>/iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0622-beam-cells.ai
+<local-regression-root>/private section regression drawing HIERARCHY-saas-ARCHITECTURAL-private-regression-output.ai
 ```
 
 Keep its report next to it:
 
 ```text
-<private-arch-202b-root>/iso-axon-v0622-beam-cells-report.json
+<local-regression-root>/private-regression-report.json
 ```
 
 Do not use the low-confidence roof-cap experiment for print:
 
 ```text
-iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0620-lowconf-roofcap.ai
+private section regression drawing HIERARCHY-saas-ARCHITECTURAL-private-regression-output.ai
 ```
 
 That file proves why low-confidence bbox fills remain diagnostic-only: it
@@ -50,7 +50,7 @@ the headless native-payload path. Use the Illustrator JSX path or the already
 generated deadline candidate:
 
 ```text
-<private-arch-202b-root>/stairs HIERARCHY-jsx-v0624-stair-path-clean.ai
+<local-regression-root>/stairs HIERARCHY-jsx-private-regression-output.ai
 ```
 
 What changed:

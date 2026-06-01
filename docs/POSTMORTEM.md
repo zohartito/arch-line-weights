@@ -8,7 +8,7 @@
 
 Project: `arch-line-weights` — apply architectural line-weight hierarchy +
 poché to color-coded vector drawings (typically Rhino-exported `.ai`).
-Reference test file: USC ARCH 202B section drawing, 24 MB, 340,323 strokes,
+Reference test file: private architecture section regression drawing, 24 MB, 340,323 strokes,
 62 OCG layers, 21 of which are `Visible::ClippingPlaneIntersections::*` (the
 section cuts that should become poché).
 
