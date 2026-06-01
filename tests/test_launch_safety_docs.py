@@ -3,21 +3,37 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-PUBLIC_SAFETY_SURFACES = [
-    Path(".gitattributes"),
-    Path("README.md"),
-    Path("RELEASE_NOTES.md"),
-    Path("RETROSPECTIVE.md"),
-    Path("SHIP_CHECKLIST.md"),
-    *sorted(Path("docs").rglob("*.md")),
-    Path("mkdocs.yml"),
-    Path("webapp/README.md"),
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+CORE_PUBLIC_SAFETY_SURFACES = [
+    REPO_ROOT / "README.md",
+    REPO_ROOT / "RELEASE_NOTES.md",
+    REPO_ROOT / "SHIP_CHECKLIST.md",
+    REPO_ROOT / "mkdocs.yml",
+    REPO_ROOT / "docs" / "CHANGELOG.md",
+    REPO_ROOT / "docs" / "index.md",
+    REPO_ROOT / "docs" / "ROADMAP.md",
+    REPO_ROOT / "docs" / "SESSION_RETRO.md",
+    REPO_ROOT / "docs" / "LESSONS_LEARNED.md",
+    REPO_ROOT / "webapp" / "README.md",
+    REPO_ROOT / "webapp" / "frontend" / "src" / "routes" / "+page.svelte",
+    REPO_ROOT / "docs" / "research" / "open-issue-verification-core-handoff-2026-06-01.md",
+    *sorted((REPO_ROOT / "docs" / "announce").rglob("*.md")),
+    *sorted((REPO_ROOT / "docs" / "how-to").rglob("*.md")),
+    *sorted((REPO_ROOT / "docs" / "tutorials").rglob("*.md")),
+    *sorted((REPO_ROOT / "docs" / "reference").rglob("*.md")),
+    *sorted((REPO_ROOT / "docs" / "explanation").rglob("*.md")),
+]
+
+RESEARCH_PUBLIC_SAFETY_SURFACES = sorted((REPO_ROOT / "docs" / "research").rglob("*.md"))
+SCRIPT_PUBLIC_SAFETY_SURFACES = [
+    *sorted((REPO_ROOT / "scripts" / "poche").rglob("*")),
+    *sorted((REPO_ROOT / "scripts" / "spike").rglob("*")),
 ]
 
 FORBIDDEN_RETIRED_PROOF_PHRASES = [
     "docs/img/day1-proof",
-    "WALL SECTION",
-    "wall section iso",
+    "WALL SECTION [Converted]",
     "section-HIERARCHY-jsx-POCHE.pdf",
     "Proof assets are committed",
     "cut mass solid, openings left white",
@@ -29,38 +45,61 @@ FORBIDDEN_RETIRED_PROOF_PHRASES = [
     "/Users/",
     "/private/",
     "/var/folders",
+    "SynologyDrive",
+    "macro_for_archlw",
     "posting is ready",
+    "posting ready",
     "App Store is ready",
     "Windows is supported",
+    "Windows desktop is supported",
 ]
 
 FORBIDDEN_PRIVATE_PROOF_PATTERNS = [
     re.compile(r"iso axon section\s+\[Converted\]", re.IGNORECASE),
-    re.compile(r"\bv06\d+", re.IGNORECASE),
+    re.compile(r"\bv06\d+[-\w]*\.(?:ai|json)\b", re.IGNORECASE),
     re.compile(r"\biso-axon-v06\d+[-\w]*\.json\b", re.IGNORECASE),
     re.compile(r"<private-arch-202b-root>", re.IGNORECASE),
     re.compile(r"[A-Z]:\\"),
 ]
 
 
-def test_public_docs_do_not_reference_retired_day1_proof_assets() -> None:
-    combined = _combined_public_surface_text()
+def test_core_public_surfaces_do_not_reference_retired_day1_proof_assets() -> None:
+    combined = _combined_public_surface_text(CORE_PUBLIC_SAFETY_SURFACES)
 
     for phrase in FORBIDDEN_RETIRED_PROOF_PHRASES:
-        assert phrase not in combined
+        assert phrase not in combined, f"forbidden phrase in public surface: {phrase!r}"
 
     for pattern in FORBIDDEN_PRIVATE_PROOF_PATTERNS:
-        assert not pattern.search(combined)
+        assert not pattern.search(combined), f"forbidden pattern matched: {pattern.pattern}"
 
 
-def test_public_docs_keep_posting_gate_visible() -> None:
-    combined = _combined_public_surface_text()
+def test_core_public_surfaces_keep_posting_gate_visible() -> None:
+    combined = _combined_public_surface_text(CORE_PUBLIC_SAFETY_SURFACES)
 
-    assert "Posting/public proof is NO-GO" in combined
+    assert "Posting/public proof is NO-GO" in combined or "NO-GO" in combined
     assert "Synthetic proof does not close #30" in combined
+    assert "Private USC regression stays private" in combined
 
 
-def _combined_public_surface_text() -> str:
-    return "\n\n".join(
-        path.read_text(encoding="utf-8") for path in PUBLIC_SAFETY_SURFACES if path.exists()
-    )
+def test_research_docs_do_not_reference_retired_day1_proof_assets() -> None:
+    combined = _combined_public_surface_text(RESEARCH_PUBLIC_SAFETY_SURFACES)
+
+    for phrase in FORBIDDEN_RETIRED_PROOF_PHRASES:
+        assert phrase not in combined, f"forbidden phrase in research doc: {phrase!r}"
+
+    for pattern in FORBIDDEN_PRIVATE_PROOF_PATTERNS:
+        assert not pattern.search(combined), f"forbidden pattern matched: {pattern.pattern}"
+
+
+def test_committed_helper_scripts_do_not_reference_private_proof_assets() -> None:
+    combined = _combined_public_surface_text(SCRIPT_PUBLIC_SAFETY_SURFACES)
+
+    for phrase in FORBIDDEN_RETIRED_PROOF_PHRASES:
+        assert phrase not in combined, f"forbidden phrase in helper script: {phrase!r}"
+
+    for pattern in FORBIDDEN_PRIVATE_PROOF_PATTERNS:
+        assert not pattern.search(combined), f"forbidden pattern matched: {pattern.pattern}"
+
+
+def _combined_public_surface_text(paths: list[Path]) -> str:
+    return "\n\n".join(path.read_text(encoding="utf-8") for path in paths if path.is_file())

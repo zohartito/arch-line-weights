@@ -1,7 +1,7 @@
 #target illustrator
 
 (function () {
-    var TARGET = "<private-arch-202b-root>/DRAWING 4 SECTION [Converted] HIERARCHY.ai";
+    var TARGET = "sample-section HIERARCHY.ai";
     var OUT = "/tmp/cut_geometry.json";
     var REPORT = "/tmp/cut_dump_report.txt";
 

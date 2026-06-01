@@ -28,7 +28,7 @@ build_apply_jsx.py       →    /tmp/apply_poche_shapely.jsx
 POCHE.ai
 ```
 
-## Status (current run on the USC ARCH 202B reference drawing)
+## Status (current run on a local reference drawing)
 
 | Outcome | Layers | Notes |
 |---|---|---|

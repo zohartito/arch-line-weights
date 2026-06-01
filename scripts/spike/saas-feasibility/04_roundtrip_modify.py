@@ -28,9 +28,7 @@ from pathlib import Path
 import pikepdf
 import zstandard as zstd
 
-DEFAULT_AI = Path(
-    "<private-arch-202b-root>/DRAWING 4 SECTION [Converted].ai"
-)
+DEFAULT_AI = Path("sample-section.ai")
 PREFIX = b"%AI24_ZStandard_Data"
 CHUNK = 65536  # original block size
 
