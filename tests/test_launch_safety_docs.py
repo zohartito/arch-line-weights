@@ -28,6 +28,10 @@ CORE_PUBLIC_SAFETY_SURFACES = [
 ]
 
 RESEARCH_PUBLIC_SAFETY_SURFACES = sorted((REPO_ROOT / "docs" / "research").rglob("*.md"))
+SCRIPT_PUBLIC_SAFETY_SURFACES = [
+    *sorted((REPO_ROOT / "scripts" / "poche").rglob("*")),
+    *sorted((REPO_ROOT / "scripts" / "spike").rglob("*")),
+]
 
 FORBIDDEN_RETIRED_PROOF_PHRASES = [
     "docs/img/day1-proof",
@@ -84,6 +88,16 @@ def test_research_docs_do_not_reference_retired_day1_proof_assets() -> None:
 
     for phrase in FORBIDDEN_RETIRED_PROOF_PHRASES:
         assert phrase not in combined, f"forbidden phrase in research doc: {phrase!r}"
+
+    for pattern in FORBIDDEN_PRIVATE_PROOF_PATTERNS:
+        assert not pattern.search(combined), f"forbidden pattern matched: {pattern.pattern}"
+
+
+def test_committed_helper_scripts_do_not_reference_private_proof_assets() -> None:
+    combined = _combined_public_surface_text(SCRIPT_PUBLIC_SAFETY_SURFACES)
+
+    for phrase in FORBIDDEN_RETIRED_PROOF_PHRASES:
+        assert phrase not in combined, f"forbidden phrase in helper script: {phrase!r}"
 
     for pattern in FORBIDDEN_PRIVATE_PROOF_PATTERNS:
         assert not pattern.search(combined), f"forbidden pattern matched: {pattern.pattern}"

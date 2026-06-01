@@ -1,8 +1,8 @@
 #target illustrator
 
 (function () {
-    var TARGET   = "<private-arch-202b-root>/DRAWING 4 SECTION [Converted] HIERARCHY.ai";
-    var OUTPUT   = "<private-arch-202b-root>/DRAWING 4 SECTION [Converted] POCHE.ai";
+    var TARGET   = "sample-section HIERARCHY.ai";
+    var OUTPUT   = "sample-section POCHE.ai";
     var PROGRESS = "/tmp/poche_progress.txt";
     var REPORT   = "/tmp/poche_report.txt";
 

@@ -23,9 +23,7 @@ import pikepdf
 import zstandard as zstd
 from pikepdf import Stream
 
-DEFAULT_AI = Path(
-    "<private-arch-202b-root>/DRAWING 4 SECTION [Converted].ai"
-)
+DEFAULT_AI = Path("sample-section.ai")
 
 
 def main(path: Path) -> None:
