@@ -78,7 +78,10 @@ product. It is an engineering control document, not a public launch claim.
   explicit W5/W7 acceptance.
 - #45 is draft: launch-safety quarantine for private proof assets and public
   posting drafts. It removes committed Day-1 proof media from the public tree
-  and redacts inherited local/private paths.
+  and redacts inherited local/private paths. A later update also quarantines
+  retired Day-1 proof wording in release notes and adds a docs regression test
+  that rejects old proof-asset links, private fixture names, and "all cut mass"
+  style proof overclaims in public-facing docs.
 
 The repo has an existing local `webapp/` scaffold: FastAPI backend, SvelteKit
 frontend, local filesystem storage, and tests. Designer-console work should
