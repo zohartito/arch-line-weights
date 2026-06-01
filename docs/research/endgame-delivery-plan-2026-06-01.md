@@ -129,7 +129,14 @@ product. It is an engineering control document, not a public launch claim.
   and redacts inherited local/private paths. A later update also quarantines
   retired Day-1 proof wording in release notes and adds a docs regression test
   that rejects old proof-asset links, private fixture names, and "all cut mass"
-  style proof overclaims in public-facing docs.
+  style proof overclaims in public-facing docs. A later update expands that
+  safety regression to cover `SHIP_CHECKLIST.md`, `docs/CHANGELOG.md`, docs-site
+  index/how-to/tutorial pages, and stale proof-asset `.gitattributes` entries;
+  replaces the README private-derived command sample with a synthetic workflow
+  example; removes local-path and submit-quality wording from the dogfood
+  checklist; and sanitizes changelog validation entries so private fixture
+  names, output artifact names, and proof-like private counts do not appear in
+  public surfaces.
 
 The repo has an existing local `webapp/` scaffold: FastAPI backend, SvelteKit
 frontend, local filesystem storage, and tests. Designer-console work should
