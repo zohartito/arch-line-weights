@@ -59,19 +59,6 @@ def test_report_marks_injected_structural_open_loop_as_inferred():
     )
 
 
-def test_report_keeps_non_foundation_inferred_fill_as_inferred_without_visual_gate():
-    layer = "axon::Visible::ClippingPlaneIntersections::TEC_CLT_SLABS"
-    data = _report(
-        [FillResult(layer, "structural_open_loop", 0.88, 1, 12)],
-        polygons={layer: [[[0, 0], [10, 0], [10, 10], [0, 10]]]},
-        injected=1,
-    )
-
-    assert data["layers"][0]["status"] == "inferred"
-    assert data["layers"][0]["review"]["needs_review"] is False
-    assert data["layers"][0]["review"]["visual_acceptance_required"] is False
-
-
 def test_apply_saas_report_marks_structural_helper_evidence_from_poche_report():
     layer = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
     data = _report(
@@ -79,23 +66,6 @@ def test_apply_saas_report_marks_structural_helper_evidence_from_poche_report():
         polygons={layer: [[[100, 0], [130, 0], [130, 160], [100, 160], [100, 0]]]},
         injected=1,
         helper_counts={layer: 2},
-    )
-
-    assert data["layers"][0]["evidence"]["used_structural_helpers"] is True
-    assert data["layers"][0]["evidence"]["structural_helper_count"] == 2
-
-
-def test_poche_report_marks_structural_helper_evidence_from_poche_report():
-    layer = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
-    data = build_poche_report(
-        input_path="hierarchy.ai",
-        output_path="poche.ai",
-        source={"mode": "poche", "style": "solid"},
-        poche_report=PocheReport(
-            fills=[FillResult(layer, "structural_open_loop", 0.88, 1, 8)],
-            polygons={layer: [[[100, 0], [130, 0], [130, 160], [100, 160], [100, 0]]]},
-            structural_helper_counts={layer: 2},
-        ),
     )
 
     assert data["layers"][0]["evidence"]["used_structural_helpers"] is True
@@ -264,3 +234,33 @@ def test_poche_cli_writes_durable_report(monkeypatch, tmp_path):
     assert data["source"]["mode"] == "poche"
     assert data["source"]["input_format"]["input_kind"] == "pdf_compatible_ai"
     assert data["summary"]["polygons_filled"] == 1
+
+
+def test_report_keeps_non_foundation_inferred_fill_as_inferred_without_visual_gate():
+    layer = "axon::Visible::ClippingPlaneIntersections::TEC_CLT_SLABS"
+    data = _report(
+        [FillResult(layer, "structural_open_loop", 0.88, 1, 12)],
+        polygons={layer: [[[0, 0], [10, 0], [10, 10], [0, 10]]]},
+        injected=1,
+    )
+
+    assert data["layers"][0]["status"] == "inferred"
+    assert data["layers"][0]["review"]["needs_review"] is False
+    assert data["layers"][0]["review"]["visual_acceptance_required"] is False
+
+
+def test_poche_report_marks_structural_helper_evidence_from_poche_report():
+    layer = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+    data = build_poche_report(
+        input_path="hierarchy.ai",
+        output_path="poche.ai",
+        source={"mode": "poche", "style": "solid"},
+        poche_report=PocheReport(
+            fills=[FillResult(layer, "structural_open_loop", 0.88, 1, 8)],
+            polygons={layer: [[[100, 0], [130, 0], [130, 160], [100, 160], [100, 0]]]},
+            structural_helper_counts={layer: 2},
+        ),
+    )
+
+    assert data["layers"][0]["evidence"]["used_structural_helpers"] is True
+    assert data["layers"][0]["evidence"]["structural_helper_count"] == 2
