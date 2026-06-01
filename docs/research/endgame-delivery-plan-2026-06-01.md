@@ -40,6 +40,11 @@ product. It is an engineering control document, not a public launch claim.
   old-vs-new rendered diff localized to the previously white concrete pier/stem
   area. This is Exit-A progress, but it is still not W5 visual acceptance and
   does not close #30.
+- #37 + #42 temp integration was tested locally. The stack had one small import
+  conflict in `poche.py`; after resolving it, focused tests and ruff passed,
+  and a private USC `poche --report` probe reported `TEC_CONCRETE_BASE` as
+  `inferred` / `structural_open_loop` instead of `low_confidence`, with output
+  and report artifacts created in temp storage only.
 - #43 is draft and stacked on #36: the local designer-console prototype. It has
   local full-test verification, but no GitHub checks are reported on the
   stacked branch yet.
