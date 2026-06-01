@@ -16,6 +16,19 @@ product. It is an engineering control document, not a public launch claim.
 - Do not claim App Store, Windows, Rhino plugin, or Illustrator panel readiness
   until those surfaces are actually implemented and tested.
 
+## Integration Rehearsal Checkpoint - 2026-06-01 (evening)
+
+Archival branch `codex/tmp-integration-rehearsal-20260601b` at `aadde55` merges the
+full intended stack on top of PR #37 head `bea0ded`:
+
+- #36 `v0.2-verification-core` (layout-jsx, bridge-rhino-ai reports)
+- #23 cleanup, #19 diagnose, #30 concrete-base synthetic regression
+- #20 entourage assets, w2 fixture-sourcing docs, endgame ledger plan
+
+Rehearsal verification: **651** pytest passed (excluding hatch v05), **36** webapp
+tests, launch-safety docs **3** passed, ruff clean. **No merge. #29/#30 open.
+Posting NO-GO.**
+
 ## Pause Checkpoint - 2026-06-01 08:09 PDT
 
 The long-running endgame goal is paused, not complete. All work that should be
