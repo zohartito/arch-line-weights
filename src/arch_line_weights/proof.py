@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -150,14 +151,19 @@ def build_proof_packet_plan(
     )
 
 
-def validate_proof_packet(plan: ProofPacketPlan) -> ProofPacketValidation:
+def validate_proof_packet(
+    plan: ProofPacketPlan,
+    *,
+    review_regions: Sequence[ReviewRegion] | None = None,
+    min_dark_ratio: float = 0.05,
+    threshold: int = 48,
+) -> ProofPacketValidation:
     """Validate a local proof packet and build a path-free public summary.
 
     Raw run reports are allowed to exist locally, but public proof status must
     never pass when required artifacts are absent, the report carries failed or
     no-go state, or local/private path references leak into the raw report.
     """
-
     artifacts = _proof_packet_artifacts(plan)
     missing_artifacts = [
         label for label, path in artifacts.items() if not path.exists() or path.is_dir() or path.stat().st_size <= 0
@@ -198,6 +204,17 @@ def validate_proof_packet(plan: ProofPacketPlan) -> ProofPacketValidation:
         visual_errors, visual_missing = _report_visual_errors(report, plan)
         failed_reasons.extend(visual_errors)
         missing_artifacts.extend(visual_missing)
+
+    if report and review_regions:
+        failed_reasons.extend(
+            _review_region_pixel_errors(
+                report,
+                plan,
+                review_regions,
+                min_dark_ratio=min_dark_ratio,
+                threshold=threshold,
+            )
+        )
 
     summary = report.get("summary") if isinstance(report.get("summary"), dict) else {}
     layer_failure_count = _int_count(summary, "layers_failed")
@@ -312,6 +329,30 @@ def has_dark_pixels_in_region(
     return dark_ratio >= min_dark_ratio
 
 
+def review_region_pixel_errors(
+    image: Image.Image | np.ndarray,
+    regions: Sequence[ReviewRegion],
+    *,
+    min_dark_ratio: float = 0.05,
+    threshold: int = 48,
+) -> list[str]:
+    """Return visual failure reasons for known review-region expectations."""
+
+    errors: list[str] = []
+    for region in regions:
+        has_poche = has_dark_pixels_in_region(
+            image,
+            rect=region.rect,
+            min_dark_ratio=min_dark_ratio,
+            threshold=threshold,
+        )
+        if region.kind == "poche_presence" and not has_poche:
+            errors.append(f"review region {region.id} ({region.kind}) expected dark poché pixels")
+        elif region.kind == "protected_void" and has_poche:
+            errors.append(f"review region {region.id} ({region.kind}) expected light protected void")
+    return errors
+
+
 def _load_yaml_mapping(path: Path) -> dict[str, Any]:
     if yaml is None:
         raise ManifestValidationError("PyYAML is required to load proof manifests")
@@ -355,8 +396,8 @@ def _build_public_summary(
     changed = _changed_messages(report_summary)
     skipped = _skipped_messages(report_summary)
     failed = _failed_messages(report_summary, missing_artifacts)
-    if not failed and status == "no_go":
-        failed = ["raw report status is no_go"]
+    if not failed and status in {"failed", "no_go"}:
+        failed = list(reasons) or [f"raw report status is {status}"]
     public_acceptance = _public_acceptance(report)
     public_safe = status == "passed" and bool(public_acceptance["accepted"])
     public_reasons = list(reasons)
@@ -448,10 +489,67 @@ def _report_visual_errors(report: dict[str, Any], plan: ProofPacketPlan) -> tupl
 def _artifact_reference_exists(plan: ProofPacketPlan, value: str) -> bool:
     if _LOCAL_PATH_RE.search(value):
         return True
+    path = _artifact_reference_path(plan, value)
+    return path.exists() and path.is_file() and path.stat().st_size > 0
+
+
+def _artifact_reference_path(plan: ProofPacketPlan, value: str) -> Path:
     path = Path(value)
     if not path.is_absolute():
         path = plan.output_dir / path
-    return path.exists() and path.is_file() and path.stat().st_size > 0
+    return path
+
+
+def _review_region_pixel_errors(
+    report: dict[str, Any],
+    plan: ProofPacketPlan,
+    review_regions: Sequence[ReviewRegion],
+    *,
+    min_dark_ratio: float,
+    threshold: int,
+) -> list[str]:
+    rendered_after_paths = _rendered_view_after_paths(report, plan)
+    errors: list[str] = []
+    for region in review_regions:
+        path = rendered_after_paths.get(region.id)
+        if path is None:
+            errors.append(f"review region {region.id} has no matching rendered view after image")
+            continue
+        if not path.exists() or not path.is_file() or path.stat().st_size <= 0:
+            errors.append(f"review region {region.id} after image is missing")
+            continue
+        try:
+            with Image.open(path) as image:
+                errors.extend(
+                    review_region_pixel_errors(
+                        image,
+                        [region],
+                        min_dark_ratio=min_dark_ratio,
+                        threshold=threshold,
+                    )
+                )
+        except OSError as exc:
+            errors.append(f"review region {region.id} after image could not be opened: {exc}")
+    return errors
+
+
+def _rendered_view_after_paths(report: dict[str, Any], plan: ProofPacketPlan) -> dict[str, Path]:
+    visual_artifacts = report.get("visual_artifacts") if isinstance(report.get("visual_artifacts"), dict) else {}
+    rendered_views = (
+        visual_artifacts.get("rendered_views") if isinstance(visual_artifacts.get("rendered_views"), list) else []
+    )
+    paths: dict[str, Path] = {}
+    for raw_view in rendered_views:
+        if not isinstance(raw_view, dict):
+            continue
+        view_id = raw_view.get("id")
+        after = raw_view.get("after")
+        if not isinstance(view_id, str) or not view_id.strip():
+            continue
+        if not isinstance(after, str) or not after.strip() or _LOCAL_PATH_RE.search(after):
+            continue
+        paths[view_id] = _artifact_reference_path(plan, after)
+    return paths
 
 
 def _public_proof_identity(report: dict[str, Any]) -> dict[str, str]:

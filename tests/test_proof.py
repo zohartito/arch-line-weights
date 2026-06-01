@@ -6,6 +6,7 @@ from PIL import Image
 from arch_line_weights.poche import FillResult, PocheReport
 from arch_line_weights.proof import (
     ManifestValidationError,
+    ReviewRegion,
     build_proof_packet_plan,
     has_dark_pixels_in_region,
     images_effectively_unchanged,
@@ -466,6 +467,97 @@ def test_has_dark_pixels_in_region_detects_expected_poche_presence() -> None:
 
     assert has_dark_pixels_in_region(image, rect=(4, 4, 12, 12), min_dark_ratio=0.25, threshold=32)
     assert not has_dark_pixels_in_region(image, rect=(12, 12, 19, 19), min_dark_ratio=0.25, threshold=32)
+
+
+def test_validate_proof_packet_checks_dark_pixels_in_matching_review_region(
+    tmp_path: Path,
+) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    _write_packet_artifacts(plan, report=_safe_pass_report())
+    after = Image.new("RGB", (20, 20), "white")
+    for x in range(6, 12):
+        for y in range(6, 12):
+            after.putpixel((x, y), (0, 0, 0))
+    after.save(plan.output_dir / "cut-mass-after.png")
+
+    validation = validate_proof_packet(
+        plan,
+        review_regions=[
+            ReviewRegion(
+                id="cut_mass_detail",
+                kind="poche_presence",
+                rect=(5, 5, 13, 13),
+            )
+        ],
+        min_dark_ratio=0.25,
+        threshold=32,
+    )
+
+    assert validation.status == "passed"
+    assert validation.public_summary["public_safe"] is False
+
+
+def test_validate_proof_packet_fails_when_matching_review_region_stays_light(
+    tmp_path: Path,
+) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    _write_packet_artifacts(plan, report=_safe_pass_report())
+    Image.new("RGB", (20, 20), "white").save(plan.output_dir / "cut-mass-after.png")
+
+    validation = validate_proof_packet(
+        plan,
+        review_regions=[
+            ReviewRegion(
+                id="cut_mass_detail",
+                kind="poche_presence",
+                rect=(5, 5, 13, 13),
+            )
+        ],
+        min_dark_ratio=0.25,
+        threshold=32,
+    )
+
+    assert validation.status == "failed"
+    assert "review region cut_mass_detail (poche_presence) expected dark poché pixels" in validation.reasons
+    assert validation.public_summary["what_failed"] == [
+        "review region cut_mass_detail (poche_presence) expected dark poché pixels"
+    ]
+    assert validation.public_summary["why"] == [
+        "review region cut_mass_detail (poche_presence) expected dark poché pixels"
+    ]
+
+
+def test_validate_proof_packet_fails_when_review_region_has_no_matching_rendered_view(
+    tmp_path: Path,
+) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    _write_packet_artifacts(plan, report=_safe_pass_report())
+
+    validation = validate_proof_packet(
+        plan,
+        review_regions=[
+            ReviewRegion(
+                id="missing_region",
+                kind="poche_presence",
+                rect=(5, 5, 13, 13),
+            )
+        ],
+    )
+
+    assert validation.status == "failed"
+    assert "review region missing_region has no matching rendered view after image" in validation.reasons
 
 
 def _write_packet_artifacts(
