@@ -36,6 +36,9 @@ product. It is an engineering control document, not a public launch claim.
 - #44 is draft: a repo-native `webapp/` FastAPI + SvelteKit designer-console
   prototype based on `main`. It preserves the existing webapp scaffold shape and
   is the preferred path if the team wants the console to live in `webapp/`.
+- #45 is draft: launch-safety quarantine for private proof assets and public
+  posting drafts. It removes committed Day-1 proof media from the public tree
+  and redacts inherited local/private paths.
 
 The repo has an existing local `webapp/` scaffold: FastAPI backend, SvelteKit
 frontend, local filesystem storage, and tests. Designer-console work should
