@@ -4,7 +4,7 @@ Date: 2026-05-05
 
 ## Why This Exists
 
-The `iso axon section  [Converted].ai` failures showed that poché and line
+The `private section regression drawing.ai` failures showed that poché and line
 weights cannot be solved as separate layer-local passes.
 
 Rhino Make2D can split one architectural component across:
@@ -73,11 +73,11 @@ Line-weight implications:
 
 ## Current Outputs
 
-- `v0612-bounds-candidates.ai`: recovered more mass, but accepted helper-only
+- `private-regression-output.ai`: recovered more mass, but accepted helper-only
   false blobs.
-- `v0614-no-concrete-blob.ai`: removed the lower-left concrete-base expansion
+- `private-regression-output.ai`: removed the lower-left concrete-base expansion
   and stayed conservative.
-- `v0615-overlay.ai`: adds a top `ARCH_LW_POCHE` layer; useful for draw-order
+- `private-regression-output.ai`: adds a top `ARCH_LW_POCHE` layer; useful for draw-order
   review but does not solve missing component topology.
 
 ## Next Implementation Steps
@@ -85,10 +85,10 @@ Line-weight implications:
 1. Promote candidate reporting to a user-facing `diagnose-poche` or
    `--poche-report` output.
 2. Add `ArchitecturalComponent` grouping and component-level candidate scores.
-3. Add fixture tests for known zones in `iso axon section  [Converted].ai`.
+3. Add fixture tests for known zones in `private section regression drawing.ai`.
 4. Let line-weight hierarchy consume the component graph, starting with
    connectors/secondary steel/facade screens.
-5. Add visual QA screenshots for v0612/v0614/v0615 comparisons.
+5. Add visual QA screenshots for prior private run/prior private run/prior private run comparisons.
 
 The books/reference library should feed this stage as executable rules and
 tests, not as raw committed PDFs or live book-reading during each run.

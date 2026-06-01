@@ -7,15 +7,11 @@ PUBLIC_SAFETY_SURFACES = [
     Path(".gitattributes"),
     Path("README.md"),
     Path("RELEASE_NOTES.md"),
+    Path("RETROSPECTIVE.md"),
     Path("SHIP_CHECKLIST.md"),
-    Path("docs/CHANGELOG.md"),
-    Path("docs/index.md"),
-    Path("docs/ROADMAP.md"),
-    Path("docs/SESSION_RETRO.md"),
-    Path("docs/LESSONS_LEARNED.md"),
-    *sorted(Path("docs/announce").glob("*.md")),
-    *sorted(Path("docs/how-to").glob("*.md")),
-    *sorted(Path("docs/tutorials").glob("*.md")),
+    *sorted(Path("docs").rglob("*.md")),
+    Path("mkdocs.yml"),
+    Path("webapp/README.md"),
 ]
 
 FORBIDDEN_RETIRED_PROOF_PHRASES = [
@@ -28,16 +24,22 @@ FORBIDDEN_RETIRED_PROOF_PHRASES = [
     "full section poché",
     "all cut mass black",
     "DRAWING 4 SECTION",
-    "USC ARCH 202B drawing",
+    "USC ARCH 202B",
     "submit-quality path",
     "/Users/",
+    "/private/",
+    "/var/folders",
+    "posting is ready",
+    "App Store is ready",
+    "Windows is supported",
 ]
 
 FORBIDDEN_PRIVATE_PROOF_PATTERNS = [
     re.compile(r"iso axon section\s+\[Converted\]", re.IGNORECASE),
-    re.compile(r"\bv06\d+[-\w]*\.(?:ai|json)\b", re.IGNORECASE),
+    re.compile(r"\bv06\d+", re.IGNORECASE),
     re.compile(r"\biso-axon-v06\d+[-\w]*\.json\b", re.IGNORECASE),
     re.compile(r"<private-arch-202b-root>", re.IGNORECASE),
+    re.compile(r"[A-Z]:\\"),
 ]
 
 

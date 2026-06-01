@@ -2,7 +2,7 @@
 
 Date: 2026-05-05
 
-This is the roadmap addendum after the `iso axon section [Converted]` debugging
+This is the roadmap addendum after the `private section regression drawing` debugging
 session. The main correction is philosophical: the program must behave like an
 architectural drawing assistant, not a color-sorting script plus polygonizer.
 
@@ -113,7 +113,7 @@ untrustworthy engine only makes the wrong answer easier to upload.
 Yes, we need to test what we have made so far, but the sequence matters:
 
 1. Unit/regression tests: already passing after the latest rules.
-2. Real-file test: rerun `iso axon section  [Converted].ai` with
+2. Real-file test: rerun `private section regression drawing.ai` with
    `--architectural --poche`.
 3. Visual QA: inspect the known zones in Illustrator/Computer Use:
    - left retaining wall blob
@@ -148,7 +148,7 @@ Goal: make Zohar's current drawings usable now.
 - [x] Add cut-stroke styling separate from poché eligibility, including RGB/CMYK
   stroke-color overrides and solid dash normalization for strong cut layers.
 - [x] Add manual Illustrator poché workflow spec and map it to engine stages.
-- [x] Add first rectangularity/fragment guards learned from v0617/v0618:
+- [x] Add first rectangularity/fragment guards learned from prior private run/prior private run:
   large roof/slab/foundation candidates must look like material strips; tiny
   backup-wall fragments and large triangular roof surfaces are rejected.
 - [x] Re-enable timber beam completion in a narrow way: small cut-anchored
@@ -287,7 +287,7 @@ Next recommended subagent wave:
 | Agent | Mission | Output |
 | --- | --- | --- |
 | Geometry repair | Build component-graph rules for right retaining wall/foundation and split roof/slab loops. | Tests + patch proposal for Issue #21. |
-| Visual QA | Compare v0616/v0618/next output in Illustrator with known failure zones. | Screenshot notes + pass/fail checklist for Issue #7/#19. |
+| Visual QA | Compare prior private run/prior private run/next output in Illustrator with known failure zones. | Screenshot notes + pass/fail checklist for Issue #7/#19. |
 | Hierarchy standards | Convert remaining Ching/reference rulebook hooks into classifier tests. | Tests for cut mass, thin cut lines, glass, connectors, cladding, entourage. |
 | Report UX | Design `arch-lw diagnose` / run report format. | Markdown/JSON schema for filled/skipped/inferred/review candidates. |
 | Deadline workflow | Write the fastest safe user workflow for current school drawings. | CLI recipes for hierarchy-only, poché, no-poché, and review modes. |
