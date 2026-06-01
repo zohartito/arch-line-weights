@@ -171,19 +171,12 @@ From a source checkout:
   -o /tmp/sample-linework-HIERARCHY.pdf
 ```
 
-### Day-1 proof images
+### Proof status
 
-The section proof uses the Illustrator bridge path (`apply-jsx` followed by
-`arch-lw poche`) on `WALL SECTION [Converted].ai`.
-
-![Day-1 section proof close-up: solid cut mass, openings left white](docs/img/day1-proof/05-closeup-cut-mass-windows-white.png)
-
-Proof assets:
-
-- [Before: raw Rhino/Make2D export](docs/img/day1-proof/01-before-raw.png)
-- [After: hierarchy + solid-black poché](docs/img/day1-proof/03-after-poche-full.png)
-- [Layers panel: preserved `ClippingPlaneIntersections` layers](docs/img/day1-proof/04-layers-panel-clipping-poche.png)
-- [Final poché PDF](docs/img/day1-proof/section-HIERARCHY-jsx-POCHE.pdf)
+Public proof assets are intentionally not committed in this branch. Posting and
+public proof remain **NO-GO** unless W5/W7 explicitly accepts the packet.
+Synthetic proof can demonstrate the harness, but it does not close #30, and the
+private USC regression stays private.
 
 ---
 
