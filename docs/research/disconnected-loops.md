@@ -6,7 +6,7 @@
 
 ## Concrete failure case
 
-USC ARCH 202B reference drawing, layer
+private architecture section regression drawing, layer
 `Visible::ClippingPlaneIntersections::TEC_FOUNDATION`: 10 line segments,
 should form one closed cut boundary of the building foundation. Bare
 `shapely.ops.linemerge` chains 0 of them — endpoints don't share within any

@@ -82,7 +82,7 @@ For each match:
 | `f/F/f*` | Increment `total_drawings`; bucket `fill_color` |
 
 The walker is `O(n)` in content-stream bytes (no parse tree). On the 98 MB
-`macro_for_archlw.ai` it walks 113 MB of content stream in **24 s**. Compare
+`private-axon-stress-fixture.ai` it walks 113 MB of content stream in **24 s**. Compare
 PyMuPDF: it parses + builds drawing objects in **~9 s** but **fails outright
 on the 237 MB original**.
 
@@ -189,7 +189,7 @@ Run: `pytest tests/test_basic.py -k inspect_` → 4 passed in ~0.4 s.
 ## Smoke tests on the real ARCH 211 drawing
 
 ```
-$ time arch-lw inspect '/.../macro_for_archlw.ai'   # 98 MB AI
+$ time arch-lw inspect '/.../private-axon-stress-fixture.ai'   # 98 MB AI
 1,282,990 total_drawings, 41 distinct stroke colors, 49 OCG layer names
 real    0m25s
 ```

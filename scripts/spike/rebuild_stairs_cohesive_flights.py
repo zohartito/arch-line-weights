@@ -18,7 +18,7 @@ from pathlib import Path
 
 import rhino3dm as r3
 
-ARCH_202B = Path("/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B")
+ARCH_202B = Path("<private-arch-202b-root>")
 DEFAULT_SRC = ARCH_202B / "stairs.3dm"
 DEFAULT_DST = ARCH_202B / "stairs CLEAN MAKE2D v7 cohesive no-stringers.3dm"
 

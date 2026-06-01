@@ -10,7 +10,7 @@
 The user has a Rhino-exported drawing on disk literally named
 
 ```
-/Users/.../wall section iso cut .ai
+<local-drawing-folder>/sample section cut .ai
 ```
 
 — note the **trailing space** before `.ai`. (Most filesystems allow
@@ -22,7 +22,7 @@ extension, sees a stem ending in a single space, and renders the doc
 title as
 
 ```
-wall section iso cut  [Converted].ai
+sample section cut  [Converted].ai
 ```
 
 — with **two spaces** between `cut` and `[Converted]` (one from the
@@ -43,10 +43,10 @@ For our trailing-space disk file:
 
 | candidate                                         | active doc name (Illustrator)        | match?
 |---------------------------------------------------|-------------------------------------|------
-| `wall section iso cut .ai [Converted]`            | `wall section iso cut  [Converted].ai` | no — `.ai` in the wrong position
-| `wall section iso cut .ai [Converted].ai`         | …                                    | no — same problem
-| `wall section iso cut  [Converted]`               | …                                    | no — Illustrator's name has `.ai`
-| `wall section iso cut  [Converted].ai`            | `wall section iso cut  [Converted].ai` | **would match exactly**
+| `sample section cut .ai [Converted]`            | `sample section cut  [Converted].ai` | no — `.ai` in the wrong position
+| `sample section cut .ai [Converted].ai`         | …                                    | no — same problem
+| `sample section cut  [Converted]`               | …                                    | no — Illustrator's name has `.ai`
+| `sample section cut  [Converted].ai`            | `sample section cut  [Converted].ai` | **would match exactly**
 
 So in principle the fourth candidate should have matched. In practice
 the active-doc-name shape Illustrator returns sometimes strips the
@@ -54,7 +54,7 @@ trailing whitespace from the stem (Illustrator's display logic is
 inconsistent across versions), giving e.g.
 
 ```
-wall section iso cut [Converted].ai
+sample section cut [Converted].ai
 ```
 
 — **one space** between `cut` and `[Converted]`. None of the candidate
