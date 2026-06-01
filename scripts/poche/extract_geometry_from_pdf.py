@@ -15,7 +15,7 @@ from pikepdf import parse_content_stream
 from shapely.geometry import LineString, MultiLineString
 from shapely.ops import linemerge, polygonize
 
-SRC = "<private-arch-202b-root>/DRAWING 4 SECTION [Converted] BACKUP.ai"
+SRC = "sample-section BACKUP.ai"
 OUT = "/tmp/poche_polygons.json"
 TOLERANCE = 0.05  # pt — Make2D output is exact, but be safe
 
@@ -25,7 +25,7 @@ page = pdf.pages[0]
 # Build MC# -> OCG layer name lookup
 props = page.obj["/Resources"].get("/Properties")
 mc_to_name = {}
-for key in props.keys():
+for key in props:
     ocg = props[key]
     if "/Name" in ocg:
         mc_to_name[str(key)] = str(ocg["/Name"])  # e.g. "/MC28" -> "axon...::TEC_FOUNDATION"
