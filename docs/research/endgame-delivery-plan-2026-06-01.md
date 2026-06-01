@@ -21,7 +21,9 @@ product. It is an engineering control document, not a public launch claim.
 - #34 is green: verification fixture sourcing research. It was refreshed at
   `186531a` to remove a private axon filename from the public roadmap wording,
   update stale PR #36 CI language, and refresh the PR body with current local
-  validation.
+  validation. A later compatibility update at `911bcd5` removes a retired proof
+  phrase from the retrospective so the expanded launch-safety scanner can pass
+  in the combined stack.
 - #36 is green and draft: W3 verification core, layout-jsx reports, Rhino bridge.
 - #37 is green and draft at the last completed check: input diagnostics and
   proof report harness. It now includes proof-packet validation that fails
@@ -61,7 +63,10 @@ product. It is an engineering control document, not a public launch claim.
   filled directly, and unrelated structural helpers do not leak into poché
   output. Later updates record structural helper counts in poché reports, expose
   those counts downstream, and mirror the W5/W7 concrete/foundation review gate
-  in #42 so helper-backed inference is never treated as acceptance.
+  in #42 so helper-backed inference is never treated as acceptance. A later
+  update adds concrete/foundation-only tiny collinear fragment-gap bridging for
+  C2/C3-like Make2D edge fragments: small same-line gaps can be normalized into
+  one cut face, while larger voids remain open.
 - #37 + #42 temp integration was tested locally. The stack had one small import
   conflict in `poche.py`; after resolving it, focused tests and ruff passed,
   and a private USC `poche --report` probe reported `TEC_CONCRETE_BASE` as
@@ -103,6 +108,13 @@ product. It is an engineering control document, not a public launch claim.
   `git diff --check` was clean, the changed-diff private-path/name scan had no
   hits, and the feasible full suite passed with 559 passing tests and 1 skipped
   test.
+- #37 + #42 integration was rechecked again after #42 added fragmented
+  concrete/foundation edge recovery. The refreshed temp merge was conflict-free.
+  Combined focused proof/report/geometry tests passed with 122 passing tests,
+  ruff passed, `git diff --check` was clean, and the feasible full suite passed
+  with 562 passing tests and 1 skipped test. The changed-diff scan had one
+  intentional proof-validator regex hit for detecting local paths; it was not a
+  leaked path.
 - #43 is draft and stacked on #36: the local designer-console prototype. It has
   local full-test verification, but no GitHub checks are reported on the
   stacked branch yet.
@@ -136,7 +148,72 @@ product. It is an engineering control document, not a public launch claim.
   example; removes local-path and submit-quality wording from the dogfood
   checklist; and sanitizes changelog validation entries so private fixture
   names, output artifact names, and proof-like private counts do not appear in
-  public surfaces.
+  public surfaces. A later update at `fa5524a` expands the safety scanner to
+  every markdown file under `docs/`, `RETROSPECTIVE.md`, `mkdocs.yml`, and
+  `webapp/README.md`, then redacts stale research/postmortem references to
+  private-derived filenames, local paths, and private run artifact names.
+
+## Full-Stack No-Merge Rehearsal - 2026-06-01
+
+A disposable local integration branch was built from `origin/main` and no PRs
+were merged. The rehearsal tested this branch order:
+
+1. #34 `w2-verification-fixture-sourcing` at `911bcd5`.
+2. #37 `codex/open-issue-verification-core` at `7784f7b`.
+3. #36 `v0.2-verification-core` at `a3a7e6a`.
+4. #38 `codex/issue20-entourage-assets` at `4153778`.
+5. #39 `codex/issue23-single-layer-cleanup` at `aab7db9`.
+6. #40 `codex/issue19-diagnose-report` at `2733120`.
+7. #42 `codex/issue30-concrete-base-synthetic-regression` at `e8450b0`.
+8. #44 `codex/webapp-designer-console-prototype` at `fb7db78`.
+9. #45 `codex/quarantine-day1-proof-assets` at `fa5524a`.
+10. #41 `codex/endgame-delivery-ledger` at `e98b183`.
+
+Conflict findings:
+
+- #36/#37 overlap in CLI and report contracts. Local resolution kept input
+  preflight, proof/report identity, rendered artifact requirements, and the
+  layout/report-json interfaces.
+- #39 overlapped cleanup CLI/readme wiring. Local resolution kept the cleanup
+  command path plus the supported-input preflight imports.
+- #42 overlapped report semantics. Local resolution kept concrete/foundation
+  W5/W7 visual acceptance gates and structural helper evidence.
+- #45 overlapped roadmap/report-safety wording. Local resolution kept the
+  NO-GO posture, synthetic-proof caveat, private-regression caveat, and #29/#30
+  blockers.
+- #36 carried stale fake-PDF `poche --report-json` tests that #37 correctly
+  rejected under input preflight. The rehearsal fixed those tests locally by
+  generating valid minimal PDF-compatible `.ai` fixtures and asserting the
+  fuller `arch-lw poche ...` command identity.
+- The expanded #45 safety scan found stale private-derived references in
+  research/postmortem docs; #45 was updated and pushed at `fa5524a`.
+- The expanded #45 safety scan then found one retired proof phrase in #34's
+  retrospective; #34 was updated and pushed at `911bcd5`.
+
+Final rehearsal verification:
+
+- Focused integrated Python/backend tests:
+  `tests/test_run_report.py tests/test_proof.py tests/test_launch_safety_docs.py
+  tests/test_apply_saas_poche.py webapp/tests/test_console_routes.py
+  webapp/tests/test_routes.py webapp/tests/test_dev_console.py` -> 123 passed,
+  1 Starlette/httpx deprecation warning.
+- Feasible full Python suite:
+  `pytest --ignore=tests/test_hatch_v05.py -q` -> 627 passed, 6 skipped,
+  1 xfailed, 5 warnings.
+- `ruff check src/ tests/ webapp/backend webapp/tests` -> pass.
+- `git diff --check` -> clean.
+- Public-surface private-path / retired-proof / premature-claim scan across
+  README, release notes, retrospective, ship checklist, docs, MkDocs config,
+  and webapp README -> no hits.
+- `npm run check` in `webapp/frontend` -> 0 Svelte errors, 0 warnings.
+- `npm run build` in `webapp/frontend` -> pass; Vite/SvelteKit emitted
+  dependency export warnings but exited successfully.
+
+Result: the current active green stack has no unresolvable integration blocker,
+but it has real sequencing requirements. #45 must be included before any
+public-surface clearance, and the #36/#37/#42 report-contract overlaps need an
+explicit merge resolution if the PRs are landed separately. This rehearsal does
+not close #29 or #30 and does not change posting/public proof from NO-GO.
 
 The repo has an existing local `webapp/` scaffold: FastAPI backend, SvelteKit
 frontend, local filesystem storage, and tests. Designer-console work should
