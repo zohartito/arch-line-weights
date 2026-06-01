@@ -4,10 +4,65 @@ This branch preserves the WIP implementation and investigation for the open-issu
 
 ## Branch
 
-- Branch: `codex/open-issue-verification-core` (PR **#37**, draft, redaction head `49f4932`; this handoff note follows)
+- Branch: `codex/open-issue-verification-core` (PR **#37**, draft; head `c2c1500`)
 - Integration rehearsal: `codex/tmp-integration-rehearsal-20260601b` (pushed head `d457acb`)
+- Endgame ledger: `codex/endgame-delivery-ledger` (PR **#41**, head `a86d268`)
+- Human landing map: `docs/research/human-landing-plan-2026-06-01.md`
 - Remote: `origin` (`git@github.com:zohartito/arch-line-weights.git`)
 - Goal status: in progress; not launch-ready.
+
+## Update — 2026-06-01 (issue #19 diagnose slice integrated)
+
+### What changed
+
+- Cherry-picked PR **#40** / `codex/issue19-diagnose-report` onto the coordinator
+  branch as `c2c1500`.
+- Added `arch-lw diagnose run-report.json [--json]` for existing durable run
+  reports, with human-readable review layers, failed/missing layers, reasons,
+  and a preview warning that PDF preview is not authoritative for AI-native
+  Illustrator payloads.
+- Kept `arch-lw proof-check` and `arch-lw diagnose` side by side in the CLI
+  reference; `diagnose` reads a report, `proof-check` validates/plan-checks a
+  manifest-backed proof packet.
+
+### Verification (this slice)
+
+```text
+pytest tests/test_diagnose_report.py tests/test_run_report.py tests/test_cli_proof_check.py -q  → 21 passed
+pytest tests/test_proof.py tests/test_launch_safety_docs.py -q  → 41 passed
+ruff check src tests webapp/backend webapp/tests  → pass
+git diff --check  → pass
+```
+
+### Boundaries
+
+- **#19 advances** but still needs Illustrator-backed/private visual review
+  evidence before it can be closed as fully validated.
+- **#29** / **#30** remain open; posting/public proof **NO-GO**.
+- GitHub issue comments/PR-body edits are blocked until `gh` is reauthenticated
+  (`gh auth status` reports the token for `zohartito` is invalid).
+
+## Update — 2026-06-01 (human landing plan + console posting clarity)
+
+### What changed
+
+- Added `docs/research/human-landing-plan-2026-06-01.md` — merge waves, superseded PRs,
+  rehearsal vs #37 delta classification, human review checklist.
+- Console public summary now exposes `posting_clearance` (always **NO-GO** today) and
+  `synthetic_proof_closes_issue_30: false`.
+- Designer UI: synthetic-demo banner, clearer posting labels, handoff filenames in artifact copy.
+
+### Verification (this slice)
+
+```text
+pytest --ignore=tests/test_hatch_v05.py -q  → (run after commit)
+webapp/tests/test_console_routes.py  → posting_clearance assertions
+tests/test_launch_safety_docs.py  → includes landing plan surface
+```
+
+### Boundaries
+
+- **No PR merges.** **#29** / **#30** open. Posting **NO-GO.**
 
 ## Update — 2026-06-01 (full integration rehearsal refreshed through `d457acb`)
 
