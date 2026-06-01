@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from PIL import Image
@@ -8,6 +9,7 @@ from arch_line_weights.proof import (
     has_dark_pixels_in_region,
     images_effectively_unchanged,
     load_manifest,
+    validate_proof_packet,
 )
 
 
@@ -132,6 +134,116 @@ def test_build_proof_packet_plan_uses_stable_artifact_paths(tmp_path: Path) -> N
     ]
 
 
+def test_validate_proof_packet_rejects_missing_artifacts(tmp_path: Path) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    _write_packet_artifacts(
+        plan,
+        report={
+            "schema_version": 2,
+            "summary": {"layers_filled": 1, "layers_failed": 0, "layers_needs_review": 0},
+            "layers": [],
+        },
+        missing={plan.after_path},
+    )
+
+    validation = validate_proof_packet(plan)
+
+    assert validation.status == "failed"
+    assert "after.png" in validation.public_summary["what_failed"][0]
+    assert "Regenerate the proof packet artifacts" in validation.public_summary["next_step"]
+
+
+def test_validate_proof_packet_rejects_no_go_report(tmp_path: Path) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    _write_packet_artifacts(
+        plan,
+        report={
+            "schema_version": 2,
+            "status": "no_go",
+            "summary": {"layers_filled": 0, "layers_failed": 1, "layers_needs_review": 0},
+            "layers": [{"layer": "LayerA", "status": "failed", "review": {"needs_review": True}}],
+        },
+    )
+
+    validation = validate_proof_packet(plan)
+
+    assert validation.status == "no_go"
+    assert any("raw report status is no_go" in reason for reason in validation.reasons)
+    assert "Fix the no-go proof condition" in validation.public_summary["next_step"]
+
+
+def test_validate_proof_packet_rejects_local_paths_and_sanitizes_public_summary(tmp_path: Path) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    local_input = "/" + "/".join(("Users", "example", "private", "client-section.ai"))
+    _write_packet_artifacts(
+        plan,
+        report={
+            "schema_version": 2,
+            "source": {
+                "input": local_input,
+                "command": f"arch-lw apply-jsx {local_input}",
+            },
+            "summary": {"layers_filled": 1, "layers_failed": 0, "layers_needs_review": 0},
+            "layers": [{"layer": "LayerA", "status": "filled", "review": {"needs_review": False}}],
+        },
+    )
+
+    validation = validate_proof_packet(plan)
+
+    assert validation.status == "no_go"
+    assert validation.unsafe_references == ("source.command", "source.input")
+    public_payload = json.dumps(validation.public_summary, sort_keys=True)
+    assert local_input.rsplit("/", 1)[0] not in public_payload
+    assert "client-section" not in public_payload
+    assert "raw report contains local/private path references" in validation.public_summary["why"][0]
+
+
+def test_validate_proof_packet_passes_public_safe_report_with_expected_artifacts(tmp_path: Path) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    _write_packet_artifacts(
+        plan,
+        report={
+            "schema_version": 2,
+            "summary": {
+                "layers_filled": 1,
+                "layers_inferred": 1,
+                "layers_skipped": 0,
+                "layers_failed": 0,
+                "layers_needs_review": 0,
+                "polygons_filled": 4,
+            },
+            "layers": [
+                {"layer": "LayerA", "status": "filled", "review": {"needs_review": False}},
+                {"layer": "LayerB", "status": "inferred", "review": {"needs_review": False}},
+            ],
+        },
+    )
+
+    validation = validate_proof_packet(plan)
+
+    assert validation.status == "passed"
+    assert "1 layer filled" in validation.public_summary["what_changed"]
+    assert "4 polygons filled" in validation.public_summary["what_changed"]
+    assert validation.public_summary["what_failed"] == []
+    assert "Attach the public summary only" in validation.public_summary["next_step"]
+
+
 def test_images_effectively_unchanged_uses_pixel_ratio_threshold() -> None:
     before = Image.new("RGB", (10, 10), "white")
     almost_same = before.copy()
@@ -153,3 +265,27 @@ def test_has_dark_pixels_in_region_detects_expected_poche_presence() -> None:
 
     assert has_dark_pixels_in_region(image, rect=(4, 4, 12, 12), min_dark_ratio=0.25, threshold=32)
     assert not has_dark_pixels_in_region(image, rect=(12, 12, 19, 19), min_dark_ratio=0.25, threshold=32)
+
+
+def _write_packet_artifacts(
+    plan,
+    *,
+    report: dict,
+    missing: set[Path] | None = None,
+) -> None:
+    missing = missing or set()
+    for path in (
+        plan.report_path,
+        plan.before_path,
+        plan.after_path,
+        plan.diff_path,
+        plan.cut_geometry_path,
+        plan.layer_audit_path,
+    ):
+        if path in missing:
+            continue
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if path == plan.report_path:
+            path.write_text(json.dumps(report), encoding="utf-8")
+        else:
+            path.write_bytes(b"synthetic proof artifact")

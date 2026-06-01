@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -17,6 +19,9 @@ except ModuleNotFoundError:  # pragma: no cover - exercised only in minimal inst
 
 VALID_FIXTURE_STATUSES = {"pass", "expected_fail", "unsupported", "needs_manual_review"}
 VALID_REPORT_STATUSES = VALID_FIXTURE_STATUSES | {"fail"}
+_LOCAL_PATH_RE = re.compile(
+    r"(?i)(?:file://)?(?:/Users/|/private/|/var/folders/|/tmp/|/Volumes/|[A-Z]:\\|\\\\)"
+)
 
 
 class ManifestValidationError(ValueError):
@@ -87,6 +92,16 @@ class ProofPacketPlan:
     commands: list[CommandPlan]
 
 
+@dataclass(frozen=True)
+class ProofPacketValidation:
+    fixture_id: str
+    status: str
+    public_summary: dict[str, Any]
+    missing_artifacts: tuple[str, ...]
+    unsafe_references: tuple[str, ...]
+    reasons: tuple[str, ...]
+
+
 def load_manifest(path: str | Path) -> ProofManifest:
     """Load and validate a compact Make2D proof manifest."""
 
@@ -119,6 +134,112 @@ def build_proof_packet_plan(
         cut_geometry_path=fixture_output_dir / "cut-geometry.json",
         layer_audit_path=fixture_output_dir / "layer-audit.json",
         commands=[CommandPlan(index=index, command=command) for index, command in enumerate(command_list)],
+    )
+
+
+def validate_proof_packet(plan: ProofPacketPlan) -> ProofPacketValidation:
+    """Validate a local proof packet and build a path-free public summary.
+
+    Raw run reports are allowed to exist locally, but public proof status must
+    never pass when required artifacts are absent, the report carries failed or
+    no-go state, or local/private path references leak into the raw report.
+    """
+
+    artifacts = _proof_packet_artifacts(plan)
+    missing_artifacts = tuple(
+        label for label, path in artifacts.items() if not path.exists() or path.is_dir() or path.stat().st_size <= 0
+    )
+
+    report: dict[str, Any] = {}
+    failed_reasons: list[str] = []
+    no_go_reasons: list[str] = []
+    review_reasons: list[str] = []
+
+    if missing_artifacts:
+        failed_reasons.append(f"missing proof artifacts: {', '.join(missing_artifacts)}")
+
+    if "report.json" not in missing_artifacts:
+        try:
+            report = _load_json_mapping(plan.report_path)
+        except ManifestValidationError as exc:
+            failed_reasons.append(str(exc))
+    else:
+        failed_reasons.append("raw report is missing")
+
+    raw_status = _normalized_status(report.get("status")) if report else ""
+    if raw_status == "no_go":
+        no_go_reasons.append("raw report status is no_go")
+    elif raw_status in {"fail", "failed"}:
+        failed_reasons.append("raw report status is failed")
+    elif raw_status in {"needs_review", "needs_manual_review"}:
+        review_reasons.append("raw report status needs review")
+
+    unsafe_references = _find_unsafe_report_references(report)
+    if unsafe_references:
+        no_go_reasons.append(
+            "raw report contains local/private path references: " + ", ".join(unsafe_references)
+        )
+
+    summary = report.get("summary") if isinstance(report.get("summary"), dict) else {}
+    layer_failure_count = _int_count(summary, "layers_failed")
+    if layer_failure_count:
+        failed_reasons.append(_plural(layer_failure_count, "layer failed", "layers failed"))
+
+    layers = report.get("layers") if isinstance(report.get("layers"), list) else []
+    no_go_layers = 0
+    failed_layers = 0
+    review_layers = 0
+    missing_payload_layers = 0
+    for layer in layers:
+        if not isinstance(layer, dict):
+            continue
+        layer_status = _normalized_status(layer.get("status"))
+        review = layer.get("review") if isinstance(layer.get("review"), dict) else {}
+        if layer_status == "no_go":
+            no_go_layers += 1
+        elif layer_status in {"fail", "failed"}:
+            failed_layers += 1
+        elif layer_status == "missing_payload":
+            missing_payload_layers += 1
+        elif layer_status in {"needs_review", "low_confidence"} or review.get("needs_review") is True:
+            review_layers += 1
+
+    if no_go_layers:
+        no_go_reasons.append(_plural(no_go_layers, "layer is no_go", "layers are no_go"))
+    if failed_layers:
+        failed_reasons.append(_plural(failed_layers, "layer failed", "layers failed"))
+    if missing_payload_layers:
+        failed_reasons.append(
+            _plural(missing_payload_layers, "layer missing payload", "layers missing payload")
+        )
+    summary_review_layers = _int_count(summary, "layers_needs_review")
+    review_count = max(review_layers, summary_review_layers)
+    if review_count:
+        review_reasons.append(_plural(review_count, "layer needs review", "layers need review"))
+
+    if no_go_reasons:
+        status = "no_go"
+    elif failed_reasons:
+        status = "failed"
+    elif review_reasons:
+        status = "needs_review"
+    else:
+        status = "passed"
+
+    reasons = tuple(dict.fromkeys([*no_go_reasons, *failed_reasons, *review_reasons]))
+    return ProofPacketValidation(
+        fixture_id=plan.fixture_id,
+        status=status,
+        public_summary=_build_public_summary(
+            fixture_id=plan.fixture_id,
+            status=status,
+            report_summary=summary,
+            reasons=reasons,
+            missing_artifacts=missing_artifacts,
+        ),
+        missing_artifacts=missing_artifacts,
+        unsafe_references=unsafe_references,
+        reasons=reasons,
     )
 
 
@@ -178,6 +299,134 @@ def _load_yaml_mapping(path: Path) -> dict[str, Any]:
     if not isinstance(raw, dict):
         raise ManifestValidationError("manifest must be a mapping")
     return raw
+
+
+def _load_json_mapping(path: Path) -> dict[str, Any]:
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ManifestValidationError(f"raw report is not valid JSON: {exc.msg}") from exc
+    if not isinstance(raw, dict):
+        raise ManifestValidationError("raw report must be a mapping")
+    return raw
+
+
+def _proof_packet_artifacts(plan: ProofPacketPlan) -> dict[str, Path]:
+    return {
+        "report.json": plan.report_path,
+        "before.png": plan.before_path,
+        "after.png": plan.after_path,
+        "diff.png": plan.diff_path,
+        "cut-geometry.json": plan.cut_geometry_path,
+        "layer-audit.json": plan.layer_audit_path,
+    }
+
+
+def _build_public_summary(
+    *,
+    fixture_id: str,
+    status: str,
+    report_summary: dict[str, Any],
+    reasons: tuple[str, ...],
+    missing_artifacts: tuple[str, ...],
+) -> dict[str, Any]:
+    changed = _changed_messages(report_summary)
+    skipped = _skipped_messages(report_summary)
+    failed = _failed_messages(report_summary, missing_artifacts)
+    if not failed and status == "no_go":
+        failed = ["raw report status is no_go"]
+
+    return {
+        "fixture_id": fixture_id,
+        "status": status,
+        "public_safe": status == "passed",
+        "what_changed": changed,
+        "what_skipped": skipped,
+        "what_failed": failed,
+        "why": list(reasons),
+        "next_step": _next_step(status, reasons),
+    }
+
+
+def _changed_messages(summary: dict[str, Any]) -> list[str]:
+    messages: list[str] = []
+    for key, singular, plural in (
+        ("layers_filled", "layer filled", "layers filled"),
+        ("layers_inferred", "layer inferred", "layers inferred"),
+        ("polygons_filled", "polygon filled", "polygons filled"),
+        ("bytes_injected", "byte injected", "bytes injected"),
+    ):
+        count = _int_count(summary, key)
+        if count:
+            messages.append(_plural(count, singular, plural))
+    return messages
+
+
+def _skipped_messages(summary: dict[str, Any]) -> list[str]:
+    skipped = _int_count(summary, "layers_skipped")
+    return [_plural(skipped, "layer skipped", "layers skipped")] if skipped else []
+
+
+def _failed_messages(summary: dict[str, Any], missing_artifacts: tuple[str, ...]) -> list[str]:
+    messages: list[str] = []
+    if missing_artifacts:
+        messages.append(f"missing proof artifacts: {', '.join(missing_artifacts)}")
+    failed = _int_count(summary, "layers_failed")
+    if failed:
+        messages.append(_plural(failed, "layer failed", "layers failed"))
+    return messages
+
+
+def _next_step(status: str, reasons: tuple[str, ...]) -> str:
+    if status == "no_go" and any("local/private path references" in reason for reason in reasons):
+        return (
+            "Remove local/private references from raw proof, regenerate a public-safe summary, "
+            "and keep private USC evidence local."
+        )
+    if status == "no_go":
+        return "Fix the no-go proof condition before treating this packet as evidence."
+    if status == "failed" and any("missing proof artifacts" in reason for reason in reasons):
+        return "Regenerate the proof packet artifacts before treating this as evidence."
+    if status == "failed":
+        return "Fix failed proof stages, then rerun the proof packet."
+    if status == "needs_review":
+        return "Review flagged layers or regions before accepting the packet."
+    return "Attach the public summary only; keep raw local reports out of committed/public proof."
+
+
+def _find_unsafe_report_references(report: dict[str, Any]) -> tuple[str, ...]:
+    references: set[str] = set()
+
+    def walk(value: Any, label: str) -> None:
+        if isinstance(value, str):
+            if _LOCAL_PATH_RE.search(value):
+                references.add(label)
+        elif isinstance(value, dict):
+            for key, child in value.items():
+                child_label = f"{label}.{key}" if label else str(key)
+                walk(child, child_label)
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                walk(child, f"{label}[{index}]")
+
+    walk(report, "")
+    return tuple(sorted(references))
+
+
+def _normalized_status(value: Any) -> str:
+    if not isinstance(value, str):
+        return ""
+    return value.strip().lower().replace("-", "_")
+
+
+def _int_count(summary: dict[str, Any], key: str) -> int:
+    value = summary.get(key)
+    return value if isinstance(value, int) and value > 0 else 0
+
+
+def _plural(count: int, singular: str, plural: str) -> str:
+    noun = singular if count == 1 else plural
+    return f"{count} {noun}"
 
 
 def _parse_fixture(raw: Any, manifest_dir: Path, index: int) -> ProofFixture:
