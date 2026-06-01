@@ -355,6 +355,52 @@ This phase cannot be declared complete without private review/acceptance for
 the USC regression. Synthetic proof can support confidence, but it cannot close
 #30.
 
+### Human Acceptance Handoff - #30
+
+Purpose: make the remaining non-automated gate explicit enough that W5/W7 can
+accept or reject it without exposing private proof artifacts.
+
+Private review inputs stay local:
+
+- Local run folder for the private USC regression.
+- Raw report JSON, rendered before/after/diff images, and proof packet artifacts.
+- C2/C3 foundation/concrete crops, D2 glazing-white positive control, and any
+  local Illustrator/Rhino screenshots needed for the visual decision.
+
+GitHub-safe evidence is only a redacted decision summary:
+
+- Target layer family reviewed, using public layer-family names only.
+- Whether W5/W7 accepted the visual result or rejected it.
+- Whether the accepted scope is private-regression-only, public-proof, or both.
+- Which no-go or limitation remains, if rejected.
+- Confirmation that no private drawings, screenshots, PDFs, raw reports, proof
+  assets, or absolute local paths were committed.
+
+If W5/W7 accepts the private visual layer gate, the raw local report may carry a
+local-only overlay shaped like:
+
+```json
+{
+  "review_acceptance": {
+    "visual_layer_gates": [
+      {
+        "layer": "TEC_CONCRETE_BASE",
+        "accepted": true,
+        "accepted_by": "W7",
+        "date": "2026-06-01",
+        "scope": "private USC C2/C3 foundation-concrete visual review"
+      }
+    ]
+  }
+}
+```
+
+That overlay can clear only the matching eligible visual-review layer gate in
+proof validation. It does not override failed, no-go, missing-payload,
+explicit-review, or low-confidence states. It also does not make public proof
+safe; public proof still needs separate W5/W7 `public_proof` acceptance metadata
+and public-safe artifacts.
+
 ### Phase 4 - Designer Console
 
 Purpose: give a designer a local non-terminal surface.
