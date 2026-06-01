@@ -16,11 +16,16 @@ commitment.
 - Bluebeam review is unverified. Use Illustrator and Acrobat for the validated
   Day-1 review loop.
 
-## Validated Proof Points
+## Proof Posture
 
 - Section-bridge and large-file stress runs have been exercised locally.
-  Public proof assets are not committed. Posting remains **NO-GO** until W5/W7
-  accepts a proof packet. Synthetic proof does not close #30.
+  Public proof assets are not committed. Posting/public proof is **NO-GO**
+  unless W5/W7 explicitly accepts the packet. Synthetic proof does not close
+  #30.
+- The private USC regression stays private and is not represented by committed
+  screenshots, PDFs, raw reports, or local file paths.
+- Prior private dogfood showed useful bridge and large-file signals, but those
+  private filenames and artifacts are intentionally not public proof claims.
 
 ## Known Input Caveats
 

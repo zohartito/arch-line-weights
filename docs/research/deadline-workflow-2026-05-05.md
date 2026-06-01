@@ -10,13 +10,13 @@ base sheet but not yet good enough to finish every poché face automatically.
 For `iso axon section  [Converted].ai`, use:
 
 ```text
-/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0622-beam-cells.ai
+<private-arch-202b-root>/iso axon section  [Converted] HIERARCHY-saas-ARCHITECTURAL-v0622-beam-cells.ai
 ```
 
 Keep its report next to it:
 
 ```text
-/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/iso-axon-v0622-beam-cells-report.json
+<private-arch-202b-root>/iso-axon-v0622-beam-cells-report.json
 ```
 
 Do not use the low-confidence roof-cap experiment for print:
@@ -34,7 +34,7 @@ Use this for drawings with no section cut poché, or when the drawing just needs
 architectural line-weight hierarchy.
 
 ```bash
-cd /Users/zohartito/SynologyDrive/Projects/arch-line-weights
+cd <local-arch-line-weights-checkout>
 PYTHONPATH=src pyenv exec python -m arch_line_weights.cli apply-saas \
   "/path/to/drawing.ai" \
   --architectural --auto --preset section --source rhino --no-progress
@@ -50,7 +50,7 @@ the headless native-payload path. Use the Illustrator JSX path or the already
 generated deadline candidate:
 
 ```text
-/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/stairs HIERARCHY-jsx-v0624-stair-path-clean.ai
+<private-arch-202b-root>/stairs HIERARCHY-jsx-v0624-stair-path-clean.ai
 ```
 
 What changed:
@@ -72,7 +72,7 @@ without a special Illustrator script.
 Use this for sections where structural cut mass should become black poché.
 
 ```bash
-cd /Users/zohartito/SynologyDrive/Projects/arch-line-weights
+cd <local-arch-line-weights-checkout>
 ARCH_LW_BRIDGE_BEST_LAYER_BUDGET_SEC=60 \
 ARCH_LW_BRIDGE_BEST_MAX_ENDPOINTS=1000 \
 PYTHONPATH=src pyenv exec python -m arch_line_weights.cli apply-saas \
