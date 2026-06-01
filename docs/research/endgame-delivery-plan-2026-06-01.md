@@ -39,7 +39,10 @@ product. It is an engineering control document, not a public launch claim.
   pixel checks, then connect the committed synthetic manifest's
   `review_regions` to that gate so synthetic proof packets fail when a declared
   cut-mass close-up region stays light or lacks a matching rendered `after`
-  view.
+  view. A later proof-truth update tightens those review regions with
+  per-region `min_dark_ratio` and `min_dark_delta` gates, so outline/dot
+  artifacts and already-dark before views cannot pass as newly added solid
+  poché.
 - #38 is green and draft: entourage SVG asset generator.
 - #39 is green and draft: conservative single-layer cleanup mode.
 - #40 is green and draft: run-report diagnose command.
@@ -93,6 +96,13 @@ product. It is an engineering control document, not a public launch claim.
   Combined focused proof/report/geometry tests passed with 77 passing tests,
   ruff passed, the touched-file private/no-claim scan had no hits, and the
   feasible full suite passed with 556 passing tests and 1 skipped test.
+- #37 + #42 integration was rechecked again after #37 tightened review-region
+  gates with manifest-level `min_dark_ratio` and `min_dark_delta` thresholds.
+  The refreshed temp merge was conflict-free. Combined focused
+  proof/report/geometry tests passed with 80 passing tests, ruff passed,
+  `git diff --check` was clean, the changed-diff private-path/name scan had no
+  hits, and the feasible full suite passed with 559 passing tests and 1 skipped
+  test.
 - #43 is draft and stacked on #36: the local designer-console prototype. It has
   local full-test verification, but no GitHub checks are reported on the
   stacked branch yet.
@@ -173,8 +183,9 @@ Required capabilities:
 - Status never reports passed when outputs are missing, report says failed/no_go,
   raw proof contains private paths, report identity is missing, or rendered-view
   evidence is incomplete.
-- Visual sentinels catch blank output, false fills, missing cut mass, and
-  materially changed linework.
+- Visual sentinels catch blank output, false fills, missing cut mass, weak
+  outline/dot artifacts, unchanged before/after poché regions, and materially
+  changed linework.
 
 Key issues: #29, #31, #32.
 
