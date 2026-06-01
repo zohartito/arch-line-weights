@@ -18,6 +18,20 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
+def local_vite_cors_origins() -> list[str]:
+    """Return the local Vite dev origins the console may use.
+
+    Vite starts on 5173, but when that port is occupied it offers the next
+    available port. The console should still work when it moves within the
+    local dev range instead of failing CORS preflight after rendering.
+    """
+    return [
+        origin
+        for port in range(5173, 5180)
+        for origin in (f"http://localhost:{port}", f"http://127.0.0.1:{port}")
+    ]
+
+
 class Settings(BaseSettings):
     """Runtime configuration. All fields overridable via ARCHLW_* env vars."""
 
@@ -44,7 +58,7 @@ class Settings(BaseSettings):
 
     # CORS — broad in dev, narrow in prod. Comma-separated origin list.
     cors_origins: Annotated[list[str], NoDecode] = Field(
-        default_factory=lambda: ["http://localhost:5173", "http://127.0.0.1:5173"]
+        default_factory=local_vite_cors_origins
     )
 
     @field_validator("cors_origins", mode="before")

@@ -47,11 +47,13 @@ PYTHONPATH=../src:. uvicorn backend.main:app --reload --port 8000
 ```bash
 cd webapp/frontend
 npm install
-npm run dev    # http://localhost:5173
+npm run dev    # open the Local URL Vite prints, usually http://localhost:5173
 ```
 
 The frontend talks to the backend at `http://localhost:8000` by default
-(`VITE_API_BASE_URL` can override it).
+(`VITE_API_BASE_URL` can override it). If Vite shifts to `5174`, `5175`, or
+another nearby local dev port because `5173` is occupied, use the printed URL;
+the backend allows the local Vite fallback ports by default.
 
 ### What it can do
 
@@ -127,7 +129,7 @@ OpenAPI docs:
 |---|---|---|
 | `ARCHLW_STORAGE_ROOT` | `$TMPDIR/archlw-webapp` | Where uploads + outputs land |
 | `ARCHLW_MAX_UPLOAD_BYTES` | `52428800` (50 MB) | Hard cap per upload |
-| `ARCHLW_CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Comma-separated browser origins |
+| `ARCHLW_CORS_ORIGINS` | local Vite ports `5173`-`5179` on `localhost` and `127.0.0.1` | Comma-separated browser origins |
 | `ARCHLW_JOB_RUNNER` | `sync` | `sync` (current) or `queue` (future RQ) |
 
 ## Run the tests
@@ -146,7 +148,7 @@ The frontend source files are checked in but **`node_modules` is not pre-populat
 ```bash
 cd webapp/frontend
 npm install
-npm run dev    # http://localhost:5173
+npm run dev    # open the Local URL Vite prints
 ```
 
 The frontend talks to the backend at `http://localhost:8000` (configurable via `VITE_API_BASE_URL` in `frontend/.env`).

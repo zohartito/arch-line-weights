@@ -72,10 +72,11 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # Browser dev (SvelteKit on :5173) talks to FastAPI on :8000 — same host
-    # but different ports => CORS preflight. We trust only the configured
-    # origin list; ``allow_credentials=True`` because magic-link cookies
-    # are coming in a later phase.
+    # Browser dev (SvelteKit starts on :5173 and may shift upward when that
+    # port is occupied) talks to FastAPI on :8000 — same host but different
+    # ports => CORS preflight. We trust only the configured origin list;
+    # ``allow_credentials=True`` because magic-link cookies are coming in a
+    # later phase.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,

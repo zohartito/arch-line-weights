@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from backend.config import Settings, local_vite_cors_origins
+
 
 def test_health_returns_200(app_client) -> None:
     """Health endpoint is the only route that must always be up."""
@@ -16,6 +18,18 @@ def test_health_returns_200(app_client) -> None:
     body = resp.json()
     assert body["status"] == "ok"
     assert body["service"] == "arch-line-weights-webapp"
+
+
+def test_default_cors_allows_local_vite_fallback_ports(monkeypatch) -> None:
+    monkeypatch.delenv("ARCHLW_CORS_ORIGINS", raising=False)
+
+    origins = Settings().cors_origins
+
+    assert local_vite_cors_origins() == origins
+    assert "http://localhost:5173" in origins
+    assert "http://127.0.0.1:5173" in origins
+    assert "http://localhost:5175" in origins
+    assert "http://127.0.0.1:5175" in origins
 
 
 def test_get_unknown_job_returns_404(app_client) -> None:
