@@ -134,17 +134,24 @@ def test_console_synthetic_demo_runs_full_headless_review_packet(
     assert packet_summary["overall_status"] == "needs_review"
     assert handoff["public_safe"] is False
     assert handoff["public_clearance"] == "NO-GO"
-    assert handoff["visual_layer_gate_overlay_template"]["review_acceptance"][
-        "visual_layer_gates"
-    ][0]["accepted_by"] == "W5 or W7"
-    assert "Private review inputs stay local." in handoff_text
+    assert handoff["posting_ready"] is False
+    assert handoff["synthetic_proof_closes_issue_30"] is False
+    assert handoff["issues_open"] == ["#29", "#30"]
+    gates = handoff["local_only_overlay_template"]["review_acceptance"]["visual_layer_gates"]
+    assert gates[0]["layer"] == "EXAMPLE_CUT_LAYER"
+    assert gates[0]["accepted"] is False
+    assert "NO-GO" in handoff_text
     assert "Synthetic proof does not close #30." in handoff_text
+    assert "acceptance has not occurred" in handoff_text.lower()
     dumped = json.dumps(packet_summary)
     dumped += json.dumps(handoff)
     dumped += handoff_text
     assert "/private/" not in dumped
     assert "/Users/" not in dumped
     assert "/var/folders/" not in dumped
+    assert "macro_for_archlw" not in dumped.lower()
+    assert "synologydrive" not in dumped.lower()
+    assert "tec_concrete_base" not in dumped.lower()
 
 
 def test_console_inspect_stage_returns_public_safe_report(
@@ -259,7 +266,8 @@ def test_console_export_packet_is_review_gated_without_w5_w7_acceptance(
     stage = next(s for s in body["stages"] if s["key"] == "export_proof_packet")
     assert stage["status"] == "needs_review"
     assert "W5/W7 public proof acceptance is not recorded." in stage["why"]
-    assert "Get explicit W5/W7 acceptance" in stage["next_step"]
+    assert "W5-W7-ACCEPTANCE-HANDOFF.md" in stage["next_step"]
+    assert "explicit W5/W7 acceptance" in stage["next_step"]
     assert body["overall_status"] == "needs_review"
     assert body["public_safe"] is False
     assert body["public_acceptance"] == {"accepted": False, "accepted_by": []}
@@ -268,10 +276,15 @@ def test_console_export_packet_is_review_gated_without_w5_w7_acceptance(
     run = app.state.console_store.load(created["run_id"])
     packet_path = Path(run.artifacts[proof_artifact["key"]])
     with zipfile.ZipFile(packet_path) as packet:
+        packet_names = set(packet.namelist())
         packet_summary = json.loads(packet.read("public-summary.json"))
+        handoff = json.loads(packet.read("W5-W7-ACCEPTANCE-HANDOFF.json"))
         readme = packet.read("README-NOT-PUBLIC-CLEARANCE.txt").decode("utf-8")
 
+    assert "W5-W7-ACCEPTANCE-HANDOFF.json" in packet_names
+    assert "W5-W7-ACCEPTANCE-HANDOFF.md" in packet_names
     assert packet_summary["public_safe"] is False
     assert packet_summary["public_acceptance"] == {"accepted": False, "accepted_by": []}
     assert packet_summary["overall_status"] == "needs_review"
+    assert handoff["public_clearance"] == "NO-GO"
     assert "W5/W7 public proof acceptance is not recorded." in readme

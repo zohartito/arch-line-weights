@@ -26,6 +26,10 @@ from arch_line_weights.inspect import inspect_file
 from arch_line_weights.poche import PocheReport, apply_poche
 from arch_line_weights.poche_saas import apply_saas_with_poche
 from arch_line_weights.presets import select_preset
+from arch_line_weights.proof import (
+    build_w5_w7_acceptance_handoff,
+    write_w5_w7_acceptance_handoff_to_zip,
+)
 
 try:  # PR #36 branches provide these; older branches honestly degrade.
     from arch_line_weights.apply_jsx import validate_apply_jsx_result
@@ -675,7 +679,8 @@ class DesignerConsoleStore:
                 PUBLIC_ACCEPTANCE_MISSING,
             ],
             next_step=(
-                "Get explicit W5/W7 acceptance before treating this packet as public proof."
+                "Open W5-W7-ACCEPTANCE-HANDOFF.md locally, then get explicit W5/W7 acceptance "
+                "before treating this packet as public proof."
                 if status == "needs_review"
                 else "Resolve failed or no-go stages before using this packet."
             ),
@@ -1021,9 +1026,39 @@ def _poche_why(report: dict[str, Any]) -> list[str]:
     return ["Poché report indicates injectable cut geometry."]
 
 
+def _public_summary_for_handoff(console_summary: dict[str, Any]) -> dict[str, Any]:
+    """Map designer-console rollup fields to proof public_summary shape."""
+
+    public_acceptance = console_summary.get("public_acceptance")
+    if not isinstance(public_acceptance, dict):
+        public_acceptance = {"accepted": False, "accepted_by": []}
+    visual_acceptance = console_summary.get("visual_acceptance")
+    if not isinstance(visual_acceptance, dict):
+        visual_acceptance = {"accepted_layer_count": 0, "accepted_by": []}
+    return {
+        "status": console_summary.get("overall_status"),
+        "public_safe": console_summary.get("public_safe"),
+        "public_acceptance": public_acceptance,
+        "visual_acceptance": visual_acceptance,
+    }
+
+
+def _handoff_fixture_id(console_summary: dict[str, Any]) -> str:
+    run_id = console_summary.get("run_id")
+    if isinstance(run_id, str) and run_id.strip():
+        return run_id.strip()
+    workflow = console_summary.get("workflow")
+    if isinstance(workflow, str) and workflow.strip():
+        return workflow.strip()
+    return "designer-console"
+
+
 def _write_proof_packet(packet_path: Path, summary: dict[str, Any]) -> None:
     packet_path.parent.mkdir(parents=True, exist_ok=True)
-    handoff = _w5_w7_acceptance_handoff(summary)
+    handoff_json, handoff_md = build_w5_w7_acceptance_handoff(
+        fixture_id=_handoff_fixture_id(summary),
+        public_summary=_public_summary_for_handoff(summary),
+    )
     text_lines = [
         "arch-line-weights designer console proof packet",
         "",
@@ -1037,17 +1072,20 @@ def _write_proof_packet(packet_path: Path, summary: dict[str, Any]) -> None:
         "Next step:",
         summary["report"]["next_step"],
         "",
+        "Review handoff:",
+        "Open W5-W7-ACCEPTANCE-HANDOFF.md in this zip before recording acceptance.",
+        "",
     ]
     with zipfile.ZipFile(packet_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr(
             "public-summary.json",
             json.dumps(summary, indent=2, sort_keys=True) + "\n",
         )
-        zf.writestr(
-            "W5-W7-ACCEPTANCE-HANDOFF.json",
-            json.dumps(handoff, indent=2, sort_keys=True) + "\n",
+        write_w5_w7_acceptance_handoff_to_zip(
+            zf,
+            handoff_json=handoff_json,
+            handoff_md=handoff_md,
         )
-        zf.writestr("W5-W7-ACCEPTANCE-HANDOFF.md", _w5_w7_acceptance_handoff_markdown(handoff))
         zf.writestr("designer-console-report.txt", "\n".join(text_lines))
         zf.writestr(
             "README-NOT-PUBLIC-CLEARANCE.txt",
@@ -1055,84 +1093,3 @@ def _write_proof_packet(packet_path: Path, summary: dict[str, Any]) -> None:
             + f"\n\n{PUBLIC_ACCEPTANCE_MISSING}\n"
             + "This packet is local review material only. It is not posting clearance.\n",
         )
-
-
-def _w5_w7_acceptance_handoff(summary: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "schema_version": 1,
-        "purpose": "Redacted W5/W7 review handoff for a local designer-console proof packet.",
-        "run_id": summary["run_id"],
-        "workflow": summary["workflow"],
-        "workflow_label": summary["workflow_label"],
-        "overall_status": summary["overall_status"],
-        "public_safe": summary["public_safe"],
-        "public_clearance": "accepted" if summary["public_safe"] else "NO-GO",
-        "public_acceptance": summary["public_acceptance"],
-        "guardrails": CONSOLE_GUARDRAILS,
-        "private_review_inputs_stay_local": [
-            "raw local reports",
-            "source drawings",
-            "rendered before/after/diff images",
-            "private C2/C3 crops",
-            "local Illustrator or Rhino screenshots",
-        ],
-        "github_safe_decision_summary_template": {
-            "target_layer_family": "TEC_CONCRETE_BASE / TEC_FOUNDATION",
-            "decision": "accepted | rejected",
-            "accepted_by": "W5 or W7",
-            "scope": "private-regression-only | public-proof | both",
-            "remaining_no_go_or_limitation": "",
-            "no_private_artifacts_committed": True,
-        },
-        "visual_layer_gate_overlay_template": {
-            "review_acceptance": {
-                "visual_layer_gates": [
-                    {
-                        "layer": "TEC_CONCRETE_BASE",
-                        "accepted": True,
-                        "accepted_by": "W5 or W7",
-                        "date": "YYYY-MM-DD",
-                        "scope": "private visual review scope",
-                    }
-                ]
-            }
-        },
-        "public_proof_acceptance_note": (
-            "Visual layer acceptance does not make public proof safe. Public proof still "
-            "requires separate W5/W7 public_proof acceptance metadata and public-safe artifacts."
-        ),
-        "next_step": (
-            "W5/W7 reviews the local packet and records only a redacted accept/reject summary. "
-            "Do not commit private drawings, screenshots, PDFs, raw reports, proof assets, or local paths."
-        ),
-    }
-
-
-def _w5_w7_acceptance_handoff_markdown(handoff: dict[str, Any]) -> str:
-    private_inputs = "\n".join(
-        f"- {item}" for item in handoff["private_review_inputs_stay_local"]
-    )
-    guardrails = "\n".join(f"- {item}" for item in handoff["guardrails"])
-    overlay = json.dumps(
-        handoff["visual_layer_gate_overlay_template"],
-        indent=2,
-        sort_keys=True,
-    )
-    summary_template = json.dumps(
-        handoff["github_safe_decision_summary_template"],
-        indent=2,
-        sort_keys=True,
-    )
-    return (
-        "# W5/W7 Acceptance Handoff\n\n"
-        "Private review inputs stay local.\n\n"
-        f"{private_inputs}\n\n"
-        "GitHub-safe decision summary template:\n\n"
-        f"```json\n{summary_template}\n```\n\n"
-        "Local-only visual layer gate overlay template:\n\n"
-        f"```json\n{overlay}\n```\n\n"
-        f"{handoff['public_proof_acceptance_note']}\n\n"
-        "Guardrails:\n\n"
-        f"{guardrails}\n\n"
-        f"Next step: {handoff['next_step']}\n"
-    )
