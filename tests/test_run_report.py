@@ -13,6 +13,7 @@ def _report(
     *,
     polygons: dict[str, list[list[list[float]]]] | None = None,
     candidates: list[object] | None = None,
+    helper_counts: dict[str, int] | None = None,
     missing: list[str] | None = None,
     injected: int = 0,
 ):
@@ -24,6 +25,7 @@ def _report(
             fills=fills,
             polygons=polygons or {},
             completion_candidates=candidates or [],
+            structural_helper_counts=helper_counts or {},
         ),
         poche_result=PocheSaasResult(
             polygons_injected=injected,
@@ -44,7 +46,25 @@ def test_report_marks_injected_structural_open_loop_as_inferred():
     assert data["summary"]["polygons_filled"] == 2
     assert data["layers"][0]["status"] == "inferred"
     assert data["layers"][0]["action"] == "injected"
-    assert data["layers"][0]["review"]["needs_review"] is False
+    assert data["layers"][0]["review"]["needs_review"] is True
+    assert data["layers"][0]["review"]["visual_acceptance_required"] is True
+    assert any(
+        "W5/W7 visual acceptance" in reason
+        for reason in data["layers"][0]["review"]["reasons"]
+    )
+
+
+def test_apply_saas_report_marks_structural_helper_evidence_from_poche_report():
+    layer = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+    data = _report(
+        [FillResult(layer, "structural_open_loop", 0.88, 1, 8)],
+        polygons={layer: [[[100, 0], [130, 0], [130, 160], [100, 160], [100, 0]]]},
+        injected=1,
+        helper_counts={layer: 2},
+    )
+
+    assert data["layers"][0]["evidence"]["used_structural_helpers"] is True
+    assert data["layers"][0]["evidence"]["structural_helper_count"] == 2
 
 
 def test_report_marks_alpha_shape_as_low_confidence_diagnostic_only():

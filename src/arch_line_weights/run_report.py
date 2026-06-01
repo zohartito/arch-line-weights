@@ -19,6 +19,12 @@ _INFERRED_STRATEGIES = {
     "llm_topology",
 }
 _REVIEW_STRATEGIES = {"alpha_shape", "concave_hull", "bbox", "llm_topology"}
+_VISUAL_ACCEPTANCE_COMPONENTS = (
+    "TEC_CONCRETE_BASE",
+    "TEC_FOUNDATION",
+    "FOUNDATION",
+    "FOOTING",
+)
 
 
 def _short_name(layer: str) -> str:
@@ -53,6 +59,13 @@ def _meaningful_rejection(candidate: object) -> bool:
     return "duplicates existing" not in reason
 
 
+def _requires_visual_acceptance(result: FillResult) -> bool:
+    if result.strategy not in _INFERRED_STRATEGIES:
+        return False
+    upper = _short_name(result.layer).upper()
+    return any(component in upper for component in _VISUAL_ACCEPTANCE_COMPONENTS)
+
+
 def _layer_status(
     result: FillResult,
     *,
@@ -83,6 +96,7 @@ def build_apply_saas_report(
     """Build a JSON-serializable report for one ``apply-saas`` run."""
     poche_report = poche_report or PocheReport()
     poche_result = poche_result or PocheSaasResult()
+    structural_helper_counts = getattr(poche_report, "structural_helper_counts", {})
 
     candidates_by_layer: dict[str, list[object]] = {}
     for candidate in poche_report.completion_candidates:
@@ -104,6 +118,7 @@ def build_apply_saas_report(
             diagnostic_polygons += fill.polygon_count
 
         layer_candidates = candidates_by_layer.get(fill.layer, [])
+        structural_helper_count = int(structural_helper_counts.get(fill.layer, 0) or 0)
         review_reasons: list[str] = []
         if status in {"low_confidence", "failed", "missing_payload"}:
             review_reasons.append(status.replace("_", " "))
@@ -115,7 +130,10 @@ def build_apply_saas_report(
             review_reasons.append("payload layer could not be located for injection")
         if any(_meaningful_rejection(candidate) for candidate in layer_candidates):
             review_reasons.append("one or more Make2D completion candidates were rejected")
-
+        if _requires_visual_acceptance(fill):
+            review_reasons.append(
+                "inferred concrete/foundation fill requires W5/W7 visual acceptance"
+            )
         layers.append(
             {
                 "layer": fill.layer,
@@ -133,11 +151,14 @@ def build_apply_saas_report(
                 "evidence": {
                     "used_cut_layer": True,
                     "used_poche_close_layer": False,
-                    "used_structural_helpers": bool(layer_candidates),
+                    "used_structural_helpers": bool(layer_candidates)
+                    or bool(structural_helper_count),
+                    "structural_helper_count": structural_helper_count,
                     "used_visible_completion": fill.strategy == "structural_visible_completion",
                 },
                 "review": {
                     "needs_review": bool(review_reasons),
+                    "visual_acceptance_required": _requires_visual_acceptance(fill),
                     "reasons": sorted(set(review_reasons)),
                 },
             }
