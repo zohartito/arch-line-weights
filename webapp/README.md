@@ -37,23 +37,29 @@ webapp/
 
 ## Open the Designer Console
 
-Run the backend and frontend in two terminals:
+Install once, then use the one-command launcher:
 
 ```bash
 cd webapp
-PYTHONPATH=../src:. uvicorn backend.main:app --reload --port 8000
+pip install -e .. -e '.[dev]'
+cd frontend
+npm install
 ```
 
 ```bash
-cd webapp/frontend
-npm install
-npm run dev    # open the Local URL Vite prints, usually http://localhost:5173
+cd webapp
+arch-lw-web-console
 ```
 
-The frontend talks to the backend at `http://localhost:8000` by default
-(`VITE_API_BASE_URL` can override it). If Vite shifts to `5174`, `5175`, or
-another nearby local dev port because `5173` is occupied, use the printed URL;
-the backend allows the local Vite fallback ports by default.
+The launcher starts FastAPI and SvelteKit together, chooses open local ports,
+sets the frontend API URL, prints the console URL, and opens it in your browser.
+Use `arch-lw-web-console --no-open` when running automated smoke checks.
+
+Manual two-terminal launch is still available for debugging. The frontend talks
+to the backend at `http://localhost:8000` by default (`VITE_API_BASE_URL` can
+override it). If Vite shifts to `5174`, `5175`, or another nearby local dev
+port because `5173` is occupied, use the printed URL; the backend allows the
+local Vite fallback ports by default.
 
 ### What it can do
 
@@ -94,12 +100,13 @@ Windows.
 
 ## Run the backend directly
 
-The webapp depends on the parent `arch-line-weights` package (installed editable from `..`). Install both at once:
+The webapp depends on the parent `arch-line-weights` package. Install both local
+packages at once:
 
 ```bash
 cd webapp
-pip install -e .            # editable install pulls in arch-line-weights
-pip install -e .[dev]       # add pytest + httpx
+pip install -e .. -e .        # parent engine + webapp
+pip install -e .. -e '.[dev]' # add pytest + httpx + ruff
 ```
 
 Run the dev server:
@@ -152,6 +159,29 @@ npm run dev    # open the Local URL Vite prints
 ```
 
 The frontend talks to the backend at `http://localhost:8000` (configurable via `VITE_API_BASE_URL` in `frontend/.env`).
+
+## One-command local console launcher
+
+After the editable install and frontend dependency install above, this starts
+both local servers:
+
+```bash
+cd webapp
+arch-lw-web-console
+```
+
+Useful flags:
+
+| Flag | Purpose |
+|---|---|
+| `--no-open` | Print the URL without opening a browser |
+| `--backend-port 8010` | Start searching for the backend port at 8010 |
+| `--frontend-port 5174` | Start searching for the frontend port at 5174 |
+| `--storage-root /path/to/local-output` | Put local run files under a chosen folder |
+| `--reload` | Start FastAPI with `uvicorn --reload` |
+
+The command keeps raw local reports in local storage. It is a prototype launch
+helper, not desktop packaging.
 
 ## REST API
 

@@ -23,6 +23,9 @@ dependencies = [
     "pydantic-settings>=2.4",
 ]
 
+[project.scripts]
+arch-lw-web-console = "backend.dev_console:main"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8",
