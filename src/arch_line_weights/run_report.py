@@ -121,6 +121,7 @@ def build_apply_saas_report(
             diagnostic_polygons += fill.polygon_count
 
         layer_candidates = candidates_by_layer.get(fill.layer, [])
+        structural_helper_count = int(structural_helper_counts.get(fill.layer, 0) or 0)
         review_reasons: list[str] = []
         if status in {"low_confidence", "failed", "missing_payload"}:
             review_reasons.append(status.replace("_", " "))
@@ -136,8 +137,6 @@ def build_apply_saas_report(
             review_reasons.append(
                 "inferred concrete/foundation fill requires W5/W7 visual acceptance"
             )
-        structural_helper_count = int(structural_helper_counts.get(fill.layer, 0) or 0)
-
         layers.append(
             {
                 "layer": fill.layer,
@@ -234,6 +233,7 @@ def build_poche_report(
         if action == "diagnostic_only":
             diagnostic_polygons += fill.polygon_count
 
+        structural_helper_count = int(structural_helper_counts.get(fill.layer, 0) or 0)
         review_reasons: list[str] = []
         if status in {"low_confidence", "failed"}:
             review_reasons.append(status.replace("_", " "))
@@ -245,8 +245,6 @@ def build_poche_report(
             review_reasons.append(
                 "inferred concrete/foundation fill requires W5/W7 visual acceptance"
             )
-        structural_helper_count = int(structural_helper_counts.get(fill.layer, 0) or 0)
-
         layers.append(
             {
                 "layer": fill.layer,
