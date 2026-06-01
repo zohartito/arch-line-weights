@@ -218,7 +218,8 @@ Goal: stop trusting counters.
   - green: clean
   - yellow: inferred/needs review
   - red: skipped/failed
-- [ ] Add `arch-lw diagnose drawing.ai`.
+- [x] Add `arch-lw diagnose run-report.json` for existing run reports.
+- [ ] Add direct `arch-lw diagnose drawing.ai` analysis.
 - [ ] Add layer-level screenshots or isolated preview exports.
 - [ ] Build a "compare old/new" workflow for Codex Computer Use.
 
