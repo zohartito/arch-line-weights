@@ -47,7 +47,6 @@ from shapely.ops import linemerge, polygonize, snap, unary_union
 
 from .bridge import infer_bridges, infer_bridges_best
 from .hatch import hatch_polygon, material_for_layer
-from .make2d_completion import structural_completion_paths_for_layers
 
 _log = logging.getLogger(__name__)
 
@@ -1002,6 +1001,8 @@ def polygonize_dump(
     bridge_strategy: str | None = None,
 ) -> PocheReport:
     """Load a JSON dump from `dump_cut_geometry.jsx`, polygonize each layer."""
+    from .make2d_completion import structural_completion_paths_for_layers
+
     with open(geometry_json_path) as f:
         data = json.load(f)
 
