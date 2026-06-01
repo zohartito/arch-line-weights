@@ -25,6 +25,12 @@ product. It is an engineering control document, not a public launch claim.
   phrase from the retrospective so the expanded launch-safety scanner can pass
   in the combined stack.
 - #36 is green and draft: W3 verification core, layout-jsx reports, Rhino bridge.
+  A later status-contract update at `8f00e18` gates inferred
+  concrete/foundation poché output on W5/W7 visual acceptance in the durable
+  report itself: injected helper-backed output can remain `inferred`, but
+  `review.visual_acceptance_required` is true and standalone `arch-lw poche`
+  summaries report `needs_review` instead of `passed` while any such layer is
+  review-gated.
 - #37 is green and draft at the last completed check: input diagnostics and
   proof report harness. It now includes proof-packet validation that fails
   closed on missing artifacts, failed/no-go raw reports, review layers, missing
@@ -115,6 +121,12 @@ product. It is an engineering control document, not a public launch claim.
   with 562 passing tests and 1 skipped test. The changed-diff scan had one
   intentional proof-validator regex hit for detecting local paths; it was not a
   leaked path.
+- #36 was then refreshed with the report-status gate at `8f00e18`, and a
+  disposable full-stack rehearsal merged it into the current local stack. The
+  report/proof slice passed with 45 tests, ruff passed, and a private local
+  regression rerun produced 42 injected poché polygons with 0 failed layers
+  while correctly summarizing the durable report as `needs_review` for 2
+  W5/W7-gated foundation/concrete layers. Raw reports and paths stayed local.
 - #43 is draft and stacked on #36: the local designer-console prototype. It has
   local full-test verification, but no GitHub checks are reported on the
   stacked branch yet.
@@ -135,7 +147,13 @@ product. It is an engineering control document, not a public launch claim.
   false`, W5/W7 acceptance state, no-go guardrails, and local-artifact proof
   notice to the legacy `/api/jobs` response and job detail UI, closing a
   plausible operator-confusion path where old done/download flows lacked proof
-  clearance context.
+  clearance context. A later launcher update at `e7fbd9d` keeps backend and
+  frontend dev-server ports distinct when the requested frontend port is
+  already occupied, so `arch-lw-web-console` cannot accidentally wait on the
+  backend root while Vite failed to bind. Rendered smoke on the fixed launcher
+  showed the console at the requested local URL, the required no-go guardrails,
+  and Synthetic proof/demo -> Inspect File reaching `passed` with no browser
+  console warnings or errors.
 - #45 is draft: launch-safety quarantine for private proof assets and public
   posting drafts. It removes committed Day-1 proof media from the public tree
   and redacts inherited local/private paths. A later update also quarantines
