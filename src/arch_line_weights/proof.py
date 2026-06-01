@@ -226,13 +226,16 @@ def validate_proof_packet(
         failed_reasons.append(_plural(layer_failure_count, "layer failed", "layers failed"))
 
     layers = report.get("layers") if isinstance(report.get("layers"), list) else []
+    visual_acceptance_by_layer = _visual_layer_acceptance_by_layer(report)
     no_go_layers = 0
     failed_layers = 0
     review_layers = 0
     missing_payload_layers = 0
+    accepted_visual_review_layers = 0
     for layer in layers:
         if not isinstance(layer, dict):
             continue
+        layer_name = layer.get("layer")
         layer_status = _normalized_status(layer.get("status"))
         review = layer.get("review") if isinstance(layer.get("review"), dict) else {}
         if layer_status == "no_go":
@@ -241,8 +244,17 @@ def validate_proof_packet(
             failed_layers += 1
         elif layer_status == "missing_payload":
             missing_payload_layers += 1
-        elif layer_status in {"needs_review", "low_confidence"} or review.get("needs_review") is True:
+        elif layer_status in {"needs_review", "low_confidence"}:
             review_layers += 1
+        elif review.get("needs_review") is True:
+            if (
+                review.get("visual_acceptance_required") is True
+                and isinstance(layer_name, str)
+                and layer_name in visual_acceptance_by_layer
+            ):
+                accepted_visual_review_layers += 1
+            else:
+                review_layers += 1
 
     if no_go_layers:
         no_go_reasons.append(_plural(no_go_layers, "layer is no_go", "layers are no_go"))
@@ -253,6 +265,8 @@ def validate_proof_packet(
             _plural(missing_payload_layers, "layer missing payload", "layers missing payload")
         )
     summary_review_layers = _int_count(summary, "layers_needs_review")
+    if layers and accepted_visual_review_layers:
+        summary_review_layers = max(0, summary_review_layers - accepted_visual_review_layers)
     review_count = max(review_layers, summary_review_layers)
     if review_count:
         review_reasons.append(_plural(review_count, "layer needs review", "layers need review"))
@@ -452,6 +466,7 @@ def _build_public_summary(
     if not failed and status in {"failed", "no_go"}:
         failed = list(reasons) or [f"raw report status is {status}"]
     public_acceptance = _public_acceptance(report)
+    visual_acceptance = _public_visual_acceptance(report)
     public_safe = status == "passed" and bool(public_acceptance["accepted"])
     public_reasons = list(reasons)
     if status == "passed" and not public_safe:
@@ -469,6 +484,7 @@ def _build_public_summary(
         "proof_identity": _public_proof_identity(report),
         "rendered_views": _public_rendered_views(report),
         "public_acceptance": public_acceptance,
+        "visual_acceptance": visual_acceptance,
     }
 
 
@@ -702,6 +718,74 @@ def _public_acceptance(report: dict[str, Any]) -> dict[str, Any]:
         if isinstance(value, str) and value.strip() and not _LOCAL_PATH_RE.search(value):
             acceptance[key] = value
     return acceptance
+
+
+def _public_visual_acceptance(report: dict[str, Any]) -> dict[str, Any]:
+    accepted = _visual_layer_acceptance_by_layer(report)
+    accepted_by = sorted(
+        {
+            reviewer
+            for acceptance in accepted.values()
+            for reviewer in acceptance.get("accepted_by", [])
+            if isinstance(reviewer, str)
+        }
+    )
+    return {
+        "accepted_layer_count": len(accepted),
+        "accepted_by": accepted_by,
+    }
+
+
+def _visual_layer_acceptance_by_layer(report: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    raw = report.get("review_acceptance")
+    if not isinstance(raw, dict):
+        return {}
+
+    visual_layer_gates = raw.get("visual_layer_gates")
+    if not isinstance(visual_layer_gates, list):
+        return {}
+
+    eligible_layers = _visual_acceptance_eligible_layers(report)
+    if not eligible_layers:
+        return {}
+
+    accepted: dict[str, dict[str, Any]] = {}
+    for entry in visual_layer_gates:
+        if not isinstance(entry, dict):
+            continue
+        layer = entry.get("layer")
+        if not isinstance(layer, str) or not layer.strip() or _LOCAL_PATH_RE.search(layer):
+            continue
+        if layer not in eligible_layers:
+            continue
+        if entry.get("accepted") is not True:
+            continue
+        accepted_by = _accepted_reviewers(entry.get("accepted_by"))
+        if not accepted_by:
+            continue
+        existing = accepted.setdefault(layer, {"accepted_by": []})
+        for reviewer in accepted_by:
+            if reviewer not in existing["accepted_by"]:
+                existing["accepted_by"].append(reviewer)
+    return accepted
+
+
+def _visual_acceptance_eligible_layers(report: dict[str, Any]) -> set[str]:
+    layers = report.get("layers") if isinstance(report.get("layers"), list) else []
+    eligible_layers: set[str] = set()
+    for layer in layers:
+        if not isinstance(layer, dict):
+            continue
+        layer_name = layer.get("layer")
+        if not isinstance(layer_name, str) or not layer_name.strip() or _LOCAL_PATH_RE.search(layer_name):
+            continue
+        layer_status = _normalized_status(layer.get("status"))
+        if layer_status in {"no_go", "fail", "failed", "missing_payload", "needs_review", "low_confidence"}:
+            continue
+        review = layer.get("review") if isinstance(layer.get("review"), dict) else {}
+        if review.get("needs_review") is True and review.get("visual_acceptance_required") is True:
+            eligible_layers.add(layer_name)
+    return eligible_layers
 
 
 def _accepted_reviewers(value: Any) -> list[str]:
