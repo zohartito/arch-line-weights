@@ -31,6 +31,8 @@ from dataclasses import dataclass, field
 
 import pikepdf
 
+from .input_format import raise_if_unsupported
+
 # PyMuPDF is imported lazily inside ``_inspect_pdf`` so a missing/broken
 # install only fails when a `.pdf` file is actually inspected.
 
@@ -78,6 +80,7 @@ class InspectionReport:
     # callers that hand-construct InspectionReport don't break.
     pdf_metadata: dict = field(default_factory=dict)
     layer_names: list[str] = field(default_factory=list)
+    input_format: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {
@@ -93,6 +96,7 @@ class InspectionReport:
             "width_by_color": {k: dict(v) for k, v in self.width_by_color.items()},
             "pdf_metadata": dict(self.pdf_metadata),
             "layer_names": list(self.layer_names),
+            "input_format": dict(self.input_format),
         }
 
 
@@ -244,11 +248,13 @@ def _walk_content_stream(
     current_stroke: tuple[int, int, int] | None = None
     current_fill: tuple[int, int, int] | None = None
     current_width: float | None = None
-    state_stack: list[tuple[
-        tuple[int, int, int] | None,
-        tuple[int, int, int] | None,
-        float | None,
-    ]] = []
+    state_stack: list[
+        tuple[
+            tuple[int, int, int] | None,
+            tuple[int, int, int] | None,
+            float | None,
+        ]
+    ] = []
 
     for m in _TOKEN_RE.finditer(data):
         # RG / rg — stroke / fill color set
@@ -471,9 +477,7 @@ def _inspect_ai(path: str) -> InspectionReport:
             data = _read_content_stream_bytes(page)
             if not data:
                 continue
-            stroke_widths, stroke_colors, fill_colors, width_by_color = _walk_content_stream(
-                data, rep
-            )
+            stroke_widths, stroke_colors, fill_colors, width_by_color = _walk_content_stream(data, rep)
             # Merge into the report's running counters.
             for k, v in stroke_widths.items():
                 rep.stroke_widths[k] = rep.stroke_widths.get(k, 0) + v
@@ -536,6 +540,7 @@ def inspect_file(path: str) -> InspectionReport:
     * Other ``.pdf`` → PyMuPDF
     * Both backends fail → raise ``RuntimeError`` pointing at the workaround
     """
+    input_diag = raise_if_unsupported(path, "inspect")
     ext = os.path.splitext(path)[1].lower()
     use_pikepdf_first = ext == ".ai" or _looks_like_illustrator(path)
 
@@ -544,20 +549,28 @@ def inspect_file(path: str) -> InspectionReport:
 
     if use_pikepdf_first:
         try:
-            return _inspect_ai(path)
+            rep = _inspect_ai(path)
+            _attach_input_format(rep, input_diag)
+            return rep
         except Exception as e:
             pikepdf_err = e
         try:
-            return _inspect_pdf(path)
+            rep = _inspect_pdf(path)
+            _attach_input_format(rep, input_diag)
+            return rep
         except Exception as e:
             pymupdf_err = e
     else:
         try:
-            return _inspect_pdf(path)
+            rep = _inspect_pdf(path)
+            _attach_input_format(rep, input_diag)
+            return rep
         except Exception as e:
             pymupdf_err = e
         try:
-            return _inspect_ai(path)
+            rep = _inspect_ai(path)
+            _attach_input_format(rep, input_diag)
+            return rep
         except Exception as e:
             pikepdf_err = e
 
@@ -567,3 +580,32 @@ def inspect_file(path: str) -> InspectionReport:
         f"opening it in Adobe Illustrator and using File → Save As to write "
         f"a smaller copy, then re-run arch-lw on the smaller version."
     )
+
+
+def _attach_input_format(rep: InspectionReport, input_diag) -> None:
+    """Add content-aware drawing/no-op diagnostics to the sniffed input shape."""
+
+    diagnostic = input_diag.to_dict()
+    if rep.total_stroked > 0:
+        diagnostic["has_drawings"] = True
+        diagnostic["is_no_op"] = False
+        diagnostic["no_drawing_reason"] = None
+    elif rep.total_drawings > 0:
+        diagnostic["has_drawings"] = True
+        diagnostic["is_no_op"] = True
+        diagnostic["no_drawing_reason"] = (
+            "Vector drawing marks were found, but no rewriteable stroked "
+            "geometry was found for line-weight changes."
+        )
+    else:
+        diagnostic["has_drawings"] = False
+        diagnostic["is_no_op"] = True
+        if diagnostic.get("input_kind") == "plain_pdf" and not rep.layer_names:
+            diagnostic["no_drawing_reason"] = (
+                "No vector drawing marks were found; this looks like a non-drawing or image-only PDF."
+            )
+        else:
+            diagnostic["no_drawing_reason"] = (
+                "No vector drawing marks were found; this may be an empty drawing export."
+            )
+    rep.input_format = diagnostic

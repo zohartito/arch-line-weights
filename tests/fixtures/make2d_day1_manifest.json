@@ -1,0 +1,223 @@
+{
+  "schema_version": 2,
+  "private_fixture_root_env": "ARCH_LW_PRIVATE_FIXTURE_ROOT",
+  "cases": [
+    {
+      "id": "day1_section_jsx",
+      "description": "Day-1 Make2D section proof captured from Illustrator via apply-jsx then poche.",
+      "sources": {
+        "raw_ai": {
+          "relative_path": "sources/raw.ai",
+          "sha256": "98fe764fc639627b8490403c5599a4f90ab97aa8c654d800ca1e6d345338c06a",
+          "size_bytes": 433140
+        },
+        "hierarchy_ai": {
+          "relative_path": "outputs/hierarchy.ai",
+          "sha256": "3bf86528fddddc361431d7b7af6187d7b458b854f5b14cfe2428232a573a4abe",
+          "size_bytes": 75962
+        },
+        "poche_ai": {
+          "relative_path": "outputs/poche.ai",
+          "sha256": "97ab3318dc90d881d5ddd190f861f4e1f8a05acc9cb0474a019ec01d14313a93",
+          "size_bytes": 77989
+        }
+      },
+      "screenshots": {
+        "raw": {
+          "relative_path": "screenshots/raw.png",
+          "sha256": "4fead0dfc683ffb5a33e3b7512d826d39ebb4f1643fc0c455280f6b249b5ea7a",
+          "size_bytes": 229655,
+          "width": 7776,
+          "height": 7776
+        },
+        "hierarchy": {
+          "relative_path": "screenshots/hierarchy.png",
+          "sha256": "bd7ca4cd6870938c5166834af72a6cea33d71ba171725e39e73d53ce123ddd20",
+          "size_bytes": 231859,
+          "width": 7776,
+          "height": 7776
+        },
+        "poche": {
+          "relative_path": "screenshots/poche.png",
+          "sha256": "562aa33b28024c504cffe3a07f8ce08125b9f51061bcca3a2c8d763c3cba33b9",
+          "size_bytes": 215777,
+          "width": 7776,
+          "height": 7776
+        },
+        "layers_panel": {
+          "relative_path": "screenshots/layers-panel.png",
+          "sha256": "0ae03bb7da790c32ed81eab33cb8ae186a30961f6240ee386483d4605b1584b8",
+          "size_bytes": 894075,
+          "width": 3680,
+          "height": 2302
+        },
+        "known_miss_closeup": {
+          "relative_path": "screenshots/known-miss-closeup.png",
+          "sha256": "4d67e51f5fccadeafc8bbc59c175a6aea2a67dbfda438c0e08121af184f1fa67",
+          "size_bytes": 102271,
+          "width": 3378,
+          "height": 6804
+        }
+      },
+      "exports": {
+        "poche_pdf": {
+          "relative_path": "exports/poche.pdf",
+          "sha256": "9b8366bd54b3bf13ddba0362025edcdcc64084b3e7c21d9ffcdc8a4f14944172",
+          "size_bytes": 78568
+        }
+      },
+      "logs": {
+        "capture_script": {
+          "relative_path": "logs/capture.sh",
+          "sha256": "be5f8b016dff3cb6f9c62354a0dd0f9a89fdb314568f9860a32e5271d67fbc39",
+          "size_bytes": 1670
+        },
+        "capture_log": {
+          "relative_path": "logs/capture.log",
+          "sha256": "558af5d82cbcf41a0cd24f4dd45ed2baf661894ad945f44ee1b149a3d0a30af0",
+          "size_bytes": 550
+        },
+        "apply_jsx_log": {
+          "relative_path": "logs/apply-jsx.log",
+          "sha256": "d90dcf5bdcda4105665d78da18fa3a69a100d5459b4f795cafb7e1b5975ebe57",
+          "size_bytes": 230
+        },
+        "apply_saas_attempt_log": {
+          "relative_path": "logs/apply-saas-attempt.log",
+          "sha256": "fd2c642ab517ffdeba802b0b7113d6dd19852b8708d2c84031fe4201d265da43",
+          "size_bytes": 1904
+        },
+        "poche_log": {
+          "relative_path": "logs/poche.log",
+          "sha256": "7c36af44b803dbbc88e05cacc65a5f219625b9f961665b324836c4a8eeba419a",
+          "size_bytes": 1165
+        }
+      },
+      "expected_inspect": {
+        "total_stroked": 513,
+        "stroke_colors": {
+          "RGB(0,0,0)": 513
+        },
+        "raw_stroke_widths": {
+          "1.0": 150,
+          "0.5": 19,
+          "0.35": 134,
+          "0.4": 173,
+          "0.7": 1,
+          "0.25": 35,
+          "0.75": 1
+        },
+        "hierarchy_stroke_widths": {
+          "1.984": 140,
+          "1.417": 77,
+          "0.709": 200,
+          "0.992": 35,
+          "0.51": 61
+        }
+      },
+      "expected_image_deltas": {
+        "raw_to_hierarchy": {
+          "changed_pixels_min": 200000,
+          "changed_pixels_max": 400000,
+          "ratio_min": 0.003,
+          "ratio_max": 0.006
+        },
+        "hierarchy_to_poche": {
+          "changed_pixels_min": 1000000,
+          "changed_pixels_max": 1400000,
+          "ratio_min": 0.015,
+          "ratio_max": 0.025
+        }
+      },
+      "poche": {
+        "expected_summary": {
+          "polygons_created": 30,
+          "clean_layers": 6,
+          "imperfect_layers": 2,
+          "failed_layers": 0
+        },
+        "expected_fills": [
+          {
+            "layer_id": "cut_layer_001",
+            "strategy": "linemerge_bare",
+            "polygons": 10,
+            "confidence": 1.0
+          },
+          {
+            "layer_id": "cut_layer_002",
+            "strategy": "auto_bridge",
+            "polygons": 1,
+            "confidence": 0.93,
+            "bridge_strategy_name": "greedy"
+          },
+          {
+            "layer_id": "cut_layer_003",
+            "strategy": "structural_open_loop",
+            "polygons": 3,
+            "confidence": 0.9
+          },
+          {
+            "layer_id": "cut_layer_004",
+            "strategy": "structural_open_loop",
+            "polygons": 5,
+            "confidence": 0.9
+          },
+          {
+            "layer_id": "cut_layer_005",
+            "strategy": "structural_open_loop",
+            "polygons": 4,
+            "confidence": 0.9,
+            "bridge_strategy_name": "dbscan_collapse+backtrack"
+          },
+          {
+            "layer_id": "cut_layer_006",
+            "strategy": "auto_bridge",
+            "polygons": 5,
+            "confidence": 0.88,
+            "bridge_strategy_name": "greedy"
+          },
+          {
+            "layer_id": "cut_layer_007",
+            "strategy": "auto_bridge",
+            "polygons": 1,
+            "confidence": 0.69,
+            "bridge_strategy_name": "greedy",
+            "expected_status": "low_confidence"
+          },
+          {
+            "layer_id": "cut_layer_008",
+            "strategy": "alpha_shape",
+            "polygons": 1,
+            "confidence": 0.55,
+            "expected_status": "low_confidence"
+          }
+        ],
+        "expected_skips": []
+      },
+      "known_misses": [
+        {
+          "id": "foundation_concrete_under_wood_column_left_footing",
+          "status": "no_go",
+          "scope": "foundation_concrete",
+          "blocks_issue": 30,
+          "evidence_screenshot": "known_miss_closeup",
+          "roi": [300, 6200, 1600, 6760],
+          "expected_min_black_ratio": 0.15,
+          "current_black_ratio_observed": 0.0,
+          "reason": "The left foundation/concrete mass below the wood column is outline-only in screenshot 05."
+        }
+      ],
+      "generated_outputs": {
+        "structured_poche_report_json": {
+          "filename": "arch_lw_poche_report.json",
+          "needed_for": "machine-verifiable filled/skipped/low-confidence layer status without parsing a human log"
+        },
+        "cut_geometry_dump_json": {
+          "filename": "arch_lw_cut_geometry.json",
+          "needed_for": "localizing foundation/concrete misses to source Make2D path geometry"
+        }
+      },
+      "missing_source_files": []
+    }
+  ]
+}

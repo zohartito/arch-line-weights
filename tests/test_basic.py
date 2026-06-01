@@ -494,19 +494,17 @@ def test_inspect_pikepdf_path_tracks_q_Q_state(tmp_path):
 
 
 def test_inspect_unreadable_file_raises_with_workaround_hint(tmp_path):
-    """If both backends fail, the error message should point at the
-    Illustrator Save-As workaround the postmortem documents.
-    """
+    """Unsupported headers should fail before parser backends traceback."""
+    from arch_line_weights.input_format import UnsupportedInputError
     from arch_line_weights.inspect import inspect_file
 
     bogus = tmp_path / "not_a_pdf.ai"
     bogus.write_bytes(b"this is definitely not a PDF or AI file\n")
-    with pytest.raises(RuntimeError) as ex:
+    with pytest.raises(UnsupportedInputError) as ex:
         inspect_file(str(bogus))
     msg = str(ex.value)
-    assert "pikepdf" in msg
-    assert "PyMuPDF" in msg
-    assert "Save As" in msg or "save as" in msg.lower()
+    assert "File header is not recognized." in msg
+    assert "PDF-compatible .ai or .pdf" in msg
 
 
 def test_inspect_routes_pdf_extension_to_pymupdf_path(tmp_path, monkeypatch):

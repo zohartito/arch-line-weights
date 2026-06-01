@@ -34,6 +34,7 @@ import click
 import pikepdf
 import zstandard as zstd
 
+from .input_format import raise_if_unsupported
 from .progress import ProgressReporter
 
 # AI24 native-payload framing constants. Every Rhino-export .ai we've inspected
@@ -478,6 +479,7 @@ def apply_to_file(
     """
     if os.path.abspath(src) == os.path.abspath(dst):
         raise ValueError("dst must differ from src to keep the original safe")
+    raise_if_unsupported(src, "apply-saas")
 
     if reporter is None:
         reporter = ProgressReporter(enabled=False)

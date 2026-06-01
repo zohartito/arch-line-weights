@@ -21,7 +21,7 @@ architectural-graphics standard distilled into rules that the code can execute.
 ## Local Source Folder
 
 ```text
-/Users/zohartito/SynologyDrive/7-17-2024 Backup/untitled folder/school/school books
+<local-reference-root>
 ```
 
 Initial priority books:

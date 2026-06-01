@@ -9,8 +9,9 @@ Edit DRY_RUN below to preview without writing.
 Docs: https://developer.rhino3d.com/api/rhinoscriptsyntax/#layer
 """
 import re
-import scriptcontext as sc
+
 import Rhino
+import scriptcontext as sc
 
 DRY_RUN = False
 TIER_MARK = "__TIER:"
@@ -69,16 +70,15 @@ def main():
         if not tier:
             skipped_unmatched += 1
             continue
-        new_leaf = "{}{}{}".format(leaf, TIER_MARK, tier)
+        new_leaf = f"{leaf}{TIER_MARK}{tier}"
         changes.append((layer.Index, full, new_leaf, tier))
 
     Rhino.RhinoApp.WriteLine(
-        "[tag_layers] {} to tag, {} already tagged, {} unmatched.".format(
-            len(changes), skipped_tagged, skipped_unmatched
-        )
+        f"[tag_layers] {len(changes)} to tag, "
+        f"{skipped_tagged} already tagged, {skipped_unmatched} unmatched."
     )
-    for _, old, new_leaf, tier in changes:
-        Rhino.RhinoApp.WriteLine("  {}  -> ...{}{}".format(old, TIER_MARK, tier))
+    for _, old, _new_leaf, tier in changes:
+        Rhino.RhinoApp.WriteLine(f"  {old}  -> ...{TIER_MARK}{tier}")
 
     if DRY_RUN:
         Rhino.RhinoApp.WriteLine("[tag_layers] dry-run; no changes written.")
@@ -89,7 +89,7 @@ def main():
         layer.Name = new_leaf
         doc.Layers.Modify(layer, idx, quiet=True)
 
-    Rhino.RhinoApp.WriteLine("[tag_layers] wrote {} renames.".format(len(changes)))
+    Rhino.RhinoApp.WriteLine(f"[tag_layers] wrote {len(changes)} renames.")
 
 
 if __name__ == "__main__":

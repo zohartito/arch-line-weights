@@ -7,7 +7,7 @@
 
 <div class="min-h-screen flex flex-col">
   <header class="border-b border-ink-300 bg-white">
-    <div class="mx-auto max-w-3xl flex items-center justify-between px-6 py-4">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
       <a href="/" class="font-semibold tracking-tight text-ink-900 hover:text-ink-700">
         arch-line-weights
       </a>
@@ -20,13 +20,13 @@
     </div>
   </header>
 
-  <main class="flex-1 mx-auto w-full max-w-3xl px-6 py-10">
+  <main class="mx-auto w-full max-w-6xl flex-1 px-6 py-8">
     <slot />
   </main>
 
   <footer class="border-t border-ink-300 text-xs text-ink-500">
-    <div class="mx-auto max-w-3xl px-6 py-4">
-      Phase D scaffold — local-only, no auth, no payments.
+    <div class="mx-auto max-w-6xl px-6 py-4">
+      Local designer-console prototype — no public proof clearance, no desktop packaging claim.
     </div>
   </footer>
 </div>

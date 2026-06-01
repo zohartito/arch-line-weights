@@ -3,7 +3,7 @@
 (function () {
     var doc = app.activeDocument;
     var sourcePath = doc.fullName.fsName;
-    var outPath = sourcePath.replace(/v[0-9]+-stair(?:-path-clean)?\.ai$/i, "v0624-stair-path-clean.ai");
+    var outPath = sourcePath.replace(/v[0-9]+-stair(?:-path-clean)?\.ai$/i, "sample-stair-path-clean.ai");
     if (outPath === sourcePath) outPath = sourcePath.replace(/\.ai$/i, " path-clean.ai");
 
     var reportPath = "/tmp/arch_lw_stair_cleanup_report.txt";

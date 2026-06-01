@@ -18,9 +18,9 @@ from pathlib import Path
 
 import rhino3dm as r3
 
-ARCH_202B = Path("/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B")
-DEFAULT_SRC = ARCH_202B / "stairs.3dm"
-DEFAULT_DST = ARCH_202B / "stairs CLEAN MAKE2D v7 cohesive no-stringers.3dm"
+SAMPLE_ROOT = Path("sample-local-root")
+DEFAULT_SRC = SAMPLE_ROOT / "stairs.3dm"
+DEFAULT_DST = SAMPLE_ROOT / "stairs CLEAN MAKE2D cohesive no-stringers.3dm"
 
 TREAD_THICKNESS = 0.167
 RISER_THICKNESS = 1.0 / 12.0

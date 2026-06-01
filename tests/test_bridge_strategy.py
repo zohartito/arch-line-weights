@@ -20,6 +20,7 @@ import logging
 import os
 from unittest.mock import patch
 
+import pikepdf
 import pytest
 from click.testing import CliRunner
 from shapely.geometry import LineString
@@ -151,12 +152,8 @@ def test_polygonize_layer_best_calls_strategy_selector():
     """When the bare sweep AND greedy both fail, ``bridge_strategy="best"``
     routes the auto_bridge rung through ``infer_bridges_best``."""
     paths = _greedy_trap_paths()
-    with patch(
-        "arch_line_weights.poche.infer_bridges_best", wraps=infer_bridges_best
-    ) as best_spy:
-        _polys, fr = polygonize_layer(
-            "L", paths, bridge_strategy="best", use_alpha_shape=False
-        )
+    with patch("arch_line_weights.poche.infer_bridges_best", wraps=infer_bridges_best) as best_spy:
+        _polys, fr = polygonize_layer("L", paths, bridge_strategy="best", use_alpha_shape=False)
     # If the auto_bridge rung fired, infer_bridges_best should have been
     # called exactly once. If the bare sweep already closed the trap (it
     # shouldn't on this fixture but tolerate it), the spy may be 0.
@@ -229,15 +226,10 @@ def test_best_at_least_matches_greedy_polygon_count():
     must yield at least as many polygons as greedy — which is the whole
     reason the selector exists."""
     paths = _greedy_trap_paths()
-    _polys_g, fr_g = polygonize_layer(
-        "L", paths, bridge_strategy="greedy", use_alpha_shape=False
-    )
-    _polys_b, fr_b = polygonize_layer(
-        "L", paths, bridge_strategy="best", use_alpha_shape=False
-    )
+    _polys_g, fr_g = polygonize_layer("L", paths, bridge_strategy="greedy", use_alpha_shape=False)
+    _polys_b, fr_b = polygonize_layer("L", paths, bridge_strategy="best", use_alpha_shape=False)
     assert fr_b.polygon_count >= fr_g.polygon_count, (
-        f"best under-performed greedy: greedy={fr_g.polygon_count} "
-        f"best={fr_b.polygon_count}"
+        f"best under-performed greedy: greedy={fr_g.polygon_count} best={fr_b.polygon_count}"
     )
 
 
@@ -298,9 +290,7 @@ def test_env_var_threads_through_polygonize_layer():
     paths = _greedy_trap_paths()
     with (
         patch.dict(os.environ, {"ARCH_LW_BRIDGE_STRATEGY": "best"}, clear=False),
-        patch(
-            "arch_line_weights.poche.infer_bridges_best", wraps=infer_bridges_best
-        ) as best_spy,
+        patch("arch_line_weights.poche.infer_bridges_best", wraps=infer_bridges_best) as best_spy,
     ):
         _polys, fr = polygonize_layer("L", paths, use_alpha_shape=False)
     if fr.strategy == "auto_bridge":
@@ -314,9 +304,7 @@ def test_env_var_greedy_threads_through_polygonize_layer():
     with (
         patch.dict(os.environ, {"ARCH_LW_BRIDGE_STRATEGY": "greedy"}, clear=False),
         patch("arch_line_weights.poche.infer_bridges", wraps=infer_bridges) as greedy_spy,
-        patch(
-            "arch_line_weights.poche.infer_bridges_best", wraps=infer_bridges_best
-        ) as best_spy,
+        patch("arch_line_weights.poche.infer_bridges_best", wraps=infer_bridges_best) as best_spy,
     ):
         _polys, fr = polygonize_layer("L", paths, use_alpha_shape=False)
     # If auto_bridge fired, it must have gone through the greedy path.
@@ -370,9 +358,9 @@ def test_cli_poche_threads_strategy_to_apply_poche(tmp_path):
     """End-to-end: ``arch-lw poche --bridge-strategy=best`` calls
     ``apply_poche`` with ``bridge_strategy="best"`` (we mock the inner
     Illustrator calls so this stays hermetic)."""
-    # Create a fake .ai file so the click.Path(exists=True) check passes.
+    # Create a minimal valid PDF-compatible .ai so input preflight passes.
     fake_ai = tmp_path / "fake.ai"
-    fake_ai.write_bytes(b"%PDF-1.5\n%\xc4\xe5\xf2\xe5\xeb\xa7\xf3\xa0\xd0\xc4\xc6\n")
+    _write_valid_pdf_compatible_ai(fake_ai)
 
     captured: dict[str, object] = {}
 
@@ -380,13 +368,12 @@ def test_cli_poche_threads_strategy_to_apply_poche(tmp_path):
         captured["kwargs"] = kwargs
         # Return a minimal PocheReport-like object.
         from arch_line_weights.poche import PocheReport
+
         return PocheReport()
 
     runner = CliRunner()
     with patch("arch_line_weights.cli.apply_poche", side_effect=fake_apply_poche):
-        result = runner.invoke(
-            cli, ["poche", str(fake_ai), "--bridge-strategy=best"]
-        )
+        result = runner.invoke(cli, ["poche", str(fake_ai), "--bridge-strategy=best"])
 
     assert result.exit_code == 0, result.output
     assert captured["kwargs"]["bridge_strategy"] == "best"
@@ -396,13 +383,14 @@ def test_cli_poche_default_threads_best(tmp_path):
     """Without ``--bridge-strategy``, ``apply_poche`` is called with the
     v0.6.7 default ``"best"`` so the strategy selector runs by default."""
     fake_ai = tmp_path / "fake.ai"
-    fake_ai.write_bytes(b"%PDF-1.5\n%\xc4\xe5\xf2\xe5\xeb\xa7\xf3\xa0\xd0\xc4\xc6\n")
+    _write_valid_pdf_compatible_ai(fake_ai)
 
     captured: dict[str, object] = {}
 
     def fake_apply_poche(*args, **kwargs):
         captured["kwargs"] = kwargs
         from arch_line_weights.poche import PocheReport
+
         return PocheReport()
 
     runner = CliRunner()
@@ -418,20 +406,19 @@ def test_cli_poche_explicit_greedy_threads_legacy(tmp_path):
     ``apply_poche`` with the literal ``"greedy"`` so the legacy bridger
     stays reachable from the CLI for backwards compatibility."""
     fake_ai = tmp_path / "fake.ai"
-    fake_ai.write_bytes(b"%PDF-1.5\n%\xc4\xe5\xf2\xe5\xeb\xa7\xf3\xa0\xd0\xc4\xc6\n")
+    _write_valid_pdf_compatible_ai(fake_ai)
 
     captured: dict[str, object] = {}
 
     def fake_apply_poche(*args, **kwargs):
         captured["kwargs"] = kwargs
         from arch_line_weights.poche import PocheReport
+
         return PocheReport()
 
     runner = CliRunner()
     with patch("arch_line_weights.cli.apply_poche", side_effect=fake_apply_poche):
-        result = runner.invoke(
-            cli, ["poche", str(fake_ai), "--bridge-strategy=greedy"]
-        )
+        result = runner.invoke(cli, ["poche", str(fake_ai), "--bridge-strategy=greedy"])
 
     assert result.exit_code == 0, result.output
     assert captured["kwargs"]["bridge_strategy"] == "greedy"
@@ -474,8 +461,7 @@ def test_infer_bridges_best_logs_warning_on_strategy_exception(caplog):
     # And the warning should mention which strategy failed and the type.
     warning_records = [r for r in caplog.records if r.levelno == logging.WARNING]
     assert any("greedy" in r.getMessage() for r in warning_records), (
-        f"expected a warning mentioning 'greedy', got: "
-        f"{[r.getMessage() for r in warning_records]}"
+        f"expected a warning mentioning 'greedy', got: {[r.getMessage() for r in warning_records]}"
     )
     assert any("RuntimeError" in r.getMessage() for r in warning_records), (
         f"expected a warning mentioning the exception type 'RuntimeError', got: "
@@ -491,14 +477,10 @@ def test_infer_bridges_best_does_not_log_on_success(caplog):
     with caplog.at_level(logging.WARNING, logger="arch_line_weights.bridge"):
         infer_bridges_best(segs, max_gap=2.0)
     bridge_warnings = [
-        r
-        for r in caplog.records
-        if r.levelno == logging.WARNING
-        and r.name == "arch_line_weights.bridge"
+        r for r in caplog.records if r.levelno == logging.WARNING and r.name == "arch_line_weights.bridge"
     ]
     assert bridge_warnings == [], (
-        f"expected no warnings on happy path, got: "
-        f"{[r.getMessage() for r in bridge_warnings]}"
+        f"expected no warnings on happy path, got: {[r.getMessage() for r in bridge_warnings]}"
     )
 
 
@@ -526,12 +508,8 @@ def test_infer_bridges_best_continues_after_each_strategy_failure(broken_func, c
     assert 0.0 <= conf <= 1.0
     assert isinstance(name, str)
     # At least one warning was emitted by the bridge module.
-    bridge_warnings = [
-        r for r in caplog.records if r.name == "arch_line_weights.bridge"
-    ]
-    assert len(bridge_warnings) >= 1, (
-        "expected at least one warning from arch_line_weights.bridge"
-    )
+    bridge_warnings = [r for r in caplog.records if r.name == "arch_line_weights.bridge"]
+    assert len(bridge_warnings) >= 1, "expected at least one warning from arch_line_weights.bridge"
 
 
 # --------------------------------------------------------------------------- #
@@ -552,9 +530,7 @@ def test_fill_result_bridge_strategy_name_set_when_best_wins():
     """When the auto_bridge rung fires under ``bridge_strategy="best"``,
     the FillResult should carry the name of the inner winning strategy."""
     paths = _greedy_trap_paths()
-    _polys, fr = polygonize_layer(
-        "L", paths, bridge_strategy="best", use_alpha_shape=False
-    )
+    _polys, fr = polygonize_layer("L", paths, bridge_strategy="best", use_alpha_shape=False)
     if fr.strategy == "auto_bridge":
         assert fr.bridge_strategy_name is not None
         assert fr.bridge_strategy_name in {
@@ -564,3 +540,10 @@ def test_fill_result_bridge_strategy_name_set_when_best_wins():
             "dbscan_collapse+backtrack",
             "none",
         }
+
+
+def _write_valid_pdf_compatible_ai(path) -> None:
+    pdf = pikepdf.new()
+    pdf.add_blank_page(page_size=(72, 72))
+    pdf.save(path)
+    pdf.close()

@@ -90,8 +90,8 @@ fire because of #1 above.
 ## 3. Disk filenames with trailing whitespace
 
 **Symptom.** A Rhino-exported file literally named
-`wall section iso cut .ai` (note the trailing space before `.ai`) was
-opened in Illustrator as `wall section iso cut  [Converted].ai` (two
+`sample section cut .ai` (note the trailing space before `.ai`) was
+opened in Illustrator as `sample section cut  [Converted].ai` (two
 spaces between `cut` and `[Converted]`), and the v0.6.1 `_is_converted_match`
 helper failed to recognize the relationship.
 

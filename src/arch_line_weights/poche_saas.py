@@ -444,6 +444,7 @@ def compute_polygons_for_layers(
             structural_helper_lines: list[LineString] | None = None
             helper_paths = structural_helper_paths_by_layer.get(layer_name)
             if helper_paths:
+                report.structural_helper_counts[layer_name] = len(helper_paths)
                 structural_helper_lines = _lines_from_anchors(helper_paths)
             polys, fr = polygonize_layer(
                 layer_name,
@@ -457,6 +458,9 @@ def compute_polygons_for_layers(
 
             completion_paths = structural_completion_paths_by_layer.get(layer_name)
             if completion_paths:
+                report.structural_helper_counts[layer_name] = (
+                    report.structural_helper_counts.get(layer_name, 0) + len(completion_paths)
+                )
                 base_polys = polys if should_inject_fill(fr) else []
                 completion_polys, candidates = complete_structural_cut_polygons(
                     layer_name,
