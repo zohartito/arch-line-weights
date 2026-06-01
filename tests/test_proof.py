@@ -414,6 +414,168 @@ def test_validate_proof_packet_needs_review_for_visual_acceptance_gate(tmp_path:
     assert "layer needs review" in validation.public_summary["why"][0]
 
 
+def test_validate_proof_packet_accepts_w5_w7_visual_layer_gate(
+    tmp_path: Path,
+) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    _write_packet_artifacts(
+        plan,
+        report={
+            "schema_version": 2,
+            "source": {
+                "input": "stair-section.ai",
+                "output": "stair-section-poche.ai",
+                "command": "arch-lw poche stair-section.ai",
+            },
+            "visual_artifacts": _safe_visual_artifacts(),
+            "summary": {
+                "layers_filled": 1,
+                "layers_inferred": 1,
+                "layers_failed": 0,
+                "layers_needs_review": 1,
+                "polygons_filled": 2,
+            },
+            "layers": [
+                {"layer": "LayerA", "status": "filled", "review": {"needs_review": False}},
+                {
+                    "layer": "TEC_CONCRETE_BASE",
+                    "status": "inferred",
+                    "review": {
+                        "needs_review": True,
+                        "visual_acceptance_required": True,
+                        "reasons": [
+                            "inferred concrete/foundation fill requires W5/W7 visual acceptance"
+                        ],
+                    },
+                },
+            ],
+            "review_acceptance": {
+                "visual_layer_gates": [
+                    {
+                        "layer": "TEC_CONCRETE_BASE",
+                        "accepted": True,
+                        "accepted_by": ["W7"],
+                        "date": "2026-06-01",
+                        "scope": "C2/C3 foundation-concrete crop visual review",
+                    }
+                ]
+            },
+        },
+    )
+
+    validation = validate_proof_packet(plan)
+
+    assert validation.status == "passed"
+    assert validation.public_summary["public_safe"] is False
+    assert "W5/W7 public proof acceptance is not recorded" in validation.public_summary["why"]
+    assert validation.public_summary["visual_acceptance"] == {
+        "accepted_layer_count": 1,
+        "accepted_by": ["W7"],
+    }
+
+
+def test_validate_proof_packet_visual_acceptance_does_not_clear_non_visual_review(
+    tmp_path: Path,
+) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    _write_packet_artifacts(
+        plan,
+        report={
+            "schema_version": 2,
+            "source": {
+                "input": "stair-section.ai",
+                "output": "stair-section-poche.ai",
+                "command": "arch-lw poche stair-section.ai",
+            },
+            "visual_artifacts": _safe_visual_artifacts(),
+            "summary": {
+                "layers_filled": 1,
+                "layers_failed": 0,
+                "layers_needs_review": 1,
+                "polygons_filled": 2,
+            },
+            "layers": [
+                {
+                    "layer": "LayerB",
+                    "status": "low_confidence",
+                    "review": {
+                        "needs_review": True,
+                        "visual_acceptance_required": True,
+                    },
+                },
+            ],
+            "review_acceptance": {
+                "visual_layer_gates": [
+                    {
+                        "layer": "LayerB",
+                        "accepted": True,
+                        "accepted_by": "W5",
+                        "scope": "visual acceptance cannot override low-confidence status",
+                    }
+                ]
+            },
+        },
+    )
+
+    validation = validate_proof_packet(plan)
+
+    assert validation.status == "needs_review"
+    assert any("layer needs review" in reason for reason in validation.public_summary["why"])
+
+
+def test_validate_proof_packet_visual_acceptance_requires_allowed_reviewer_and_exact_layer(
+    tmp_path: Path,
+) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    report = _safe_pass_report()
+    report["summary"]["layers_needs_review"] = 1
+    report["layers"] = [
+        {
+            "layer": "TEC_CONCRETE_BASE",
+            "status": "inferred",
+            "review": {
+                "needs_review": True,
+                "visual_acceptance_required": True,
+            },
+        },
+    ]
+    report["review_acceptance"] = {
+        "visual_layer_gates": [
+            {
+                "layer": "TEC_FOUNDATION",
+                "accepted": True,
+                "accepted_by": "W7",
+            },
+            {
+                "layer": "TEC_CONCRETE_BASE",
+                "accepted": True,
+                "accepted_by": "W4",
+            },
+        ]
+    }
+    _write_packet_artifacts(plan, report=report)
+
+    validation = validate_proof_packet(plan)
+
+    assert validation.status == "needs_review"
+    assert validation.public_summary["visual_acceptance"] == {
+        "accepted_layer_count": 0,
+        "accepted_by": [],
+    }
+
+
 def test_helper_backed_concrete_poche_report_stays_review_gated_in_proof(
     tmp_path: Path,
 ) -> None:
