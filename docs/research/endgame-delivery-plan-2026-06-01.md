@@ -46,6 +46,30 @@ Resume from here:
 - Do not merge PRs or make posting/App Store/Windows readiness claims from this
   checkpoint.
 
+## Resume Refresh - 2026-06-01 09:01 PDT
+
+External Cursor work continued after the pause checkpoint and is now verified
+against live GitHub state:
+
+- #37 `codex/open-issue-verification-core` is now at `d8bdd3d`, with CI green.
+  It merged the #44 designer-console branch, then replaced the console-local
+  handoff writer with shared proof helpers in `src/arch_line_weights/proof.py`.
+- Shared proof helpers now build and write `W5-W7-ACCEPTANCE-HANDOFF.json` and
+  `.md` for proof packet zips. The handoff is path-free, uses generic
+  `EXAMPLE_CUT_LAYER` template values, keeps `accepted: false`, and validates
+  that it does not claim public clearance or visual acceptance.
+- #37 records local verification from that slice: focused proof/run-report/
+  console/dev-console tests passed, feasible full Python suite passed with 559
+  passing tests and 1 skipped test, ruff passed, diff check was clean, and the
+  changed-file private-token scan found no leaks.
+- #44 remains useful as the standalone webapp console PR, but the canonical
+  integrated handoff implementation for the current stack is #37 after
+  `97cc805`, because it routes console proof-packet handoff files through the
+  shared proof helpers.
+
+This refresh does not close #29 or #30, does not merge any PR, and does not
+change posting/public proof from NO-GO.
+
 ## Current Baseline
 
 - #34 is green: verification fixture sourcing research. It was refreshed at
@@ -85,7 +109,10 @@ Resume from here:
   matching eligible visual-review layer gate, while failed, no-go,
   missing-payload, needs-review, and low-confidence layer statuses still win.
   This does not make proof public-safe; `public_safe` still requires separate
-  W5/W7 public-proof acceptance metadata.
+  W5/W7 public-proof acceptance metadata. The current #37 head `d8bdd3d`
+  additionally ships shared W5/W7 handoff builders and zip writers in
+  `proof.py`, so proof packets and the merged designer console use one
+  public-safe handoff contract.
 - #38 is green and draft: entourage SVG asset generator.
 - #39 is green and draft: conservative single-layer cleanup mode.
 - #40 is green and draft: run-report diagnose command.
@@ -168,6 +195,12 @@ Resume from here:
   `tests/test_proof.py`, `tests/test_run_report.py tests/test_proof.py`, the
   feasible full Python suite excluding the known hatch test, ruff, diff check,
   and the changed-diff private-path/name/claim scan. GitHub CI for #37 is green.
+  A later #37 update at `d8bdd3d` merges the designer console into the
+  verification-core branch and replaces console-local proof-packet handoff
+  generation with shared proof helpers. The shared handoff remains NO-GO,
+  `public_safe: false`, `posting_ready: false`, and `acceptance_recorded:
+  false`; its local overlay template uses `EXAMPLE_CUT_LAYER` with
+  `accepted: false`.
 - #43 is draft and stacked on #36: the local designer-console prototype. It has
   local full-test verification, but no GitHub checks are reported on the
   stacked branch yet.
