@@ -35,6 +35,17 @@ fixtures:
       before: before.png
       after: after.png
       diff: diff.png
+      rendered_views:
+        - id: full_board
+          kind: full_board
+          before: before.png
+          after: after.png
+          diff: diff.png
+        - id: stair_core
+          kind: cut_mass_closeup
+          before: stair-core-before.png
+          after: stair-core-after.png
+          diff: stair-core-diff.png
     geometry_artifacts:
       cut_dump: cut-geometry.json
       layer_audit: layer-audit.json
@@ -60,6 +71,8 @@ fixtures:
     assert manifest.fixtures[0].expected_report.status == "pass"
     assert manifest.fixtures[0].expected_report.counts == {"layers": 4, "poche_regions": 1}
     assert manifest.fixtures[0].visual_artifacts.after == Path("after.png")
+    assert manifest.fixtures[0].visual_artifacts.rendered_views[0].kind == "full_board"
+    assert manifest.fixtures[0].visual_artifacts.rendered_views[1].kind == "cut_mass_closeup"
     assert manifest.fixtures[0].geometry_artifacts.cut_dump == Path("cut-geometry.json")
     assert manifest.fixtures[0].geometry_artifacts.layer_audit == Path("layer-audit.json")
     assert manifest.fixtures[0].review_regions[0].rect == (10, 20, 30, 40)
@@ -79,6 +92,10 @@ def test_committed_make2d_manifest_is_repo_safe_synthetic_fixture() -> None:
     assert fixture.geometry_artifacts.cut_dump == Path(
         "proof/public-foundation-window-section/cut-geometry.json"
     )
+    assert {view.kind for view in fixture.visual_artifacts.rendered_views} == {
+        "full_board",
+        "cut_mass_closeup",
+    }
     assert fixture.review_regions[0].kind == "poche_presence"
     assert any("does not close issue #30" in caveat for caveat in fixture.caveats)
     assert any("Private USC regression stays private" in caveat for caveat in fixture.caveats)
@@ -210,7 +227,7 @@ def test_validate_proof_packet_rejects_local_paths_and_sanitizes_public_summary(
     assert "raw report contains local/private path references" in validation.public_summary["why"][0]
 
 
-def test_validate_proof_packet_passes_public_safe_report_with_expected_artifacts(tmp_path: Path) -> None:
+def test_validate_proof_packet_requires_report_identity_and_rendered_views(tmp_path: Path) -> None:
     plan = build_proof_packet_plan(
         fixture_id="stair_section",
         output_dir=tmp_path / "proof",
@@ -220,19 +237,59 @@ def test_validate_proof_packet_passes_public_safe_report_with_expected_artifacts
         plan,
         report={
             "schema_version": 2,
-            "summary": {
-                "layers_filled": 1,
-                "layers_inferred": 1,
-                "layers_skipped": 0,
-                "layers_failed": 0,
-                "layers_needs_review": 0,
-                "polygons_filled": 4,
-            },
-            "layers": [
-                {"layer": "LayerA", "status": "filled", "review": {"needs_review": False}},
-                {"layer": "LayerB", "status": "inferred", "review": {"needs_review": False}},
-            ],
+            "summary": {"layers_filled": 1, "layers_failed": 0, "layers_needs_review": 0},
+            "layers": [{"layer": "LayerA", "status": "filled", "review": {"needs_review": False}}],
         },
+    )
+
+    validation = validate_proof_packet(plan)
+
+    assert validation.status == "failed"
+    assert any("report source.input is required" in reason for reason in validation.reasons)
+    assert any("visual artifacts missing rendered view checklist" in reason for reason in validation.reasons)
+
+
+def test_validate_proof_packet_requires_full_board_and_closeup_views(tmp_path: Path) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    _write_packet_artifacts(
+        plan,
+        report=_safe_pass_report(
+            visual_artifacts={
+                "before": "before.png",
+                "after": "after.png",
+                "diff": "diff.png",
+                "rendered_views": [
+                    {
+                        "id": "full_board",
+                        "kind": "full_board",
+                        "before": "before.png",
+                        "after": "after.png",
+                        "diff": "diff.png",
+                    }
+                ],
+            }
+        ),
+    )
+
+    validation = validate_proof_packet(plan)
+
+    assert validation.status == "failed"
+    assert any("visual artifacts missing close-up rendered view" in reason for reason in validation.reasons)
+
+
+def test_validate_proof_packet_passes_public_safe_report_with_expected_artifacts(tmp_path: Path) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    _write_packet_artifacts(
+        plan,
+        report=_safe_pass_report(),
     )
 
     validation = validate_proof_packet(plan)
@@ -241,6 +298,23 @@ def test_validate_proof_packet_passes_public_safe_report_with_expected_artifacts
     assert "1 layer filled" in validation.public_summary["what_changed"]
     assert "4 polygons filled" in validation.public_summary["what_changed"]
     assert validation.public_summary["what_failed"] == []
+    assert validation.public_summary["proof_identity"]["command"] == "arch-lw poche stair-section.ai"
+    assert validation.public_summary["rendered_views"] == [
+        {
+            "id": "full_board",
+            "kind": "full_board",
+            "before": "before.png",
+            "after": "after.png",
+            "diff": "diff.png",
+        },
+        {
+            "id": "cut_mass_detail",
+            "kind": "cut_mass_closeup",
+            "before": "cut-mass-before.png",
+            "after": "cut-mass-after.png",
+            "diff": "cut-mass-diff.png",
+        },
+    ]
     assert "Attach the public summary only" in validation.public_summary["next_step"]
 
 
@@ -254,6 +328,12 @@ def test_validate_proof_packet_needs_review_for_visual_acceptance_gate(tmp_path:
         plan,
         report={
             "schema_version": 2,
+            "source": {
+                "input": "stair-section.ai",
+                "output": "stair-section-poche.ai",
+                "command": "arch-lw poche stair-section.ai",
+            },
+            "visual_artifacts": _safe_visual_artifacts(),
             "summary": {
                 "layers_filled": 1,
                 "layers_inferred": 1,
@@ -329,3 +409,64 @@ def _write_packet_artifacts(
             path.write_text(json.dumps(report), encoding="utf-8")
         else:
             path.write_bytes(b"synthetic proof artifact")
+    visual_artifacts = report.get("visual_artifacts") if isinstance(report.get("visual_artifacts"), dict) else {}
+    views = visual_artifacts.get("rendered_views") if isinstance(visual_artifacts.get("rendered_views"), list) else []
+    for view in views:
+        if not isinstance(view, dict):
+            continue
+        for key in ("before", "after", "diff"):
+            value = view.get(key)
+            if isinstance(value, str):
+                path = plan.output_dir / value
+                if path in missing:
+                    continue
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(b"synthetic rendered view")
+
+
+def _safe_pass_report(*, visual_artifacts: dict | None = None) -> dict:
+    return {
+        "schema_version": 2,
+        "source": {
+            "input": "stair-section.ai",
+            "output": "stair-section-poche.ai",
+            "command": "arch-lw poche stair-section.ai",
+        },
+        "visual_artifacts": visual_artifacts or _safe_visual_artifacts(),
+        "summary": {
+            "layers_filled": 1,
+            "layers_inferred": 1,
+            "layers_skipped": 0,
+            "layers_failed": 0,
+            "layers_needs_review": 0,
+            "polygons_filled": 4,
+        },
+        "layers": [
+            {"layer": "LayerA", "status": "filled", "review": {"needs_review": False}},
+            {"layer": "LayerB", "status": "inferred", "review": {"needs_review": False}},
+        ],
+    }
+
+
+def _safe_visual_artifacts() -> dict:
+    return {
+        "before": "before.png",
+        "after": "after.png",
+        "diff": "diff.png",
+        "rendered_views": [
+            {
+                "id": "full_board",
+                "kind": "full_board",
+                "before": "before.png",
+                "after": "after.png",
+                "diff": "diff.png",
+            },
+            {
+                "id": "cut_mass_detail",
+                "kind": "cut_mass_closeup",
+                "before": "cut-mass-before.png",
+                "after": "cut-mass-after.png",
+                "diff": "cut-mass-diff.png",
+            },
+        ],
+    }

@@ -14,6 +14,17 @@ fixtures:
       before: proof/public-foundation-window-section/before.png
       after: proof/public-foundation-window-section/after.png
       diff: proof/public-foundation-window-section/diff.png
+      rendered_views:
+        - id: full_board
+          kind: full_board
+          before: proof/public-foundation-window-section/before.png
+          after: proof/public-foundation-window-section/after.png
+          diff: proof/public-foundation-window-section/diff.png
+        - id: foundation_window_cut_mass
+          kind: cut_mass_closeup
+          before: proof/public-foundation-window-section/foundation-window-before.png
+          after: proof/public-foundation-window-section/foundation-window-after.png
+          diff: proof/public-foundation-window-section/foundation-window-diff.png
     geometry_artifacts:
       cut_dump: proof/public-foundation-window-section/cut-geometry.json
       layer_audit: proof/public-foundation-window-section/layer-audit.json

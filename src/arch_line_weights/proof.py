@@ -19,6 +19,8 @@ except ModuleNotFoundError:  # pragma: no cover - exercised only in minimal inst
 
 VALID_FIXTURE_STATUSES = {"pass", "expected_fail", "unsupported", "needs_manual_review"}
 VALID_REPORT_STATUSES = VALID_FIXTURE_STATUSES | {"fail"}
+VALID_RENDERED_VIEW_KINDS = {"full_board", "cut_mass_closeup", "openings_closeup", "detail_closeup"}
+_CLOSEUP_RENDERED_VIEW_KINDS = {"cut_mass_closeup", "openings_closeup", "detail_closeup"}
 _LOCAL_PATH_RE = re.compile(
     r"(?i)(?:file://)?(?:/Users/|/private/|/var/folders/|/tmp/|/Volumes/|[A-Z]:\\|\\\\)"
 )
@@ -35,10 +37,20 @@ class ExpectedReport:
 
 
 @dataclass(frozen=True)
+class RenderedView:
+    id: str
+    kind: str
+    before: Path
+    after: Path
+    diff: Path
+
+
+@dataclass(frozen=True)
 class VisualArtifacts:
     before: Path
     after: Path
     diff: Path
+    rendered_views: list[RenderedView]
 
 
 @dataclass(frozen=True)
@@ -146,9 +158,9 @@ def validate_proof_packet(plan: ProofPacketPlan) -> ProofPacketValidation:
     """
 
     artifacts = _proof_packet_artifacts(plan)
-    missing_artifacts = tuple(
+    missing_artifacts = [
         label for label, path in artifacts.items() if not path.exists() or path.is_dir() or path.stat().st_size <= 0
-    )
+    ]
 
     report: dict[str, Any] = {}
     failed_reasons: list[str] = []
@@ -179,6 +191,12 @@ def validate_proof_packet(plan: ProofPacketPlan) -> ProofPacketValidation:
         no_go_reasons.append(
             "raw report contains local/private path references: " + ", ".join(unsafe_references)
         )
+
+    if report:
+        failed_reasons.extend(_report_identity_errors(report))
+        visual_errors, visual_missing = _report_visual_errors(report, plan)
+        failed_reasons.extend(visual_errors)
+        missing_artifacts.extend(visual_missing)
 
     summary = report.get("summary") if isinstance(report.get("summary"), dict) else {}
     layer_failure_count = _int_count(summary, "layers_failed")
@@ -227,17 +245,19 @@ def validate_proof_packet(plan: ProofPacketPlan) -> ProofPacketValidation:
         status = "passed"
 
     reasons = tuple(dict.fromkeys([*no_go_reasons, *failed_reasons, *review_reasons]))
+    missing_artifact_tuple = tuple(dict.fromkeys(missing_artifacts))
     return ProofPacketValidation(
         fixture_id=plan.fixture_id,
         status=status,
         public_summary=_build_public_summary(
             fixture_id=plan.fixture_id,
             status=status,
+            report=report,
             report_summary=summary,
             reasons=reasons,
-            missing_artifacts=missing_artifacts,
+            missing_artifacts=missing_artifact_tuple,
         ),
-        missing_artifacts=missing_artifacts,
+        missing_artifacts=missing_artifact_tuple,
         unsafe_references=unsafe_references,
         reasons=reasons,
     )
@@ -326,6 +346,7 @@ def _build_public_summary(
     *,
     fixture_id: str,
     status: str,
+    report: dict[str, Any],
     report_summary: dict[str, Any],
     reasons: tuple[str, ...],
     missing_artifacts: tuple[str, ...],
@@ -345,7 +366,114 @@ def _build_public_summary(
         "what_failed": failed,
         "why": list(reasons),
         "next_step": _next_step(status, reasons),
+        "proof_identity": _public_proof_identity(report),
+        "rendered_views": _public_rendered_views(report),
     }
+
+
+def _report_identity_errors(report: dict[str, Any]) -> list[str]:
+    source = report.get("source")
+    if not isinstance(source, dict):
+        return [
+            "report source.input is required",
+            "report source.output is required",
+            "report source.command is required",
+        ]
+
+    errors: list[str] = []
+    for key in ("input", "output", "command"):
+        value = source.get(key)
+        if not isinstance(value, str) or not value.strip():
+            errors.append(f"report source.{key} is required")
+    return errors
+
+
+def _report_visual_errors(report: dict[str, Any], plan: ProofPacketPlan) -> tuple[list[str], list[str]]:
+    visual_artifacts = report.get("visual_artifacts")
+    if not isinstance(visual_artifacts, dict):
+        return ["visual artifacts mapping is required", "visual artifacts missing rendered view checklist"], []
+
+    errors: list[str] = []
+    missing: list[str] = []
+    for key in ("before", "after", "diff"):
+        value = visual_artifacts.get(key)
+        if not isinstance(value, str) or not value.strip():
+            errors.append(f"visual_artifacts.{key} is required")
+            continue
+        if not _artifact_reference_exists(plan, value):
+            missing.append(f"visual_artifacts.{key}")
+
+    rendered_views = visual_artifacts.get("rendered_views")
+    if not isinstance(rendered_views, list) or not rendered_views:
+        errors.append("visual artifacts missing rendered view checklist")
+        return errors, missing
+
+    kinds: set[str] = set()
+    for index, raw_view in enumerate(rendered_views):
+        label = f"visual_artifacts.rendered_views[{index}]"
+        if not isinstance(raw_view, dict):
+            errors.append(f"{label} must be a mapping")
+            continue
+        view_id = raw_view.get("id")
+        if not isinstance(view_id, str) or not view_id.strip():
+            errors.append(f"{label}.id is required")
+        kind = raw_view.get("kind")
+        if not isinstance(kind, str) or kind not in VALID_RENDERED_VIEW_KINDS:
+            expected = ", ".join(sorted(VALID_RENDERED_VIEW_KINDS))
+            errors.append(f"{label}.kind must be one of: {expected}")
+        else:
+            kinds.add(kind)
+        for key in ("before", "after", "diff"):
+            value = raw_view.get(key)
+            if not isinstance(value, str) or not value.strip():
+                errors.append(f"{label}.{key} is required")
+                continue
+            if not _artifact_reference_exists(plan, value):
+                missing.append(f"{label}.{key}")
+
+    if "full_board" not in kinds:
+        errors.append("visual artifacts missing full-board rendered view")
+    if not (kinds & _CLOSEUP_RENDERED_VIEW_KINDS):
+        errors.append("visual artifacts missing close-up rendered view")
+    return errors, missing
+
+
+def _artifact_reference_exists(plan: ProofPacketPlan, value: str) -> bool:
+    if _LOCAL_PATH_RE.search(value):
+        return True
+    path = Path(value)
+    if not path.is_absolute():
+        path = plan.output_dir / path
+    return path.exists() and path.is_file() and path.stat().st_size > 0
+
+
+def _public_proof_identity(report: dict[str, Any]) -> dict[str, str]:
+    source = report.get("source") if isinstance(report.get("source"), dict) else {}
+    identity: dict[str, str] = {}
+    for key in ("input", "output", "command"):
+        value = source.get(key)
+        if isinstance(value, str) and value.strip() and not _LOCAL_PATH_RE.search(value):
+            identity[key] = value
+    return identity
+
+
+def _public_rendered_views(report: dict[str, Any]) -> list[dict[str, str]]:
+    visual_artifacts = report.get("visual_artifacts") if isinstance(report.get("visual_artifacts"), dict) else {}
+    rendered_views = (
+        visual_artifacts.get("rendered_views") if isinstance(visual_artifacts.get("rendered_views"), list) else []
+    )
+    public_views: list[dict[str, str]] = []
+    for raw_view in rendered_views:
+        if not isinstance(raw_view, dict):
+            continue
+        public_view: dict[str, str] = {}
+        for key in ("id", "kind", "before", "after", "diff"):
+            value = raw_view.get(key)
+            if isinstance(value, str) and value.strip() and not _LOCAL_PATH_RE.search(value):
+                public_view[key] = value
+        if {"id", "kind", "before", "after", "diff"}.issubset(public_view):
+            public_views.append(public_view)
+    return public_views
 
 
 def _changed_messages(summary: dict[str, Any]) -> list[str]:
@@ -481,11 +609,43 @@ def _parse_expected_report(raw: Any, fixture_id: str) -> ExpectedReport:
 def _parse_visual_artifacts(raw: Any, fixture_id: str) -> VisualArtifacts:
     if not isinstance(raw, dict):
         raise ManifestValidationError(f"{fixture_id}.visual_artifacts must be a mapping")
+    rendered_views = _parse_rendered_views(raw.get("rendered_views"), fixture_id)
     return VisualArtifacts(
         before=Path(_required_str(raw, "before", f"{fixture_id}.visual_artifacts")),
         after=Path(_required_str(raw, "after", f"{fixture_id}.visual_artifacts")),
         diff=Path(_required_str(raw, "diff", f"{fixture_id}.visual_artifacts")),
+        rendered_views=rendered_views,
     )
+
+
+def _parse_rendered_views(raw: Any, fixture_id: str) -> list[RenderedView]:
+    label = f"{fixture_id}.visual_artifacts.rendered_views"
+    if not isinstance(raw, list) or not raw:
+        raise ManifestValidationError(f"{label} must include full_board and close-up rendered views")
+
+    views: list[RenderedView] = []
+    kinds: set[str] = set()
+    for index, item in enumerate(raw):
+        item_label = f"{label}[{index}]"
+        if not isinstance(item, dict):
+            raise ManifestValidationError(f"{item_label} must be a mapping")
+        kind = _required_status(item, "kind", item_label, VALID_RENDERED_VIEW_KINDS)
+        kinds.add(kind)
+        views.append(
+            RenderedView(
+                id=_required_str(item, "id", item_label),
+                kind=kind,
+                before=Path(_required_str(item, "before", item_label)),
+                after=Path(_required_str(item, "after", item_label)),
+                diff=Path(_required_str(item, "diff", item_label)),
+            )
+        )
+
+    if "full_board" not in kinds:
+        raise ManifestValidationError(f"{label} must include a full_board rendered view")
+    if not (kinds & _CLOSEUP_RENDERED_VIEW_KINDS):
+        raise ManifestValidationError(f"{label} must include at least one close-up rendered view")
+    return views
 
 
 def _parse_geometry_artifacts(raw: Any, fixture_id: str) -> GeometryArtifacts:
