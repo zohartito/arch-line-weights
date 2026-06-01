@@ -3,15 +3,23 @@ from __future__ import annotations
 import json
 from unittest.mock import patch
 
+import pikepdf
 from click.testing import CliRunner
 
 from arch_line_weights.cli import cli
 from arch_line_weights.poche import FillResult, PocheReport
 
 
+def _write_valid_ai_pdf(path):
+    pdf = pikepdf.new()
+    pdf.add_blank_page(page_size=(100, 100))
+    pdf.save(path)
+    pdf.close()
+
+
 def test_cli_poche_writes_structured_report_json(tmp_path):
     src = tmp_path / "section.ai"
-    src.write_bytes(b"%PDF-1.6\n")
+    _write_valid_ai_pdf(src)
     output = tmp_path / "section POCHE.ai"
     report_json = tmp_path / "reports" / "arch_lw_poche_report.json"
     layer = "axon::Visible::ClippingPlaneIntersections::09_SHS_50x50x5_HORIZ"
@@ -41,7 +49,7 @@ def test_cli_poche_writes_structured_report_json(tmp_path):
     data = json.loads(report_json.read_text())
     assert data["source"]["input"] == str(src)
     assert data["source"]["output"] == str(output)
-    assert data["source"]["command"] == "poche"
+    assert data["source"]["command"].startswith("arch-lw poche ")
     assert data["source"]["stage"] == "poche"
     assert data["summary"]["status"] == "passed"
     assert data["summary"]["layers_filled"] == 1
@@ -52,7 +60,7 @@ def test_cli_poche_writes_structured_report_json(tmp_path):
 
 def test_cli_poche_threads_geometry_json_path(tmp_path):
     src = tmp_path / "section.ai"
-    src.write_bytes(b"%PDF-1.6\n")
+    _write_valid_ai_pdf(src)
     geometry_json = tmp_path / "reports" / "geometry.json"
     captured = {}
 
