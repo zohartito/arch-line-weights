@@ -6,7 +6,38 @@ This branch preserves the WIP implementation and investigation for the open-issu
 
 - Branch: `codex/open-issue-verification-core`
 - Remote: `origin` (`git@github.com:zohartito/arch-line-weights.git`)
-- Goal status: paused by request, not complete.
+- Goal status: in progress on PR #37; not launch-ready.
+
+## Update — 2026-06-01 (W5/W7 proof-packet handoff slice)
+
+### What changed
+
+- Added shared `build_w5_w7_acceptance_handoff`, `assert_handoff_is_public_safe`, and
+  `write_w5_w7_acceptance_handoff_to_zip` in `src/arch_line_weights/proof.py`.
+- Exported proof packets (designer console zip) now include `W5-W7-ACCEPTANCE-HANDOFF.json`
+  and `W5-W7-ACCEPTANCE-HANDOFF.md` with explicit **NO-GO** clearance, generic overlay
+  templates (`EXAMPLE_CUT_LAYER`), and no private fixture names or local paths.
+- Merged `codex/webapp-designer-console-prototype` console routes; `_write_proof_packet`
+  uses the shared proof helpers instead of a duplicate handoff builder.
+- Extended `tests/test_proof.py` and `webapp/tests/test_console_routes.py` for handoff zip
+  contents and overclaim guards.
+
+### Verification (this slice)
+
+```text
+pytest tests/test_proof.py tests/test_run_report.py webapp/tests/test_console_routes.py webapp/tests/test_dev_console.py -q  → 54 passed
+pytest --ignore=tests/test_hatch_v05.py -q  → 559 passed, 1 skipped
+ruff check src/ tests/ webapp/backend/ webapp/tests/  → pass
+git diff --check  → pass
+```
+
+### Remains open (non-negotiable)
+
+- **#29** and **#30** stay open; this slice does not close them.
+- **Posting / public proof:** NO-GO unless W5/W7 record separate `public_proof` acceptance.
+- **Synthetic proof** does not close #30; **private USC regression** stays private.
+- Full control ledger: PR #41 `docs/research/endgame-delivery-plan-2026-06-01.md`.
+- No PR merges performed from this slice.
 
 ## Implemented Work Preserved
 
@@ -47,6 +78,48 @@ Known caveats before resuming:
 - `ruff format --check src tests webapp/backend` was already noisy across many pre-existing files, so no bulk formatting was performed.
 - Webapp tests previously required webapp-specific dependencies (`pydantic-settings`, etc.) to be installed in the active environment.
 - GitHub issue comments/closures were not performed before the pause.
+
+## 2026-06-01 — W5/W7 acceptance handoff slice (PR #37)
+
+### What changed
+
+- Added shared `build_w5_w7_acceptance_handoff`, `assert_handoff_is_public_safe`, and
+  `write_w5_w7_acceptance_handoff_to_zip` in `src/arch_line_weights/proof.py`. Exported proof
+  packet zips now include path-free `W5-W7-ACCEPTANCE-HANDOFF.json` and `.md` with explicit
+  **NO-GO** clearance, `public_safe: false`, `posting_ready: false`,
+  `synthetic_proof_closes_issue_30: false`, open issues `#29` / `#30`, guardrails, sanitized
+  acceptance echoes, a generic `github_safe_decision_template`, and a `local_only_overlay_template`
+  using `EXAMPLE_CUT_LAYER` with `accepted: false`.
+- Merged `codex/webapp-designer-console-prototype` (PR #44) into this branch and wired
+  `webapp/backend/console.py` `_write_proof_packet` to the shared handoff helpers (replacing the
+  console-local handoff that used private layer names).
+- Extended `tests/test_proof.py` and `webapp/tests/test_console_routes.py` for zip contents, NO-GO
+  gates, overlay template shape, and leak/overclaim scans.
+
+### Verification (local, 2026-06-01)
+
+```bash
+.venv/bin/python -m pytest tests/test_proof.py tests/test_run_report.py \
+  webapp/tests/test_console_routes.py webapp/tests/test_dev_console.py -q
+# 54 passed
+
+.venv/bin/python -m pytest --ignore=tests/test_hatch_v05.py -q
+# 559 passed, 1 skipped
+
+.venv/bin/python -m ruff check src/ tests/ webapp/backend/console.py webapp/tests/test_console_routes.py
+git diff --check
+```
+
+### Remains (explicit boundaries)
+
+- **Do not merge** PR #37 or other stacked PRs from this work alone.
+- GitHub issues **#29** and **#30** stay **open**; this handoff documents blockers only.
+- **Posting / public proof: NO-GO** until separate W5/W7 `review_acceptance.public_proof` with
+  public-safe artifacts — synthetic proof does **not** close #30.
+- **Private USC regression stays private**; no private drawings, screenshots, PDFs, or raw reports
+  with local paths in committed proof assets.
+- Full endgame control ledger: `docs/research/endgame-delivery-plan-2026-06-01.md` on branch
+  `codex/endgame-delivery-ledger` (PR #41), not duplicated here.
 
 ## Resume Path
 
