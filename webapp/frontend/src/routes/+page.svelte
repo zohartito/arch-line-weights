@@ -50,8 +50,10 @@
   });
   $: canStart = workflow === 'synthetic_proof_demo' || chosenFile !== null;
   $: proofArtifact = run?.artifacts.find((artifact) => artifact.key === 'proof_packet') ?? null;
-  $: publicProofLabel = run?.public_safe ? 'Accepted' : 'NO-GO';
+  $: publicProofLabel =
+    run?.posting_clearance === 'GO' ? 'Posting: W5/W7 accepted (local)' : 'Posting: NO-GO';
   $: publicAcceptanceLabel = acceptanceLabel(run);
+  $: isSyntheticDemo = (run?.workflow ?? workflow) === 'synthetic_proof_demo';
 
   function stageFor(key: ConsoleStageKey): ConsoleStage {
     const label = stageDefinitions.find((stage) => stage.key === key)?.label ?? key;
@@ -175,6 +177,16 @@
       </div>
     {/each}
   </section>
+
+  {#if isSyntheticDemo}
+    <div
+      class="border border-amber-500 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+      data-testid="synthetic-demo-banner"
+    >
+      Synthetic proof / demo — exercises the local harness only. It does <strong>not</strong> close
+      GitHub issue #30 and is not public posting clearance.
+    </div>
+  {/if}
 
   <section class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
     <div class="space-y-4">
@@ -342,8 +354,9 @@
             <p class="text-ink-500">No proof packet exported.</p>
           {/if}
           <p class="text-xs text-ink-500">
-            Public proof status: {publicProofLabel}. The packet includes a redacted W5/W7 handoff template;
-            raw local reports stay in local storage.
+            {publicProofLabel}. Zip includes <code class="text-[11px]">W5-W7-ACCEPTANCE-HANDOFF.json</code>
+            and <code class="text-[11px]">W5-W7-ACCEPTANCE-HANDOFF.md</code> (always NO-GO until W5/W7
+            records public acceptance). Raw local reports stay in local storage only.
           </p>
         </div>
       </section>

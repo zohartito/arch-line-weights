@@ -129,6 +129,8 @@ export interface ConsoleSummary {
   created_at: string;
   overall_status: ConsoleStatus;
   public_safe: boolean;
+  posting_clearance: 'GO' | 'NO-GO';
+  synthetic_proof_closes_issue_30: boolean;
   public_acceptance: PublicAcceptance;
   guardrails: string[];
   stages: ConsoleStage[];

@@ -20,6 +20,7 @@ CORE_PUBLIC_SAFETY_SURFACES = [
     REPO_ROOT / "webapp" / "README.md",
     REPO_ROOT / "webapp" / "frontend" / "src" / "routes" / "+page.svelte",
     REPO_ROOT / "docs" / "research" / "open-issue-verification-core-handoff-2026-06-01.md",
+    REPO_ROOT / "docs" / "research" / "human-landing-plan-2026-06-01.md",
     *sorted((REPO_ROOT / "docs" / "announce").rglob("*.md")),
     *sorted((REPO_ROOT / "docs" / "how-to").rglob("*.md")),
     *sorted((REPO_ROOT / "docs" / "tutorials").rglob("*.md")),

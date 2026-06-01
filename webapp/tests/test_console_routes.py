@@ -43,6 +43,8 @@ def test_console_create_run_has_guardrails_and_required_stage_statuses(
     assert body["original_filename"] == synthetic_ai.name
     assert body["overall_status"] == "needs_review"
     assert body["public_safe"] is False
+    assert body["posting_clearance"] == "NO-GO"
+    assert body["synthetic_proof_closes_issue_30"] is False
     assert body["public_acceptance"] == {"accepted": False, "accepted_by": []}
     assert [stage["status"] for stage in body["stages"]] == ["not_run"] * 5
     assert [stage["key"] for stage in body["stages"]] == [

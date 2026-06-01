@@ -152,6 +152,9 @@ class ConsoleRun:
         ]
         overall_status = _overall_status(self.stages)
         public_acceptance = _public_acceptance()
+        posting_clearance = "GO" if (
+            overall_status == "passed" and bool(public_acceptance["accepted"])
+        ) else "NO-GO"
         return {
             "schema_version": 1,
             "run_id": self.run_id,
@@ -160,7 +163,9 @@ class ConsoleRun:
             "original_filename": self.original_filename,
             "created_at": self.created_at,
             "overall_status": overall_status,
-            "public_safe": overall_status == "passed" and bool(public_acceptance["accepted"]),
+            "public_safe": posting_clearance == "GO",
+            "posting_clearance": posting_clearance,
+            "synthetic_proof_closes_issue_30": False,
             "public_acceptance": public_acceptance,
             "guardrails": list(self.guardrails),
             "stages": stage_rows,
