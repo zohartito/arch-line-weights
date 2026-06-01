@@ -26,7 +26,9 @@ product. It is an engineering control document, not a public launch claim.
 - #37 is green and draft at the last completed check: input diagnostics and
   proof report harness. It now includes proof-packet validation that fails
   closed on missing artifacts, failed/no-go raw reports, review layers, missing
-  payloads, and raw local/private path references.
+  payloads, and raw local/private path references. It also gates inferred
+  concrete/foundation fills on explicit W5/W7 visual acceptance, so those
+  reports stay `needs_review` even when the geometric strategy improves.
 - #38 is green and draft: entourage SVG asset generator.
 - #39 is green and draft: conservative single-layer cleanup mode.
 - #40 is green and draft: run-report diagnose command.
@@ -44,7 +46,11 @@ product. It is an engineering control document, not a public launch claim.
   conflict in `poche.py`; after resolving it, focused tests and ruff passed,
   and a private USC `poche --report` probe reported `TEC_CONCRETE_BASE` as
   `inferred` / `structural_open_loop` instead of `low_confidence`, with output
-  and report artifacts created in temp storage only.
+  and report artifacts created in temp storage only. After the #37 report gate
+  update, the same combined stack reports `TEC_CONCRETE_BASE` and
+  `TEC_FOUNDATION` as requiring W5/W7 visual acceptance. That is the desired
+  no-go behavior: geometry progress is captured, but proof status remains
+  review-gated until human visual acceptance exists.
 - #43 is draft and stacked on #36: the local designer-console prototype. It has
   local full-test verification, but no GitHub checks are reported on the
   stacked branch yet.
