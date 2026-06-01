@@ -66,7 +66,12 @@ product. It is an engineering control document, not a public launch claim.
   the backend and frontend together, chooses open ports, coordinates CORS/API
   URL settings, and opens the console. Rendered QA confirmed both a normal
   fallback URL and an outside-default frontend port can load the console and
-  run the synthetic-demo inspect stage without browser console errors.
+  run the synthetic-demo inspect stage without browser console errors. A later
+  update gates console proof exports on the same W5/W7 acceptance posture as
+  the proof harness: exported packets are local review packets, the UI shows
+  Public proof `NO-GO` and W5/W7 acceptance status, packet summaries carry
+  `public_safe: false`, and the export stage remains `needs_review` without
+  explicit W5/W7 acceptance.
 - #45 is draft: launch-safety quarantine for private proof assets and public
   posting drafts. It removes committed Day-1 proof media from the public tree
   and redacts inherited local/private paths.
@@ -163,6 +168,8 @@ Required MVP:
 - Local launch command and docs.
 - Backend tests for status/report behavior.
 - Browser render check of the main screen.
+- Exported local review packets stay `needs_review` and `public_safe: false`
+  until W5/W7 acceptance exists.
 
 The existing `webapp/` scaffold is the first candidate host.
 
@@ -213,7 +220,8 @@ the decision to keep or reject subagent patches.
 Engineering can call the endgame complete only when:
 
 - Designer console opens locally and runs a representative proof workflow.
-- Proof packet export is public-safe by default and raw reports are isolated.
+- Proof packet export is sanitized, raw reports are isolated, and public-proof
+  status remains no-go without W5/W7 acceptance.
 - Verification catches missing outputs, no-go reports, private paths, and false
   pass states.
 - Geometry/poche produces accepted results on the private USC regression.
