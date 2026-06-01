@@ -266,6 +266,19 @@ def _bbox(lines: list[LineString]) -> Polygon | None:
     return box(minx, miny, maxx, maxy)
 
 
+def _is_poche_cut_layer_name(layer_name: str) -> bool:
+    upper = layer_name.upper()
+    if "CLIPPINGPLANEINTERSECTIONS" not in upper:
+        return False
+    return "GLASS" not in upper and "IGU" not in upper
+
+
+def _uses_jsx_structural_helpers(layer_name: str) -> bool:
+    """Limit JSX helper completion to the #30 concrete/foundation target family."""
+    upper = layer_name.upper()
+    return "TEC_CONCRETE_BASE" in upper or "TEC_FOUNDATION" in upper
+
+
 def _is_structural_poche_layer(layer_name: str) -> bool:
     try:
         from .architectural import classify_architectural_layer
@@ -939,6 +952,24 @@ def polygonize_layer(
         conf = 0.95 if tol <= 0.5 else (0.85 if tol <= 1.0 else 0.7)
         return polys, FillResult(layer_name, "linemerge_snap", conf, len(polys), n_segments, tol)
 
+    # Same-component visible/tangent helper geometry is stronger architectural
+    # evidence than a blind low-confidence endpoint bridge. Try it before the
+    # auto-bridge rung so real Make2D helper edges can close cut mass without
+    # being downgraded to diagnostic-only bridge output.
+    if helper_lines:
+        try:
+            structural_polys = _try_structural_open_loop(layer_name, lines, helper_lines)
+            if structural_polys:
+                return structural_polys, FillResult(
+                    layer_name,
+                    "structural_open_loop",
+                    0.88,
+                    len(structural_polys),
+                    n_segments,
+                )
+        except Exception:
+            pass
+
     # Auto-bridge: infer missing connecting segments and re-run
     # linemerge+polygonize. Default strategy (v0.6.7+) is ``"best"``, which
     # dispatches to the 4-way strategy selector. ``"greedy"`` retains the
@@ -1100,6 +1131,8 @@ def polygonize_dump(
     bridge_strategy: str | None = None,
 ) -> PocheReport:
     """Load a JSON dump from `dump_cut_geometry.jsx`, polygonize each layer."""
+    from .make2d_completion import structural_completion_paths_for_layers
+
     with open(geometry_json_path) as f:
         data = json.load(f)
 
@@ -1114,7 +1147,15 @@ def polygonize_dump(
 
     overrides = overrides or {}
     report = PocheReport()
-    for layer_name, paths in data.items():
+    cut_data = {name: paths for name, paths in data.items() if _is_poche_cut_layer_name(name)}
+    helper_target_data = {
+        name: paths for name, paths in cut_data.items() if _uses_jsx_structural_helpers(name)
+    }
+    structural_completion_paths_by_layer = structural_completion_paths_for_layers(
+        helper_target_data,
+        data,
+    )
+    for layer_name, paths in cut_data.items():
         # Match override: exact layer name or fnmatch-style suffix
         ov = overrides.get(layer_name)
         if ov is None:
@@ -1123,6 +1164,10 @@ def polygonize_dump(
                     ov = val
                     break
 
+        helper_paths = structural_completion_paths_by_layer.get(layer_name, [])
+        if helper_paths:
+            report.structural_helper_counts[layer_name] = len(helper_paths)
+
         polys, result = polygonize_layer(
             layer_name,
             paths,
@@ -1130,6 +1175,7 @@ def polygonize_dump(
             ov,
             use_alpha_shape=use_alpha_shape,
             bridge_strategy=bridge_strategy,
+            structural_helper_lines=_lines_from_anchors(helper_paths),
         )
         report.fills.append(result)
         if polys and should_inject_fill(result):
@@ -1166,9 +1212,12 @@ DUMP_JSX_TEMPLATE = r"""#target illustrator
     function shouldDump(name) {
         var n = String(name).toUpperCase();
         if (n.indexOf("__POCHE_CLOSE__") !== -1) return true;
-        if (n.indexOf("CLIPPINGPLANEINTERSECTIONS") === -1) return false;
-        if (n.indexOf("GLASS") !== -1 || n.indexOf("IGU") !== -1) return false;
-        return true;
+        if (n.indexOf("CLIPPINGPLANEINTERSECTIONS") !== -1) {
+            if (n.indexOf("GLASS") !== -1 || n.indexOf("IGU") !== -1) return false;
+            return true;
+        }
+        if (n.indexOf("::VISIBLE::CURVES::") === -1 && n.indexOf("::VISIBLE::TANGENTS::") === -1) return false;
+        return n.indexOf("FOUNDATION") !== -1 || n.indexOf("CONCRETE") !== -1;
     }
 
     var doc = null;
