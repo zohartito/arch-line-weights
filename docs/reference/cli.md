@@ -189,6 +189,18 @@ effectively unchanged. It fails nonzero for `failed` or `no_go` packets and keep
 `needs_review` visible for W5/W7 acceptance. Treat `--write` output as local
 evidence: do not commit raw proof-check reports that contain machine-local paths.
 
+## `arch-lw diagnose`
+
+Summarize an `arch-lw --report` JSON file into a review checklist.
+
+```bash
+arch-lw diagnose run-report.json [--json]
+```
+
+The text output groups filled, inferred, low-confidence, skipped, failed, and
+missing-payload layers, lists review reasons, and reminds the user that PDF
+preview is not authoritative for AI-native Illustrator payloads.
+
 ## `arch-lw explain-layer`
 
 Show what tier+weight the classifier assigns.
