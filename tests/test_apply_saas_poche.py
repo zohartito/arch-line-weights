@@ -480,6 +480,10 @@ def test_jsx_poche_dump_collects_visible_helper_layers():
     assert "::VISIBLE::CURVES::" in jsx
     assert "::VISIBLE::TANGENTS::" in jsx
     assert "CLIPPINGPLANEINTERSECTIONS" in jsx
+    assert "FOUNDATION" in jsx
+    assert "CONCRETE" in jsx
+    assert "TIMBER" not in jsx
+    assert "CLT" not in jsx
 
 
 def test_polygonize_dump_uses_same_component_helpers_without_filling_them(tmp_path):
@@ -510,6 +514,37 @@ def test_polygonize_dump_uses_same_component_helpers_without_filling_them(tmp_pa
     assert cut_name in report.polygons
     assert helper_name not in report.polygons
     assert unrelated_helper not in report.polygons
+
+
+def test_polygonize_dump_limits_jsx_helpers_to_foundation_concrete(tmp_path):
+    concrete_cut = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+    timber_cut = "axon::Visible::ClippingPlaneIntersections::TEC_TIMBER_BEAMS"
+    geometry = {
+        concrete_cut: [
+            [[0, 0], [140, 0]],
+            [[140, 40], [0, 40]],
+        ],
+        "axon::Visible::Curves::TEC_CONCRETE_BASE": [
+            [[0, 0], [0, 40]],
+            [[140, 0], [140, 40]],
+        ],
+        timber_cut: [
+            [[0, 90], [140, 90]],
+            [[140, 130], [0, 130]],
+        ],
+        "axon::Visible::Curves::TEC_TIMBER_BEAMS": [
+            [[0, 90], [0, 130]],
+            [[140, 90], [140, 130]],
+        ],
+    }
+    geometry_path = tmp_path / "geometry.json"
+    geometry_path.write_text(json.dumps(geometry))
+
+    report = polygonize_dump(str(geometry_path))
+    by_layer = {fill.layer: fill for fill in report.fills}
+
+    assert by_layer[concrete_cut].strategy == "structural_open_loop"
+    assert by_layer[timber_cut].strategy != "structural_open_loop"
 
 
 def test_structural_completion_accepts_cut_anchored_missing_face():

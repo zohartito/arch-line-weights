@@ -272,6 +272,12 @@ def _is_poche_cut_layer_name(layer_name: str) -> bool:
     return "GLASS" not in upper and "IGU" not in upper
 
 
+def _uses_jsx_structural_helpers(layer_name: str) -> bool:
+    """Limit JSX helper completion to the #30 concrete/foundation target family."""
+    upper = layer_name.upper()
+    return "TEC_CONCRETE_BASE" in upper or "TEC_FOUNDATION" in upper
+
+
 def _is_structural_poche_layer(layer_name: str) -> bool:
     try:
         from .architectural import classify_architectural_layer
@@ -1011,8 +1017,11 @@ def polygonize_dump(
     overrides = overrides or {}
     report = PocheReport()
     cut_data = {name: paths for name, paths in data.items() if _is_poche_cut_layer_name(name)}
+    helper_target_data = {
+        name: paths for name, paths in cut_data.items() if _uses_jsx_structural_helpers(name)
+    }
     structural_completion_paths_by_layer = structural_completion_paths_for_layers(
-        cut_data,
+        helper_target_data,
         data,
     )
     for layer_name, paths in cut_data.items():
@@ -1075,19 +1084,7 @@ DUMP_JSX_TEMPLATE = r"""#target illustrator
             return true;
         }
         if (n.indexOf("::VISIBLE::CURVES::") === -1 && n.indexOf("::VISIBLE::TANGENTS::") === -1) return false;
-        return (
-            n.indexOf("FOUNDATION") !== -1 ||
-            n.indexOf("CONCRETE") !== -1 ||
-            n.indexOf("CLT") !== -1 ||
-            n.indexOf("TIMBER") !== -1 ||
-            n.indexOf("STEEL") !== -1 ||
-            n.indexOf("STRUCT") !== -1 ||
-            n.indexOf("SLAB") !== -1 ||
-            n.indexOf("ROOF") !== -1 ||
-            n.indexOf("WALL") !== -1 ||
-            n.indexOf("BEAM") !== -1 ||
-            n.indexOf("COLUMN") !== -1
-        );
+        return n.indexOf("FOUNDATION") !== -1 || n.indexOf("CONCRETE") !== -1;
     }
 
     var doc = null;
