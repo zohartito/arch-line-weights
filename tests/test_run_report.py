@@ -46,7 +46,12 @@ def test_report_marks_injected_structural_open_loop_as_inferred():
     assert data["summary"]["polygons_filled"] == 2
     assert data["layers"][0]["status"] == "inferred"
     assert data["layers"][0]["action"] == "injected"
-    assert data["layers"][0]["review"]["needs_review"] is False
+    assert data["layers"][0]["review"]["needs_review"] is True
+    assert data["layers"][0]["review"]["visual_acceptance_required"] is True
+    assert any(
+        "W5/W7 visual acceptance" in reason
+        for reason in data["layers"][0]["review"]["reasons"]
+    )
 
 
 def test_apply_saas_report_marks_structural_helper_evidence_from_poche_report():
