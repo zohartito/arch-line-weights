@@ -46,7 +46,11 @@ product. It is an engineering control document, not a public launch claim.
   `structural_open_loop` at confidence 0.88, with output created and the
   old-vs-new rendered diff localized to the previously white concrete pier/stem
   area. This is Exit-A progress, but it is still not W5 visual acceptance and
-  does not close #30.
+  does not close #30. A later update adds a repo-owned C2/C3-shaped synthetic
+  regression for a vertical concrete stem plus foundation footing: target-family
+  helper evidence recovers concrete/foundation cut mass, helper layers are not
+  filled directly, and unrelated structural helpers do not leak into poché
+  output.
 - #37 + #42 temp integration was tested locally. The stack had one small import
   conflict in `poche.py`; after resolving it, focused tests and ruff passed,
   and a private USC `poche --report` probe reported `TEC_CONCRETE_BASE` as
