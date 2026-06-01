@@ -231,6 +231,18 @@ Each asset should be:
 - Named predictably, e.g. `person_standing_iso_ne_01`.
 - Free of source-PDF material and free of copied commercial entourage assets.
 
+Current implementation:
+
+- `arch_line_weights.entourage.generate_entourage_library()` creates the
+  minimum standing, walking, seated, and leaning SVG set.
+- Generated assets stay on `Entourage::People::<Posture>` layers with optional
+  contact shadows on `Entourage::People::Shadows`.
+- Stroke weight is clamped to the current `entourage` tier (`0.13 pt` in
+  screen-review section mode), and generated vectors avoid pure black fills and
+  strokes.
+- This is an asset generator only. AI insertion, floor-plate placement, and
+  Illustrator panel workflows remain future work.
+
 ## CLI Support for Issue #20
 
 Add the feature as a separate presentation step after hierarchy/poché:
