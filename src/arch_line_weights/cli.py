@@ -15,6 +15,7 @@ from .apply import apply_to_file
 from .apply_jsx import apply_via_jsx
 from .apply_saas import apply_to_file as apply_to_file_saas
 from .apply_saas import default_output_path as default_output_path_saas
+from .bridge_rhino_ai import bridge_rhino_ai
 from .classify import auto_by_luminance, explain_mapping, from_user_mapping
 from .input_format import UnsupportedInputError, raise_if_unsupported
 from .inspect import color_to_rgb255, inspect_file
@@ -24,6 +25,7 @@ from .layer_classify import (
     detect_source,
     explain_source_match,
 )
+from .layout_jsx import layout_via_jsx, parse_artboard_size, parse_length
 from .poche import apply_poche
 from .presets import PRESETS, select_preset
 from .progress import DEFAULT_PROGRESS_FILE, make_reporter
@@ -94,6 +96,10 @@ def _require_rewriteable_inspection(rep, *, src: Path, command: str) -> None:
         f"{reason} Nothing was written; run `arch-lw inspect` to confirm "
         "that this is a drawing export rather than a reference/report PDF."
     )
+
+
+def _default_poche_output_path(src: Path) -> Path:
+    return src.with_name(f"{src.stem.replace(' HIERARCHY', '')} POCHE{src.suffix}")
 
 
 @click.group()
@@ -406,6 +412,260 @@ def apply_jsx_cmd(
         printer=lambda s: click.echo(s, err=True),
     )
     click.echo(result["report"])
+
+
+@cli.command("layout-jsx")
+@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option(
+    "-o",
+    "--output",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Output path. Defaults to '<src> LAYOUT-jsx.<ext>'.",
+)
+@click.option(
+    "--artboard",
+    default="24x36in",
+    show_default=True,
+    help="Artboard size as WIDTHxHEIGHT. Bare values are inches; 'pt' is also supported.",
+)
+@click.option(
+    "--fit",
+    "fit_mode",
+    type=click.Choice(["center", "fit"]),
+    default="center",
+    show_default=True,
+    help="'center' keeps scale and recenters; 'fit' scales down to fit within the margin.",
+)
+@click.option(
+    "--margin",
+    default="0.5in",
+    show_default=True,
+    help="Margin used by --fit. Bare values are inches; 'pt' is also supported.",
+)
+@click.option(
+    "--allow-enlarge",
+    is_flag=True,
+    help="Allow --fit to scale artwork up when it is smaller than the target artboard.",
+)
+@click.option(
+    "--report-json",
+    "report_json",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Write/read a structured JSON layout report.",
+)
+@click.option(
+    "--jsx-path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Path for the generated Illustrator JSX bridge script.",
+)
+@click.option(
+    "--timeout",
+    "timeout_min",
+    type=click.IntRange(1, 240),
+    default=None,
+    help="JSX timeout in minutes (default 30, max 240). Honors ARCH_LW_JSX_TIMEOUT_MIN when omitted.",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Render the JSX/report contract without opening Illustrator or writing output artwork.",
+)
+def layout_jsx_cmd(
+    src: Path,
+    output: Path | None,
+    artboard: str,
+    fit_mode: str,
+    margin: str,
+    allow_enlarge: bool,
+    report_json: Path | None,
+    jsx_path: Path | None,
+    timeout_min: int | None,
+    dry_run: bool,
+):
+    """Open a Rhino/Illustrator export, set artboard size, fit/center, and save.
+
+    \b
+    This is the narrow bridge for Make2D output after Rhino export and before
+    line hierarchy/poché work. It does not classify strokes or change drawing
+    content; it makes the Illustrator document inspectable and centered on a
+    known sheet size.
+    """
+    try:
+        parse_artboard_size(artboard)
+    except ValueError as exc:
+        raise click.UsageError(f"invalid artboard: {exc}") from exc
+    try:
+        parse_length(margin)
+    except ValueError as exc:
+        raise click.UsageError(f"invalid margin: {exc}") from exc
+
+    try:
+        result = layout_via_jsx(
+            str(src),
+            dst=str(output) if output else None,
+            artboard=artboard,
+            fit_mode=fit_mode,
+            margin=margin,
+            allow_enlarge=allow_enlarge,
+            report_json=str(report_json) if report_json else None,
+            jsx_path=str(jsx_path) if jsx_path else None,
+            timeout_min=timeout_min,
+            dry_run=dry_run,
+        )
+    except ValueError as exc:
+        raise click.UsageError(str(exc)) from exc
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    if dry_run:
+        click.echo(f"layout: dry run wrote JSX {result['jsx_path']}", err=True)
+    else:
+        click.echo(f"layout: wrote {result['output']}", err=True)
+    click.echo(f"layout: report {result['report_json']}", err=True)
+    if result.get("report"):
+        click.echo(result["report"])
+
+
+@cli.command("bridge-rhino-ai")
+@click.option(
+    "--input",
+    "input_path",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Rhino Export Selected `.ai` or `.pdf` file.",
+)
+@click.option(
+    "-o",
+    "--output",
+    "layout_output",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Layout output path. Defaults to '<input> LAYOUT-jsx.<ext>'.",
+)
+@click.option(
+    "--artboard",
+    default="24x36in",
+    show_default=True,
+    help="Target artboard size as WIDTHxHEIGHT.",
+)
+@click.option(
+    "--fit",
+    "fit_mode",
+    type=click.Choice(["center", "fit"]),
+    default="center",
+    show_default=True,
+    help="Keep scale and center, or scale down to fit within the margin.",
+)
+@click.option("--margin", default="0.5in", show_default=True, help="Margin used by --fit.")
+@click.option("--allow-enlarge", is_flag=True, help="Allow --fit to scale artwork up.")
+@click.option(
+    "--preset",
+    type=click.Choice(sorted(PRESETS)),
+    default="section",
+    show_default=True,
+    help="Preset passed to optional --apply-jsx.",
+)
+@click.option(
+    "--source",
+    type=click.Choice(_SOURCE_CHOICES),
+    default=Source.RHINO.value,
+    show_default=True,
+    help="Layer-name convention recorded for reports and optional poché.",
+)
+@click.option("--scale", default="1/4", show_default=True, help="Plot scale for optional --apply-jsx.")
+@click.option("--for-print", is_flag=True, help="Use print weights in optional --apply-jsx.")
+@click.option("--apply-jsx", "run_apply_jsx", is_flag=True, help="Run hierarchy after layout.")
+@click.option("--poche", "run_poche", is_flag=True, help="Run poché after --apply-jsx.")
+@click.option(
+    "--poche-style",
+    type=click.Choice(["solid", "material"]),
+    default="solid",
+    show_default=True,
+    help="Style passed to optional poché.",
+)
+@click.option(
+    "--bridge-strategy",
+    type=click.Choice(_BRIDGE_STRATEGY_CHOICES),
+    default=_BRIDGE_STRATEGY_DEFAULT,
+    show_default=True,
+    help="Bridge selector passed to optional poché.",
+)
+@click.option(
+    "--report-dir",
+    type=click.Path(file_okay=False, path_type=Path),
+    help="Directory for bridge/layout/poché reports and generated JSX.",
+)
+@click.option(
+    "--timeout",
+    "timeout_min",
+    type=click.IntRange(1, 240),
+    default=None,
+    help="Illustrator JSX timeout in minutes.",
+)
+@click.option("--dry-run", is_flag=True, help="Plan stages and render layout JSX/report without GUI work.")
+def bridge_rhino_ai_cmd(
+    input_path: Path,
+    layout_output: Path | None,
+    artboard: str,
+    fit_mode: str,
+    margin: str,
+    allow_enlarge: bool,
+    preset: str,
+    source: str,
+    scale: str,
+    for_print: bool,
+    run_apply_jsx: bool,
+    run_poche: bool,
+    poche_style: str,
+    bridge_strategy: str,
+    report_dir: Path | None,
+    timeout_min: int | None,
+    dry_run: bool,
+):
+    """Run the Rhino Make2D -> Illustrator layout bridge.
+
+    \b
+    The first stage always runs `layout-jsx`. Optional stages continue into
+    `apply-jsx` and `poche`, but launch-proof decisions still depend on the
+    verification reports and visual QA gates.
+    """
+    if run_poche and not run_apply_jsx:
+        raise click.UsageError("--poche requires --apply-jsx")
+    try:
+        parse_artboard_size(artboard)
+        parse_length(margin)
+    except ValueError as exc:
+        raise click.UsageError(str(exc)) from exc
+
+    try:
+        result = bridge_rhino_ai(
+            str(input_path),
+            layout_output=str(layout_output) if layout_output else None,
+            artboard=artboard,
+            fit_mode=fit_mode,
+            margin=margin,
+            allow_enlarge=allow_enlarge,
+            preset=preset,
+            source=source,
+            scale=scale,
+            for_print=for_print,
+            run_apply_jsx=run_apply_jsx,
+            run_poche=run_poche,
+            report_dir=str(report_dir) if report_dir else None,
+            timeout_min=timeout_min,
+            bridge_strategy=bridge_strategy,
+            poche_style=poche_style,
+            dry_run=dry_run,
+        )
+    except ValueError as exc:
+        raise click.UsageError(str(exc)) from exc
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    click.echo(f"bridge: {result['summary']['status']}", err=True)
+    click.echo(f"bridge: report {result['report_json']}", err=True)
+    for stage in result["stages"]:
+        click.echo(f"  {stage['name']}: {stage['status']} -> {stage.get('output', '')}", err=True)
+    click.echo(json.dumps(result, indent=2, sort_keys=True))
 
 
 @cli.command("apply-saas")
@@ -919,10 +1179,17 @@ def apply_saas_cmd(
 )
 @click.option(
     "--report",
+    "--report-json",
     "report_path",
     type=click.Path(dir_okay=False, path_type=Path),
     default=None,
-    help="Write a durable JSON run report with filled/skipped/failed/why layer status.",
+    help="Write a durable JSON poché report for verification gates.",
+)
+@click.option(
+    "--geometry-json",
+    "geometry_json",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Write a redacted cut-geometry summary JSON for verification gates.",
 )
 def poche_cmd(
     src: Path,
@@ -935,6 +1202,7 @@ def poche_cmd(
     llm_fallback: bool,
     source: str,
     report_path: Path | None,
+    geometry_json: Path | None,
 ):
     """Generate solid-black poché on cut layers via shapely linemerge + polygonize.
 
@@ -961,7 +1229,8 @@ def poche_cmd(
       }
     """
     input_diag = _require_supported_input(src, "poche")
-    out = str(output) if output else None
+    resolved_output = output if output else _default_poche_output_path(src)
+    out = str(resolved_output)
     over = str(overrides_path) if overrides_path else None
     if source != Source.AUTO.value:
         click.echo(f"# layer-source: {source} (forced)", err=True)
@@ -971,38 +1240,41 @@ def poche_cmd(
         os.environ["ARCH_LW_LLM_FALLBACK"] = "1"
         click.echo("# llm-fallback: enabled (rung 5)", err=True)
     click.echo(f"applying poche to {src} (style={style}, scale=1:{int(1 / hatch_scale)})...", err=True)
-    report = apply_poche(
-        str(src),
-        out,
-        overrides_path=over,
-        style=style,
-        scale=hatch_scale,
-        use_alpha_shape=alpha_shape,
-        bridge_strategy=bridge_strategy,
-    )
-    output_path = (
-        Path(out) if out else src.with_name(f"{src.stem.replace(' HIERARCHY', '')} POCHE{src.suffix}")
-    )
-    if report_path is not None:
-        from .run_report import build_poche_report
-
-        run_report = build_poche_report(
-            input_path=src,
-            output_path=output_path,
-            source={
-                "mode": "poche",
-                "style": style,
-                "scale": hatch_scale,
-                "layer_source": source,
-                "bridge_strategy": bridge_strategy,
-            },
-            poche_report=report,
-            input_format=input_diag.to_dict(),
-            command=_command_summary("poche", src),
+    try:
+        report = apply_poche(
+            str(src),
+            out,
+            overrides_path=over,
+            style=style,
+            scale=hatch_scale,
+            use_alpha_shape=alpha_shape,
+            bridge_strategy=bridge_strategy,
+            geometry_report_path=str(geometry_json) if geometry_json else None,
         )
-        report_path.parent.mkdir(parents=True, exist_ok=True)
-        report_path.write_text(json.dumps(run_report, indent=2, sort_keys=True) + "\n")
-        click.echo(f"report: wrote {report_path}", err=True)
+    except Exception as exc:
+        if report_path is not None:
+            from .run_report import build_poche_report
+
+            run_report = build_poche_report(
+                input_path=src,
+                output_path=resolved_output,
+                source={
+                    "mode": "poche",
+                    "style": style,
+                    "scale": hatch_scale,
+                    "layer_source": source,
+                    "bridge_strategy": bridge_strategy,
+                    "min_inject_confidence": 0.85,
+                },
+                poche_report=None,
+                input_format=input_diag.to_dict(),
+                command=_command_summary("poche", src),
+                error=str(exc),
+            )
+            report_path.parent.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(json.dumps(run_report, indent=2, sort_keys=True) + "\n")
+            click.echo(f"report: wrote {report_path}", err=True)
+        raise
     click.echo("", err=True)
     click.echo(f"polygons created: {report.total_polygons}", err=True)
     click.echo(f"  clean (linemerge):     {report.working_layers} layers", err=True)
@@ -1021,6 +1293,27 @@ def poche_cmd(
             f"conf={fr.confidence:.2f}{bridge_suffix}",
             err=True,
         )
+    if report_path is not None:
+        from .run_report import build_poche_report
+
+        run_report = build_poche_report(
+            input_path=src,
+            output_path=resolved_output,
+            source={
+                "mode": "poche",
+                "style": style,
+                "scale": hatch_scale,
+                "layer_source": source,
+                "bridge_strategy": bridge_strategy,
+                "min_inject_confidence": 0.85,
+            },
+            poche_report=report,
+            input_format=input_diag.to_dict(),
+            command=_command_summary("poche", src),
+        )
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(json.dumps(run_report, indent=2, sort_keys=True) + "\n")
+        click.echo(f"report: wrote {report_path}", err=True)
 
 
 def _path_payload(path: Path) -> str:
