@@ -50,7 +50,12 @@ product. It is an engineering control document, not a public launch claim.
   view. A later proof-truth update tightens those review regions with
   per-region `min_dark_ratio` and `min_dark_delta` gates, so outline/dot
   artifacts and already-dark before views cannot pass as newly added solid
-  poché.
+  poché. A later proof-gate update at #37 `d72ecec` adds explicit
+  `review_acceptance.visual_layer_gates` handling: W5/W7 can clear only a
+  matching eligible visual-review layer gate, while failed, no-go,
+  missing-payload, needs-review, and low-confidence layer statuses still win.
+  This does not make proof public-safe; `public_safe` still requires separate
+  W5/W7 public-proof acceptance metadata.
 - #38 is green and draft: entourage SVG asset generator.
 - #39 is green and draft: conservative single-layer cleanup mode.
 - #40 is green and draft: run-report diagnose command.
@@ -127,6 +132,12 @@ product. It is an engineering control document, not a public launch claim.
   regression rerun produced 42 injected poché polygons with 0 failed layers
   while correctly summarizing the durable report as `needs_review` for 2
   W5/W7-gated foundation/concrete layers. Raw reports and paths stayed local.
+- #37 was refreshed at `d72ecec` so explicit W5/W7 visual-layer acceptance can
+  clear only the narrow proof-review gate it is meant to clear. Local
+  validation on the branch passed the new visual-gate regression tests, all
+  `tests/test_proof.py`, `tests/test_run_report.py tests/test_proof.py`, the
+  feasible full Python suite excluding the known hatch test, ruff, diff check,
+  and the changed-diff private-path/name/claim scan. GitHub CI for #37 is green.
 - #43 is draft and stacked on #36: the local designer-console prototype. It has
   local full-test verification, but no GitHub checks are reported on the
   stacked branch yet.
