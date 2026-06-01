@@ -30,6 +30,9 @@ product. It is an engineering control document, not a public launch claim.
 - #41 is draft: this control plan.
 - #42 is draft: a public-safe synthetic concrete-base poché regression. It is
   confidence evidence only and does not close #30.
+- #43 is draft and stacked on #36: the local designer-console prototype. It has
+  local full-test verification, but no GitHub checks are reported on the
+  stacked branch yet.
 
 The repo has an existing local `webapp/` scaffold: FastAPI backend, SvelteKit
 frontend, local filesystem storage, and tests. Designer-console work should
