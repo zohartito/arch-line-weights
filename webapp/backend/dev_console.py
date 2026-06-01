@@ -28,9 +28,18 @@ def webapp_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
-def find_available_port(host: str, preferred: int, *, limit: int = PORT_SEARCH_LIMIT) -> int:
+def find_available_port(
+    host: str,
+    preferred: int,
+    *,
+    limit: int = PORT_SEARCH_LIMIT,
+    exclude: set[int] | None = None,
+) -> int:
     """Return the first bindable port at or after ``preferred``."""
+    excluded = set(exclude or set())
     for port in range(preferred, preferred + limit):
+        if port in excluded:
+            continue
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
@@ -39,6 +48,17 @@ def find_available_port(host: str, preferred: int, *, limit: int = PORT_SEARCH_L
                 continue
             return port
     raise RuntimeError(f"no available port found from {preferred} through {preferred + limit - 1}")
+
+
+def choose_server_ports(
+    host: str,
+    *,
+    backend_preferred: int,
+    frontend_preferred: int,
+) -> tuple[int, int]:
+    backend_port = find_available_port(host, backend_preferred)
+    frontend_port = find_available_port(host, frontend_preferred, exclude={backend_port})
+    return backend_port, frontend_port
 
 
 def build_pythonpath(root: Path, env: Mapping[str, str]) -> str:
@@ -156,8 +176,11 @@ def run(argv: Sequence[str] | None = None) -> int:
         return 2
 
     try:
-        backend_port = find_available_port(args.host, args.backend_port)
-        frontend_port = find_available_port(args.host, args.frontend_port)
+        backend_port, frontend_port = choose_server_ports(
+            args.host,
+            backend_preferred=args.backend_port,
+            frontend_preferred=args.frontend_port,
+        )
     except RuntimeError as exc:
         print(str(exc), file=sys.stderr)
         return 2

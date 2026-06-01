@@ -20,6 +20,48 @@ def test_find_available_port_skips_occupied_port() -> None:
     assert available >= occupied
 
 
+def test_find_available_port_skips_excluded_port() -> None:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        excluded = sock.getsockname()[1]
+
+    available = dev_console.find_available_port("127.0.0.1", excluded, exclude={excluded})
+
+    assert available != excluded
+    assert available > excluded
+
+
+def test_choose_server_ports_keeps_backend_and_frontend_distinct(monkeypatch) -> None:
+    calls: list[tuple[int, set[int]]] = []
+
+    def fake_find_available_port(
+        _host: str,
+        preferred: int,
+        *,
+        limit: int = dev_console.PORT_SEARCH_LIMIT,
+        exclude: set[int] | None = None,
+    ) -> int:
+        del limit
+        excluded = set(exclude or set())
+        calls.append((preferred, excluded))
+        if preferred == 8766:
+            return 8766
+        assert 8766 in excluded
+        return 8767
+
+    monkeypatch.setattr(dev_console, "find_available_port", fake_find_available_port)
+
+    backend_port, frontend_port = dev_console.choose_server_ports(
+        "127.0.0.1",
+        backend_preferred=8766,
+        frontend_preferred=8765,
+    )
+
+    assert backend_port == 8766
+    assert frontend_port == 8767
+    assert calls == [(8766, set()), (8765, {8766})]
+
+
 def test_build_backend_env_sets_pythonpath_and_cors(tmp_path: Path) -> None:
     root = tmp_path / "webapp"
     root.mkdir()
