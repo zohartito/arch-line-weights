@@ -35,6 +35,32 @@ git diff --check  → pass
   `public_proof` acceptance.
 - No PR merges.
 
+## Integration rehearsal — 2026-06-01 (`codex/tmp-full-stack-rehearsal`)
+
+Archival no-merge branch; not release clearance.
+
+Merge order used (all clean into rehearsal at this checkpoint):
+
+1. `origin/codex/open-issue-verification-core` (`b9758e8`) — canonical proof + console handoff
+2. `origin/codex/endgame-delivery-ledger` — control docs
+3. `origin/codex/issue30-concrete-base-synthetic-regression` — already present
+4. `origin/v0.2-verification-core`, `origin/w2-verification-fixture-sourcing`,
+   `origin/codex/quarantine-day1-proof-assets` — already present
+
+Rehearsal verification:
+
+```text
+pytest --ignore=tests/test_hatch_v05.py -q  → 644 passed, 6 skipped, 1 xfailed
+```
+
+`#37`-only slice on `codex/open-issue-verification-core`:
+
+```text
+pytest --ignore=tests/test_hatch_v05.py -q  → 568 passed, 1 skipped
+webapp/tests (console + routes + dev_console)  → 36 passed
+ruff check src/ tests/ webapp/backend webapp/tests  → pass
+```
+
 ## Update — 2026-06-01 (W5/W7 proof-packet handoff slice, `d8bdd3d`)
 
 ### What changed
