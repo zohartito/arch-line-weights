@@ -547,6 +547,58 @@ def test_polygonize_dump_limits_jsx_helpers_to_foundation_concrete(tmp_path):
     assert by_layer[timber_cut].strategy != "structural_open_loop"
 
 
+def test_polygonize_dump_recovers_c2_c3_shaped_foundation_concrete_only(tmp_path):
+    concrete_stem = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+    foundation_footing = "axon::Visible::ClippingPlaneIntersections::TEC_FOUNDATION"
+    unrelated_cut = "axon::Visible::ClippingPlaneIntersections::TEC_TIMBER_BEAMS"
+    concrete_helper = "axon::Visible::Curves::TEC_CONCRETE_BASE"
+    foundation_helper = "axon::Visible::Tangents::TEC_FOUNDATION"
+    unrelated_helper = "axon::Visible::Curves::TEC_TIMBER_BEAMS"
+    geometry = {
+        concrete_stem: [
+            [[100, 0], [100, 160]],
+            [[130, 160], [130, 0]],
+        ],
+        concrete_helper: [
+            [[100, 0], [130, 0]],
+            [[100, 160], [130, 160]],
+        ],
+        foundation_footing: [
+            [[0, -30], [180, -30]],
+            [[180, -2], [0, -2]],
+        ],
+        foundation_helper: [
+            [[0, -30], [0, -2]],
+            [[180, -30], [180, -2]],
+        ],
+        unrelated_cut: [
+            [[0, 220], [140, 220]],
+            [[140, 260], [0, 260]],
+        ],
+        unrelated_helper: [
+            [[0, 220], [0, 260]],
+            [[140, 220], [140, 260]],
+        ],
+    }
+    geometry_path = tmp_path / "geometry.json"
+    geometry_path.write_text(json.dumps(geometry))
+
+    report = polygonize_dump(str(geometry_path))
+    by_layer = {fill.layer: fill for fill in report.fills}
+
+    assert by_layer[concrete_stem].strategy == "structural_open_loop"
+    assert by_layer[foundation_footing].strategy == "structural_open_loop"
+    assert by_layer[concrete_stem].polygon_count >= 1
+    assert by_layer[foundation_footing].polygon_count >= 1
+    assert concrete_stem in report.polygons
+    assert foundation_footing in report.polygons
+    assert concrete_helper not in by_layer
+    assert foundation_helper not in by_layer
+    assert unrelated_helper not in by_layer
+    assert by_layer[unrelated_cut].strategy != "structural_open_loop"
+    assert unrelated_cut not in report.polygons
+
+
 def test_structural_completion_accepts_cut_anchored_missing_face():
     accepted, candidates = complete_structural_cut_polygons(
         "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
