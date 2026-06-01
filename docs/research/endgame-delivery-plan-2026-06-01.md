@@ -60,6 +60,13 @@ product. It is an engineering control document, not a public launch claim.
   `TEC_FOUNDATION` as requiring W5/W7 visual acceptance. That is the desired
   no-go behavior: geometry progress is captured, but proof status remains
   review-gated until human visual acceptance exists.
+- #37 + #42 integration was rechecked after the latest #42 C2/C3 synthetic
+  regression. #42 now avoids the prior `poche.py` import conflict by keeping
+  the Make2D-completion import local to `polygonize_dump`, and #37 adds a
+  proof-level regression showing helper-backed synthetic concrete poché reports
+  remain `needs_review` / `public_safe: false` when validated as proof packets.
+  The combined temp stack merged without conflicts, passed focused
+  proof/report/geometry tests, and passed the feasible full suite.
 - #43 is draft and stacked on #36: the local designer-console prototype. It has
   local full-test verification, but no GitHub checks are reported on the
   stacked branch yet.
