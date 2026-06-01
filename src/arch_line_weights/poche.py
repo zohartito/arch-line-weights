@@ -47,6 +47,7 @@ from shapely.ops import linemerge, polygonize, snap, unary_union
 
 from .bridge import infer_bridges, infer_bridges_best
 from .hatch import hatch_polygon, material_for_layer
+from .input_format import raise_if_unsupported
 
 _log = logging.getLogger(__name__)
 
@@ -1321,6 +1322,7 @@ def apply_poche(
     dst = os.path.abspath(dst)
     if dst == src:
         raise ValueError("dst must differ from src")
+    raise_if_unsupported(src, "poche")
 
     overrides = {}
     if overrides_path:

@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import json
+
+from click.testing import CliRunner
 from shapely.geometry import Polygon
 
+from arch_line_weights import cli as cli_mod
+from arch_line_weights.cli import cli
 from arch_line_weights.make2d_completion import CompletionCandidate
 from arch_line_weights.poche import FillResult, PocheReport
 from arch_line_weights.poche_saas import PocheSaasResult
-from arch_line_weights.run_report import build_apply_saas_report
+from arch_line_weights.run_report import build_apply_saas_report, build_poche_report
 
 
 def _report(
@@ -113,3 +118,81 @@ def test_report_includes_completion_candidate_rejections():
     assert data["completion_candidates"][0]["cut_shared_length"] == 42.5
     assert data["completion_candidates"][0]["bounds"] == [0.0, 0.0, 100.0, 80.0]
     assert data["layers"][0]["review"]["needs_review"] is True
+
+
+def test_apply_saas_report_schema_v2_includes_input_format_and_visual_artifacts():
+    layer = "LayerA"
+    data = build_apply_saas_report(
+        input_path="in.ai",
+        output_path="out.ai",
+        source={"mode": "apply-saas"},
+        poche_report=PocheReport(fills=[FillResult(layer, "linemerge_bare", 1.0, 1, 4)]),
+        poche_result=PocheSaasResult(polygons_injected=1),
+        input_format={"input_kind": "native_ai", "header_kind": "pdf"},
+        visual_artifacts={"before": "before.png", "after": "after.png", "diff": "diff.png"},
+        command="arch-lw apply-saas in.ai --poche --report report.json",
+    )
+
+    assert data["schema_version"] == 2
+    assert data["source"]["input_format"]["input_kind"] == "native_ai"
+    assert data["source"]["command"] == "arch-lw apply-saas in.ai --poche --report report.json"
+    assert data["visual_artifacts"]["diff"] == "diff.png"
+
+
+def test_poche_report_uses_same_changed_skipped_failed_shape():
+    layer = "axon::Visible::ClippingPlaneIntersections::TEC_FOUNDATION"
+    data = build_poche_report(
+        input_path="hierarchy.ai",
+        output_path="poche.ai",
+        source={"mode": "poche", "style": "solid"},
+        poche_report=PocheReport(
+            fills=[
+                FillResult(layer, "linemerge_bare", 1.0, 2, 8),
+                FillResult("BadLayer", "failed", 0.0, 0, 3),
+            ],
+            polygons={layer: [[[0, 0], [10, 0], [10, 10], [0, 10]]]},
+        ),
+        input_format={"input_kind": "pdf_compatible_ai"},
+        command="arch-lw poche hierarchy.ai --report report.json",
+    )
+
+    assert data["schema_version"] == 2
+    assert data["source"]["mode"] == "poche"
+    assert data["summary"]["layers_filled"] == 1
+    assert data["summary"]["layers_failed"] == 1
+    assert data["summary"]["polygons_filled"] == 1
+    assert data["layers"][0]["status"] == "filled"
+    assert data["layers"][0]["action"] == "injected"
+    assert data["layers"][1]["status"] == "failed"
+
+
+def test_poche_cli_writes_durable_report(monkeypatch, tmp_path):
+    import pikepdf
+
+    src = tmp_path / "hierarchy.ai"
+    output = tmp_path / "out.ai"
+    report_path = tmp_path / "report.json"
+    pdf = pikepdf.new()
+    pdf.add_blank_page(page_size=(100, 100))
+    pdf.save(src)
+    pdf.close()
+
+    def fake_apply_poche(*_args, **_kwargs):
+        return PocheReport(
+            fills=[FillResult("LayerA", "linemerge_bare", 1.0, 1, 4)],
+            polygons={"LayerA": [[[0, 0], [1, 0], [1, 1], [0, 1]]]},
+        )
+
+    monkeypatch.setattr(cli_mod, "apply_poche", fake_apply_poche)
+
+    result = CliRunner().invoke(
+        cli,
+        ["poche", str(src), "-o", str(output), "--report", str(report_path)],
+    )
+
+    assert result.exit_code == 0, result.output
+    data = json.loads(report_path.read_text())
+    assert data["schema_version"] == 2
+    assert data["source"]["mode"] == "poche"
+    assert data["source"]["input_format"]["input_kind"] == "pdf_compatible_ai"
+    assert data["summary"]["polygons_filled"] == 1

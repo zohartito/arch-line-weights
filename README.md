@@ -128,6 +128,21 @@ Input caveats for that path:
 - Legacy Rhino PostScript `.ai` exports may need Illustrator File > Save As /
   re-save before v1 can process them.
 
+Supported input matrix:
+
+| Input kind | Recommended commands | Notes |
+|---|---|---|
+| Native Illustrator `.ai` with `/NumBlock` | `inspect`, `apply-saas`, `apply-saas --poche` | Best headless, layer-preserving path. |
+| PDF-only or `[Converted]` `.ai` | `inspect`, `apply-jsx`, then `poche` | Use the Illustrator bridge when layers must be preserved. |
+| Plain `.pdf` | `inspect`, `apply` | Fast PDF-stream rewrite; no Illustrator layer editing claim. |
+| Reference/report/image-only `.pdf` | `inspect` diagnostic only | Not a line-weight output path; export a vector drawing sheet instead. |
+| Legacy Rhino PostScript `.ai` | Illustrator Save As first | Convert to modern/PDF-compatible `.ai`, then re-run `inspect`. |
+
+Commands now preflight the input shape and return a diagnostic with the
+detected kind, supported command map, and recommended next step when the wrong
+file shape is used. If a PDF has no vector drawing marks or rewriteable strokes,
+`apply` stops before writing a no-op output.
+
 `apply-jsx` uses a **semantic layer-name classifier**: anything in a
 `Visible::ClippingPlaneIntersections::*` OCG is the section cut (1.0 pt);
 `TEC_TIMBER_*`, `TEC_CLT_*`, `TEC_FOUNDATION` etc. are structure (0.5 pt);
