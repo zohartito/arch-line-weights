@@ -33,9 +33,9 @@ product. It is an engineering control document, not a public launch claim.
   `public_safe` false until explicit W5/W7 public-proof acceptance metadata is
   present. It also gates inferred concrete/foundation fills on explicit W5/W7
   visual acceptance, so those reports stay `needs_review` even when the
-  geometric strategy improves. A later update carries helper-backed poché
-  evidence through reports as `used_structural_helpers` while preserving the
-  proof gate.
+  geometric strategy improves. Later updates carry helper-backed poché evidence
+  through reports as `used_structural_helpers` plus `structural_helper_count`
+  while preserving the proof gate.
 - #38 is green and draft: entourage SVG asset generator.
 - #39 is green and draft: conservative single-layer cleanup mode.
 - #40 is green and draft: run-report diagnose command.
@@ -52,9 +52,9 @@ product. It is an engineering control document, not a public launch claim.
   regression for a vertical concrete stem plus foundation footing: target-family
   helper evidence recovers concrete/foundation cut mass, helper layers are not
   filled directly, and unrelated structural helpers do not leak into poché
-  output. A later update records structural helper counts in poché reports so
-  downstream run/proof reports can show helper-backed evidence without treating
-  it as acceptance.
+  output. Later updates record structural helper counts in poché reports, expose
+  those counts downstream, and mirror the W5/W7 concrete/foundation review gate
+  in #42 so helper-backed inference is never treated as acceptance.
 - #37 + #42 temp integration was tested locally. The stack had one small import
   conflict in `poche.py`; after resolving it, focused tests and ruff passed,
   and a private USC `poche --report` probe reported `TEC_CONCRETE_BASE` as
@@ -75,6 +75,12 @@ product. It is an engineering control document, not a public launch claim.
   update. #37 records helper-backed evidence in both apply-saas and proof-style
   reports, and #42 records structural helper counts from runtime helper paths.
   The refreshed temp merge remained conflict-free. Combined focused
+  proof/report/geometry tests passed, ruff passed, the touched-file
+  private/no-claim scan had no hits, and the feasible full suite passed.
+- #37 + #42 integration was rechecked again after adding
+  `structural_helper_count`, mirroring the concrete/foundation W5/W7 gate into
+  #42, and rearranging overlapping report tests so the stack merges cleanly.
+  The refreshed temp merge was conflict-free. Combined focused
   proof/report/geometry tests passed, ruff passed, the touched-file
   private/no-claim scan had no hits, and the feasible full suite passed.
 - #43 is draft and stacked on #36: the local designer-console prototype. It has
