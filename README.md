@@ -128,6 +128,23 @@ Input caveats for that path:
 - Legacy Rhino PostScript `.ai` exports may need Illustrator File > Save As /
   re-save before v1 can process them.
 
+### Clean up one-layer Make2D exports
+
+Use `cleanup` when a Make2D/Illustrator export has too little layer hierarchy
+to classify by layer name, such as a single stair or axon layer:
+
+```
+arch-lw cleanup drawing.ai \
+  --output "drawing CLEANUP.ai" \
+  --report "drawing-cleanup-report.json"
+```
+
+The first version is conservative. It writes a new file, deletes only tiny
+high-confidence dust paths and exact duplicate paths, inserts per-path weights
+for short/detail, medium, and long/profile strokes, and writes JSON counts for
+what changed. It does not repair invalid Rhino source solids or make uncertain
+internal lines disappear; those remain review items in the report/workflow.
+
 `apply-jsx` uses a **semantic layer-name classifier**: anything in a
 `Visible::ClippingPlaneIntersections::*` OCG is the section cut (1.0 pt);
 `TEC_TIMBER_*`, `TEC_CLT_*`, `TEC_FOUNDATION` etc. are structure (0.5 pt);
