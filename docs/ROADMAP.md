@@ -41,9 +41,9 @@ structured poché report work, cut-geometry summary work, an Illustrator layout
 JSX bridge, and follow-up work to encode the foundation/concrete no-go
 limitation, stabilize the Rhino bridge verification path, and normalize
 `layout-jsx` runtime reports. That is useful progress toward honest report
-semantics, but CI still needs attention and #30 is not closed until the
-foundation/concrete path is either fixed or documented as a limitation and
-accepted by proof QA.
+semantics, but it does not close #30: the foundation/concrete path still needs
+either a real visual fix or a documented limitation that proof QA explicitly
+accepts.
 
 See `RETROSPECTIVE.md` for the current wins, failures, causes, and operating
 changes.
@@ -54,8 +54,8 @@ changes.
   enough layer structure for review.
 - The poché path can produce fills on high-confidence cut layers and now has
   a structured reporting direction.
-- The axon stress proof passed on `macro_for_archlw.ai`: 98 MB / 1.28M
-  strokes, `apply-saas` exit 0, about 1:53 runtime.
+- The private axon stress proof passed on a local-only 98 MB / 1.28M-stroke
+  fixture: `apply-saas` exit 0, about 1:53 runtime.
 
 The axon run remains large-file performance evidence. It is not section or
 poché evidence, because that fixture had no `ClippingPlaneIntersections` cut
@@ -79,7 +79,8 @@ layers.
 - Keep #29 blocked until #30 has verifier-backed proof truth.
 - Treat W3's current limitation/report work as implementation evidence, not
   acceptance. W5 still needs to re-QA the proof packet before the blocker moves.
-- Fix the current ruff failure on PR #36 before any merge-readiness decision.
+- Keep PR #36 ruff/tests green before any merge-readiness decision; treat every
+  new branch head as requiring fresh checks.
 - Finish the verification report contract: changed, skipped, failed, why,
   input provenance, command manifest, stroke delta, raster diff, poché
   coverage, missed-fill detection, false-fill detection, and an exportable
