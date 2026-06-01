@@ -60,10 +60,11 @@ product. It is an engineering control document, not a public launch claim.
 - #44 is draft: a repo-native `webapp/` FastAPI + SvelteKit designer-console
   prototype based on `main`. It preserves the existing webapp scaffold shape and
   is the preferred path if the team wants the console to live in `webapp/`. It
-  now allows local Vite fallback ports so the console keeps working when the
-  default frontend port is already occupied; rendered QA confirmed the
-  fallback URL can load the console and run the synthetic-demo inspect stage
-  without browser console errors.
+  now includes a one-command local launcher, `arch-lw-web-console`, that starts
+  the backend and frontend together, chooses open ports, coordinates CORS/API
+  URL settings, and opens the console. Rendered QA confirmed both a normal
+  fallback URL and an outside-default frontend port can load the console and
+  run the synthetic-demo inspect stage without browser console errors.
 - #45 is draft: launch-safety quarantine for private proof assets and public
   posting drafts. It removes committed Day-1 proof media from the public tree
   and redacts inherited local/private paths.
