@@ -73,6 +73,67 @@ def test_console_synthetic_demo_can_start_without_upload(app_client) -> None:
     assert "Synthetic proof does not close #30." in body["guardrails"]
 
 
+def test_console_synthetic_demo_runs_full_headless_review_packet(
+    app_client,
+    monkeypatch,
+) -> None:
+    client, app = app_client
+    import backend.console as console
+
+    def fail_apply_via_jsx(*_args, **_kwargs):
+        raise AssertionError("synthetic demo should use the headless apply path")
+
+    def fail_apply_poche(*_args, **_kwargs):
+        raise AssertionError("synthetic demo should use the headless poche path")
+
+    monkeypatch.setattr(console, "layout_via_jsx", None)
+    monkeypatch.setattr(console, "apply_via_jsx", fail_apply_via_jsx)
+    monkeypatch.setattr(console, "apply_poche", fail_apply_poche)
+
+    created = client.post(
+        "/api/console/runs",
+        data={"workflow": "synthetic_proof_demo"},
+    ).json()
+
+    body = created
+    for stage_key in [
+        "inspect_file",
+        "run_layout",
+        "apply_line_weights",
+        "generate_poche",
+        "export_proof_packet",
+    ]:
+        resp = client.post(f"/api/console/runs/{created['run_id']}/stages/{stage_key}")
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+
+    stages = {stage["key"]: stage for stage in body["stages"]}
+    assert stages["inspect_file"]["status"] == "passed"
+    assert stages["run_layout"]["status"] == "needs_review"
+    assert stages["apply_line_weights"]["status"] == "passed"
+    assert stages["generate_poche"]["status"] == "passed"
+    assert stages["export_proof_packet"]["status"] == "needs_review"
+    assert body["overall_status"] == "needs_review"
+    assert body["public_safe"] is False
+    assert "W5/W7 public proof acceptance is not recorded." in stages["export_proof_packet"]["why"]
+
+    proof_artifact = next(artifact for artifact in body["artifacts"] if artifact["key"] == "proof_packet")
+    run = app.state.console_store.load(created["run_id"])
+    packet_path = Path(run.artifacts[proof_artifact["key"]])
+    with zipfile.ZipFile(packet_path) as packet:
+        packet_summary = json.loads(packet.read("public-summary.json"))
+        packet_names = set(packet.namelist())
+
+    assert "public-summary.json" in packet_names
+    assert "README-NOT-PUBLIC-CLEARANCE.txt" in packet_names
+    assert packet_summary["public_safe"] is False
+    assert packet_summary["overall_status"] == "needs_review"
+    dumped = json.dumps(packet_summary)
+    assert "/private/" not in dumped
+    assert "/Users/" not in dumped
+    assert "/var/folders/" not in dumped
+
+
 def test_console_inspect_stage_returns_public_safe_report(
     app_client,
     synthetic_ai: Path,
