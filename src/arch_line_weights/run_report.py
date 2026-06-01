@@ -175,6 +175,9 @@ def build_apply_saas_report(
         "layers_low_confidence": sum(1 for layer in layers if layer["status"] == "low_confidence"),
         "layers_failed": sum(1 for layer in layers if layer["status"] == "failed"),
         "layers_needs_review": sum(1 for layer in layers if layer["review"]["needs_review"]),
+        "visual_acceptance_gated_layers": sum(
+            1 for layer in layers if layer["review"]["visual_acceptance_required"]
+        ),
         "polygons_filled": poche_result.polygons_injected,
         "polygons_diagnostic_only": diagnostic_polygons,
         "bytes_injected": poche_result.bytes_injected,
@@ -282,6 +285,9 @@ def build_poche_report(
         "layers_low_confidence": sum(1 for layer in layers if layer["status"] == "low_confidence"),
         "layers_failed": sum(1 for layer in layers if layer["status"] == "failed"),
         "layers_needs_review": sum(1 for layer in layers if layer["review"]["needs_review"]),
+        "visual_acceptance_gated_layers": sum(
+            1 for layer in layers if layer["review"]["visual_acceptance_required"]
+        ),
         "polygons_filled": sum(len(polys) for polys in poche_report.polygons.values()),
         "polygons_diagnostic_only": diagnostic_polygons,
         "bytes_injected": 0,

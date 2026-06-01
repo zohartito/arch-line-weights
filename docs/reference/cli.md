@@ -110,6 +110,33 @@ arch-lw preview BEFORE AFTER -o OUTPUT [OPTIONS]
 | `--dpi INT` | `96` | Render DPI |
 | `--ghostscript` | off | Ghostscript fallback for hairline accuracy |
 
+## `arch-lw proof-check`
+
+Read a Make2D proof manifest and emit proof-packet plan or validation JSON.
+
+```bash
+arch-lw proof-check tests/fixtures/make2d/manifest.yml \
+  --output-dir proof \
+  --plan-only
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--output-dir PATH` | `proof` | Directory containing, or planned to contain, per-fixture proof packet artifacts |
+| `--fixture ID` | all fixtures | Limit output to one fixture id; may be passed multiple times |
+| `--plan-only` | off | Emit manifest, expected artifact paths, commands, and guardrails without validating local files |
+| `--write PATH` | — | Write the proof-check JSON report to disk as well as stdout |
+| `--pretty / --no-pretty` | pretty | Pretty-print JSON output |
+
+Validation mode checks the deterministic proof packet paths for `report.json`,
+before/after/diff images, cut-geometry JSON, layer-audit JSON, rendered-view
+coverage, report identity, no-go/review state, private path leaks, and configured
+review-region pixel gates. It also compares manifest `expected_report.counts`
+against the raw report summary and fails when rendered before/after views are
+effectively unchanged. It fails nonzero for `failed` or `no_go` packets and keeps
+`needs_review` visible for W5/W7 acceptance. Treat `--write` output as local
+evidence: do not commit raw proof-check reports that contain machine-local paths.
+
 ## `arch-lw explain-layer`
 
 Show what tier+weight the classifier assigns.

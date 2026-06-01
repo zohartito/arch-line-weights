@@ -202,6 +202,23 @@ def test_poche_report_marks_inferred_foundation_concrete_as_needing_visual_accep
     assert data["layers"][0]["review"]["needs_review"] is True
     assert data["layers"][0]["review"]["visual_acceptance_required"] is True
     assert data["summary"]["layers_needs_review"] == 1
+    assert data["summary"]["visual_acceptance_gated_layers"] == 1
+
+
+def test_apply_saas_report_counts_visual_acceptance_gated_layers():
+    layer = "axon::Visible::ClippingPlaneIntersections::TEC_FOUNDATION"
+    data = build_apply_saas_report(
+        input_path="in.ai",
+        output_path="out.ai",
+        source={"mode": "apply-saas"},
+        poche_report=PocheReport(
+            fills=[FillResult(layer, "structural_open_loop", 0.88, 1, 8)],
+            polygons={layer: [[[0, 0], [10, 0], [10, 10], [0, 10]]]},
+        ),
+        poche_result=PocheSaasResult(polygons_injected=1),
+    )
+
+    assert data["summary"]["visual_acceptance_gated_layers"] == 1
 
 
 def test_poche_cli_writes_durable_report(monkeypatch, tmp_path):

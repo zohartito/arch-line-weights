@@ -168,6 +168,9 @@ def validate_proof_packet(
     plan: ProofPacketPlan,
     *,
     review_regions: Sequence[ReviewRegion] | None = None,
+    fail_on_unchanged: bool = False,
+    unchanged_max_changed_ratio: float = 0.001,
+    unchanged_per_channel_tolerance: int = 2,
     min_dark_ratio: float = 0.05,
     min_dark_delta: float = 0.0,
     threshold: int = 48,
@@ -218,6 +221,16 @@ def validate_proof_packet(
         visual_errors, visual_missing = _report_visual_errors(report, plan)
         failed_reasons.extend(visual_errors)
         missing_artifacts.extend(visual_missing)
+
+    if report and fail_on_unchanged:
+        failed_reasons.extend(
+            _rendered_view_unchanged_errors(
+                report,
+                plan,
+                max_changed_ratio=unchanged_max_changed_ratio,
+                per_channel_tolerance=unchanged_per_channel_tolerance,
+            )
+        )
 
     if report and review_regions:
         failed_reasons.extend(
@@ -626,6 +639,38 @@ def _review_region_pixel_errors(
                 )
         except OSError as exc:
             errors.append(f"review region {region.id} after image could not be opened: {exc}")
+    return errors
+
+
+def _rendered_view_unchanged_errors(
+    report: dict[str, Any],
+    plan: ProofPacketPlan,
+    *,
+    max_changed_ratio: float,
+    per_channel_tolerance: int,
+) -> list[str]:
+    before_paths = _rendered_view_artifact_paths(report, plan, "before")
+    after_paths = _rendered_view_artifact_paths(report, plan, "after")
+    errors: list[str] = []
+    for view_id, before_path in before_paths.items():
+        after_path = after_paths.get(view_id)
+        if after_path is None:
+            continue
+        if not before_path.exists() or not before_path.is_file() or before_path.stat().st_size <= 0:
+            continue
+        if not after_path.exists() or not after_path.is_file() or after_path.stat().st_size <= 0:
+            continue
+        try:
+            with Image.open(before_path) as before_image, Image.open(after_path) as after_image:
+                if images_effectively_unchanged(
+                    before_image,
+                    after_image,
+                    max_changed_ratio=max_changed_ratio,
+                    per_channel_tolerance=per_channel_tolerance,
+                ):
+                    errors.append(f"rendered view {view_id} is effectively unchanged")
+        except OSError as exc:
+            errors.append(f"rendered view {view_id} images could not be opened: {exc}")
     return errors
 
 

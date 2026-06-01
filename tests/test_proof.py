@@ -651,6 +651,28 @@ def test_images_effectively_unchanged_uses_pixel_ratio_threshold() -> None:
     assert not images_effectively_unchanged(before, changed, max_changed_ratio=0.02, per_channel_tolerance=8)
 
 
+def test_validate_proof_packet_rejects_effectively_unchanged_rendered_views_when_enabled(
+    tmp_path: Path,
+) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    _write_packet_artifacts(plan, report=_safe_pass_report())
+    before = Image.new("RGB", (20, 20), "white")
+    before.save(plan.output_dir / "before.png")
+    before.save(plan.output_dir / "after.png")
+    before.save(plan.output_dir / "cut-mass-before.png")
+    before.save(plan.output_dir / "cut-mass-after.png")
+
+    validation = validate_proof_packet(plan, fail_on_unchanged=True)
+
+    assert validation.status == "failed"
+    assert any("rendered view full_board is effectively unchanged" in reason for reason in validation.reasons)
+    assert any("rendered view cut_mass_detail is effectively unchanged" in reason for reason in validation.reasons)
+
+
 def test_has_dark_pixels_in_region_detects_expected_poche_presence() -> None:
     image = Image.new("RGB", (20, 20), "white")
     for x in range(5, 10):

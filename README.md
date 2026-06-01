@@ -185,6 +185,13 @@ proof can exercise the harness, but it does not close #30, and the private USC
 regression stays private. Use the local designer console or proof packet export
 for review material that includes `W5-W7-ACCEPTANCE-HANDOFF.json`.
 
+To inspect the proof manifest or validate a local proof packet, run:
+
+```bash
+.venv/bin/arch-lw proof-check tests/fixtures/make2d/manifest.yml --plan-only
+.venv/bin/arch-lw proof-check tests/fixtures/make2d/manifest.yml --output-dir proof --write proof-check.json
+```
+
 ---
 
 ## How it works (and why it's fast)

@@ -6,6 +6,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 import click
 
@@ -1020,6 +1021,208 @@ def poche_cmd(
             f"conf={fr.confidence:.2f}{bridge_suffix}",
             err=True,
         )
+
+
+def _path_payload(path: Path) -> str:
+    return path.as_posix()
+
+
+def _fixture_artifact_payload(artifacts) -> dict[str, Any]:
+    return {
+        "before": _path_payload(artifacts.before),
+        "after": _path_payload(artifacts.after),
+        "diff": _path_payload(artifacts.diff),
+        "rendered_views": [
+            {
+                "id": view.id,
+                "kind": view.kind,
+                "before": _path_payload(view.before),
+                "after": _path_payload(view.after),
+                "diff": _path_payload(view.diff),
+            }
+            for view in artifacts.rendered_views
+        ],
+    }
+
+
+def _review_region_payload(region) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "id": region.id,
+        "kind": region.kind,
+        "rect": list(region.rect),
+    }
+    if region.min_dark_ratio is not None:
+        payload["min_dark_ratio"] = region.min_dark_ratio
+    if region.min_dark_delta is not None:
+        payload["min_dark_delta"] = region.min_dark_delta
+    return payload
+
+
+def _proof_check_status(validation_statuses: list[str], *, plan_only: bool) -> str:
+    if plan_only:
+        return "planned"
+    if "no_go" in validation_statuses:
+        return "no_go"
+    if "failed" in validation_statuses:
+        return "failed"
+    if "needs_review" in validation_statuses:
+        return "needs_review"
+    return "passed"
+
+
+def _expected_count_errors(report_path: Path, expected_counts: dict[str, int]) -> list[str]:
+    if not expected_counts or not report_path.is_file():
+        return []
+    try:
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return []
+    summary = report.get("summary") if isinstance(report, dict) else None
+    if not isinstance(summary, dict):
+        return ["expected_report.counts could not be checked because report.summary is missing"]
+
+    errors: list[str] = []
+    for key, expected in sorted(expected_counts.items()):
+        actual = summary.get(key)
+        if actual != expected:
+            errors.append(f"expected_report.counts.{key} expected {expected}, found {actual!r}")
+    return errors
+
+
+@cli.command("proof-check")
+@click.argument("manifest", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option(
+    "--output-dir",
+    type=click.Path(file_okay=False, path_type=Path),
+    default=Path("proof"),
+    show_default=True,
+    help="Directory containing or planned to contain per-fixture proof packet artifacts.",
+)
+@click.option(
+    "--fixture",
+    "fixture_ids",
+    multiple=True,
+    help="Fixture id to include. May be passed multiple times; defaults to all fixtures.",
+)
+@click.option(
+    "--plan-only",
+    is_flag=True,
+    help="Only emit manifest/proof-packet plan JSON; do not validate local artifacts.",
+)
+@click.option(
+    "--write",
+    "write_path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Write the proof-check JSON report to a file in addition to stdout.",
+)
+@click.option("--pretty/--no-pretty", default=True, help="Pretty-print JSON output.")
+def proof_check_cmd(
+    manifest: Path,
+    output_dir: Path,
+    fixture_ids: tuple[str, ...],
+    plan_only: bool,
+    write_path: Path | None,
+    pretty: bool,
+):
+    """Read a Make2D proof manifest and validate/plan proof packet artifacts."""
+    from .proof import PROOF_PACKET_GUARDRAILS, build_proof_packet_plan, load_manifest, validate_proof_packet
+
+    proof_manifest = load_manifest(manifest)
+    selected_ids = set(fixture_ids)
+    fixtures = [fixture for fixture in proof_manifest.fixtures if not selected_ids or fixture.id in selected_ids]
+    if selected_ids:
+        known_ids = {fixture.id for fixture in proof_manifest.fixtures}
+        unknown_ids = sorted(selected_ids - known_ids)
+        if unknown_ids:
+            raise click.UsageError(f"unknown fixture id(s): {', '.join(unknown_ids)}")
+
+    fixture_payloads: list[dict[str, Any]] = []
+    validation_statuses: list[str] = []
+    for fixture in fixtures:
+        plan = build_proof_packet_plan(
+            fixture_id=fixture.id,
+            output_dir=output_dir,
+            commands=fixture.commands,
+        )
+        validation_payload: dict[str, Any] = {"status": "not_run", "reasons": []}
+        if not plan_only:
+            validation = validate_proof_packet(
+                plan,
+                review_regions=fixture.review_regions,
+                fail_on_unchanged=True,
+            )
+            reasons = list(validation.reasons)
+            expected_count_errors = _expected_count_errors(plan.report_path, fixture.expected_report.counts)
+            reasons.extend(expected_count_errors)
+            status = validation.status
+            if expected_count_errors and status != "no_go":
+                status = "failed"
+            validation_payload = {
+                "status": status,
+                "reasons": reasons,
+                "missing_artifacts": list(validation.missing_artifacts),
+                "unsafe_references": list(validation.unsafe_references),
+                "public_summary": validation.public_summary,
+            }
+            validation_statuses.append(status)
+
+        fixture_payloads.append(
+            {
+                "id": fixture.id,
+                "manifest_status": fixture.status,
+                "source_path": _path_payload(fixture.source_path),
+                "commands": fixture.commands,
+                "expected_report": {
+                    "status": fixture.expected_report.status,
+                    "counts": fixture.expected_report.counts,
+                },
+                "visual_artifacts": _fixture_artifact_payload(fixture.visual_artifacts),
+                "geometry_artifacts": {
+                    "cut_dump": _path_payload(fixture.geometry_artifacts.cut_dump),
+                    "layer_audit": _path_payload(fixture.geometry_artifacts.layer_audit),
+                },
+                "review_regions": [_review_region_payload(region) for region in fixture.review_regions],
+                "caveats": fixture.caveats,
+                "proof_packet": {
+                    "directory": _path_payload(plan.output_dir),
+                    "report": _path_payload(plan.report_path),
+                    "before": _path_payload(plan.before_path),
+                    "after": _path_payload(plan.after_path),
+                    "diff": _path_payload(plan.diff_path),
+                    "cut_geometry": _path_payload(plan.cut_geometry_path),
+                    "layer_audit": _path_payload(plan.layer_audit_path),
+                },
+                "validation": validation_payload,
+            }
+        )
+
+    validation_status = _proof_check_status(validation_statuses, plan_only=plan_only)
+    summary = {
+        "fixtures": len(fixture_payloads),
+        "passed": validation_statuses.count("passed"),
+        "needs_review": validation_statuses.count("needs_review"),
+        "failed": validation_statuses.count("failed"),
+        "no_go": validation_statuses.count("no_go"),
+        "needs_manual_review": sum(1 for fixture in fixtures if fixture.status == "needs_manual_review"),
+    }
+    payload = {
+        "schema_version": 1,
+        "status": validation_status,
+        "manifest": _path_payload(manifest),
+        "output_dir": _path_payload(output_dir),
+        "guardrails": list(PROOF_PACKET_GUARDRAILS),
+        "summary": summary,
+        "fixtures": fixture_payloads,
+    }
+    indent = 2 if pretty else None
+    encoded = json.dumps(payload, indent=indent, sort_keys=True) + "\n"
+    click.echo(encoded, nl=False)
+    if write_path is not None:
+        write_path.parent.mkdir(parents=True, exist_ok=True)
+        write_path.write_text(encoded, encoding="utf-8")
+        click.echo(f"proof-check: wrote {write_path}", err=True)
+    if validation_status in {"failed", "no_go"}:
+        raise click.ClickException(f"proof-check status is {validation_status}")
 
 
 @cli.command("preview")
