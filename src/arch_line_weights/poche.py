@@ -266,6 +266,19 @@ def _bbox(lines: list[LineString]) -> Polygon | None:
     return box(minx, miny, maxx, maxy)
 
 
+def _is_poche_cut_layer_name(layer_name: str) -> bool:
+    upper = layer_name.upper()
+    if "CLIPPINGPLANEINTERSECTIONS" not in upper:
+        return False
+    return "GLASS" not in upper and "IGU" not in upper
+
+
+def _uses_jsx_structural_helpers(layer_name: str) -> bool:
+    """Limit JSX helper completion to the #30 concrete/foundation target family."""
+    upper = layer_name.upper()
+    return "TEC_CONCRETE_BASE" in upper or "TEC_FOUNDATION" in upper
+
+
 def _is_structural_poche_layer(layer_name: str) -> bool:
     try:
         from .architectural import classify_architectural_layer
@@ -350,6 +363,18 @@ def _helper_candidate_overexpands_cut(
     if helper_poly.is_empty or not cut_only_polys:
         return False
     limit = _helper_expansion_limit(layer_name)
+    covered_cut_area = 0.0
+    for cut_poly in cut_only_polys:
+        if cut_poly.is_empty or cut_poly.area <= 1.0:
+            continue
+        try:
+            overlap = helper_poly.intersection(cut_poly).area
+        except Exception:
+            continue
+        if overlap >= cut_poly.area * 0.75:
+            covered_cut_area += cut_poly.area
+    if covered_cut_area > 0 and helper_poly.area <= covered_cut_area * limit:
+        return False
     for cut_poly in cut_only_polys:
         if cut_poly.is_empty or cut_poly.area <= 1.0:
             continue
@@ -448,6 +473,115 @@ def _segments_from_lines(lines: list[LineString]) -> list[LineString]:
             if seg.length > 2.0:
                 segments.append(seg)
     return segments
+
+
+def _structural_fragment_gap_bridges(
+    lines: list[LineString],
+    *,
+    max_gap: float = 8.0,
+    max_offset: float = 1.0,
+) -> list[LineString]:
+    """Bridge tiny collinear Make2D fragment gaps on structural cut edges."""
+    segments = _segments_from_lines(lines)
+    if len(segments) < 2:
+        return []
+
+    max_angle_delta = math.cos(math.radians(4.0))
+    bridges: list[LineString] = []
+    seen: set[tuple[tuple[float, float], tuple[float, float]]] = set()
+    for idx, a in enumerate(segments):
+        if a.length < max(8.0, max_gap * 2.0):
+            continue
+        a_dir = _normalized_direction(a)
+        if a_dir is None:
+            continue
+        a_coords = list(a.coords)
+        a_mid = (
+            (a_coords[0][0] + a_coords[-1][0]) / 2.0,
+            (a_coords[0][1] + a_coords[-1][1]) / 2.0,
+        )
+        normal = (-a_dir[1], a_dir[0])
+
+        def _project(pt: tuple[float, float], direction: tuple[float, float] = a_dir) -> float:
+            return pt[0] * direction[0] + pt[1] * direction[1]
+
+        a_interval = sorted(
+            [(_project(a_coords[0]), a_coords[0]), (_project(a_coords[-1]), a_coords[-1])]
+        )
+        for b in segments[idx + 1 :]:
+            if b.length < max(8.0, max_gap * 2.0):
+                continue
+            b_dir = _normalized_direction(b)
+            if b_dir is None:
+                continue
+            dot = abs(a_dir[0] * b_dir[0] + a_dir[1] * b_dir[1])
+            if dot < max_angle_delta:
+                continue
+
+            b_coords = list(b.coords)
+            b_mid = (
+                (b_coords[0][0] + b_coords[-1][0]) / 2.0,
+                (b_coords[0][1] + b_coords[-1][1]) / 2.0,
+            )
+            offset = abs(
+                (b_mid[0] - a_mid[0]) * normal[0] + (b_mid[1] - a_mid[1]) * normal[1]
+            )
+            if offset > max_offset:
+                continue
+
+            b_interval = sorted(
+                [
+                    (_project(b_coords[0]), b_coords[0]),
+                    (_project(b_coords[-1]), b_coords[-1]),
+                ]
+            )
+            if a_interval[1][0] < b_interval[0][0]:
+                gap = b_interval[0][0] - a_interval[1][0]
+                bridge_points = (a_interval[1][1], b_interval[0][1])
+            elif b_interval[1][0] < a_interval[0][0]:
+                gap = a_interval[0][0] - b_interval[1][0]
+                bridge_points = (b_interval[1][1], a_interval[0][1])
+            else:
+                continue
+
+            if gap <= 0.1 or gap > max_gap:
+                continue
+            key = tuple(
+                sorted(
+                    (
+                        (round(float(bridge_points[0][0]), 4), round(float(bridge_points[0][1]), 4)),
+                        (round(float(bridge_points[1][0]), 4), round(float(bridge_points[1][1]), 4)),
+                    )
+                )
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+            bridges.append(LineString(bridge_points))
+    return bridges
+
+
+def _merge_line_strings(lines: list[LineString]) -> list[LineString]:
+    if not lines:
+        return []
+
+    def _simplify(line: LineString) -> LineString:
+        try:
+            simplified = line.simplify(0.001, preserve_topology=False)
+        except Exception:
+            return line
+        return simplified if isinstance(simplified, LineString) else line
+
+    try:
+        merged = linemerge(MultiLineString(lines))
+    except Exception:
+        return lines
+    if isinstance(merged, LineString):
+        return [_simplify(merged)]
+    try:
+        return [_simplify(g) for g in merged.geoms if isinstance(g, LineString)]
+    except AttributeError:
+        return lines
 
 
 def _normalized_direction(line: LineString) -> tuple[float, float] | None:
@@ -638,26 +772,33 @@ def _try_structural_open_loop(
         return []
 
     helper_lines = helper_lines or []
-    lengths = sorted(_segment_lengths(lines))
+    cut_lines = lines
+    if _uses_jsx_structural_helpers(layer_name):
+        cut_lines = _merge_line_strings([*lines, *_structural_fragment_gap_bridges(lines)])
+        helper_lines = _merge_line_strings(
+            [*helper_lines, *_structural_fragment_gap_bridges(helper_lines)]
+        )
+
+    lengths = sorted(_segment_lengths(cut_lines))
     median_seg = lengths[len(lengths) // 2] if lengths else 20.0
     max_gap = max(75.0, min(350.0, median_seg * 24.0))
 
     cut_only = _clean_structural_polygons(
-        _structural_open_loop_candidates(lines, max_gap=max_gap)
-        + _try_structural_parallel_edges(layer_name, lines, [])
+        _structural_open_loop_candidates(cut_lines, max_gap=max_gap)
+        + _try_structural_parallel_edges(layer_name, cut_lines, [])
     )
     candidates = list(cut_only)
 
     if helper_lines:
-        for poly in _try_structural_parallel_edges(layer_name, lines, helper_lines):
+        for poly in _try_structural_parallel_edges(layer_name, cut_lines, helper_lines):
             if _helper_candidate_overexpands_cut(layer_name, poly, cut_only):
                 continue
             candidates.append(poly)
 
     if helper_lines:
-        bounds_gate = _expanded_bounds_polygon(lines, max_gap)
+        bounds_gate = _expanded_bounds_polygon(cut_lines, max_gap)
         helper_candidates = _structural_open_loop_candidates(
-            lines + helper_lines,
+            cut_lines + helper_lines,
             max_gap=max_gap,
         )
         for poly in helper_candidates:
@@ -810,6 +951,24 @@ def polygonize_layer(
             return polys, FillResult(layer_name, "linemerge_bare", 1.0, len(polys), n_segments, tol)
         conf = 0.95 if tol <= 0.5 else (0.85 if tol <= 1.0 else 0.7)
         return polys, FillResult(layer_name, "linemerge_snap", conf, len(polys), n_segments, tol)
+
+    # Same-component visible/tangent helper geometry is stronger architectural
+    # evidence than a blind low-confidence endpoint bridge. Try it before the
+    # auto-bridge rung so real Make2D helper edges can close cut mass without
+    # being downgraded to diagnostic-only bridge output.
+    if helper_lines:
+        try:
+            structural_polys = _try_structural_open_loop(layer_name, lines, helper_lines)
+            if structural_polys:
+                return structural_polys, FillResult(
+                    layer_name,
+                    "structural_open_loop",
+                    0.88,
+                    len(structural_polys),
+                    n_segments,
+                )
+        except Exception:
+            pass
 
     # Auto-bridge: infer missing connecting segments and re-run
     # linemerge+polygonize. Default strategy (v0.6.7+) is ``"best"``, which
@@ -972,6 +1131,8 @@ def polygonize_dump(
     bridge_strategy: str | None = None,
 ) -> PocheReport:
     """Load a JSON dump from `dump_cut_geometry.jsx`, polygonize each layer."""
+    from .make2d_completion import structural_completion_paths_for_layers
+
     with open(geometry_json_path) as f:
         data = json.load(f)
 
@@ -986,7 +1147,15 @@ def polygonize_dump(
 
     overrides = overrides or {}
     report = PocheReport()
-    for layer_name, paths in data.items():
+    cut_data = {name: paths for name, paths in data.items() if _is_poche_cut_layer_name(name)}
+    helper_target_data = {
+        name: paths for name, paths in cut_data.items() if _uses_jsx_structural_helpers(name)
+    }
+    structural_completion_paths_by_layer = structural_completion_paths_for_layers(
+        helper_target_data,
+        data,
+    )
+    for layer_name, paths in cut_data.items():
         # Match override: exact layer name or fnmatch-style suffix
         ov = overrides.get(layer_name)
         if ov is None:
@@ -995,6 +1164,10 @@ def polygonize_dump(
                     ov = val
                     break
 
+        helper_paths = structural_completion_paths_by_layer.get(layer_name, [])
+        if helper_paths:
+            report.structural_helper_counts[layer_name] = len(helper_paths)
+
         polys, result = polygonize_layer(
             layer_name,
             paths,
@@ -1002,6 +1175,7 @@ def polygonize_dump(
             ov,
             use_alpha_shape=use_alpha_shape,
             bridge_strategy=bridge_strategy,
+            structural_helper_lines=_lines_from_anchors(helper_paths),
         )
         report.fills.append(result)
         if polys and should_inject_fill(result):
@@ -1038,9 +1212,12 @@ DUMP_JSX_TEMPLATE = r"""#target illustrator
     function shouldDump(name) {
         var n = String(name).toUpperCase();
         if (n.indexOf("__POCHE_CLOSE__") !== -1) return true;
-        if (n.indexOf("CLIPPINGPLANEINTERSECTIONS") === -1) return false;
-        if (n.indexOf("GLASS") !== -1 || n.indexOf("IGU") !== -1) return false;
-        return true;
+        if (n.indexOf("CLIPPINGPLANEINTERSECTIONS") !== -1) {
+            if (n.indexOf("GLASS") !== -1 || n.indexOf("IGU") !== -1) return false;
+            return true;
+        }
+        if (n.indexOf("::VISIBLE::CURVES::") === -1 && n.indexOf("::VISIBLE::TANGENTS::") === -1) return false;
+        return n.indexOf("FOUNDATION") !== -1 || n.indexOf("CONCRETE") !== -1;
     }
 
     var doc = null;
