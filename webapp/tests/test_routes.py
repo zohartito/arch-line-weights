@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from backend.config import Settings, local_vite_cors_origins
+
 
 def test_health_returns_200(app_client) -> None:
     """Health endpoint is the only route that must always be up."""
@@ -16,6 +18,18 @@ def test_health_returns_200(app_client) -> None:
     body = resp.json()
     assert body["status"] == "ok"
     assert body["service"] == "arch-line-weights-webapp"
+
+
+def test_default_cors_allows_local_vite_fallback_ports(monkeypatch) -> None:
+    monkeypatch.delenv("ARCHLW_CORS_ORIGINS", raising=False)
+
+    origins = Settings().cors_origins
+
+    assert local_vite_cors_origins() == origins
+    assert "http://localhost:5173" in origins
+    assert "http://127.0.0.1:5173" in origins
+    assert "http://localhost:5175" in origins
+    assert "http://127.0.0.1:5175" in origins
 
 
 def test_get_unknown_job_returns_404(app_client) -> None:
@@ -80,6 +94,10 @@ def test_full_upload_run_poll_download(app_client, synthetic_ai: Path) -> None:
     assert "job_id" in created
     job_id = created["job_id"]
     assert created["status"] in ("done", "pending", "running")
+    assert created["public_safe"] is False
+    assert created["public_acceptance"] == {"accepted": False, "accepted_by": []}
+    assert "Posting/public proof is NO-GO unless W5/W7 explicitly accepts it." in created["guardrails"]
+    assert created["proof_notice"] == "Legacy job outputs are local processing artifacts, not public proof clearance."
 
     # 2. Poll status
     detail = client.get(f"/api/jobs/{job_id}").json()
@@ -87,6 +105,10 @@ def test_full_upload_run_poll_download(app_client, synthetic_ai: Path) -> None:
     # Sync runner means the job is already done.
     assert detail["status"] == "done", detail
     assert detail["original_filename"] == synthetic_ai.name
+    assert detail["public_safe"] is False
+    assert detail["public_acceptance"] == {"accepted": False, "accepted_by": []}
+    assert "Synthetic proof does not close #30." in detail["guardrails"]
+    assert detail["proof_notice"] == "Legacy job outputs are local processing artifacts, not public proof clearance."
     assert detail["apply_summary"] is not None
     assert detail["poche_summary"] is not None
     assert detail["download_url"] is not None
