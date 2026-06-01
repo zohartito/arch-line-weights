@@ -4,9 +4,49 @@ This branch preserves the WIP implementation and investigation for the open-issu
 
 ## Branch
 
-- Branch: `codex/open-issue-verification-core`
+- Branch: `codex/open-issue-verification-core` (PR **#37**, draft, head `bea0ded`)
+- Integration rehearsal: `codex/tmp-integration-rehearsal-20260601b` (head `aadde55`)
 - Remote: `origin` (`git@github.com:zohartito/arch-line-weights.git`)
-- Goal status: in progress on PR #37; not launch-ready.
+- Goal status: in progress; not launch-ready.
+
+## Update — 2026-06-01 (full integration rehearsal `aadde55`)
+
+Worktree: disposable `archlw-integration-rehearsal-20260601b` (local only, **no merge**).
+
+### Merge order (all completed on rehearsal)
+
+1. Fast-forward `origin/codex/open-issue-verification-core` → `bea0ded` (proof-check, console, PR #45 quarantine)
+2. `origin/v0.2-verification-core` → merge `a482934` (conflicts: `cli.py`, `run_report.py`, `test_run_report.py` — resolved favoring #37 proof + #36 reports)
+3. `origin/codex/issue23-single-layer-cleanup` → merge `d802065` (`cleanup.py`, `tests/test_cleanup.py`; `cli.md` documents cleanup)
+4. `origin/codex/issue19-diagnose-report` → merge `36f4d49` (`diagnose_report.py`, `arch-lw diagnose`)
+5. `origin/codex/issue30-concrete-base-synthetic-regression` → merge `1385f39` (`run_report.py` conflicts — kept foundation/concrete launch-blocking limitations)
+6. `origin/codex/issue20-entourage-assets` → merge (clean)
+7. `origin/w2-verification-fixture-sourcing` → merge `6ffa75c` (`docs/ROADMAP.md` — combined NO-GO posture + verifier gate)
+8. PR #45 quarantine — already ancestor via #37 (`30b6951`); not re-merged
+9. `origin/codex/endgame-delivery-ledger` → merge `aadde55` (`endgame-delivery-plan-2026-06-01.md`)
+
+### Verification (rehearsal `aadde55`)
+
+```text
+PYTHONPATH=src pytest --ignore=tests/test_hatch_v05.py -q  → 651 passed, 6 skipped, 1 xfailed
+PYTHONPATH=src pytest webapp/tests/test_console_routes.py …  → 36 passed
+pytest tests/test_launch_safety_docs.py -q  → 3 passed
+ruff check src/ tests/ webapp/backend/ webapp/tests/  → pass
+git diff --check  → pass
+npm ci && npm run check && npm run build (webapp/frontend)  → pass (after npm ci in worktree)
+```
+
+### Boundaries (unchanged)
+
+- **No PR merges.** PR **#37** and **#36** stay **draft**.
+- **#29** / **#30** remain **open**. Posting/public proof **NO-GO**.
+- Synthetic proof does **not** close #30. Private USC regression stays private.
+
+### Remains before shipping stack to main
+
+- Land #37 (and dependent PRs) via human review; rehearsal branch is archival integration signal only.
+- Optional: port non-conflicting rehearsal-only doc fixes back to #37 / #41 ledger.
+- Real W5/W7 acceptance still required for any public-proof GO.
 
 ## Update — 2026-06-01 (PR #45 quarantine integrated on #37)
 
