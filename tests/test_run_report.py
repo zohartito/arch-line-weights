@@ -53,7 +53,10 @@ def test_report_marks_injected_structural_open_loop_as_inferred():
     assert data["layers"][0]["action"] == "injected"
     assert data["layers"][0]["review"]["needs_review"] is True
     assert data["layers"][0]["review"]["visual_acceptance_required"] is True
-    assert any("W5/W7 visual acceptance" in reason for reason in data["layers"][0]["review"]["reasons"])
+    assert any(
+        "W5/W7 visual acceptance" in reason
+        for reason in data["layers"][0]["review"]["reasons"]
+    )
 
 
 def test_report_keeps_non_foundation_inferred_fill_as_inferred_without_visual_gate():
@@ -69,7 +72,7 @@ def test_report_keeps_non_foundation_inferred_fill_as_inferred_without_visual_ga
     assert data["layers"][0]["review"]["visual_acceptance_required"] is False
 
 
-def test_report_marks_structural_helper_evidence_from_poche_report():
+def test_apply_saas_report_marks_structural_helper_evidence_from_poche_report():
     layer = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
     data = _report(
         [FillResult(layer, "structural_open_loop", 0.88, 1, 8)],
