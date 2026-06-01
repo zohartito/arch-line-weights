@@ -63,7 +63,10 @@ product. It is an engineering control document, not a public launch claim.
   filled directly, and unrelated structural helpers do not leak into poché
   output. Later updates record structural helper counts in poché reports, expose
   those counts downstream, and mirror the W5/W7 concrete/foundation review gate
-  in #42 so helper-backed inference is never treated as acceptance.
+  in #42 so helper-backed inference is never treated as acceptance. A later
+  update adds concrete/foundation-only tiny collinear fragment-gap bridging for
+  C2/C3-like Make2D edge fragments: small same-line gaps can be normalized into
+  one cut face, while larger voids remain open.
 - #37 + #42 temp integration was tested locally. The stack had one small import
   conflict in `poche.py`; after resolving it, focused tests and ruff passed,
   and a private USC `poche --report` probe reported `TEC_CONCRETE_BASE` as
@@ -105,6 +108,13 @@ product. It is an engineering control document, not a public launch claim.
   `git diff --check` was clean, the changed-diff private-path/name scan had no
   hits, and the feasible full suite passed with 559 passing tests and 1 skipped
   test.
+- #37 + #42 integration was rechecked again after #42 added fragmented
+  concrete/foundation edge recovery. The refreshed temp merge was conflict-free.
+  Combined focused proof/report/geometry tests passed with 122 passing tests,
+  ruff passed, `git diff --check` was clean, and the feasible full suite passed
+  with 562 passing tests and 1 skipped test. The changed-diff scan had one
+  intentional proof-validator regex hit for detecting local paths; it was not a
+  leaked path.
 - #43 is draft and stacked on #36: the local designer-console prototype. It has
   local full-test verification, but no GitHub checks are reported on the
   stacked branch yet.
