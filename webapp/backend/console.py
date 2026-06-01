@@ -19,8 +19,13 @@ from pathlib import Path
 from typing import Any, BinaryIO
 
 from arch_line_weights.apply_jsx import apply_via_jsx
+from arch_line_weights.apply_saas import NoNativePayloadError
+from arch_line_weights.apply_saas import apply_to_file as apply_to_file_saas
+from arch_line_weights.classify import auto_by_luminance, from_user_mapping
 from arch_line_weights.inspect import inspect_file
 from arch_line_weights.poche import PocheReport, apply_poche
+from arch_line_weights.poche_saas import apply_saas_with_poche
+from arch_line_weights.presets import select_preset
 
 try:  # PR #36 branches provide these; older branches honestly degrade.
     from arch_line_weights.apply_jsx import validate_apply_jsx_result
@@ -419,38 +424,92 @@ class DesignerConsoleStore:
             self.save(run)
             return run
 
-        output = self._derived_output_path(Path(layout_output), "HIERARCHY-jsx")
-        jsx_path = self._raw_path(run, "apply-line-weights.jsx")
+        layout_path = Path(layout_output)
+        output = self._derived_output_path(layout_path, "HIERARCHY-saas")
+        raw_report_path = self._raw_path(run, "apply-line-weights-report.json")
         preset = _preset_for_workflow(run.workflow)
-        effective_preset = None if preset == "section" else preset
         try:
-            result = apply_via_jsx(
+            mapping = _auto_weight_mapping(layout_path, run.workflow)
+            result = apply_to_file_saas(
                 layout_output,
                 str(output),
-                jsx_path=str(jsx_path),
-                preset=effective_preset,
-                printer=lambda _line: None,
+                mapping,
             )
-            _validate_apply_result(result, expected_output=output)
+            report_data = _apply_saas_report_dict(
+                result,
+                input_name=layout_path.name,
+                output_name=output.name,
+                preset=preset,
+            )
+            raw_report_path.write_text(
+                json.dumps(report_data, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            status = _report_status(report_data, default="passed")
+            _require_stage_output(status=status, output_path=output, report_label="apply-saas")
             run.artifacts["hierarchy_output"] = str(output)
-            report_text = str(result.get("report") or "")
-            status = _text_report_status(report_text)
+            summary = report_data["summary"]
             stage.finish(
                 status=status,
                 what_changed=[
                     f"Applied {WORKFLOW_LABELS.get(run.workflow, run.workflow)} line weights "
-                    f"to {output.name}."
+                    f"headlessly to {output.name}."
                 ],
                 what_skipped=["Poché and proof packet stages have not run yet."],
-                why=["apply-jsx output/report validation completed."],
+                why=[
+                    f"Rewrote {summary['widths_rewritten']} stroke-width token(s).",
+                    f"Read {summary['xa_seen']} native stroke-color event(s).",
+                ],
                 next_step=(
                     "Generate Poché or export a proof packet."
                     if status == "passed"
-                    else "Review the apply-jsx report before proof use."
+                    else "Review the apply-saas report before proof use."
                 ),
                 output_path=str(output),
-                raw_report_path=str(result.get("report_path")) if result.get("report_path") else None,
+                raw_report_path=str(raw_report_path),
             )
+            self.save(run)
+            return run
+        except NoNativePayloadError:
+            output = self._derived_output_path(layout_path, "HIERARCHY-jsx")
+            jsx_path = self._raw_path(run, "apply-line-weights.jsx")
+            effective_preset = None if preset == "section" else preset
+            try:
+                result = apply_via_jsx(
+                    layout_output,
+                    str(output),
+                    jsx_path=str(jsx_path),
+                    preset=effective_preset,
+                    printer=lambda _line: None,
+                )
+                _validate_apply_result(result, expected_output=output)
+                run.artifacts["hierarchy_output"] = str(output)
+                report_text = str(result.get("report") or "")
+                status = _text_report_status(report_text)
+                stage.finish(
+                    status=status,
+                    what_changed=[
+                        f"Applied {WORKFLOW_LABELS.get(run.workflow, run.workflow)} line weights "
+                        f"to {output.name}."
+                    ],
+                    what_skipped=["Poché and proof packet stages have not run yet."],
+                    why=["apply-jsx output/report validation completed."],
+                    next_step=(
+                        "Generate Poché or export a proof packet."
+                        if status == "passed"
+                        else "Review the apply-jsx report before proof use."
+                    ),
+                    output_path=str(output),
+                    raw_report_path=str(result.get("report_path")) if result.get("report_path") else None,
+                )
+            except Exception as exc:  # noqa: BLE001 - surfaced in stage report
+                stage.finish(
+                    status=_status_from_exception(exc),
+                    what_failed=[_exception_message(exc)],
+                    why=["apply-jsx validation rejected the hierarchy output/report."],
+                    next_step="Fix the apply-jsx issue, then run line weights again.",
+                    output_path=str(output),
+                )
         except Exception as exc:  # noqa: BLE001 - surfaced in stage report
             stage.finish(
                 status=_status_from_exception(exc),
@@ -476,19 +535,24 @@ class DesignerConsoleStore:
             self.save(run)
             return run
 
-        output = self._poche_output_path(Path(hierarchy_output))
+        hierarchy_path = Path(hierarchy_output)
+        output = self._poche_output_path(hierarchy_path)
         raw_report_path = self._raw_path(run, "poche-report.json")
         raw_dir = raw_report_path.parent
         try:
-            report = apply_poche(
+            mapping = _auto_weight_mapping(hierarchy_path, run.workflow)
+            _apply_result, _poche_result, poche_report = apply_saas_with_poche(
                 hierarchy_output,
                 str(output),
-                workdir=str(raw_dir),
+                mapping,
                 bridge_strategy="best",
+                preset=_preset_for_workflow(run.workflow),
+                scale="1/4",
+                for_print=False,
             )
             report_data = _poche_report_dict(
-                report if isinstance(report, PocheReport) else PocheReport(),
-                input_name=Path(hierarchy_output).name,
+                poche_report,
+                input_name=hierarchy_path.name,
                 output_name=output.name,
             )
             raw_report_path.write_text(
@@ -496,14 +560,14 @@ class DesignerConsoleStore:
                 encoding="utf-8",
             )
             status = _poche_status(report_data)
-            _require_stage_output(status=status, output_path=output, report_label="poche")
+            _require_stage_output(status=status, output_path=output, report_label="poche-saas")
             run.artifacts["poche_output"] = str(output)
             summary = report_data["summary"]
             stage.finish(
                 status=status,
                 what_changed=[
                     f"Generated {summary['polygons_injected']} injected poché polygon(s) "
-                    f"in {output.name}."
+                    f"headlessly in {output.name}."
                 ],
                 what_skipped=[],
                 why=_poche_why(report_data),
@@ -515,6 +579,54 @@ class DesignerConsoleStore:
                 output_path=str(output),
                 raw_report_path=str(raw_report_path),
             )
+            self.save(run)
+            return run
+        except NoNativePayloadError:
+            try:
+                report = apply_poche(
+                    hierarchy_output,
+                    str(output),
+                    workdir=str(raw_dir),
+                    bridge_strategy="best",
+                )
+                report_data = _poche_report_dict(
+                    report if isinstance(report, PocheReport) else PocheReport(),
+                    input_name=Path(hierarchy_output).name,
+                    output_name=output.name,
+                )
+                raw_report_path.write_text(
+                    json.dumps(report_data, indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
+                status = _poche_status(report_data)
+                _require_stage_output(status=status, output_path=output, report_label="poche")
+                run.artifacts["poche_output"] = str(output)
+                summary = report_data["summary"]
+                stage.finish(
+                    status=status,
+                    what_changed=[
+                        f"Generated {summary['polygons_injected']} injected poché polygon(s) "
+                        f"in {output.name}."
+                    ],
+                    what_skipped=[],
+                    why=_poche_why(report_data),
+                    next_step=(
+                        "Export Proof Packet."
+                        if status == "passed"
+                        else "Review low-confidence or failed poché layers before proof use."
+                    ),
+                    output_path=str(output),
+                    raw_report_path=str(raw_report_path),
+                )
+            except Exception as exc:  # noqa: BLE001 - surfaced in stage report
+                stage.finish(
+                    status=_status_from_exception(exc),
+                    what_failed=[_exception_message(exc)],
+                    why=["Poché did not produce a trustworthy output/report."],
+                    next_step="Fix cut-layer closure or poché settings, then generate poché again.",
+                    output_path=str(output),
+                    raw_report_path=str(raw_report_path) if raw_report_path.exists() else None,
+                )
         except Exception as exc:  # noqa: BLE001 - surfaced in stage report
             stage.finish(
                 status=_status_from_exception(exc),
@@ -659,6 +771,16 @@ def _preset_for_workflow(workflow: str) -> str:
     return workflow
 
 
+def _auto_weight_mapping(input_path: Path, workflow: str) -> dict[tuple[int, int, int], float]:
+    report = inspect_file(str(input_path))
+    tiers = select_preset(
+        _preset_for_workflow(workflow),
+        scale="1/4",
+        for_print=False,
+    )
+    return from_user_mapping(auto_by_luminance(report, tiers))
+
+
 def _filename(path: str | None) -> str | None:
     return Path(path).name if path else None
 
@@ -797,6 +919,39 @@ def _validate_apply_result(result: dict[str, Any], *, expected_output: Path) -> 
         raise RuntimeError("apply-jsx wrote an unexpected output path")
     if not output.exists():
         raise RuntimeError(f"apply-jsx output is missing: {output.name}")
+
+
+def _apply_saas_report_dict(
+    result: Any,
+    *,
+    input_name: str,
+    output_name: str,
+    preset: str,
+) -> dict[str, Any]:
+    result_data = asdict(result)
+    widths_rewritten = int(result_data.get("widths_rewritten") or 0)
+    output_size = int(result_data.get("output_size") or 0)
+    status = "passed" if widths_rewritten > 0 and output_size > 0 else "needs_review"
+    return {
+        "schema_version": 1,
+        "source": {
+            "input_file": input_name,
+            "output_file": output_name,
+            "engine": "apply-saas",
+            "preset": preset,
+        },
+        "summary": {
+            "status": status,
+            "xa_seen": int(result_data.get("xa_seen") or 0),
+            "widths_rewritten": widths_rewritten,
+            "unmatched_color_count": len(result_data.get("unmatched_colors") or {}),
+            "payload_size_in": int(result_data.get("payload_size_in") or 0),
+            "payload_size_out": int(result_data.get("payload_size_out") or 0),
+            "chunks_in": int(result_data.get("chunks_in") or 0),
+            "chunks_out": int(result_data.get("chunks_out") or 0),
+            "output_size": output_size,
+        },
+    }
 
 
 def _text_report_status(report: str) -> str:
