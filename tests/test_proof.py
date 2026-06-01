@@ -560,6 +560,48 @@ def test_validate_proof_packet_fails_when_review_region_has_no_matching_rendered
     assert "review region missing_region has no matching rendered view after image" in validation.reasons
 
 
+def test_committed_manifest_review_region_can_fail_synthetic_packet(
+    tmp_path: Path,
+) -> None:
+    fixture = load_manifest(Path("tests/fixtures/make2d/manifest.yml")).fixtures[0]
+    plan = build_proof_packet_plan(
+        fixture_id=fixture.id,
+        output_dir=tmp_path / "proof",
+        commands=fixture.commands,
+    )
+    visual_artifacts = {
+        "before": fixture.visual_artifacts.before.as_posix(),
+        "after": fixture.visual_artifacts.after.as_posix(),
+        "diff": fixture.visual_artifacts.diff.as_posix(),
+        "rendered_views": [
+            {
+                "id": view.id,
+                "kind": view.kind,
+                "before": view.before.as_posix(),
+                "after": view.after.as_posix(),
+                "diff": view.diff.as_posix(),
+            }
+            for view in fixture.visual_artifacts.rendered_views
+        ],
+    }
+    _write_packet_artifacts(plan, report=_safe_pass_report(visual_artifacts=visual_artifacts))
+    closeup = next(view for view in fixture.visual_artifacts.rendered_views if view.kind == "cut_mass_closeup")
+    Image.new("RGB", (800, 600), "white").save(plan.output_dir / closeup.after)
+
+    validation = validate_proof_packet(
+        plan,
+        review_regions=fixture.review_regions,
+        min_dark_ratio=0.05,
+        threshold=32,
+    )
+
+    assert validation.status == "failed"
+    assert (
+        "review region foundation_window_cut_mass (poche_presence) expected dark poché pixels"
+        in validation.reasons
+    )
+
+
 def _write_packet_artifacts(
     plan,
     *,
