@@ -50,6 +50,58 @@ Layer-preserving via Illustrator JSX.
 arch-lw apply-jsx SRC [-o OUTPUT]
 ```
 
+## `arch-lw layout-jsx`
+
+Illustrator layout bridge for Rhino Make2D exports. Sets the requested artboard,
+centers or fits visible unlocked artwork, saves a PDF-compatible `.ai`, and can
+write a structured layout report.
+
+```bash
+arch-lw layout-jsx SRC [OPTIONS]
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `-o, --output PATH` | `<src> LAYOUT-jsx.<ext>` | Output path |
+| `--artboard WIDTHxHEIGHT` | `24x36in` | Target artboard. Bare numbers are inches; `pt` is also supported |
+| `--fit {center,fit}` | `center` | Keep scale and center, or scale down to fit within the margin |
+| `--margin LENGTH` | `0.5in` | Margin used by `--fit` |
+| `--allow-enlarge` | off | Let `--fit` scale small artwork up |
+| `--report-json PATH` | `/tmp/arch_lw_layout_report.json` | Structured layout report |
+| `--jsx-path PATH` | `/tmp/arch_lw_layout.jsx` | Generated JSX path |
+| `--timeout MINUTES` | `30` | Illustrator JSX timeout |
+| `--dry-run` | off | Render JSX/report without opening Illustrator or writing output artwork |
+
+## `arch-lw bridge-rhino-ai`
+
+Bridge a Rhino Make2D export through layout and optional proof stages. The
+first stage always runs `layout-jsx`; `apply-jsx` and `poche` are opt-in so the
+layout bridge can be used without changing hierarchy or poché.
+
+```bash
+arch-lw bridge-rhino-ai --input SRC [OPTIONS]
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--input PATH` | required | Rhino Export Selected `.ai` or `.pdf` |
+| `-o, --output PATH` | `<input> LAYOUT-jsx.<ext>` | Layout output path |
+| `--artboard WIDTHxHEIGHT` | `24x36in` | Target artboard |
+| `--fit {center,fit}` | `center` | Center at current scale, or fit within margin |
+| `--margin LENGTH` | `0.5in` | Margin for `--fit` |
+| `--allow-enlarge` | off | Let `--fit` scale small artwork up |
+| `--preset {section,plan,elevation,detail,usc}` | `section` | Preset for optional `--apply-jsx` |
+| `--source {auto,rhino,autocad}` | `rhino` | Layer-name convention for reports and optional poché |
+| `--scale TEXT` | `1/4` | Plot scale for optional `--apply-jsx --for-print` |
+| `--for-print` | off | Use print weights in optional `--apply-jsx` |
+| `--apply-jsx` | off | Run hierarchy after layout |
+| `--poche` | off | Run poché after `--apply-jsx` |
+| `--poche-style {solid,material}` | `solid` | Poché output style |
+| `--bridge-strategy {greedy,best}` | `best` | Poché bridge selector |
+| `--report-dir DIR` | `<input> arch-lw-bridge` | Bridge, layout, poché, geometry, and JSX reports |
+| `--timeout MINUTES` | `30` | Illustrator JSX timeout |
+| `--dry-run` | off | Plan stages and render layout JSX/report without GUI work |
+
 ## `arch-lw apply-saas`
 
 Headless AI-native payload rewrite. Preserves Illustrator layers and can also
