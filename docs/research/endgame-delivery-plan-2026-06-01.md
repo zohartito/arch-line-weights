@@ -147,7 +147,13 @@ product. It is an engineering control document, not a public launch claim.
   false`, W5/W7 acceptance state, no-go guardrails, and local-artifact proof
   notice to the legacy `/api/jobs` response and job detail UI, closing a
   plausible operator-confusion path where old done/download flows lacked proof
-  clearance context.
+  clearance context. A later launcher update at `e7fbd9d` keeps backend and
+  frontend dev-server ports distinct when the requested frontend port is
+  already occupied, so `arch-lw-web-console` cannot accidentally wait on the
+  backend root while Vite failed to bind. Rendered smoke on the fixed launcher
+  showed the console at the requested local URL, the required no-go guardrails,
+  and Synthetic proof/demo -> Inspect File reaching `passed` with no browser
+  console warnings or errors.
 - #45 is draft: launch-safety quarantine for private proof assets and public
   posting drafts. It removes committed Day-1 proof media from the public tree
   and redacts inherited local/private paths. A later update also quarantines
