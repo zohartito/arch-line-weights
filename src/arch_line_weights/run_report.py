@@ -105,6 +105,7 @@ def build_apply_saas_report(
             diagnostic_polygons += fill.polygon_count
 
         layer_candidates = candidates_by_layer.get(fill.layer, [])
+        structural_helper_count = int(structural_helper_counts.get(fill.layer, 0) or 0)
         review_reasons: list[str] = []
         if status in {"low_confidence", "failed", "missing_payload"}:
             review_reasons.append(status.replace("_", " "))
@@ -116,8 +117,6 @@ def build_apply_saas_report(
             review_reasons.append("payload layer could not be located for injection")
         if any(_meaningful_rejection(candidate) for candidate in layer_candidates):
             review_reasons.append("one or more Make2D completion candidates were rejected")
-        structural_helper_count = int(structural_helper_counts.get(fill.layer, 0) or 0)
-
         layers.append(
             {
                 "layer": fill.layer,
