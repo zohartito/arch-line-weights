@@ -122,13 +122,26 @@ def test_console_synthetic_demo_runs_full_headless_review_packet(
     packet_path = Path(run.artifacts[proof_artifact["key"]])
     with zipfile.ZipFile(packet_path) as packet:
         packet_summary = json.loads(packet.read("public-summary.json"))
+        handoff = json.loads(packet.read("W5-W7-ACCEPTANCE-HANDOFF.json"))
+        handoff_text = packet.read("W5-W7-ACCEPTANCE-HANDOFF.md").decode("utf-8")
         packet_names = set(packet.namelist())
 
     assert "public-summary.json" in packet_names
     assert "README-NOT-PUBLIC-CLEARANCE.txt" in packet_names
+    assert "W5-W7-ACCEPTANCE-HANDOFF.json" in packet_names
+    assert "W5-W7-ACCEPTANCE-HANDOFF.md" in packet_names
     assert packet_summary["public_safe"] is False
     assert packet_summary["overall_status"] == "needs_review"
+    assert handoff["public_safe"] is False
+    assert handoff["public_clearance"] == "NO-GO"
+    assert handoff["visual_layer_gate_overlay_template"]["review_acceptance"][
+        "visual_layer_gates"
+    ][0]["accepted_by"] == "W5 or W7"
+    assert "Private review inputs stay local." in handoff_text
+    assert "Synthetic proof does not close #30." in handoff_text
     dumped = json.dumps(packet_summary)
+    dumped += json.dumps(handoff)
+    dumped += handoff_text
     assert "/private/" not in dumped
     assert "/Users/" not in dumped
     assert "/var/folders/" not in dumped
