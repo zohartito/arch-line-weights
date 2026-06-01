@@ -8,6 +8,31 @@ This branch preserves the WIP implementation and investigation for the open-issu
 - Remote: `origin` (`git@github.com:zohartito/arch-line-weights.git`)
 - Goal status: in progress on PR #37; not launch-ready.
 
+## Update — 2026-06-01 (public-surface launch safety + doc quarantine)
+
+### What changed
+
+- Added `tests/test_launch_safety_docs.py` for core public surfaces (README, RELEASE,
+  SHIP, webapp UI, handoff doc) with a separate debt test tracking `docs/announce/*`
+  until PR #45 merges.
+- Redacted committed Day-1 proof asset links and private filenames from README,
+  RELEASE_NOTES, ROADMAP, SESSION_RETRO, and SHIP_CHECKLIST.
+
+### Verification
+
+```text
+pytest tests/test_launch_safety_docs.py -q  → 3 passed
+pytest --ignore=tests/test_hatch_v05.py -q  → 570 passed, 2 skipped
+ruff check src/ tests/ webapp/backend/ webapp/tests/  → pass
+npm --prefix webapp/frontend run check && npm run build  → pass
+```
+
+### Remains
+
+- **#29** / **#30** open; posting **NO-GO**.
+- PR **#45** still needed to quarantine `docs/announce/*` and remove committed
+  `docs/img/day1-proof/*` binaries from public history when ready.
+
 ## Update — 2026-06-01 (handoff violation regressions, `374b458`)
 
 ### What changed

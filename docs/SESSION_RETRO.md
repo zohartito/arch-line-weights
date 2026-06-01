@@ -16,7 +16,7 @@ Day-1 public source release.
 
 ## Verified Results
 
-- `apply-jsx` on `WALL SECTION [Converted].ai` modified 512 paths across
+- `apply-jsx` on a private section export modified 512 paths across
   25 leaf layers with 0 errors.
 - `arch-lw poche` then produced 30 poché polygons across 8 cut layers with
   0 failed layers.

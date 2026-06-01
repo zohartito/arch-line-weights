@@ -57,13 +57,11 @@ published to PyPI and then yanked, so install from source or GitHub as above.
 | **Native Illustrator `.ai`** (has the AI private payload `/NumBlock`) | `apply-saas` (optionally `--poche`) | Headless, layer-preserving. This is the path the 98 MB axon stress-test ran on. |
 | **Converted / section `.ai`** (`[Converted]`, PDF-only lineage, **no** `/NumBlock`) | `apply-jsx`, then `arch-lw poche` | The Illustrator-bridge path. This is the path the section proof ran on. |
 
-Converted-section example (the dogfood section-proof commands):
+Converted-section example (synthetic public-safe filenames):
 
 ```bash
-.venv/bin/arch-lw apply-jsx "WALL SECTION [Converted].ai" \
-  --preset usc --source rhino --for-print
-.venv/bin/arch-lw poche "WALL SECTION [Converted] HIERARCHY-jsx.ai" \
-  --source rhino --style solid --bridge-strategy best
+.venv/bin/arch-lw apply-jsx sample-section.ai --preset section --source rhino
+.venv/bin/arch-lw poche sample-section HIERARCHY-jsx.ai --source rhino --style solid
 ```
 
 ### Known input-format caveats
@@ -83,22 +81,11 @@ Converted-section example (the dogfood section-proof commands):
 
 ### Dogfood results (2026-05-30)
 
-- **Axon stress-test** — `macro_for_archlw.ai`, 98 MB, 1.28M strokes,
-  `apply-saas` exit 0, ~1:53 runtime. This is large-file / performance evidence,
-  **not** section/poché proof: the axon file has no `ClippingPlaneIntersections`.
-- **Section proof** (Illustrator bridge, `WALL SECTION [Converted].ai`):
-  - `apply-jsx` hierarchy: 25 leaf layers, 512 paths modified, 0 errors;
-    Illustrator opens the output.
-  - `arch-lw poche`: 30 poché polygons, 8 cut layers, 0 failed layers;
-    Illustrator opens the final output.
-- Release-gate checks passed for the source/GitHub handoff.
-
-Proof assets are committed under `docs/img/day1-proof/`:
-
-- [Before: raw Rhino/Make2D export](docs/img/day1-proof/01-before-raw.png)
-- [After: hierarchy + solid-black poché](docs/img/day1-proof/03-after-poche-full.png)
-- [Close-up: cut mass solid, openings left white](docs/img/day1-proof/05-closeup-cut-mass-windows-white.png)
-- [Final poché PDF](docs/img/day1-proof/section-HIERARCHY-jsx-POCHE.pdf)
+- Large-file stress runs and section-bridge runs have been exercised locally.
+  Public proof assets are not committed. Posting remains **NO-GO** unless W5/W7
+  explicitly accepts a proof packet.
+- Release-gate checks passed for the source/GitHub handoff at the time of the
+  release notes snapshot.
 
 ### What to file issues for
 
@@ -122,5 +109,4 @@ characteristics (source app, export type, layer names) if:
   scaffold, not a deployed service.
 - No workflow tested in Bluebeam.
 - Not yet proven on a real studio pin-up board, and not validated on every
-  Rhino/Illustrator export shape. Day-1 section-proof screenshots are committed
-  in `docs/img/day1-proof/`.
+  Rhino/Illustrator export shape. Public proof screenshots are not committed.

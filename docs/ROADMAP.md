@@ -18,15 +18,9 @@ commitment.
 
 ## Validated Proof Points
 
-- Section proof passed through the Illustrator bridge path:
-  `apply-jsx` on `WALL SECTION [Converted].ai` modified 512 paths across
-  25 leaf layers with 0 errors, then `arch-lw poche` produced 30 poché
-  polygons across 8 cut layers with 0 failed layers.
-- Axon stress proof passed on `macro_for_archlw.ai`: 98 MB / 1.28M strokes,
-  `apply-saas` exit 0, about 1:53 runtime.
-
-The axon run is large-file performance evidence. It is not section evidence,
-because that fixture had no `ClippingPlaneIntersections` cut layers.
+- Section-bridge and large-file stress runs have been exercised locally.
+  Public proof assets are not committed. Posting remains **NO-GO** until W5/W7
+  accepts a proof packet. Synthetic proof does not close #30.
 
 ## Known Input Caveats
 

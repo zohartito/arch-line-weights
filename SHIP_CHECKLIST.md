@@ -2,7 +2,7 @@
 
 ## Ready for Cursor 1 Dogfood
 
-- [x] Current checkout: `/Users/zohartito/projects/arch-line-weights-git`.
+- [x] Current checkout: local source clone of `arch-line-weights`.
 - [x] Day-1 CLI path documented: `.venv/bin/arch-lw`.
 - [x] Public install path documented as source/GitHub install, not PyPI.
 - [x] `arch-lw apply --preset usc` is supported.
@@ -27,7 +27,7 @@
 ## Current Recommended Dogfood Command
 
 ```bash
-cd /Users/zohartito/projects/arch-line-weights-git
+cd arch-line-weights
 .venv/bin/arch-lw inspect path/to/rhino-export.ai
 .venv/bin/arch-lw apply-saas path/to/rhino-export.ai \
   --architectural --poche --preset usc --source rhino
