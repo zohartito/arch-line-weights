@@ -590,6 +590,8 @@ def test_polygonize_dump_recovers_c2_c3_shaped_foundation_concrete_only(tmp_path
     assert by_layer[foundation_footing].strategy == "structural_open_loop"
     assert by_layer[concrete_stem].polygon_count >= 1
     assert by_layer[foundation_footing].polygon_count >= 1
+    assert report.structural_helper_counts[concrete_stem] == 2
+    assert report.structural_helper_counts[foundation_footing] == 2
     assert concrete_stem in report.polygons
     assert foundation_footing in report.polygons
     assert concrete_helper not in by_layer
