@@ -108,7 +108,12 @@ product. It is an engineering control document, not a public launch claim.
   the proof harness: exported packets are local review packets, the UI shows
   Public proof `NO-GO` and W5/W7 acceptance status, packet summaries carry
   `public_safe: false`, and the export stage remains `needs_review` without
-  explicit W5/W7 acceptance.
+  explicit W5/W7 acceptance. A later update keeps the stage action row
+  synchronized with completed stage status and adds the same `public_safe:
+  false`, W5/W7 acceptance state, no-go guardrails, and local-artifact proof
+  notice to the legacy `/api/jobs` response and job detail UI, closing a
+  plausible operator-confusion path where old done/download flows lacked proof
+  clearance context.
 - #45 is draft: launch-safety quarantine for private proof assets and public
   posting drafts. It removes committed Day-1 proof media from the public tree
   and redacts inherited local/private paths. A later update also quarantines
