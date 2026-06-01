@@ -2,13 +2,13 @@
 
 ## Ready for Cursor 1 Dogfood
 
-- [x] Current checkout: `/Users/zohartito/projects/arch-line-weights-git`.
+- [x] Current checkout is a local source checkout; do not publish local machine paths.
 - [x] Day-1 CLI path documented: `.venv/bin/arch-lw`.
 - [x] Public install path documented as source/GitHub install, not PyPI.
 - [x] `arch-lw apply --preset usc` is supported.
 - [x] `arch-lw apply-saas --preset usc` is supported.
 - [x] README explains that basic `apply` is fast stroke-weight output.
-- [x] README explains that `apply-saas --architectural --poche --preset usc --source rhino` is the submit-quality path for Rhino 8 -> Illustrator `.ai` -> Illustrator/Acrobat inspection.
+- [x] README explains that `apply-saas --architectural --poche --preset usc --source rhino` is a local review path for Rhino 8 -> Illustrator `.ai` -> Illustrator/Acrobat inspection.
 - [x] Tiny tracked PDF fixture added at `examples/sample-linework.pdf`.
 - [x] `examples/sample-mapping.json` is pure `RGB(...) -> weight` JSON.
 - [x] `CONVENTIONS.md` integrated into the repository root.
@@ -27,7 +27,7 @@
 ## Current Recommended Dogfood Command
 
 ```bash
-cd /Users/zohartito/projects/arch-line-weights-git
+cd path/to/arch-line-weights
 .venv/bin/arch-lw inspect path/to/rhino-export.ai
 .venv/bin/arch-lw apply-saas path/to/rhino-export.ai \
   --architectural --poche --preset usc --source rhino

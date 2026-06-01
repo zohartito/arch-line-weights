@@ -23,24 +23,24 @@ inside Illustrator only to have ExtendScript hang for hours — this is for you.
   `usc` studio workflows.
 
 ```
-$ arch-lw apply "DRAWING 4 SECTION [Converted].ai" --auto --preset usc
-# 37 colors mapped using auto:usc
+$ arch-lw apply "sample-section.ai" --auto --preset section
+# 12 colors mapped using auto:section
 --- 1.0 pt ---
-  RGB( 40, 40, 40)    5,862 strokes
+  RGB( 40, 40, 40)    1,240 strokes
   ...
-applied 340,323 strokes across 49 color changes
-   0.08 pt  →  298,443 strokes
-   0.18 pt  →    6,381 strokes
-   0.25 pt  →      494 strokes
-    0.3 pt  →   25,120 strokes
-    0.5 pt  →    3,967 strokes
-    1.0 pt  →    5,918 strokes
+applied 8,420 strokes across 12 color changes
+   0.13 pt  →    5,180 strokes
+   0.18 pt  →    1,410 strokes
+   0.25 pt  →      760 strokes
+    0.5 pt  →      820 strokes
+    1.0 pt  →      250 strokes
 
-wrote DRAWING 4 SECTION [Converted] HIERARCHY.ai  (4,081,388 bytes)
+wrote sample-section HIERARCHY.ai
 ```
 
-Total runtime: under 2 minutes for the original 24 MB / 340 K-stroke USC
-reference file.
+Runtime depends on drawing size, file format, and whether Illustrator-backed
+layer-preserving commands are used. Synthetic examples are for workflow
+orientation only and are not public proof clearance.
 
 ---
 
@@ -171,19 +171,12 @@ From a source checkout:
   -o /tmp/sample-linework-HIERARCHY.pdf
 ```
 
-### Day-1 proof images
+### Proof status
 
-The section proof uses the Illustrator bridge path (`apply-jsx` followed by
-`arch-lw poche`) on `WALL SECTION [Converted].ai`.
-
-![Day-1 section proof close-up: solid cut mass, openings left white](docs/img/day1-proof/05-closeup-cut-mass-windows-white.png)
-
-Proof assets:
-
-- [Before: raw Rhino/Make2D export](docs/img/day1-proof/01-before-raw.png)
-- [After: hierarchy + solid-black poché](docs/img/day1-proof/03-after-poche-full.png)
-- [Layers panel: preserved `ClippingPlaneIntersections` layers](docs/img/day1-proof/04-layers-panel-clipping-poche.png)
-- [Final poché PDF](docs/img/day1-proof/section-HIERARCHY-jsx-POCHE.pdf)
+Public proof assets are intentionally not committed in this branch. Posting and
+public proof remain **NO-GO** unless W5/W7 explicitly accepts the packet.
+Synthetic proof can demonstrate the harness, but it does not close #30, and the
+private USC regression stays private.
 
 ---
 
