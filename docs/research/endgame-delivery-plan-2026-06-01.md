@@ -29,9 +29,11 @@ product. It is an engineering control document, not a public launch claim.
   payloads, missing report identity, incomplete rendered-view evidence, and raw
   local/private path references. Proof packets must now identify input, output,
   command, a full-board rendered view, and at least one cut-mass/opening
-  close-up before they can pass. It also gates inferred concrete/foundation
-  fills on explicit W5/W7 visual acceptance, so those reports stay
-  `needs_review` even when the geometric strategy improves.
+  close-up before they can pass. A technically passed packet still keeps
+  `public_safe` false until explicit W5/W7 public-proof acceptance metadata is
+  present. It also gates inferred concrete/foundation fills on explicit W5/W7
+  visual acceptance, so those reports stay `needs_review` even when the
+  geometric strategy improves.
 - #38 is green and draft: entourage SVG asset generator.
 - #39 is green and draft: conservative single-layer cleanup mode.
 - #40 is green and draft: run-report diagnose command.
@@ -116,6 +118,8 @@ Required capabilities:
 - Report contract states changed, skipped, failed, why, and next step.
 - Proof packet contract names input, output, command, full-board rendered view,
   and at least one cut-mass/opening close-up.
+- Public-safe proof status requires explicit W5/W7 acceptance metadata; clean
+  artifacts alone are not posting clearance.
 - Status never reports passed when outputs are missing, report says failed/no_go,
   raw proof contains private paths, report identity is missing, or rendered-view
   evidence is incomplete.
