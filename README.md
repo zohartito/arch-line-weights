@@ -67,6 +67,18 @@ Do not assume `arch-lw`, `uv`, or `uvx` are globally on `PATH` in a fresh
 studio shell; use `.venv/bin/arch-lw` from a source checkout or install with
 `pipx`.
 
+For the local designer-console prototype:
+
+```
+python -m pip install -e ".[console]"
+arch-lw designer-console
+```
+
+This opens a local browser UI for choosing a drawing, running Inspect File,
+Run Layout, Apply Line Weights, Generate Poché, and Export Proof Packet. It is
+not public posting clearance, does not close #29/#30, and is not App Store or
+Windows desktop packaging.
+
 To wire up the Claude Code skill:
 
 ```

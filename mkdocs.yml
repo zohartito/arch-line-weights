@@ -98,6 +98,7 @@ nav:
   - Tutorials:
       - tutorials/your-first-section-drawing.md
   - How-to:
+      - Designer console: how-to/designer-console.md
       - Apply line weights: how-to/apply-line-weights.md
       - Generate poché: how-to/generate-poche.md
       - Material hatching: how-to/material-hatching.md

@@ -9,6 +9,18 @@ A working FastAPI backend + SvelteKit frontend that wraps the existing pure-Pyth
 
 This is a **local skeleton**, not a deployment. It runs against the filesystem, has no auth, no payments, no queue. The shape is meant to be the final shape — production swaps `storage.py` for Tigris/R2 and `compute.run_job` for a Redis+RQ task without changing any other module.
 
+For the current human-usable designer console prototype, use the one-command
+local UI in the main package:
+
+```bash
+python -m pip install -e ".[console]"
+arch-lw designer-console
+```
+
+That console serves a small local web UI without requiring the Svelte dev
+server. It is not public proof clearance, does not close #29/#30, and is not
+Mac/Windows desktop packaging.
+
 ## What's in here
 
 ```

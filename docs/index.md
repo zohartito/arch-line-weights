@@ -37,6 +37,8 @@ PyPI publishing is still a release checklist item.
   release.
 - Local CLI workflow, not a hosted service. The `webapp/` directory is a local
   experimental scaffold.
+- `arch-lw designer-console` is a local prototype for designer review, not
+  posting clearance or desktop packaging.
 - Bluebeam is unverified; use Illustrator and Acrobat for the validated review
   loop.
 - Native `apply-saas --poche` requires an Illustrator `.ai` with `/NumBlock`.
@@ -64,6 +66,7 @@ PyPI publishing is still a release checklist item.
     Task-shaped recipes. Pick the verb you need.
 
     [:octicons-arrow-right-24: Apply line weights](how-to/apply-line-weights.md)
+    · [Designer console](how-to/designer-console.md)
     · [Poché](how-to/generate-poche.md)
     · [Hatching](how-to/material-hatching.md)
     · [Rhino](how-to/use-with-rhino.md)
