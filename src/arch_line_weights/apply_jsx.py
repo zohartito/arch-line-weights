@@ -34,6 +34,7 @@ non-section drawing run (see docs/POSTMORTEM.md Attempt 9):
 from __future__ import annotations
 
 import contextlib
+import json
 import os
 import re
 import subprocess
@@ -41,6 +42,7 @@ import textwrap
 import threading
 import time
 from pathlib import Path
+from typing import Any
 
 from .layer_classify import as_jsx_function
 
@@ -565,6 +567,66 @@ def default_output_path(src: str | os.PathLike[str]) -> str:
 
 
 # --------------------------------------------------------------------------- #
+# Report/output validation
+# --------------------------------------------------------------------------- #
+
+
+def apply_jsx_report_failure(report: str) -> str | None:
+    """Return a normalized failure reason when an apply-jsx report is not usable."""
+    text = report.strip()
+    if not text:
+        return "apply-jsx report was empty"
+
+    upper = text.upper()
+    if upper.startswith("ERROR") or "ERROR:" in upper:
+        return "apply-jsx report contains ERROR"
+    if upper.startswith("EXCEPTION") or "EXCEPTION:" in upper:
+        return "apply-jsx report contains EXCEPTION"
+
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
+        payload = None
+    if isinstance(payload, dict):
+        summary = payload.get("summary")
+        status = summary.get("status") if isinstance(summary, dict) else payload.get("status")
+        if str(status).lower() in {"failed", "no_go"}:
+            return f"apply-jsx report status is {status}"
+
+    lower = text.lower()
+    if "no_go" in lower:
+        return "apply-jsx report contains no_go"
+    if "failed" in lower:
+        return "apply-jsx report contains failed"
+
+    return None
+
+
+def validate_apply_jsx_result(
+    apply_result: dict[str, Any],
+    *,
+    expected_output: str | os.PathLike[str] | None = None,
+) -> None:
+    """Reject apply-jsx runs that did not produce trustworthy hierarchy output."""
+    if not apply_result.get("output"):
+        raise RuntimeError("apply-jsx did not report an output path")
+
+    reported_output = os.path.abspath(str(apply_result["output"]))
+    expected_abs = os.path.abspath(str(expected_output or reported_output))
+    if reported_output != expected_abs:
+        raise RuntimeError(
+            f"apply-jsx reported output {reported_output!r}; expected {expected_abs!r}"
+        )
+
+    report_failure = apply_jsx_report_failure(str(apply_result.get("report") or ""))
+    if report_failure is not None:
+        raise RuntimeError(report_failure)
+
+    if not Path(expected_abs).exists():
+        raise RuntimeError(f"apply-jsx did not write expected hierarchy output: {expected_abs}")
+
+
+# --------------------------------------------------------------------------- #
 # Issue #11 — configurable timeout
 # --------------------------------------------------------------------------- #
 
@@ -705,10 +767,12 @@ def apply_via_jsx(
 
     if not os.path.exists(report_path):
         raise RuntimeError(f"JSX did not produce a report at {report_path}")
-    return {
+    result = {
         "report_path": report_path,
         "output": dst,
         "report": Path(report_path).read_text(),
         "heartbeat_lines": poller.lines_seen,
         "use_open_doc": use_open_doc,
     }
+    validate_apply_jsx_result(result, expected_output=dst)
+    return result

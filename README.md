@@ -84,6 +84,50 @@ The JSON contains every stroke RGB and how many strokes use it. The dominant
 colors (highest counts) are almost always **material hatch / texture** — they
 should land in the lightest tier.
 
+### Put a Rhino export on a sheet
+
+If a Rhino Make2D export opens off the Illustrator artboard, normalize the
+layout before running hierarchy or poché. In Rhino, first select the Make2D
+curves and run:
+
+```
+_-RunPythonScript "/path/to/integrations/rhino/export_selected_make2d_manifest.py"
+```
+
+That writes an `.ai` / `.pdf` export plus a `.manifest.json` sidecar. Then run:
+
+```
+arch-lw layout-jsx rhino-make2d.ai \
+  --artboard 24x36in \
+  --fit fit \
+  --margin 0.5in \
+  --report-json layout-report.json
+```
+
+This opens the export in Illustrator, sets the requested artboard size, centers
+or fits visible unlocked artwork, saves `<src> LAYOUT-jsx.ai`, and writes a
+layout report. Use `--dry-run --jsx-path layout.jsx` to inspect the generated
+script without contacting Illustrator or writing output artwork.
+
+For a single report that chains layout with optional hierarchy and poché:
+
+```
+arch-lw bridge-rhino-ai \
+  --input rhino-make2d.ai \
+  --artboard 24x36in \
+  --fit fit \
+  --margin 0.5in \
+  --preset usc \
+  --source rhino \
+  --for-print \
+  --apply-jsx \
+  --poche \
+  --report-dir proof
+```
+
+Layout success is not launch proof. The proof gate still depends on the
+verification reports and visual QA acceptance.
+
 ### Two apply modes — pick by what you need
 
 | Mode | Speed | Layers | Use when |

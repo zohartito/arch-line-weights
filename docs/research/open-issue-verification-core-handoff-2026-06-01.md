@@ -4,12 +4,45 @@ This branch preserves the WIP implementation and investigation for the open-issu
 
 ## Branch
 
-- Branch: `codex/open-issue-verification-core` (PR **#37**, draft; includes `c2c1500` #19 diagnose slice)
+- Branch: `codex/open-issue-verification-core` (PR **#37**, draft; includes #19 diagnose and #36 bridge/report integration)
 - Integration rehearsal: `codex/tmp-integration-rehearsal-20260601b` (pushed head `d457acb`)
 - Endgame ledger: `codex/endgame-delivery-ledger` (PR **#41**, head `a86d268`)
 - Human landing map: `docs/research/human-landing-plan-2026-06-01.md`
 - Remote: `origin` (`git@github.com:zohartito/arch-line-weights.git`)
 - Goal status: in progress; not launch-ready.
+
+## Update — 2026-06-01 (PR #36 bridge/report integration)
+
+### What changed
+
+- Merged `origin/v0.2-verification-core` / PR **#36** into the coordinator branch.
+- Added `arch-lw layout-jsx`, `arch-lw bridge-rhino-ai`, Rhino selected Make2D
+  manifest export helper, and their focused tests/docs.
+- Combined report contracts instead of choosing one side:
+  - kept #37 schema-v2 `input_format`, `command`, `visual_artifacts`, proof/no-go fields;
+  - added #36 layout reports, redacted cut-geometry reports, `layers_by_status`,
+    report status/why/next-action fields, and foundation/concrete no-go limitations.
+- Kept `arch-lw poche --report` and accepted `--report-json` as the same durable
+  report output option; kept `--geometry-json` for redacted cut-geometry evidence.
+- Preserved the passing Illustrator `front document` AppleScript query while
+  integrating #36 apply-jsx validation hardening.
+
+### Verification (this slice)
+
+```text
+pytest tests/test_run_report.py tests/test_poche_report_json.py tests/test_layout_jsx.py tests/test_bridge_rhino_ai.py tests/test_make2d_proof_harness.py tests/test_rhino_integration_scripts.py -q  → 63 passed, 5 skipped, 1 xfailed
+pytest tests/test_cli_proof_check.py tests/test_proof.py tests/test_launch_safety_docs.py -q  → 46 passed
+pytest --ignore=tests/test_hatch_v05.py -q  → 632 passed, 7 skipped, 1 xfailed
+ruff check src tests webapp/backend webapp/tests  → pass
+mkdocs build  → pass
+git diff --check  → pass
+```
+
+### Boundaries
+
+- This advances #19/#31/#32 and brings the Rhino/layout report bridge onto #37.
+- **#29** / **#30** remain open; bridge/layout reports are not W5/W7 public-proof
+  acceptance. Posting/public proof **NO-GO**.
 
 ## Update — 2026-06-01 (issue #19 diagnose slice integrated)
 
