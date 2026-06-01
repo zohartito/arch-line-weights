@@ -37,6 +37,12 @@ class VisualArtifacts:
 
 
 @dataclass(frozen=True)
+class GeometryArtifacts:
+    cut_dump: Path
+    layer_audit: Path
+
+
+@dataclass(frozen=True)
 class ReviewRegion:
     id: str
     kind: str
@@ -50,6 +56,7 @@ class ProofFixture:
     commands: list[str]
     expected_report: ExpectedReport
     visual_artifacts: VisualArtifacts
+    geometry_artifacts: GeometryArtifacts
     review_regions: list[ReviewRegion]
     caveats: list[str]
     status: str
@@ -75,6 +82,8 @@ class ProofPacketPlan:
     before_path: Path
     after_path: Path
     diff_path: Path
+    cut_geometry_path: Path
+    layer_audit_path: Path
     commands: list[CommandPlan]
 
 
@@ -107,6 +116,8 @@ def build_proof_packet_plan(
         before_path=fixture_output_dir / "before.png",
         after_path=fixture_output_dir / "after.png",
         diff_path=fixture_output_dir / "diff.png",
+        cut_geometry_path=fixture_output_dir / "cut-geometry.json",
+        layer_audit_path=fixture_output_dir / "layer-audit.json",
         commands=[CommandPlan(index=index, command=command) for index, command in enumerate(command_list)],
     )
 
@@ -185,6 +196,7 @@ def _parse_fixture(raw: Any, manifest_dir: Path, index: int) -> ProofFixture:
     status = _required_status(raw, "status", fixture_id, VALID_FIXTURE_STATUSES)
     expected_report = _parse_expected_report(raw.get("expected_report"), fixture_id)
     visual_artifacts = _parse_visual_artifacts(raw.get("visual_artifacts"), fixture_id)
+    geometry_artifacts = _parse_geometry_artifacts(raw.get("geometry_artifacts"), fixture_id)
     review_regions = _parse_review_regions(raw.get("review_regions", []), fixture_id)
 
     return ProofFixture(
@@ -193,6 +205,7 @@ def _parse_fixture(raw: Any, manifest_dir: Path, index: int) -> ProofFixture:
         commands=_validate_string_list(raw.get("commands"), f"{fixture_id}.commands"),
         expected_report=expected_report,
         visual_artifacts=visual_artifacts,
+        geometry_artifacts=geometry_artifacts,
         review_regions=review_regions,
         caveats=_validate_string_list(raw.get("caveats", []), f"{fixture_id}.caveats"),
         status=status,
@@ -223,6 +236,15 @@ def _parse_visual_artifacts(raw: Any, fixture_id: str) -> VisualArtifacts:
         before=Path(_required_str(raw, "before", f"{fixture_id}.visual_artifacts")),
         after=Path(_required_str(raw, "after", f"{fixture_id}.visual_artifacts")),
         diff=Path(_required_str(raw, "diff", f"{fixture_id}.visual_artifacts")),
+    )
+
+
+def _parse_geometry_artifacts(raw: Any, fixture_id: str) -> GeometryArtifacts:
+    if not isinstance(raw, dict):
+        raise ManifestValidationError(f"{fixture_id}.geometry_artifacts must be a mapping")
+    return GeometryArtifacts(
+        cut_dump=Path(_required_str(raw, "cut_dump", f"{fixture_id}.geometry_artifacts")),
+        layer_audit=Path(_required_str(raw, "layer_audit", f"{fixture_id}.geometry_artifacts")),
     )
 
 

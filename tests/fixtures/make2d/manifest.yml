@@ -14,6 +14,9 @@ fixtures:
       before: proof/public-foundation-window-section/before.png
       after: proof/public-foundation-window-section/after.png
       diff: proof/public-foundation-window-section/diff.png
+    geometry_artifacts:
+      cut_dump: proof/public-foundation-window-section/cut-geometry.json
+      layer_audit: proof/public-foundation-window-section/layer-audit.json
     review_regions:
       - id: foundation_window_cut_mass
         kind: poche_presence

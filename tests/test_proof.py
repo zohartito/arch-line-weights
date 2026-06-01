@@ -33,6 +33,9 @@ fixtures:
       before: before.png
       after: after.png
       diff: diff.png
+    geometry_artifacts:
+      cut_dump: cut-geometry.json
+      layer_audit: layer-audit.json
     review_regions:
       - id: stair_core
         kind: poche
@@ -55,6 +58,8 @@ fixtures:
     assert manifest.fixtures[0].expected_report.status == "pass"
     assert manifest.fixtures[0].expected_report.counts == {"layers": 4, "poche_regions": 1}
     assert manifest.fixtures[0].visual_artifacts.after == Path("after.png")
+    assert manifest.fixtures[0].geometry_artifacts.cut_dump == Path("cut-geometry.json")
+    assert manifest.fixtures[0].geometry_artifacts.layer_audit == Path("layer-audit.json")
     assert manifest.fixtures[0].review_regions[0].rect == (10, 20, 30, 40)
     assert manifest.fixtures[0].caveats == ["synthetic fixture only"]
     assert manifest.fixtures[0].status == "pass"
@@ -69,6 +74,9 @@ def test_committed_make2d_manifest_is_repo_safe_synthetic_fixture() -> None:
     assert not fixture.source_path.is_absolute()
     assert fixture.expected_report.counts["cut_layers_considered"] == 3
     assert fixture.expected_report.counts["polygons_filled"] == 4
+    assert fixture.geometry_artifacts.cut_dump == Path(
+        "proof/public-foundation-window-section/cut-geometry.json"
+    )
     assert fixture.review_regions[0].kind == "poche_presence"
     assert any("does not close issue #30" in caveat for caveat in fixture.caveats)
     assert any("Private USC regression stays private" in caveat for caveat in fixture.caveats)
@@ -115,6 +123,8 @@ def test_build_proof_packet_plan_uses_stable_artifact_paths(tmp_path: Path) -> N
     assert plan.before_path == tmp_path / "proof" / "stair_section" / "before.png"
     assert plan.after_path == tmp_path / "proof" / "stair_section" / "after.png"
     assert plan.diff_path == tmp_path / "proof" / "stair_section" / "diff.png"
+    assert plan.cut_geometry_path == tmp_path / "proof" / "stair_section" / "cut-geometry.json"
+    assert plan.layer_audit_path == tmp_path / "proof" / "stair_section" / "layer-audit.json"
     assert [command.index for command in plan.commands] == [0, 1]
     assert [command.command for command in plan.commands] == [
         "arch-lw apply in.pdf",
