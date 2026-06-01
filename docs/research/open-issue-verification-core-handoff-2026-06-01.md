@@ -8,7 +8,34 @@ This branch preserves the WIP implementation and investigation for the open-issu
 - Remote: `origin` (`git@github.com:zohartito/arch-line-weights.git`)
 - Goal status: in progress on PR #37; not launch-ready.
 
-## Update — 2026-06-01 (W5/W7 proof-packet handoff slice)
+## Update — 2026-06-01 (handoff violation regressions, `374b458`)
+
+### What changed
+
+- Parametrized `find_handoff_public_safety_violations` coverage for `public_clearance`,
+  `posting_ready`, `acceptance_recorded`, local paths in JSON, private fixture tokens, and
+  `accepted: true` in the overlay template.
+- Regression that `assert_handoff_is_public_safe` rejects local paths embedded in handoff JSON.
+- Regression that `write_w5_w7_acceptance_handoff_to_zip` rejects local paths in Markdown.
+
+### Verification (this slice)
+
+```text
+pytest tests/test_proof.py -q  → 36 passed
+pytest --ignore=tests/test_hatch_v05.py -q  → 568 passed, 1 skipped
+ruff check src/ tests/ webapp/backend/ webapp/tests/  → pass
+npm --prefix webapp/frontend run check  → 0 errors
+npm --prefix webapp/frontend run build  → pass
+git diff --check  → pass
+```
+
+### Remains open
+
+- **#29** / **#30** unchanged; posting/public proof **NO-GO** without separate W5/W7
+  `public_proof` acceptance.
+- No PR merges.
+
+## Update — 2026-06-01 (W5/W7 proof-packet handoff slice, `d8bdd3d`)
 
 ### What changed
 
