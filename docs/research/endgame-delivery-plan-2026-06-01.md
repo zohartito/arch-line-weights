@@ -16,6 +16,12 @@ product. It is an engineering control document, not a public launch claim.
 - Do not claim App Store, Windows, Rhino plugin, or Illustrator panel readiness
   until those surfaces are actually implemented and tested.
 
+## Human landing map (2026-06-01)
+
+See `docs/research/human-landing-plan-2026-06-01.md` on PR **#37** for the recommended
+merge waves, superseded PRs, rehearsal-vs-#37 delta, and pre-merge review checklist.
+Posting/public proof remains **NO-GO** unless W5/W7 explicitly accepts a public-safe packet.
+
 ## Integration Rehearsal Checkpoint - 2026-06-01 (evening, refreshed)
 
 Archival branch `codex/tmp-integration-rehearsal-20260601b` has now rehearsed the
