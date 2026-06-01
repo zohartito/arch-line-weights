@@ -75,6 +75,26 @@ git diff --check  → pass
 - GitHub issue comments/PR-body edits are blocked until `gh` is reauthenticated
   (`gh auth status` reports the token for `zohartito` is invalid).
 
+## Update — 2026-06-01 (merge-ready stack: #36 on #37, overlap audit)
+
+### What changed
+
+- **#37** now includes merge of **#36** (`7794528`): layout-jsx, bridge-rhino-ai, expanded reports.
+- Added `pr-overlap-audit-2026-06-01.md`, `merge-readiness-packet-2026-06-01.md`,
+  `docs/how-to/private-studio-dogfood-runbook.md`.
+- **#40 diagnose** confirmed **duplicate** of #37 — close #40 without merge.
+- `arch-lw diagnose` prints posting NO-GO / #30 reminder in text output.
+
+### Merge-ready order (human)
+
+1. **#37** (+ close #36, #40, #44, #45)
+2. **#39** → **#38** → **#42** (resolve `make2d_completion` on #42)
+3. **#34** → **#41** (docs)
+
+### Boundaries
+
+- **No PR merges by agent.** **#29** / **#30** open. Posting **NO-GO.**
+
 ## Update — 2026-06-01 (human landing plan + console posting clarity)
 
 ### What changed

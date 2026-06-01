@@ -144,7 +144,7 @@
     if (!summary) return 'W5/W7 not recorded';
     if (!summary.public_acceptance?.accepted) return 'W5/W7 not recorded';
     const reviewers = summary.public_acceptance.accepted_by ?? [];
-    return reviewers.length ? reviewers.join(', ') : 'Accepted';
+    return reviewers.length ? `W5/W7: ${reviewers.join(', ')}` : 'W5/W7 not recorded';
   }
 
   function artifactHref(artifact: ConsoleArtifact): string {

@@ -86,7 +86,7 @@
           <p class="mt-1 text-ink-500">{detail.proof_notice}</p>
         </div>
         <span class="rounded border border-zinc-950 bg-zinc-950 px-2 py-1 text-xs font-semibold text-white">
-          {detail.public_safe ? 'Accepted' : 'NO-GO'}
+          {detail.public_safe ? 'Posting: W5/W7 accepted (local)' : 'Posting: NO-GO'}
         </span>
       </div>
       <p class="mt-2 text-xs text-ink-500">

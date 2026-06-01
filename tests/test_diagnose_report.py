@@ -66,6 +66,8 @@ def test_summarize_report_groups_review_layers_and_next_step():
     assert summary["failed_layers"][0]["short_name"] == "TEC_CONCRETE_BASE"
     assert "Illustrator" in summary["next_step"]
     assert "PDF preview is not authoritative" in summary["preview_warning"]
+    assert "NO-GO" in summary["posting_reminder"]
+    assert "#30" in summary["posting_reminder"]
 
 
 def test_format_diagnosis_is_human_readable_and_reasoned():
@@ -77,6 +79,8 @@ def test_format_diagnosis_is_human_readable_and_reasoned():
     assert "strategy bbox is review-only" in text
     assert "TEC_CONCRETE_BASE" in text
     assert "PDF preview is not authoritative" in text
+    assert "Posting/public proof is NO-GO" in text
+    assert "Synthetic proof does not close #30" in text
 
 
 def test_diagnose_cli_reads_report_and_can_emit_json(tmp_path):

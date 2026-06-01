@@ -8,6 +8,10 @@ PREVIEW_WARNING = (
     "PDF preview is not authoritative for AI-native PieceInfo outputs; "
     "review the Illustrator document or exported Illustrator smoke-check image."
 )
+POSTING_REMINDER = (
+    "Posting/public proof is NO-GO unless W5/W7 explicitly accepts a public-safe packet. "
+    "Synthetic proof does not close #30."
+)
 
 
 def _short_name(layer: str) -> str:
@@ -79,6 +83,7 @@ def summarize_report(report: dict[str, Any]) -> dict[str, Any]:
         "skipped_layers": skipped,
         "next_step": next_step,
         "preview_warning": PREVIEW_WARNING,
+        "posting_reminder": POSTING_REMINDER,
     }
 
 
@@ -118,12 +123,14 @@ def format_diagnosis(summary: dict[str, Any]) -> str:
             "",
             f"Next step: {summary['next_step']}",
             f"Preview warning: {summary['preview_warning']}",
+            f"Posting: {summary.get('posting_reminder', POSTING_REMINDER)}",
         ]
     )
     return "\n".join(lines)
 
 
 __all__ = [
+    "POSTING_REMINDER",
     "PREVIEW_WARNING",
     "format_diagnosis",
     "summarize_report",

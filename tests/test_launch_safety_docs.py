@@ -23,6 +23,8 @@ CORE_PUBLIC_SAFETY_SURFACES = [
     REPO_ROOT / "docs" / "research" / "human-landing-plan-2026-06-01.md",
     *sorted((REPO_ROOT / "docs" / "announce").rglob("*.md")),
     *sorted((REPO_ROOT / "docs" / "how-to").rglob("*.md")),
+    REPO_ROOT / "docs" / "research" / "merge-readiness-packet-2026-06-01.md",
+    REPO_ROOT / "docs" / "research" / "pr-overlap-audit-2026-06-01.md",
     *sorted((REPO_ROOT / "docs" / "tutorials").rglob("*.md")),
     *sorted((REPO_ROOT / "docs" / "reference").rglob("*.md")),
     *sorted((REPO_ROOT / "docs" / "explanation").rglob("*.md")),

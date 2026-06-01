@@ -171,8 +171,10 @@ arch-lw diagnose run-report.json [--json]
 ```
 
 The text output groups filled, inferred, low-confidence, skipped, failed, and
-missing-payload layers, lists review reasons, and reminds the user that PDF
-preview is not authoritative for AI-native Illustrator payloads.
+missing-payload layers, lists review reasons, reminds the user that PDF
+preview is not authoritative for AI-native Illustrator payloads, and prints a
+posting reminder: public proof stays NO-GO unless W5/W7 accepts a public-safe
+packet; synthetic proof does not close #30.
 
 ## `arch-lw proof-check`
 
