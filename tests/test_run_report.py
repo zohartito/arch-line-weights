@@ -49,7 +49,7 @@ def test_report_marks_injected_structural_open_loop_as_inferred():
     assert data["layers"][0]["review"]["needs_review"] is False
 
 
-def test_report_marks_structural_helper_evidence_from_poche_report():
+def test_apply_saas_report_marks_structural_helper_evidence_from_poche_report():
     layer = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
     data = _report(
         [FillResult(layer, "structural_open_loop", 0.88, 1, 8)],
