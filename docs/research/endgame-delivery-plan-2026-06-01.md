@@ -35,9 +35,11 @@ product. It is an engineering control document, not a public launch claim.
   visual acceptance, so those reports stay `needs_review` even when the
   geometric strategy improves. Later updates carry helper-backed poché evidence
   through reports as `used_structural_helpers` plus `structural_helper_count`
-  while preserving the proof gate. A later update adds opt-in review-region
-  pixel checks so synthetic proof packets fail when a declared cut-mass close-up
-  region stays light or lacks a matching rendered `after` view.
+  while preserving the proof gate. Later updates add opt-in review-region
+  pixel checks, then connect the committed synthetic manifest's
+  `review_regions` to that gate so synthetic proof packets fail when a declared
+  cut-mass close-up region stays light or lacks a matching rendered `after`
+  view.
 - #38 is green and draft: entourage SVG asset generator.
 - #39 is green and draft: conservative single-layer cleanup mode.
 - #40 is green and draft: run-report diagnose command.
@@ -86,10 +88,11 @@ product. It is an engineering control document, not a public launch claim.
   proof/report/geometry tests passed, ruff passed, the touched-file
   private/no-claim scan had no hits, and the feasible full suite passed.
 - #37 + #42 integration was rechecked again after #37 added opt-in proof
-  review-region pixel gates. The refreshed temp merge was conflict-free.
-  Combined focused proof/report/geometry tests passed, ruff passed, the
-  touched-file private/no-claim scan had no hits, and the feasible full suite
-  passed.
+  review-region pixel gates and connected the committed synthetic manifest's
+  `review_regions` to the gate. The refreshed temp merge was conflict-free.
+  Combined focused proof/report/geometry tests passed with 77 passing tests,
+  ruff passed, the touched-file private/no-claim scan had no hits, and the
+  feasible full suite passed with 556 passing tests and 1 skipped test.
 - #43 is draft and stacked on #36: the local designer-console prototype. It has
   local full-test verification, but no GitHub checks are reported on the
   stacked branch yet.
