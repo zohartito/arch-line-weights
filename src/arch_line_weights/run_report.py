@@ -234,7 +234,6 @@ def build_apply_saas_report(
         if limitation is not None:
             limitations.append(limitation)
             review_reasons.append("foundation/concrete coverage is launch-blocking")
-
         layers.append(
             {
                 "layer": fill.layer,

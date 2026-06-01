@@ -243,7 +243,7 @@ def _large_candidate_is_plausible(
 ) -> bool:
     """Allow large repairs only when they look like strongly anchored cut strips."""
     upper = layer_name.upper()
-    if "TEC_CONCRETE_BASE" in upper or "ROOF_CAP" in upper:
+    if "ROOF_CAP" in upper:
         return False
     dims = _oriented_dimensions(poly)
     if dims is None:
@@ -251,6 +251,14 @@ def _large_candidate_is_plausible(
     short, long = dims
     aspect = long / max(short, 1e-6)
     rectangularity = _rectangularity(poly, short, long)
+    if "TEC_CONCRETE_BASE" in upper:
+        return (
+            poly.area <= 6500.0
+            and aspect >= 2.25
+            and short <= 70.0
+            and rectangularity >= 0.75
+            and shared >= max(50.0, required * 1.75)
+        )
     if "TEC_FOUNDATION" in upper:
         return (
             poly.area <= 5000.0

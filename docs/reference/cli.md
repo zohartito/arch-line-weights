@@ -162,6 +162,23 @@ arch-lw preview BEFORE AFTER -o OUTPUT [OPTIONS]
 | `--dpi INT` | `96` | Render DPI |
 | `--ghostscript` | off | Ghostscript fallback for hairline accuracy |
 
+## `arch-lw cleanup`
+
+Conservatively clean a low-semantic single-layer `.ai` export (delete noise,
+lighten hairlines, keep heavy linework). This is a local prep tool, not proof
+clearance.
+
+```bash
+arch-lw cleanup drawing.ai \
+  -o "drawing CLEANUP.ai" \
+  --report drawing-cleanup-report.json
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `-o, --output PATH` | `<src> CLEANUP.<ext>` | Output path |
+| `--report PATH` | — | JSON report with deleted/lightened/medium/heavy counts |
+
 ## `arch-lw proof-check`
 
 Read a Make2D proof manifest and emit proof-packet plan or validation JSON.
