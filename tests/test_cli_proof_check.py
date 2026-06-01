@@ -256,6 +256,70 @@ fixtures:
     )
 
 
+def test_proof_check_fails_when_report_json_is_missing(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "manifest.yml"
+    manifest_path.write_text(
+        """
+fixtures:
+  - id: missing_report
+    fixture_path: synthetic.pdf
+    commands:
+      - arch-lw poche synthetic.ai --report report.json
+    expected_report:
+      status: pass
+      counts:
+        polygons_filled: 1
+    visual_artifacts:
+      before: before.png
+      after: after.png
+      diff: diff.png
+      rendered_views:
+        - id: full_board
+          kind: full_board
+          before: before.png
+          after: after.png
+          diff: diff.png
+        - id: cut_mass
+          kind: cut_mass_closeup
+          before: cut-mass-before.png
+          after: cut-mass-after.png
+          diff: cut-mass-diff.png
+    geometry_artifacts:
+      cut_dump: cut-geometry.json
+      layer_audit: layer-audit.json
+    review_regions: []
+    status: pass
+""",
+        encoding="utf-8",
+    )
+    packet_dir = tmp_path / "proof" / "missing_report"
+    packet_dir.mkdir(parents=True)
+    for name in [
+        "cut-geometry.json",
+        "layer-audit.json",
+    ]:
+        (packet_dir / name).write_bytes(b"proof artifact")
+    _write_changed_rendered_images(packet_dir)
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "proof-check",
+            str(manifest_path),
+            "--output-dir",
+            str(tmp_path / "proof"),
+            "--no-pretty",
+        ],
+    )
+
+    assert result.exit_code == 1
+    payload = json.loads(result.stdout)
+    assert payload["status"] == "failed"
+    validation = payload["fixtures"][0]["validation"]
+    assert validation["status"] == "failed"
+    assert "report.json" in " ".join(validation.get("missing_artifacts", []))
+
+
 def test_proof_check_fails_when_rendered_views_are_effectively_unchanged(tmp_path: Path) -> None:
     manifest_path = tmp_path / "manifest.yml"
     manifest_path.write_text(
