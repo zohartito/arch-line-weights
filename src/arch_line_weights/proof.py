@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import zipfile
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -26,6 +27,16 @@ _LOCAL_PATH_RE = re.compile(
     r"(?i)(?:file://)?(?:/Users/|/private/|/var/folders/|/tmp/|/Volumes/|[A-Z]:\\|\\\\)"
 )
 _PUBLIC_ACCEPTANCE_REVIEWERS = {"W5", "W7"}
+W5_W7_HANDOFF_JSON_NAME = "W5-W7-ACCEPTANCE-HANDOFF.json"
+W5_W7_HANDOFF_MD_NAME = "W5-W7-ACCEPTANCE-HANDOFF.md"
+PROOF_PACKET_GUARDRAILS = (
+    "Posting/public proof is NO-GO unless W5/W7 explicitly accepts it.",
+    "Synthetic proof does not close #30.",
+    "Private USC regression stays private.",
+)
+_PRIVATE_FIXTURE_TOKEN_RE = re.compile(
+    r"(?i)(macro_for_archlw|synologydrive|usc_1|temporaryitems|downloads/|desktop/)"
+)
 
 
 class ManifestValidationError(ValueError):
@@ -1038,3 +1049,183 @@ def _as_image_array(image: Image.Image | np.ndarray) -> np.ndarray:
         raise ValueError("image arrays must be grayscale, RGB, or RGBA")
 
     return array[..., :4].astype(np.uint8, copy=False)
+
+
+def build_w5_w7_acceptance_handoff(
+    *,
+    fixture_id: str,
+    public_summary: dict[str, Any],
+) -> tuple[dict[str, Any], str]:
+    """Build a path-free W5/W7 acceptance handoff for exported proof packets.
+
+    The handoff documents review gates and templates only. It never records that
+    acceptance occurred and never includes local/private paths.
+    """
+
+    if not isinstance(fixture_id, str) or not fixture_id.strip():
+        raise ValueError("fixture_id must be a non-empty string")
+    if not isinstance(public_summary, dict):
+        raise ValueError("public_summary must be a mapping")
+
+    public_acceptance = public_summary.get("public_acceptance")
+    if not isinstance(public_acceptance, dict):
+        public_acceptance = {"accepted": False, "accepted_by": []}
+    visual_acceptance = public_summary.get("visual_acceptance")
+    if not isinstance(visual_acceptance, dict):
+        visual_acceptance = {"accepted_layer_count": 0, "accepted_by": []}
+
+    handoff: dict[str, Any] = {
+        "fixture_id": fixture_id.strip(),
+        "public_clearance": "NO-GO",
+        "public_safe": False,
+        "posting_ready": False,
+        "synthetic_proof_closes_issue_30": False,
+        "private_usc_regression_stays_private": True,
+        "issues_open": ["#29", "#30"],
+        "acceptance_recorded": False,
+        "guardrails": list(PROOF_PACKET_GUARDRAILS),
+        "packet_status": public_summary.get("status"),
+        "public_acceptance": {
+            "accepted": public_acceptance.get("accepted") is True,
+            "accepted_by": list(public_acceptance.get("accepted_by") or []),
+        },
+        "visual_acceptance": {
+            "accepted_layer_count": int(visual_acceptance.get("accepted_layer_count") or 0),
+            "accepted_by": list(visual_acceptance.get("accepted_by") or []),
+        },
+        "github_safe_decision_template": {
+            "layer_family_reviewed": "EXAMPLE_CUT_LAYER_FAMILY",
+            "decision": "pending",
+            "accepted_scope": "private_regression_only",
+            "remaining_limitations": [
+                "Record only after private visual review; do not commit private artifacts.",
+            ],
+        },
+        "local_only_overlay_template": {
+            "review_acceptance": {
+                "visual_layer_gates": [
+                    {
+                        "layer": "EXAMPLE_CUT_LAYER",
+                        "accepted": False,
+                        "accepted_by": ["W7"],
+                        "date": "YYYY-MM-DD",
+                        "scope": "private visual review of eligible cut-mass layer only",
+                    }
+                ],
+                "public_proof": {
+                    "accepted": False,
+                    "accepted_by": ["W5"],
+                    "date": "YYYY-MM-DD",
+                    "scope": "public proof clearance only after separate W5/W7 sign-off",
+                },
+            }
+        },
+        "next_steps": [
+            "Acceptance has not occurred in this packet.",
+            "Keep private review inputs, raw reports, and local screenshots off GitHub.",
+            "If W5/W7 accept a visual layer gate, add review_acceptance.visual_layer_gates to the local raw report only.",
+            "Public posting still requires separate review_acceptance.public_proof metadata from W5 and/or W7.",
+        ],
+    }
+    assert_handoff_is_public_safe(handoff)
+    return handoff, _render_w5_w7_acceptance_handoff_markdown(handoff)
+
+
+def assert_handoff_is_public_safe(handoff: dict[str, Any]) -> None:
+    """Raise ValueError when handoff content is not safe for public zip export."""
+
+    violations = find_handoff_public_safety_violations(handoff)
+    if violations:
+        raise ValueError("handoff is not public-safe: " + "; ".join(violations))
+
+
+def find_handoff_public_safety_violations(handoff: dict[str, Any]) -> list[str]:
+    violations: list[str] = []
+    if handoff.get("public_clearance") != "NO-GO":
+        violations.append("public_clearance must be NO-GO")
+    if handoff.get("public_safe") is not False:
+        violations.append("public_safe must be false")
+    if handoff.get("posting_ready") is not False:
+        violations.append("posting_ready must be false")
+    if handoff.get("acceptance_recorded") is not False:
+        violations.append("acceptance_recorded must be false")
+    if handoff.get("synthetic_proof_closes_issue_30") is not False:
+        violations.append("synthetic_proof_closes_issue_30 must be false")
+
+    serialized = json.dumps(handoff, sort_keys=True)
+    if _LOCAL_PATH_RE.search(serialized):
+        violations.append("handoff contains local/private path references")
+    if _PRIVATE_FIXTURE_TOKEN_RE.search(serialized):
+        violations.append("handoff contains private fixture tokens")
+
+    overlay = handoff.get("local_only_overlay_template")
+    if isinstance(overlay, dict):
+        gates = overlay.get("review_acceptance", {}).get("visual_layer_gates")
+        if not isinstance(gates, list) or not gates:
+            violations.append("local_only_overlay_template.visual_layer_gates is required")
+        elif any(entry.get("accepted") is True for entry in gates if isinstance(entry, dict)):
+            violations.append("overlay template must not claim visual acceptance")
+
+    return violations
+
+
+def write_w5_w7_acceptance_handoff_to_zip(
+    zf: zipfile.ZipFile,
+    *,
+    handoff_json: dict[str, Any],
+    handoff_md: str,
+) -> None:
+    """Write sanitized W5/W7 handoff files into a proof packet zip archive."""
+
+    assert_handoff_is_public_safe(handoff_json)
+    if _LOCAL_PATH_RE.search(handoff_md) or _PRIVATE_FIXTURE_TOKEN_RE.search(handoff_md):
+        raise ValueError("handoff markdown is not public-safe")
+    zf.writestr(
+        W5_W7_HANDOFF_JSON_NAME,
+        json.dumps(handoff_json, indent=2, sort_keys=True) + "\n",
+    )
+    zf.writestr(W5_W7_HANDOFF_MD_NAME, handoff_md if handoff_md.endswith("\n") else handoff_md + "\n")
+
+
+def _render_w5_w7_acceptance_handoff_markdown(handoff: dict[str, Any]) -> str:
+    lines = [
+        "# W5/W7 acceptance handoff",
+        "",
+        "This file is local review material only. It is **not** posting clearance.",
+        "",
+        f"- Public clearance: **{handoff['public_clearance']}**",
+        f"- Public safe: `{handoff['public_safe']}`",
+        f"- Posting ready: `{handoff['posting_ready']}`",
+        f"- Acceptance recorded: `{handoff['acceptance_recorded']}`",
+        "",
+        "## Guardrails",
+        "",
+    ]
+    lines.extend(f"- {item}" for item in handoff.get("guardrails", []))
+    lines.extend(
+        [
+            "",
+            "## Open launch blockers",
+            "",
+            "- Issue #29 remains open until proof truth is accepted.",
+            "- Issue #30 remains open; synthetic proof does not close it.",
+            "",
+            "## Next steps",
+            "",
+        ]
+    )
+    lines.extend(f"- {item}" for item in handoff.get("next_steps", []))
+    lines.extend(
+        [
+            "",
+            "## Local-only overlay template",
+            "",
+            "Add to the **local** raw report only after W5/W7 visual review:",
+            "",
+            "```json",
+            json.dumps(handoff.get("local_only_overlay_template", {}), indent=2, sort_keys=True),
+            "```",
+            "",
+        ]
+    )
+    return "\n".join(lines)
