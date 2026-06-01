@@ -12,8 +12,8 @@ from arch_line_weights.proof import (
     W5_W7_HANDOFF_MD_NAME,
     ManifestValidationError,
     ReviewRegion,
-    build_proof_packet_plan,
     assert_handoff_is_public_safe,
+    build_proof_packet_plan,
     build_w5_w7_acceptance_handoff,
     find_handoff_public_safety_violations,
     has_dark_pixels_in_region,
@@ -1108,13 +1108,15 @@ def test_write_w5_w7_handoff_to_zip_rejects_local_path_in_markdown(tmp_path: Pat
         public_summary={"status": "needs_review", "public_safe": False},
     )
     packet_path = tmp_path / "proof-packet.zip"
-    with zipfile.ZipFile(packet_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        with pytest.raises(ValueError, match="handoff markdown is not public-safe"):
-            write_w5_w7_acceptance_handoff_to_zip(
-                zf,
-                handoff_json=handoff,
-                handoff_md=handoff_md + "\n/private/tmp/leaked-report.json\n",
-            )
+    with (
+        zipfile.ZipFile(packet_path, "w", compression=zipfile.ZIP_DEFLATED) as zf,
+        pytest.raises(ValueError, match="handoff markdown is not public-safe"),
+    ):
+        write_w5_w7_acceptance_handoff_to_zip(
+            zf,
+            handoff_json=handoff,
+            handoff_md=handoff_md + "\n/private/tmp/leaked-report.json\n",
+        )
 
 
 def _strict_review_region(
