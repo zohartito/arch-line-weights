@@ -32,6 +32,8 @@ fixtures:
       - id: foundation_window_cut_mass
         kind: poche_presence
         rect: [120, 160, 620, 460]
+        min_dark_ratio: 0.20
+        min_dark_delta: 0.12
     caveats:
       - "Synthetic fixture only; it does not close issue #30."
       - "Private USC regression stays private and remains separate from public proof."

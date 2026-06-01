@@ -56,6 +56,8 @@ fixtures:
       - id: stair_core
         kind: poche
         rect: [10, 20, 30, 40]
+        min_dark_ratio: 0.20
+        min_dark_delta: 0.12
     caveats:
       - synthetic fixture only
     status: pass
@@ -79,6 +81,8 @@ fixtures:
     assert manifest.fixtures[0].geometry_artifacts.cut_dump == Path("cut-geometry.json")
     assert manifest.fixtures[0].geometry_artifacts.layer_audit == Path("layer-audit.json")
     assert manifest.fixtures[0].review_regions[0].rect == (10, 20, 30, 40)
+    assert manifest.fixtures[0].review_regions[0].min_dark_ratio == 0.20
+    assert manifest.fixtures[0].review_regions[0].min_dark_delta == 0.12
     assert manifest.fixtures[0].caveats == ["synthetic fixture only"]
     assert manifest.fixtures[0].status == "pass"
 
@@ -100,6 +104,8 @@ def test_committed_make2d_manifest_is_repo_safe_synthetic_fixture() -> None:
         "cut_mass_closeup",
     }
     assert fixture.review_regions[0].kind == "poche_presence"
+    assert fixture.review_regions[0].min_dark_ratio == 0.20
+    assert fixture.review_regions[0].min_dark_delta == 0.12
     assert any("does not close issue #30" in caveat for caveat in fixture.caveats)
     assert any("Private USC regression stays private" in caveat for caveat in fixture.caveats)
 
@@ -501,6 +507,118 @@ def test_validate_proof_packet_checks_dark_pixels_in_matching_review_region(
     assert validation.public_summary["public_safe"] is False
 
 
+def test_validate_proof_packet_rejects_sparse_outline_when_region_requires_solid_poche(
+    tmp_path: Path,
+) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    _write_packet_artifacts(plan, report=_safe_pass_report())
+    rect = (10, 10, 40, 40)
+    before = Image.new("RGB", (50, 50), "white")
+    after = Image.new("RGB", (50, 50), "white")
+    for x in range(rect[0], rect[2]):
+        after.putpixel((x, rect[1]), (0, 0, 0))
+        after.putpixel((x, rect[3] - 1), (0, 0, 0))
+    for y in range(rect[1], rect[3]):
+        after.putpixel((rect[0], y), (0, 0, 0))
+        after.putpixel((rect[2] - 1, y), (0, 0, 0))
+    for x, y in ((16, 16), (22, 21), (28, 18), (32, 30), (18, 34), (35, 23)):
+        after.putpixel((x, y), (0, 0, 0))
+    before.save(plan.output_dir / "cut-mass-before.png")
+    after.save(plan.output_dir / "cut-mass-after.png")
+
+    validation = validate_proof_packet(
+        plan,
+        review_regions=[
+            _strict_review_region(
+                id="cut_mass_detail",
+                kind="poche_presence",
+                rect=rect,
+                min_dark_ratio=0.20,
+                min_dark_delta=0.12,
+            )
+        ],
+        min_dark_ratio=0.05,
+        threshold=32,
+    )
+
+    assert validation.status == "failed"
+    assert any("expected solid poché dark ratio >= 0.200" in reason for reason in validation.reasons)
+
+
+def test_validate_proof_packet_requires_dark_delta_from_before_view(
+    tmp_path: Path,
+) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    _write_packet_artifacts(plan, report=_safe_pass_report())
+    rect = (10, 10, 40, 40)
+    before = Image.new("RGB", (50, 50), "white")
+    after = Image.new("RGB", (50, 50), "white")
+    _fill_rect(before, rect, (0, 0, 0))
+    _fill_rect(after, rect, (0, 0, 0))
+    before.save(plan.output_dir / "cut-mass-before.png")
+    after.save(plan.output_dir / "cut-mass-after.png")
+
+    validation = validate_proof_packet(
+        plan,
+        review_regions=[
+            _strict_review_region(
+                id="cut_mass_detail",
+                kind="poche_presence",
+                rect=rect,
+                min_dark_ratio=0.20,
+                min_dark_delta=0.12,
+            )
+        ],
+        min_dark_ratio=0.05,
+        threshold=32,
+    )
+
+    assert validation.status == "failed"
+    assert any("expected new dark poché delta >= 0.120" in reason for reason in validation.reasons)
+
+
+def test_validate_proof_packet_accepts_solid_region_with_strict_ratio_and_delta(
+    tmp_path: Path,
+) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    _write_packet_artifacts(plan, report=_safe_pass_report())
+    rect = (10, 10, 40, 40)
+    before = Image.new("RGB", (50, 50), "white")
+    after = Image.new("RGB", (50, 50), "white")
+    _fill_rect(after, rect, (0, 0, 0))
+    before.save(plan.output_dir / "cut-mass-before.png")
+    after.save(plan.output_dir / "cut-mass-after.png")
+
+    validation = validate_proof_packet(
+        plan,
+        review_regions=[
+            _strict_review_region(
+                id="cut_mass_detail",
+                kind="poche_presence",
+                rect=rect,
+                min_dark_ratio=0.20,
+                min_dark_delta=0.12,
+            )
+        ],
+        min_dark_ratio=0.05,
+        threshold=32,
+    )
+
+    assert validation.status == "passed"
+
+
 def test_validate_proof_packet_fails_when_matching_review_region_stays_light(
     tmp_path: Path,
 ) -> None:
@@ -586,6 +704,7 @@ def test_committed_manifest_review_region_can_fail_synthetic_packet(
     }
     _write_packet_artifacts(plan, report=_safe_pass_report(visual_artifacts=visual_artifacts))
     closeup = next(view for view in fixture.visual_artifacts.rendered_views if view.kind == "cut_mass_closeup")
+    Image.new("RGB", (800, 600), "white").save(plan.output_dir / closeup.before)
     Image.new("RGB", (800, 600), "white").save(plan.output_dir / closeup.after)
 
     validation = validate_proof_packet(
@@ -596,9 +715,10 @@ def test_committed_manifest_review_region_can_fail_synthetic_packet(
     )
 
     assert validation.status == "failed"
-    assert (
-        "review region foundation_window_cut_mass (poche_presence) expected dark poché pixels"
-        in validation.reasons
+    assert any(
+        "review region foundation_window_cut_mass (poche_presence) expected solid poché dark ratio >= 0.200"
+        in reason
+        for reason in validation.reasons
     )
 
 
@@ -690,3 +810,30 @@ def _safe_visual_artifacts() -> dict:
             },
         ],
     }
+
+
+def _strict_review_region(
+    *,
+    id: str,
+    kind: str,
+    rect: tuple[int, int, int, int],
+    min_dark_ratio: float,
+    min_dark_delta: float,
+) -> ReviewRegion:
+    return ReviewRegion(
+        id=id,
+        kind=kind,
+        rect=rect,
+        min_dark_ratio=min_dark_ratio,
+        min_dark_delta=min_dark_delta,
+    )
+
+
+def _fill_rect(
+    image: Image.Image,
+    rect: tuple[int, int, int, int],
+    color: tuple[int, int, int],
+) -> None:
+    for x in range(rect[0], rect[2]):
+        for y in range(rect[1], rect[3]):
+            image.putpixel((x, y), color)

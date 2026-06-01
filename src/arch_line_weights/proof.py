@@ -66,6 +66,8 @@ class ReviewRegion:
     id: str
     kind: str
     rect: tuple[int, int, int, int]
+    min_dark_ratio: float | None = None
+    min_dark_delta: float | None = None
 
 
 @dataclass(frozen=True)
@@ -156,6 +158,7 @@ def validate_proof_packet(
     *,
     review_regions: Sequence[ReviewRegion] | None = None,
     min_dark_ratio: float = 0.05,
+    min_dark_delta: float = 0.0,
     threshold: int = 48,
 ) -> ProofPacketValidation:
     """Validate a local proof packet and build a path-free public summary.
@@ -212,6 +215,7 @@ def validate_proof_packet(
                 plan,
                 review_regions,
                 min_dark_ratio=min_dark_ratio,
+                min_dark_delta=min_dark_delta,
                 threshold=threshold,
             )
         )
@@ -313,6 +317,24 @@ def has_dark_pixels_in_region(
 ) -> bool:
     """Return true when a rectangular region contains enough dark pixels for poché."""
 
+    return (
+        _dark_pixel_ratio_in_region(
+            image,
+            rect=rect,
+            threshold=threshold,
+        )
+        >= min_dark_ratio
+    )
+
+
+def _dark_pixel_ratio_in_region(
+    image: Image.Image | np.ndarray,
+    *,
+    rect: tuple[int, int, int, int] | list[int],
+    threshold: int = 48,
+) -> float:
+    """Return the share of dark pixels in a clipped rectangular region."""
+
     x0, y0, x1, y1 = _validate_rect(rect, "rect")
     array = _as_image_array(image)
     height, width = array.shape[:2]
@@ -321,33 +343,64 @@ def has_dark_pixels_in_region(
     y0 = max(0, min(y0, height))
     y1 = max(0, min(y1, height))
     if x1 <= x0 or y1 <= y0:
-        return False
+        return 0.0
 
     region = array[y0:y1, x0:x1, :3].astype(np.float32)
     luminance = (0.2126 * region[..., 0]) + (0.7152 * region[..., 1]) + (0.0722 * region[..., 2])
-    dark_ratio = float(np.count_nonzero(luminance <= threshold)) / float(luminance.size)
-    return dark_ratio >= min_dark_ratio
+    return float(np.count_nonzero(luminance <= threshold)) / float(luminance.size)
 
 
 def review_region_pixel_errors(
     image: Image.Image | np.ndarray,
     regions: Sequence[ReviewRegion],
     *,
+    before_image: Image.Image | np.ndarray | None = None,
     min_dark_ratio: float = 0.05,
+    min_dark_delta: float = 0.0,
     threshold: int = 48,
 ) -> list[str]:
     """Return visual failure reasons for known review-region expectations."""
 
     errors: list[str] = []
     for region in regions:
-        has_poche = has_dark_pixels_in_region(
+        explicit_min_dark_ratio = region.min_dark_ratio
+        required_min_dark_ratio = (
+            explicit_min_dark_ratio if explicit_min_dark_ratio is not None else min_dark_ratio
+        )
+        required_min_dark_delta = region.min_dark_delta if region.min_dark_delta is not None else min_dark_delta
+        after_dark_ratio = _dark_pixel_ratio_in_region(
             image,
             rect=region.rect,
-            min_dark_ratio=min_dark_ratio,
             threshold=threshold,
         )
+        has_poche = after_dark_ratio >= required_min_dark_ratio
         if region.kind == "poche_presence" and not has_poche:
-            errors.append(f"review region {region.id} ({region.kind}) expected dark poché pixels")
+            if explicit_min_dark_ratio is None:
+                errors.append(f"review region {region.id} ({region.kind}) expected dark poché pixels")
+            else:
+                errors.append(
+                    f"review region {region.id} ({region.kind}) expected solid poché dark ratio "
+                    f">= {required_min_dark_ratio:.3f}; found {after_dark_ratio:.3f}"
+                )
+        if region.kind == "poche_presence" and required_min_dark_delta > 0:
+            if before_image is None:
+                errors.append(
+                    f"review region {region.id} ({region.kind}) expected new dark poché delta "
+                    f">= {required_min_dark_delta:.3f}; before image unavailable"
+                )
+                continue
+            before_dark_ratio = _dark_pixel_ratio_in_region(
+                before_image,
+                rect=region.rect,
+                threshold=threshold,
+            )
+            dark_delta = after_dark_ratio - before_dark_ratio
+            if dark_delta < required_min_dark_delta:
+                errors.append(
+                    f"review region {region.id} ({region.kind}) expected new dark poché delta "
+                    f">= {required_min_dark_delta:.3f}; before {before_dark_ratio:.3f}, "
+                    f"after {after_dark_ratio:.3f}, delta {dark_delta:.3f}"
+                )
         elif region.kind == "protected_void" and has_poche:
             errors.append(f"review region {region.id} ({region.kind}) expected light protected void")
     return errors
@@ -506,25 +559,41 @@ def _review_region_pixel_errors(
     review_regions: Sequence[ReviewRegion],
     *,
     min_dark_ratio: float,
+    min_dark_delta: float,
     threshold: int,
 ) -> list[str]:
-    rendered_after_paths = _rendered_view_after_paths(report, plan)
+    rendered_before_paths = _rendered_view_artifact_paths(report, plan, "before")
+    rendered_after_paths = _rendered_view_artifact_paths(report, plan, "after")
     errors: list[str] = []
     for region in review_regions:
-        path = rendered_after_paths.get(region.id)
-        if path is None:
+        after_path = rendered_after_paths.get(region.id)
+        if after_path is None:
             errors.append(f"review region {region.id} has no matching rendered view after image")
             continue
-        if not path.exists() or not path.is_file() or path.stat().st_size <= 0:
+        if not after_path.exists() or not after_path.is_file() or after_path.stat().st_size <= 0:
             errors.append(f"review region {region.id} after image is missing")
             continue
+        before_path = rendered_before_paths.get(region.id)
+        before_image = None
+        required_min_dark_delta = region.min_dark_delta if region.min_dark_delta is not None else min_dark_delta
+        needs_before_image = region.kind == "poche_presence" and required_min_dark_delta > 0
         try:
-            with Image.open(path) as image:
+            with Image.open(after_path) as after_image:
+                if (
+                    needs_before_image
+                    and before_path is not None
+                    and before_path.exists()
+                    and before_path.is_file()
+                ):
+                    with Image.open(before_path) as opened_before_image:
+                        before_image = opened_before_image.copy()
                 errors.extend(
                     review_region_pixel_errors(
-                        image,
+                        after_image,
                         [region],
+                        before_image=before_image,
                         min_dark_ratio=min_dark_ratio,
+                        min_dark_delta=min_dark_delta,
                         threshold=threshold,
                     )
                 )
@@ -533,7 +602,11 @@ def _review_region_pixel_errors(
     return errors
 
 
-def _rendered_view_after_paths(report: dict[str, Any], plan: ProofPacketPlan) -> dict[str, Path]:
+def _rendered_view_artifact_paths(
+    report: dict[str, Any],
+    plan: ProofPacketPlan,
+    artifact_key: str,
+) -> dict[str, Path]:
     visual_artifacts = report.get("visual_artifacts") if isinstance(report.get("visual_artifacts"), dict) else {}
     rendered_views = (
         visual_artifacts.get("rendered_views") if isinstance(visual_artifacts.get("rendered_views"), list) else []
@@ -543,12 +616,12 @@ def _rendered_view_after_paths(report: dict[str, Any], plan: ProofPacketPlan) ->
         if not isinstance(raw_view, dict):
             continue
         view_id = raw_view.get("id")
-        after = raw_view.get("after")
+        artifact = raw_view.get(artifact_key)
         if not isinstance(view_id, str) or not view_id.strip():
             continue
-        if not isinstance(after, str) or not after.strip() or _LOCAL_PATH_RE.search(after):
+        if not isinstance(artifact, str) or not artifact.strip() or _LOCAL_PATH_RE.search(artifact):
             continue
-        paths[view_id] = _artifact_reference_path(plan, after)
+        paths[view_id] = _artifact_reference_path(plan, artifact)
     return paths
 
 
@@ -810,6 +883,8 @@ def _parse_review_regions(raw: Any, fixture_id: str) -> list[ReviewRegion]:
                 id=_required_str(item, "id", label),
                 kind=_required_str(item, "kind", label),
                 rect=_validate_rect(item.get("rect"), f"{label}.rect"),
+                min_dark_ratio=_optional_ratio(item.get("min_dark_ratio"), f"{label}.min_dark_ratio"),
+                min_dark_delta=_optional_ratio(item.get("min_dark_delta"), f"{label}.min_dark_delta"),
             )
         )
     return regions
@@ -841,6 +916,17 @@ def _validate_string_list(value: Any, label: str) -> list[str]:
     if not isinstance(value, (list, tuple)) or any(not isinstance(item, str) for item in value):
         raise ManifestValidationError(f"{label} must be a list of strings")
     return list(value)
+
+
+def _optional_ratio(value: Any, label: str) -> float | None:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ManifestValidationError(f"{label} must be a number between 0 and 1")
+    ratio = float(value)
+    if ratio < 0 or ratio > 1:
+        raise ManifestValidationError(f"{label} must be a number between 0 and 1")
+    return ratio
 
 
 def _validate_rect(value: Any, label: str) -> tuple[int, int, int, int]:
