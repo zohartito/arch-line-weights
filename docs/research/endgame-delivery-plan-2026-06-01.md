@@ -18,7 +18,10 @@ product. It is an engineering control document, not a public launch claim.
 
 ## Current Baseline
 
-- #34 is green: verification fixture sourcing research.
+- #34 is green: verification fixture sourcing research. It was refreshed at
+  `186531a` to remove a private axon filename from the public roadmap wording,
+  update stale PR #36 CI language, and refresh the PR body with current local
+  validation.
 - #36 is green and draft: W3 verification core, layout-jsx reports, Rhino bridge.
 - #37 is green and draft at the last completed check: input diagnostics and
   proof report harness. It now includes proof-packet validation that fails
@@ -45,9 +48,9 @@ frontend, local filesystem storage, and tests. Designer-console work should
 prefer this shape unless a smaller CLI-served page is demonstrably safer.
 
 Safety scan note: inherited Day-1 proof media and README links remain a
-posting-clearance risk. They were not newly introduced by the focused PRs, but
-they must be removed, quarantined, or replaced with explicit no-go/synthetic
-language before any public proof or launch posting.
+posting-clearance risk on branches that do not include #45. PR #45 is the
+current quarantine path; until it is reviewed and merged, public proof and
+posting remain no-go.
 
 ## Phase Stack
 
