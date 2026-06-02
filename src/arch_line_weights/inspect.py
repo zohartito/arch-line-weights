@@ -525,6 +525,22 @@ def _looks_like_illustrator(path: str) -> bool:
         return False
 
 
+def _is_legacy_postscript(path: str) -> bool:
+    """Does this file start with a PostScript (``%!PS``) header instead of PDF?
+
+    Legacy Illustrator ``.ai`` files are raw PostScript, not PDF, so neither
+    pikepdf nor PyMuPDF (both PDF-only) can open them. We sniff the first bytes
+    so the caller can emit an actionable "re-save PDF-compatible" message
+    instead of a generic "damaged file" one. Reads 4 bytes only — safe even on
+    the 200 MB+ exports.
+    """
+    try:
+        with open(path, "rb") as fh:
+            return fh.read(4).startswith(b"%!PS")
+    except OSError:
+        return False
+
+
 def inspect_file(path: str) -> InspectionReport:
     """Walk every drawing on every page and bucket by stroke width / color.
 
@@ -560,6 +576,17 @@ def inspect_file(path: str) -> InspectionReport:
             return _inspect_ai(path)
         except Exception as e:
             pikepdf_err = e
+
+    if _is_legacy_postscript(path):
+        raise RuntimeError(
+            f"{path!r} is a legacy PostScript-based Illustrator file (it starts "
+            f"with a '%!PS' header, not '%PDF'). arch-lw reads PDF-based files "
+            f"only, so neither pikepdf nor PyMuPDF can open it. Fix: open it in "
+            f"Adobe Illustrator and re-save with 'Create PDF Compatible File' "
+            f"enabled (File → Save As → Adobe Illustrator (.ai)), or export a "
+            f"PDF, then re-run arch-lw on the converted file. "
+            f"(pikepdf: {pikepdf_err!r}; PyMuPDF: {pymupdf_err!r}.)"
+        )
 
     raise RuntimeError(
         f"Failed to open {path!r} with both pikepdf ({pikepdf_err!r}) and "
