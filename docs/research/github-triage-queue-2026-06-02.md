@@ -9,10 +9,10 @@ comment/closure actions were applied.
 - Active branch: `codex/open-issue-verification-core`
 - Active integration PR: #37
 - Applied checkpoint: `86d302bdeb60ddf0236c14bc62a73ae5bf82e1d9`
-- Current pushed head after applied triage bookkeeping:
+- PR head checked before this final audit note was committed:
   `0769ee7d2fa3f5477927850d66b37700c7a26b19`
-- Final audit PR state: draft, mergeable, with GitHub CI and Vercel checks green
-  on head `0769ee7d2fa3f5477927850d66b37700c7a26b19`.
+- Pre-note final audit PR state: draft, mergeable, with GitHub CI and Vercel
+  checks green on head `0769ee7d2fa3f5477927850d66b37700c7a26b19`.
 - Additional absorbed commits now on the local #37 stack:
   - `aec7674` absorbs #38 / #20, entourage SVG asset generator.
   - `585fcc4` absorbs #39 / #23, conservative single-layer cleanup mode.

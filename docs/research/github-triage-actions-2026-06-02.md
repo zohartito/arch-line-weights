@@ -9,10 +9,10 @@ Authoritative current integration branch:
 - PR: #37
 - Branch: `codex/open-issue-verification-core`
 - Applied checkpoint: `86d302bdeb60ddf0236c14bc62a73ae5bf82e1d9`
-- Current pushed head after applied triage bookkeeping:
+- PR head checked before this final audit note was committed:
   `0769ee7d2fa3f5477927850d66b37700c7a26b19`
-- Final audit PR state: draft, mergeable, with GitHub CI and Vercel checks green
-  on head `0769ee7d2fa3f5477927850d66b37700c7a26b19`.
+- Pre-note final audit PR state: draft, mergeable, with GitHub CI and Vercel
+  checks green on head `0769ee7d2fa3f5477927850d66b37700c7a26b19`.
 - Latest local verification:
   - `.venv/bin/python -m pytest -q` -> `681 passed, 7 skipped, 1 xfailed`
   - `.venv/bin/python -m pytest webapp/tests -q` -> `44 passed`
