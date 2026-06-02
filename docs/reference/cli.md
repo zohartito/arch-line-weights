@@ -224,7 +224,8 @@ against the raw report summary and fails when rendered before/after views are
 effectively unchanged. It fails nonzero for `failed` or `no_go` packets and keeps
 `needs_review` visible for W5/W7 acceptance. Treat `--write` output as local
 evidence: do not commit raw proof-check reports that contain machine-local paths.
-`--materialize-synthetic` is only a public synthetic rehearsal helper; it does
+`--materialize-synthetic` is only a public synthetic rehearsal helper. It can
+materialize public pass, expected-fail, and unsupported sentinels, but it does
 not create private/manual-review proof, record acceptance, or close #30.
 
 ## `arch-lw explain-layer`

@@ -279,7 +279,8 @@ Comment:
 Keeping this open as a close-candidate, not closing yet.
 
 #37 includes the Make2D fixture manifest, proof-check command, rendered artifact
-paths, review-region pixel gates, and tests. Current integration head: 9b2efd0.
+paths, review-region pixel gates, public synthetic pass/expected-fail/unsupported
+sentinels, and tests. Current integration head: 987e58f or later.
 
 The remaining closure gate is accepted W5/W7 review-packet evidence, especially
 for the private USC fixture. Without that accepted packet, the suite is present

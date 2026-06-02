@@ -204,7 +204,13 @@ def validate_proof_packet(
     else:
         failed_reasons.append("raw report is missing")
 
-    raw_status = _normalized_status(report.get("status")) if report else ""
+    raw_status = ""
+    if report:
+        raw_status = _normalized_status(report.get("status"))
+        if not raw_status:
+            summary = report.get("summary")
+            if isinstance(summary, dict):
+                raw_status = _normalized_status(summary.get("status"))
     if raw_status == "no_go":
         no_go_reasons.append("raw report status is no_go")
     elif raw_status in {"fail", "failed"}:
@@ -328,13 +334,16 @@ def validate_proof_packet(
 def materialize_synthetic_proof_packet(plan: ProofPacketPlan, fixture: ProofFixture) -> None:
     """Write a deterministic public synthetic proof packet for a manifest fixture.
 
-    This helper is intentionally limited to manifest fixtures marked ``pass``
-    whose id contains ``synthetic``. It gives CI and local reviewers a real
-    packet to validate without committing rendered proof artifacts or touching
-    private/manual-review evidence.
+    This helper is intentionally limited to public synthetic fixtures marked
+    ``pass``, ``expected_fail``, or ``unsupported``. It gives CI and local
+    reviewers a real packet to validate without committing rendered proof
+    artifacts or touching private/manual-review evidence.
     """
 
-    if fixture.status != "pass" or "synthetic" not in fixture.id.lower():
+    if (
+        fixture.status not in {"pass", "expected_fail", "unsupported"}
+        or "synthetic" not in fixture.id.lower()
+    ):
         raise ManifestValidationError(
             f"{fixture.id} is not eligible for synthetic proof-packet materialization"
         )
@@ -348,8 +357,8 @@ def materialize_synthetic_proof_packet(plan: ProofPacketPlan, fixture: ProofFixt
             "output": f"{fixture.source_path.stem} POCHE.ai",
             "command": " && ".join(command.command for command in plan.commands),
         },
-        "summary": _synthetic_report_summary(fixture.expected_report.counts),
-        "layers": _synthetic_report_layers(fixture.expected_report.counts),
+        "summary": _synthetic_report_summary(fixture.expected_report.counts, fixture.status),
+        "layers": _synthetic_report_layers(fixture.expected_report.counts, fixture.status),
         "visual_artifacts": visual_artifacts,
     }
 
@@ -488,12 +497,12 @@ def review_region_pixel_errors(
     return errors
 
 
-def _synthetic_report_summary(expected_counts: dict[str, int]) -> dict[str, int | str]:
+def _synthetic_report_summary(expected_counts: dict[str, int], fixture_status: str) -> dict[str, int | str]:
     cut_layers = expected_counts.get("cut_layers_considered", 1)
     layers_failed = expected_counts.get("layers_failed", 0)
     polygons_filled = expected_counts.get("polygons_filled", max(1, cut_layers))
     summary: dict[str, int | str] = {
-        "status": "pass" if layers_failed == 0 else "fail",
+        "status": fixture_status,
         "cut_layers_considered": cut_layers,
         "layers_filled": max(1, cut_layers - layers_failed),
         "layers_inferred": 0,
@@ -502,25 +511,33 @@ def _synthetic_report_summary(expected_counts: dict[str, int]) -> dict[str, int 
         "layers_needs_review": 0,
         "polygons_filled": polygons_filled,
     }
+    if fixture_status == "unsupported":
+        summary["layers_filled"] = 0
+        summary["missing_payload_layers"] = max(1, expected_counts.get("missing_payload_layers", 1))
     for key, value in expected_counts.items():
         summary[key] = value
     return summary
 
 
-def _synthetic_report_layers(expected_counts: dict[str, int]) -> list[dict[str, Any]]:
+def _synthetic_report_layers(expected_counts: dict[str, int], fixture_status: str) -> list[dict[str, Any]]:
     cut_layers = max(1, expected_counts.get("cut_layers_considered", 1))
     failed_layers = expected_counts.get("layers_failed", 0)
     layers: list[dict[str, Any]] = []
     for index in range(cut_layers):
         failed = index < failed_layers
+        status = "failed" if failed else "filled"
+        reasons: list[str] = []
+        if fixture_status == "unsupported":
+            status = "missing_payload"
+            reasons.append("synthetic unsupported-input sentinel: missing Illustrator payload")
         layers.append(
             {
                 "layer": f"SYNTHETIC::CUT::{index + 1:03d}",
-                "status": "failed" if failed else "filled",
+                "status": status,
                 "review": {
                     "needs_review": False,
                     "visual_acceptance_required": False,
-                    "reasons": [],
+                    "reasons": reasons,
                 },
             }
         )

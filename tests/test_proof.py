@@ -233,6 +233,22 @@ def test_validate_proof_packet_rejects_no_go_report(tmp_path: Path) -> None:
     assert "Fix the no-go proof condition" in validation.public_summary["next_step"]
 
 
+def test_validate_proof_packet_rejects_no_go_summary_status(tmp_path: Path) -> None:
+    plan = build_proof_packet_plan(
+        fixture_id="stair_section",
+        output_dir=tmp_path / "proof",
+        commands=["arch-lw apply-jsx in.pdf", "arch-lw poche out.ai"],
+    )
+    report = _safe_pass_report()
+    report["summary"]["status"] = "no_go"
+    _write_packet_artifacts(plan, report=report)
+
+    validation = validate_proof_packet(plan)
+
+    assert validation.status == "no_go"
+    assert any("raw report status is no_go" in reason for reason in validation.reasons)
+
+
 def test_validate_proof_packet_rejects_local_paths_and_sanitizes_public_summary(tmp_path: Path) -> None:
     plan = build_proof_packet_plan(
         fixture_id="stair_section",

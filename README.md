@@ -260,8 +260,10 @@ To inspect the proof manifest or validate a local proof packet, run:
 
 `--materialize-synthetic` writes deterministic public synthetic artifacts for
 eligible synthetic fixtures so the proof validator can be rehearsed without
-committing proof images. It does not materialize or clear private/manual-review
-fixtures, does not record W5/W7 acceptance, and does not close #30.
+committing proof images. It covers the public pass fixture plus expected-fail
+and unsupported public sentinels. It does not materialize or clear
+private/manual-review fixtures, does not record W5/W7 acceptance, and does not
+close #30.
 
 ---
 

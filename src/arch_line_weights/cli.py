@@ -1414,6 +1414,82 @@ def _proof_check_status(validation_statuses: list[str], *, plan_only: bool) -> s
     return "passed"
 
 
+def _apply_expected_fixture_status(
+    *,
+    fixture_status: str,
+    expected_status: str,
+    validation_status: str,
+    reasons: list[str],
+) -> tuple[str, str, list[str]]:
+    if fixture_status != expected_status:
+        return (
+            "failed",
+            "unexpected_fail",
+            [
+                *reasons,
+                f"manifest status {fixture_status} does not match expected_report.status {expected_status}",
+            ],
+        )
+
+    if validation_status == "no_go":
+        return "no_go", "unexpected_fail", reasons
+
+    if expected_status == "pass":
+        if validation_status == "passed":
+            return "passed", "satisfied", reasons
+        return (
+            "failed",
+            "unexpected_fail",
+            [
+                *reasons,
+                f"pass fixture validated as {validation_status}; expected passed",
+            ],
+        )
+    if expected_status == "expected_fail":
+        if validation_status == "failed":
+            return "expected_fail", "satisfied", reasons
+        if validation_status == "passed":
+            return (
+                "failed",
+                "unexpected_pass",
+                [
+                    *reasons,
+                    "expected_fail fixture validated as passed; expected a caught failure",
+                ],
+            )
+        return (
+            "failed",
+            "unexpected_fail",
+            [
+                *reasons,
+                f"expected_fail fixture validated as {validation_status}; expected a caught failure",
+            ],
+        )
+    if expected_status == "unsupported":
+        if validation_status == "failed" and any(
+            "missing payload" in reason.lower() or "unsupported" in reason.lower() for reason in reasons
+        ):
+            return "unsupported", "satisfied", reasons
+        if validation_status == "passed":
+            return (
+                "failed",
+                "unexpected_pass",
+                [
+                    *reasons,
+                    "unsupported fixture validated as passed; expected an unsupported/missing-payload condition",
+                ],
+            )
+        return (
+            "failed",
+            "unexpected_fail",
+            [
+                *reasons,
+                f"unsupported fixture validated as {validation_status}; expected an unsupported/missing-payload condition",
+            ],
+        )
+    return validation_status, "not_applicable", reasons
+
+
 def _expected_count_errors(report_path: Path, expected_counts: dict[str, int]) -> list[str]:
     if not expected_counts or not report_path.is_file():
         return []
@@ -1496,6 +1572,7 @@ def proof_check_cmd(
 
     fixture_payloads: list[dict[str, Any]] = []
     validation_statuses: list[str] = []
+    expectation_statuses: list[str] = []
     for fixture in fixtures:
         plan = build_proof_packet_plan(
             fixture_id=fixture.id,
@@ -1504,7 +1581,11 @@ def proof_check_cmd(
         )
         validation_payload: dict[str, Any] = {"status": "not_run", "reasons": []}
         if not plan_only:
-            if materialize_synthetic and fixture.status == "pass" and "synthetic" in fixture.id.lower():
+            if (
+                materialize_synthetic
+                and fixture.status in {"pass", "expected_fail", "unsupported"}
+                and "synthetic" in fixture.id.lower()
+            ):
                 materialize_synthetic_proof_packet(plan, fixture)
             validation = validate_proof_packet(
                 plan,
@@ -1517,14 +1598,25 @@ def proof_check_cmd(
             status = validation.status
             if expected_count_errors and status != "no_go":
                 status = "failed"
+            observed_status = status
+            status, expectation_status, reasons = _apply_expected_fixture_status(
+                fixture_status=fixture.status,
+                expected_status=fixture.expected_report.status,
+                validation_status=status,
+                reasons=reasons,
+            )
             validation_payload = {
                 "status": status,
+                "observed_status": observed_status,
+                "expected_status": fixture.expected_report.status,
+                "expectation_status": expectation_status,
                 "reasons": reasons,
                 "missing_artifacts": list(validation.missing_artifacts),
                 "unsafe_references": list(validation.unsafe_references),
                 "public_summary": validation.public_summary,
             }
             validation_statuses.append(status)
+            expectation_statuses.append(expectation_status)
 
         fixture_payloads.append(
             {
@@ -1560,6 +1652,11 @@ def proof_check_cmd(
     summary = {
         "fixtures": len(fixture_payloads),
         "passed": validation_statuses.count("passed"),
+        "expected_fail": validation_statuses.count("expected_fail"),
+        "unsupported": validation_statuses.count("unsupported"),
+        "expectations_satisfied": expectation_statuses.count("satisfied"),
+        "unexpected_pass": expectation_statuses.count("unexpected_pass"),
+        "unexpected_fail": expectation_statuses.count("unexpected_fail"),
         "needs_review": validation_statuses.count("needs_review"),
         "failed": validation_statuses.count("failed"),
         "no_go": validation_statuses.count("no_go"),
