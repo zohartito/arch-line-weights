@@ -75,6 +75,34 @@ def test_console_synthetic_demo_can_start_without_upload(app_client) -> None:
     assert "Synthetic proof does not close #30." in body["guardrails"]
 
 
+def test_console_synthetic_demo_layout_stays_headless_when_layout_jsx_exists(
+    app_client,
+    monkeypatch,
+) -> None:
+    client, app = app_client
+    import backend.console as console
+
+    def fail_layout_via_jsx(*_args, **_kwargs):
+        raise AssertionError("synthetic demo should not require Illustrator layout-jsx")
+
+    monkeypatch.setattr(console, "layout_via_jsx", fail_layout_via_jsx)
+    created = client.post(
+        "/api/console/runs",
+        data={"workflow": "synthetic_proof_demo"},
+    ).json()
+
+    resp = client.post(f"/api/console/runs/{created['run_id']}/stages/run_layout")
+
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    stage = next(stage for stage in body["stages"] if stage["key"] == "run_layout")
+    assert stage["status"] == "needs_review"
+    assert stage["what_failed"] == []
+    assert stage["output_file"] == "synthetic-proof-demo LAYOUT-jsx.ai"
+    run = app.state.console_store.load(created["run_id"])
+    assert Path(run.artifacts["layout_output"]).exists()
+
+
 def test_console_synthetic_demo_runs_full_headless_review_packet(
     app_client,
     monkeypatch,

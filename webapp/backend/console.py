@@ -365,19 +365,30 @@ class DesignerConsoleStore:
         raw_report_path = self._raw_path(run, "layout-report.json")
         jsx_path = self._raw_path(run, "layout.jsx")
         try:
-            if layout_via_jsx is None:
+            if run.workflow == "synthetic_proof_demo" or layout_via_jsx is None:
                 shutil.copy2(run.input_path, output)
                 run.artifacts["layout_output"] = str(output)
+                if run.workflow == "synthetic_proof_demo":
+                    what_skipped = [
+                        "Synthetic proof / demo keeps layout local; layout-jsx and Illustrator were not run."
+                    ]
+                    why = [
+                        "The synthetic fixture is only a local cockpit exercise.",
+                        "Synthetic proof does not close #30.",
+                    ]
+                else:
+                    what_skipped = [
+                        "layout-jsx is not available in this worktree; no layout normalization ran."
+                    ]
+                    why = [
+                        "This console can render and advance the local workflow, "
+                        "but the layout validator arrives with the verification-core branch."
+                    ]
                 stage.finish(
                     status="needs_review",
                     what_changed=[f"Prepared layout working copy {output.name}."],
-                    what_skipped=[
-                        "layout-jsx is not available in this worktree; no layout normalization ran."
-                    ],
-                    why=[
-                        "This console can render and advance the local workflow, "
-                        "but the layout validator arrives with the verification-core branch."
-                    ],
+                    what_skipped=what_skipped,
+                    why=why,
                     next_step="Apply Line Weights, then review layout manually.",
                     output_path=str(output),
                 )
