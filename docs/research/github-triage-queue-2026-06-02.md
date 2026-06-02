@@ -78,11 +78,11 @@ the current pushed head and verification evidence:
   tests are present on the current branch.
 - #41: safe endgame delivery control plan subset absorbed into #37 via
   cherry-pick `52f16c2`; the full broad branch remains human-gated.
-- #42: concrete-base synthetic regression behavior is now ported into #37 via
-  the current worktree update; close the PR only after this commit is pushed.
-  Do not close issue #30 from this synthetic evidence.
-- #43: older local designer-console prototype is superseded by the current #37
-  console/webapp stack.
+- #42: concrete-base synthetic regression behavior is now ported and pushed on
+  #37 via `9b2efd0`; close the PR only. Do not close issue #30 from this
+  synthetic evidence.
+- #43: older local designer-console prototype is obsolete/replaced by the
+  current #37 console/webapp stack, not literally absorbed file-for-file.
 - #44: designer-console prototype is present on #37/current branch; close as
   superseded after review.
 - #45: private-proof quarantine and launch-safety guardrails are present on

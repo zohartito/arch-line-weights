@@ -1459,6 +1459,11 @@ def _expected_count_errors(report_path: Path, expected_counts: dict[str, int]) -
     type=click.Path(dir_okay=False, path_type=Path),
     help="Write the proof-check JSON report to a file in addition to stdout.",
 )
+@click.option(
+    "--materialize-synthetic",
+    is_flag=True,
+    help="Write deterministic public synthetic proof artifacts for eligible synthetic pass fixtures before validation.",
+)
 @click.option("--pretty/--no-pretty", default=True, help="Pretty-print JSON output.")
 def proof_check_cmd(
     manifest: Path,
@@ -1466,10 +1471,17 @@ def proof_check_cmd(
     fixture_ids: tuple[str, ...],
     plan_only: bool,
     write_path: Path | None,
+    materialize_synthetic: bool,
     pretty: bool,
 ):
     """Read a Make2D proof manifest and validate/plan proof packet artifacts."""
-    from .proof import PROOF_PACKET_GUARDRAILS, build_proof_packet_plan, load_manifest, validate_proof_packet
+    from .proof import (
+        PROOF_PACKET_GUARDRAILS,
+        build_proof_packet_plan,
+        load_manifest,
+        materialize_synthetic_proof_packet,
+        validate_proof_packet,
+    )
 
     proof_manifest = load_manifest(manifest)
     selected_ids = set(fixture_ids)
@@ -1492,6 +1504,8 @@ def proof_check_cmd(
         )
         validation_payload: dict[str, Any] = {"status": "not_run", "reasons": []}
         if not plan_only:
+            if materialize_synthetic and fixture.status == "pass" and "synthetic" in fixture.id.lower():
+                materialize_synthetic_proof_packet(plan, fixture)
             validation = validate_proof_packet(
                 plan,
                 review_regions=fixture.review_regions,

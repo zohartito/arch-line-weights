@@ -153,10 +153,11 @@ Action: close PR #42.
 Comment:
 
 ```text
-Closing this PR as superseded by #37 / codex/open-issue-verification-core.
+Closing this PR as obsolete/replaced by #37 / codex/open-issue-verification-core.
 
-The local designer-console prototype is represented by the current #37 webapp
-console stack. Current integration head: 9b2efd0.
+The earlier local designer-console prototype was not absorbed file-for-file; it
+was replaced by the current #37 webapp console stack. Current integration head:
+9b2efd0.
 
 Boundary remains unchanged: public proof is NO-GO without W5/W7 acceptance.
 ```

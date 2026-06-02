@@ -44,6 +44,86 @@ def test_proof_check_plan_only_reads_make2d_manifest_and_emits_packet_plan(tmp_p
     assert fixtures["private_usc_wall_section_regression"]["validation"]["status"] == "not_run"
 
 
+def test_proof_check_can_materialize_public_synthetic_packet(tmp_path: Path) -> None:
+    manifest = Path("tests/fixtures/make2d/manifest.yml")
+    output_dir = tmp_path / "proof"
+    output_report = tmp_path / "proof-check.json"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "proof-check",
+            str(manifest),
+            "--output-dir",
+            str(output_dir),
+            "--fixture",
+            "public_foundation_window_section_synthetic",
+            "--materialize-synthetic",
+            "--write",
+            str(output_report),
+            "--no-pretty",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.stdout)
+    fixture = payload["fixtures"][0]
+    packet_dir = output_dir / "public_foundation_window_section_synthetic"
+
+    assert payload["status"] == "passed"
+    assert payload["summary"] == {
+        "failed": 0,
+        "fixtures": 1,
+        "needs_manual_review": 0,
+        "needs_review": 0,
+        "no_go": 0,
+        "passed": 1,
+    }
+    assert fixture["validation"]["status"] == "passed"
+    assert fixture["validation"]["public_summary"]["public_safe"] is False
+    assert "W5/W7 public proof acceptance is not recorded" in fixture["validation"]["public_summary"]["why"]
+    for name in [
+        "report.json",
+        "before.png",
+        "after.png",
+        "diff.png",
+        "cut-geometry.json",
+        "layer-audit.json",
+        "foundation_window_cut_mass-before.png",
+        "foundation_window_cut_mass-after.png",
+        "foundation_window_cut_mass-diff.png",
+    ]:
+        assert (packet_dir / name).is_file(), name
+    assert json.loads(output_report.read_text(encoding="utf-8")) == payload
+
+
+def test_proof_check_materialize_synthetic_does_not_clear_private_manual_review(tmp_path: Path) -> None:
+    manifest = Path("tests/fixtures/make2d/manifest.yml")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "proof-check",
+            str(manifest),
+            "--output-dir",
+            str(tmp_path / "proof"),
+            "--materialize-synthetic",
+            "--no-pretty",
+        ],
+    )
+
+    assert result.exit_code == 1
+    payload = json.loads(result.stdout)
+    fixtures = {fixture["id"]: fixture for fixture in payload["fixtures"]}
+
+    assert payload["status"] == "failed"
+    assert fixtures["public_foundation_window_section_synthetic"]["validation"]["status"] == "passed"
+    assert fixtures["private_usc_wall_section_regression"]["validation"]["status"] == "failed"
+    assert "report.json" in " ".join(
+        fixtures["private_usc_wall_section_regression"]["validation"]["missing_artifacts"]
+    )
+
+
 def test_proof_check_validates_existing_packet_and_writes_json(tmp_path: Path) -> None:
     manifest_path = tmp_path / "manifest.yml"
     manifest_path.write_text(

@@ -325,6 +325,46 @@ def validate_proof_packet(
     )
 
 
+def materialize_synthetic_proof_packet(plan: ProofPacketPlan, fixture: ProofFixture) -> None:
+    """Write a deterministic public synthetic proof packet for a manifest fixture.
+
+    This helper is intentionally limited to manifest fixtures marked ``pass``
+    whose id contains ``synthetic``. It gives CI and local reviewers a real
+    packet to validate without committing rendered proof artifacts or touching
+    private/manual-review evidence.
+    """
+
+    if fixture.status != "pass" or "synthetic" not in fixture.id.lower():
+        raise ManifestValidationError(
+            f"{fixture.id} is not eligible for synthetic proof-packet materialization"
+        )
+
+    plan.output_dir.mkdir(parents=True, exist_ok=True)
+    visual_artifacts = _synthetic_visual_artifacts_payload(fixture)
+    report = {
+        "schema_version": 2,
+        "source": {
+            "input": fixture.source_path.name,
+            "output": f"{fixture.source_path.stem} POCHE.ai",
+            "command": " && ".join(command.command for command in plan.commands),
+        },
+        "summary": _synthetic_report_summary(fixture.expected_report.counts),
+        "layers": _synthetic_report_layers(fixture.expected_report.counts),
+        "visual_artifacts": visual_artifacts,
+    }
+
+    plan.report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    plan.cut_geometry_path.write_text(
+        json.dumps(_synthetic_cut_geometry(fixture.expected_report.counts), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    plan.layer_audit_path.write_text(
+        json.dumps(_synthetic_layer_audit(report["layers"]), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    _write_synthetic_visual_artifacts(plan, fixture, visual_artifacts)
+
+
 def images_effectively_unchanged(
     before: Image.Image | np.ndarray,
     after: Image.Image | np.ndarray,
@@ -446,6 +486,171 @@ def review_region_pixel_errors(
         elif region.kind == "protected_void" and has_poche:
             errors.append(f"review region {region.id} ({region.kind}) expected light protected void")
     return errors
+
+
+def _synthetic_report_summary(expected_counts: dict[str, int]) -> dict[str, int | str]:
+    cut_layers = expected_counts.get("cut_layers_considered", 1)
+    layers_failed = expected_counts.get("layers_failed", 0)
+    polygons_filled = expected_counts.get("polygons_filled", max(1, cut_layers))
+    summary: dict[str, int | str] = {
+        "status": "pass" if layers_failed == 0 else "fail",
+        "cut_layers_considered": cut_layers,
+        "layers_filled": max(1, cut_layers - layers_failed),
+        "layers_inferred": 0,
+        "layers_skipped": 0,
+        "layers_failed": layers_failed,
+        "layers_needs_review": 0,
+        "polygons_filled": polygons_filled,
+    }
+    for key, value in expected_counts.items():
+        summary[key] = value
+    return summary
+
+
+def _synthetic_report_layers(expected_counts: dict[str, int]) -> list[dict[str, Any]]:
+    cut_layers = max(1, expected_counts.get("cut_layers_considered", 1))
+    failed_layers = expected_counts.get("layers_failed", 0)
+    layers: list[dict[str, Any]] = []
+    for index in range(cut_layers):
+        failed = index < failed_layers
+        layers.append(
+            {
+                "layer": f"SYNTHETIC::CUT::{index + 1:03d}",
+                "status": "failed" if failed else "filled",
+                "review": {
+                    "needs_review": False,
+                    "visual_acceptance_required": False,
+                    "reasons": [],
+                },
+            }
+        )
+    return layers
+
+
+def _synthetic_cut_geometry(expected_counts: dict[str, int]) -> dict[str, Any]:
+    cut_layers = max(1, expected_counts.get("cut_layers_considered", 1))
+    return {
+        "schema_version": 1,
+        "source": {"fixture": "public_synthetic"},
+        "layers": [
+            {
+                "layer": f"SYNTHETIC::CUT::{index + 1:03d}",
+                "paths": [[[0, index * 20], [100, index * 20], [100, index * 20 + 10]]],
+            }
+            for index in range(cut_layers)
+        ],
+    }
+
+
+def _synthetic_layer_audit(layers: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "source": {"fixture": "public_synthetic"},
+        "layers": [
+            {
+                "layer": layer["layer"],
+                "status": layer["status"],
+                "classification": "synthetic_cut",
+            }
+            for layer in layers
+        ],
+    }
+
+
+def _synthetic_visual_artifacts_payload(fixture: ProofFixture) -> dict[str, Any]:
+    rendered_views: list[dict[str, str]] = [
+        {
+            "id": "full_board",
+            "kind": "full_board",
+            "before": "before.png",
+            "after": "after.png",
+            "diff": "diff.png",
+        }
+    ]
+    closeups = [
+        view for view in fixture.visual_artifacts.rendered_views if view.kind in _CLOSEUP_RENDERED_VIEW_KINDS
+    ]
+    if closeups:
+        for view in closeups:
+            stem = _safe_artifact_stem(view.id)
+            rendered_views.append(
+                {
+                    "id": view.id,
+                    "kind": view.kind,
+                    "before": f"{stem}-before.png",
+                    "after": f"{stem}-after.png",
+                    "diff": f"{stem}-diff.png",
+                }
+            )
+    else:
+        rendered_views.append(
+            {
+                "id": "synthetic_cut_mass",
+                "kind": "cut_mass_closeup",
+                "before": "synthetic-cut-mass-before.png",
+                "after": "synthetic-cut-mass-after.png",
+                "diff": "synthetic-cut-mass-diff.png",
+            }
+        )
+    return {
+        "before": "before.png",
+        "after": "after.png",
+        "diff": "diff.png",
+        "rendered_views": rendered_views,
+    }
+
+
+def _safe_artifact_stem(value: str) -> str:
+    stem = re.sub(r"[^A-Za-z0-9_.-]+", "-", value.strip()).strip("-._")
+    return stem or "synthetic-view"
+
+
+def _write_synthetic_visual_artifacts(
+    plan: ProofPacketPlan,
+    fixture: ProofFixture,
+    visual_artifacts: dict[str, Any],
+) -> None:
+    width, height = _synthetic_image_size(fixture.review_regions)
+    before = Image.new("RGB", (width, height), "white")
+    after = Image.new("RGB", (width, height), "white")
+    _paint_synthetic_changes(after, fixture.review_regions)
+    diff = Image.new("RGB", (width, height), "white")
+    _paint_synthetic_changes(diff, fixture.review_regions)
+
+    images = {
+        "before.png": before,
+        "after.png": after,
+        "diff.png": diff,
+    }
+    rendered_views = visual_artifacts.get("rendered_views")
+    if isinstance(rendered_views, list):
+        for view in rendered_views:
+            if not isinstance(view, dict):
+                continue
+            for key, image in (("before", before), ("after", after), ("diff", diff)):
+                value = view.get(key)
+                if isinstance(value, str) and value:
+                    images[value] = image
+
+    for relative_name, image in images.items():
+        path = plan.output_dir / relative_name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        image.save(path)
+
+
+def _synthetic_image_size(review_regions: Sequence[ReviewRegion]) -> tuple[int, int]:
+    max_x = max((region.rect[2] for region in review_regions), default=620)
+    max_y = max((region.rect[3] for region in review_regions), default=460)
+    return max(800, max_x + 40), max(600, max_y + 40)
+
+
+def _paint_synthetic_changes(image: Image.Image, review_regions: Sequence[ReviewRegion]) -> None:
+    if review_regions:
+        for region in review_regions:
+            x0, y0, x1, y1 = region.rect
+            image.paste((0, 0, 0), (x0, y0, x1, y1))
+        return
+    image.paste((0, 0, 0), (120, 160, 520, 420))
 
 
 def _load_yaml_mapping(path: Path) -> dict[str, Any]:

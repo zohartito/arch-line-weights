@@ -251,7 +251,17 @@ To inspect the proof manifest or validate a local proof packet, run:
 ```bash
 .venv/bin/arch-lw proof-check tests/fixtures/make2d/manifest.yml --plan-only
 .venv/bin/arch-lw proof-check tests/fixtures/make2d/manifest.yml --output-dir proof --write proof-check.json
+.venv/bin/arch-lw proof-check tests/fixtures/make2d/manifest.yml \
+  --fixture public_foundation_window_section_synthetic \
+  --materialize-synthetic \
+  --output-dir /tmp/arch-lw-public-proof \
+  --write /tmp/arch-lw-public-proof/proof-check.json
 ```
+
+`--materialize-synthetic` writes deterministic public synthetic artifacts for
+eligible synthetic fixtures so the proof validator can be rehearsed without
+committing proof images. It does not materialize or clear private/manual-review
+fixtures, does not record W5/W7 acceptance, and does not close #30.
 
 ---
 

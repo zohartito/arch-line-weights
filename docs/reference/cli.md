@@ -213,6 +213,7 @@ arch-lw proof-check tests/fixtures/make2d/manifest.yml \
 | `--fixture ID` | all fixtures | Limit output to one fixture id; may be passed multiple times |
 | `--plan-only` | off | Emit manifest, expected artifact paths, commands, and guardrails without validating local files |
 | `--write PATH` | — | Write the proof-check JSON report to disk as well as stdout |
+| `--materialize-synthetic` | off | Write deterministic public synthetic artifacts for eligible synthetic pass fixtures before validation |
 | `--pretty / --no-pretty` | pretty | Pretty-print JSON output |
 
 Validation mode checks the deterministic proof packet paths for `report.json`,
@@ -223,6 +224,8 @@ against the raw report summary and fails when rendered before/after views are
 effectively unchanged. It fails nonzero for `failed` or `no_go` packets and keeps
 `needs_review` visible for W5/W7 acceptance. Treat `--write` output as local
 evidence: do not commit raw proof-check reports that contain machine-local paths.
+`--materialize-synthetic` is only a public synthetic rehearsal helper; it does
+not create private/manual-review proof, record acceptance, or close #30.
 
 ## `arch-lw explain-layer`
 
