@@ -12,6 +12,7 @@ checkpoint because GitHub write access is blocked in this session.
   - `aec7674` absorbs #38 / #20, entourage SVG asset generator.
   - `585fcc4` absorbs #39 / #23, conservative single-layer cleanup mode.
   - `52f16c2` absorbs #41, endgame delivery control plan.
+  - `58aafb6` and `ed45c89` absorb the #34 W2 fixture-sourcing research doc.
 - Local dirty file intentionally left unstaged: `webapp/frontend/vercel.json`
   changes `installCommand` from `npm ci` to `npm install`; do not commit it
   without the Vercel failure context.
@@ -28,6 +29,9 @@ Fresh verification on the current branch before this note:
 - `npm --prefix webapp/frontend run check` -> 0 errors, 0 warnings
 - `npm --prefix webapp/frontend run build` -> pass, with existing SvelteKit export warnings
 - Focused new-feature tests: `tests/test_entourage.py tests/test_cleanup.py` -> `12 passed`
+- After adding the #34 fixture-sourcing research doc:
+  - `tests/test_launch_safety_docs.py` -> `4 passed`
+  - `.venv/bin/mkdocs build` -> pass
 
 ## Write Blocker
 
@@ -41,6 +45,9 @@ Fresh verification on the current branch before this note:
 Close these PRs as superseded by #37 after posting a short comment that cites
 the current pushed head and verification evidence:
 
+- #34: fixture-sourcing research doc absorbed via `58aafb6` and `ed45c89`.
+  The later broad roadmap/retrospective edits from that branch were not folded
+  wholesale.
 - #36: absorbed into #37 via merge commit `7794528`; verification-core,
   layout-jsx, report, and Rhino bridge work now live on the current #37 stack.
 - #38: absorbed into #37 via cherry-pick `aec7674`; entourage SVG asset
@@ -76,8 +83,6 @@ Keep these open:
 - #21: broad Make2D/geometry repair remains open; #42 is not enough.
 - #33: deferred Rhino export assistant/product workflow unless the accepted
   scope is only the current bridge/export helper.
-- PR #34: keep open unless a human decides the research artifacts are obsolete
-  or superseded.
 
 ## Close Candidates After GitHub Auth Is Restored
 
@@ -108,7 +113,7 @@ Verified locally:
 - frontend check/build: pass
 - focused entourage/cleanup tests: 12 passed
 
-Superseded PRs to close against this stack: #36, #38, #39, #40, #41, #42, #43, #44, #45.
+Superseded PRs to close against this stack: #34, #36, #38, #39, #40, #41, #42, #43, #44, #45.
 Important boundaries remain unchanged: #29 and #30 stay open; synthetic proof
 does not close #30; posting/public proof remains NO-GO without W5/W7 acceptance.
 ```
