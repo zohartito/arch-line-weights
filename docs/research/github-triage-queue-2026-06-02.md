@@ -7,31 +7,49 @@ checkpoint because GitHub write access is blocked in this session.
 
 - Active branch: `codex/open-issue-verification-core`
 - Active integration PR: #37
-- Last pushed head before this note was updated: `8bc429f25251c7e930f850386ac303ec2dad1d99`
+- Last pushed head before the #42 tail worktree update: `3a2b11684516e459f6ad11b00d818d3bf2b501dd`
 - Additional absorbed commits now on the local #37 stack:
   - `aec7674` absorbs #38 / #20, entourage SVG asset generator.
   - `585fcc4` absorbs #39 / #23, conservative single-layer cleanup mode.
-  - `52f16c2` absorbs #41, endgame delivery control plan.
-  - `58aafb6` and `ed45c89` absorb the #34 W2 fixture-sourcing research doc.
+  - `52f16c2` absorbs the safe #41 endgame delivery control plan subset.
+  - `58aafb6` and `ed45c89` absorb the safe #34 W2 fixture-sourcing research
+    doc subset.
+  - This worktree update ports the remaining #42 concrete-base synthetic
+    regression behavior: same-component visible/tangent helper routing,
+    fragmented concrete edge recovery, and slim concrete-base completion above
+    the old static area cap.
 - Local dirty file intentionally left unstaged: `webapp/frontend/vercel.json`
   changes `installCommand` from `npm ci` to `npm install`; do not commit it
   without the Vercel failure context.
 
 ## Verification Evidence
 
-Fresh verification on the current branch before this note:
+Verification evidence for the current branch checkpoint:
 
-- `.venv/bin/python -m pytest -q` -> `667 passed, 7 skipped, 1 xfailed`
+- `.venv/bin/python -m pytest -q` -> `674 passed, 7 skipped, 1 xfailed`
 - `.venv/bin/python -m ruff check src tests webapp/backend` -> pass
 - `.venv/bin/python -m ruff format --check src tests webapp/backend webapp/tests` -> pass
 - `.venv/bin/mkdocs build` -> pass
 - `.venv/bin/python -m pytest webapp/tests -q` -> `44 passed`
-- `npm --prefix webapp/frontend run check` -> 0 errors, 0 warnings
-- `npm --prefix webapp/frontend run build` -> pass, with existing SvelteKit export warnings
+- Earlier frontend gate on this #37 stack, before the backend/doc-only #42 tail:
+  - `npm --prefix webapp/frontend run check` -> 0 errors, 0 warnings
+  - `npm --prefix webapp/frontend run build` -> pass, with existing SvelteKit
+    export warnings
 - Focused new-feature tests: `tests/test_entourage.py tests/test_cleanup.py` -> `12 passed`
 - After adding the #34 fixture-sourcing research doc:
   - `tests/test_launch_safety_docs.py` -> `4 passed`
   - `.venv/bin/mkdocs build` -> pass
+- After porting the #42 behavioral tail:
+  - `.venv/bin/python -m pytest tests/test_apply_saas_poche.py tests/test_architectural_mode.py -q`
+    -> `86 passed`
+  - `.venv/bin/python -m pytest tests/test_run_report.py tests/test_proof.py tests/test_launch_safety_docs.py -q`
+    -> `63 passed`
+  - `.venv/bin/python -m ruff check src tests webapp/backend` -> pass
+  - `.venv/bin/python -m ruff format --check src tests webapp/backend webapp/tests`
+    -> pass
+  - `.venv/bin/mkdocs build` -> pass
+  - `.venv/bin/python -m pytest webapp/tests -q` -> `44 passed`
+  - `git diff --check` -> pass
 
 ## Write Blocker
 
@@ -45,9 +63,9 @@ Fresh verification on the current branch before this note:
 Close these PRs as superseded by #37 after posting a short comment that cites
 the current pushed head and verification evidence:
 
-- #34: fixture-sourcing research doc absorbed via `58aafb6` and `ed45c89`.
-  The later broad roadmap/retrospective edits from that branch were not folded
-  wholesale.
+- #34: safe fixture-sourcing research doc subset absorbed via `58aafb6` and
+  `ed45c89`. The later broad roadmap/retrospective edits from that branch were
+  not folded wholesale.
 - #36: absorbed into #37 via merge commit `7794528`; verification-core,
   layout-jsx, report, and Rhino bridge work now live on the current #37 stack.
 - #38: absorbed into #37 via cherry-pick `aec7674`; entourage SVG asset
@@ -56,9 +74,10 @@ the current pushed head and verification evidence:
   cleanup mode, CLI command, README docs, and tests are now on the current branch.
 - #40: diagnose/report slice absorbed via `c2c1500`; `arch-lw diagnose` and
   tests are present on the current branch.
-- #41: absorbed into #37 via cherry-pick `52f16c2`; endgame delivery control
-  plan is now present under `docs/research/`.
-- #42: concrete-base synthetic regression absorbed into #37; close the PR only.
+- #41: safe endgame delivery control plan subset absorbed into #37 via
+  cherry-pick `52f16c2`; the full broad branch remains human-gated.
+- #42: concrete-base synthetic regression behavior is now ported into #37 via
+  the current worktree update; close the PR only after this commit is pushed.
   Do not close issue #30 from this synthetic evidence.
 - #43: older local designer-console prototype is superseded by the current #37
   console/webapp stack.
@@ -102,16 +121,19 @@ Post to #37 after GitHub auth is restored:
 ```text
 Checkpoint after integrating the current verification-core stack.
 
-Latest #37 stack now also absorbs #38, #39, and #41.
+Latest #37 stack now also absorbs #38, #39, the safe #34/#41 subsets, and the
+#42 concrete-base synthetic regression behavior.
 
 Verified locally:
-- root pytest: 667 passed, 7 skipped, 1 xfailed
+- root pytest: 674 passed, 7 skipped, 1 xfailed
 - ruff check: pass
 - ruff format check: pass
 - mkdocs build: pass
 - webapp tests: 44 passed
-- frontend check/build: pass
+- previous frontend check/build on this stack: pass
 - focused entourage/cleanup tests: 12 passed
+- focused #42 tail tests: 86 passed
+- report/proof/doc nearby tests after #42 tail: 63 passed
 
 Superseded PRs to close against this stack: #34, #36, #38, #39, #40, #41, #42, #43, #44, #45.
 Important boundaries remain unchanged: #29 and #30 stay open; synthetic proof
