@@ -240,15 +240,16 @@ Goal: use Ching/Ramsey/NCS books as a private local source of standards.
 
 Goal: add scale/life while respecting hierarchy.
 
-- [ ] Create a small consistent vector entourage library.
-- [ ] Add isometric standing/walking/seated people.
-- [ ] Add `ENTOURAGE` layer convention.
-- [ ] Ensure entourage is never poché and never heavy cut weight.
-- [ ] Add placement guidance:
+- [x] Create a small consistent vector entourage library generator.
+- [x] Add isometric standing/walking/seated/leaning people.
+- [x] Add `ENTOURAGE` layer convention.
+- [x] Ensure entourage is never poché and never heavy cut weight.
+- [x] Add placement guidance:
   - floor plates
   - roof/terrace
   - near facade for scale
   - avoid dense cut zones
+- [ ] Add Illustrator/Rhino insertion and automatic placement helpers.
 
 ## Phase 6 — Professional Product Experience
 
