@@ -1,7 +1,9 @@
 # GitHub Triage Queue - 2026-06-02
 
 This note records the issue/PR state after the current verification-core
-checkpoint because GitHub write access is blocked in this session.
+checkpoint because GitHub write access is blocked in this session. Exact
+auth-restored comment bodies and state changes are queued in
+`docs/research/github-triage-actions-2026-06-02.md`.
 
 ## Current Checkpoint
 
