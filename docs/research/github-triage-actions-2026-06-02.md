@@ -9,6 +9,10 @@ Authoritative current integration branch:
 - PR: #37
 - Branch: `codex/open-issue-verification-core`
 - Applied checkpoint: `86d302bdeb60ddf0236c14bc62a73ae5bf82e1d9`
+- Current pushed head after applied triage bookkeeping:
+  `0769ee7d2fa3f5477927850d66b37700c7a26b19`
+- Final audit PR state: draft, mergeable, with GitHub CI and Vercel checks green
+  on head `0769ee7d2fa3f5477927850d66b37700c7a26b19`.
 - Latest local verification:
   - `.venv/bin/python -m pytest -q` -> `681 passed, 7 skipped, 1 xfailed`
   - `.venv/bin/python -m pytest webapp/tests -q` -> `44 passed`
@@ -39,6 +43,23 @@ The branch should contain this applied checkpoint:
 ```
 
 Applied on 2026-06-02 after `gh auth status` reported a valid token.
+
+## Final Audit After Applying Actions
+
+After the GitHub comments and closures were applied, three bounded subagent
+audits checked the remaining open issue groups:
+
+- #29, #30, #31, and #32: keep open until accepted W5/W7/private USC proof or
+  review-packet/report-contract acceptance exists.
+- #7, #19, #21, and #33: keep open; they still require real Illustrator/private
+  visual acceptance, broad geometry-repair evidence, or an explicit unpause of
+  the Rhino export-assistant spike.
+- #1, #2, #3, and #4: keep open as user/product/legal-gated work.
+
+The audits found no additional low-risk code cleanup or GitHub state change
+that would close any remaining issue. The historical comment transcripts below
+still mention `86d302b` because that was the integration head cited when the
+actions were posted.
 
 ## PR Comments And Closures Applied
 

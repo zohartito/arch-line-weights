@@ -9,6 +9,10 @@ comment/closure actions were applied.
 - Active branch: `codex/open-issue-verification-core`
 - Active integration PR: #37
 - Applied checkpoint: `86d302bdeb60ddf0236c14bc62a73ae5bf82e1d9`
+- Current pushed head after applied triage bookkeeping:
+  `0769ee7d2fa3f5477927850d66b37700c7a26b19`
+- Final audit PR state: draft, mergeable, with GitHub CI and Vercel checks green
+  on head `0769ee7d2fa3f5477927850d66b37700c7a26b19`.
 - Additional absorbed commits now on the local #37 stack:
   - `aec7674` absorbs #38 / #20, entourage SVG asset generator.
   - `585fcc4` absorbs #39 / #23, conservative single-layer cleanup mode.
@@ -82,6 +86,23 @@ Verification evidence for the current branch checkpoint:
   #32, and #33.
 - Posted checkpoint comment on #37:
   https://github.com/zohartito/arch-line-weights/pull/37#issuecomment-4605309036
+
+## Final Subagent Audit - 2026-06-02
+
+Three bounded subagent audits checked the remaining open issue groups after
+GitHub triage was applied. They found no additional low-risk code cleanup or
+tracker action that would close a remaining issue.
+
+- #29 and #30 are not closeable without accepted W5/W7/private USC proof.
+- #31 and #32 are close-candidates only after the W5/W7 review-packet and
+  report contract are accepted.
+- #7 and #19 still need Illustrator-backed/private visual acceptance.
+- #21 remains the broad Make2D/component-graph geometry repair tracker; the
+  current #37/#42 work improves concrete/foundation behavior but does not prove
+  general completion.
+- #33 remains intentionally deferred until the verifier/proof loop is accepted.
+- #1, #2, #3, and #4 remain human/product/legal-gated; their labels and
+  keep-open comments are adequate.
 
 ## Closed/Superseded PRs
 
