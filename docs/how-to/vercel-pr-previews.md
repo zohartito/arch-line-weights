@@ -10,6 +10,13 @@ Posting/public proof remains **NO-GO** on previews — same as local.
 
 ## One-time setup (you)
 
+**Status (2026-06-01):** `zohartito/arch-line-weights` is connected to Vercel project
+`frontend` (team `zohars-projects-4fd2b0c6`). Root Directory `webapp/frontend`, Node
+22.x, SvelteKit, PR comments enabled. First preview deploys on the next push to an
+open PR branch.
+
+If reconnecting from scratch:
+
 1. Sign in at [vercel.com](https://vercel.com) (same account as `vercel whoami`).
 2. Install the GitHub app: [github.com/apps/vercel](https://github.com/apps/vercel) → grant access to `zohartito/arch-line-weights`.
 3. In Vercel → **Add New Project** → import `zohartito/arch-line-weights`.
