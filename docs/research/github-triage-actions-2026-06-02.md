@@ -1,14 +1,14 @@
 # GitHub Triage Actions - 2026-06-02
 
-Purpose: exact comments and state changes to apply after GitHub write auth is
-restored. This is a companion to `github-triage-queue-2026-06-02.md`; it exists
-because `gh auth status` currently reports the default token as invalid.
+Purpose: record the comments and state changes applied after GitHub write auth
+was restored. This is a companion to
+`github-triage-queue-2026-06-02.md`.
 
 Authoritative current integration branch:
 
 - PR: #37
 - Branch: `codex/open-issue-verification-core`
-- Reviewed checkpoint: `18f85a50deba3f1e601c932d754cc16bf28cbcb4`
+- Applied checkpoint: `86d302bdeb60ddf0236c14bc62a73ae5bf82e1d9`
 - Latest local verification:
   - `.venv/bin/python -m pytest -q` -> `681 passed, 7 skipped, 1 xfailed`
   - `.venv/bin/python -m pytest webapp/tests -q` -> `44 passed`
@@ -21,26 +21,28 @@ Authoritative current integration branch:
   - `.venv/bin/mkdocs build` -> pass
   - `git diff --check` -> pass
 
-## Preflight
+## Preflight Used
 
-Run these before making GitHub state changes:
+These checks were used before making GitHub state changes:
 
 ```bash
 gh auth status
 git fetch origin
 git rev-parse origin/codex/open-issue-verification-core
-git merge-base --is-ancestor 18f85a50deba3f1e601c932d754cc16bf28cbcb4 origin/codex/open-issue-verification-core
+git merge-base --is-ancestor 86d302bdeb60ddf0236c14bc62a73ae5bf82e1d9 origin/codex/open-issue-verification-core
 ```
 
-The branch should contain this reviewed checkpoint:
+The branch should contain this applied checkpoint:
 
 ```text
-18f85a50deba3f1e601c932d754cc16bf28cbcb4
+86d302bdeb60ddf0236c14bc62a73ae5bf82e1d9
 ```
 
-## PR Comments And Closures
+Applied on 2026-06-02 after `gh auth status` reported a valid token.
 
-Post the relevant comment first, then close the PR without merging.
+## PR Comments And Closures Applied
+
+Each PR received a closing comment and was closed without merging.
 
 ### #34 - Close As Subset Absorbed
 
@@ -50,7 +52,7 @@ Comment:
 Closing this PR as superseded by #37 / codex/open-issue-verification-core.
 
 The safe fixture-sourcing research subset was absorbed via 58aafb6 and ed45c89,
-and the current integration head is 18f85a5. I did not fold the broader roadmap
+and the current integration head is 86d302b. I did not fold the broader roadmap
 or retrospective edits wholesale; those remain human-gated/product-context work.
 
 Verification on #37: root pytest 681 passed, 7 skipped, 1 xfailed; webapp tests
@@ -68,7 +70,7 @@ Comment:
 Closing this PR as superseded by #37 / codex/open-issue-verification-core.
 
 The verification-core, layout-jsx report, and Rhino bridge work are now on the
-current #37 stack. Current integration head: 18f85a5.
+current #37 stack. Current integration head: 86d302b.
 
 Verification on #37: root pytest 681 passed, 7 skipped, 1 xfailed; webapp tests
 44 passed; ruff check and format check pass; mkdocs build passes; git diff
@@ -86,7 +88,7 @@ Closing this PR as superseded by #37 / codex/open-issue-verification-core.
 
 The entourage SVG asset generator was absorbed via aec7674 and remains covered
 by focused entourage tests on the current #37 stack. Current integration head:
-18f85a5.
+86d302b.
 ```
 
 Action: close PR #38.
@@ -100,7 +102,7 @@ Closing this PR as superseded by #37 / codex/open-issue-verification-core.
 
 The conservative single-layer cleanup mode was absorbed via 585fcc4 and remains
 covered by focused cleanup tests on the current #37 stack. Current integration
-head: 18f85a5.
+head: 86d302b.
 ```
 
 Action: close PR #39.
@@ -113,7 +115,7 @@ Comment:
 Closing this PR as superseded by #37 / codex/open-issue-verification-core.
 
 The diagnose/report slice is present on the current #37 stack, including
-`arch-lw diagnose` and report tests. Current integration head: 18f85a5.
+`arch-lw diagnose` and report tests. Current integration head: 86d302b.
 ```
 
 Action: close PR #40.
@@ -127,7 +129,7 @@ Closing this PR as superseded by #37 / codex/open-issue-verification-core.
 
 The safe endgame delivery control plan subset was absorbed via 52f16c2. I did
 not fold broader product/roadmap material wholesale; that remains human-gated.
-Current integration head: 18f85a5.
+Current integration head: 86d302b.
 ```
 
 Action: close PR #41.
@@ -141,7 +143,7 @@ Closing this PR as superseded by #37 / codex/open-issue-verification-core.
 
 The concrete-base synthetic regression behavior was ported via 9b2efd0, the
 public proof sentinels were strengthened via 2c12a9f, and both are present on
-the current #37 head, 18f85a5: same-component visible/tangent helper routing,
+the current #37 head, 86d302b: same-component visible/tangent helper routing,
 fragmented concrete edge recovery, and slim concrete-base completion above the
 previous static area cap.
 
@@ -164,7 +166,7 @@ Closing this PR as obsolete/replaced by #37 / codex/open-issue-verification-core
 
 The earlier local designer-console prototype was not absorbed file-for-file; it
 was replaced by the current #37 webapp console stack. Current integration head:
-18f85a5.
+86d302b.
 
 Boundary remains unchanged: public proof is NO-GO without W5/W7 acceptance.
 ```
@@ -178,10 +180,10 @@ Comment:
 ```text
 Closing this PR as superseded by #37 / codex/open-issue-verification-core after
 reviewing that the designer-console stack is present on #37. Current integration
-head: 18f85a5.
+head: 86d302b.
 
 Review evidence: PR #44 head 86fca6a is an ancestor of current integration head
-18f85a5, so the designer-console prototype changes are already included and
+86d302b, so the designer-console prototype changes are already included and
 then superseded by the current console/W5-W7 proof-packet stack.
 
 Verification on #37 includes webapp tests -> 44 passed. Boundary remains
@@ -197,10 +199,10 @@ Comment:
 ```text
 Closing this PR as superseded by #37 / codex/open-issue-verification-core after
 reviewing that private-proof quarantine and launch-safety guardrails are present
-on #37. Current integration head: 18f85a5.
+on #37. Current integration head: 86d302b.
 
 Review evidence: PR #45 head fa5524a is not an ancestor of current integration
-head 18f85a5, but its quarantine intent is superseded on the current branch via
+head 86d302b, but its quarantine intent is superseded on the current branch via
 9a81755, 737a7dc, 07c65fb, 30b6951, 49f4932, 63f451e, and 5532292. The retired
 Day-1 proof asset tree and stale proof `.gitattributes` entry are absent at
 HEAD, and current launch-safety coverage is stricter than #45 because it scans
@@ -213,7 +215,7 @@ proof assets, or local paths should be committed; synthetic proof does not close
 
 Action: close PR #45 without merging.
 
-## Issue Comments And Closures
+## Issue Comments And Closures Applied
 
 ### #20 - Close If Accepted Scope Is Generator Support
 
@@ -224,7 +226,7 @@ Closing this as implemented for the accepted generator/library-support scope.
 
 The #37 integration branch includes the entourage SVG asset generator via
 aec7674, plus classifier/test coverage that keeps entourage light and out of
-cut/poché treatment. Current integration head: 18f85a5.
+cut/poché treatment. Current integration head: 86d302b.
 
 If the desired scope becomes a broader product asset pack or placement UI, that
 should be a new follow-up issue.
@@ -242,7 +244,7 @@ Closing this as implemented for the conservative first cleanup command.
 
 The #37 integration branch includes conservative single-layer cleanup mode via
 585fcc4, CLI/docs coverage, and tests for the safe first-pass behavior. Current
-integration head: 18f85a5.
+integration head: 86d302b.
 
 This does not claim full general geometry repair; broad Make2D repair remains
 tracked separately in #21.
@@ -260,7 +262,7 @@ Keeping this open.
 
 #37 now has a proof manifest, proof-check command, visual artifact validation,
 W5/W7 handoff packet generation, report guardrails, and NO-GO public-proof
-posture. Current integration head: 18f85a5.
+posture. Current integration head: 86d302b.
 
 Closure still requires the final accepted proof packet: full-board plus close-up
 before/after/diff evidence, explicit skipped/failed/ambiguous regions, and W5/W7
@@ -278,7 +280,7 @@ Keeping this open.
 
 #37 now includes public-safe synthetic regressions for concrete/foundation
 helper-backed poché, including the fragmented concrete edge tail port at
-9b2efd0, present on current head 18f85a5. That improves the algorithm and report
+9b2efd0, present on current head 86d302b. That improves the algorithm and report
 coverage, but it does not prove the private USC wall-section result.
 
 Closure still requires private USC proof evidence showing the
@@ -298,7 +300,7 @@ Keeping this open as a close-candidate, not closing yet.
 
 #37 includes the Make2D fixture manifest, proof-check command, rendered artifact
 paths, review-region pixel gates, public synthetic pass/expected-fail/unsupported
-sentinels, and tests. Current integration head: 18f85a5.
+sentinels, and tests. Current integration head: 86d302b.
 
 The remaining closure gate is accepted W5/W7 review-packet evidence, especially
 for the private USC fixture. Without that accepted packet, the suite is present
@@ -317,7 +319,7 @@ Keeping this open as a close-candidate, not closing yet.
 #37 includes durable machine-readable reports for changed/skipped/failed/why,
 input diagnostics, no-op/missing-payload warnings, poché status, completion
 candidates, visual artifact paths, and W5/W7 review gates. Current integration
-head: 18f85a5.
+head: 86d302b.
 
 The remaining closure gate is accepted W5/W7 review-packet evidence. Until that
 exists, the report machinery is implemented but the proof QA decision is not
