@@ -34,7 +34,7 @@ So the only stages with real runtime impact at default settings are
 | `apply-saas` median | 24.03s (best 22.66s) | 27.95s (best 27.33s) | **+3.92s (+16%)** |
 | `apply-saas --poche` median | 26.35s (best 25.23s) | 26.13s (best 25.33s) | **−0.22s (−1%)** |
 
-Reference input: `DRAWING 4 SECTION [Converted].ai` (24 MB, 62 layers,
+Reference input: `sample-section.ai` (24 MB, 62 layers,
 23 cut). Same hardware (M-series Mac, macOS 26.4.1).
 
 **apply-saas regressed ~16%** on the reference drawing. The most likely

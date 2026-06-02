@@ -21,7 +21,9 @@
 
   async function tick() {
     try {
-      detail = await getJob($page.params.id);
+      const jobId = $page.params.id;
+      if (!jobId) throw new Error('missing job id');
+      detail = await getJob(jobId);
       if (detail.status === 'done' || detail.status === 'failed') {
         return; // stop polling — terminal state reached
       }
@@ -69,6 +71,29 @@
       </p>
     </header>
 
+    <section class="grid gap-2 md:grid-cols-3">
+      {#each detail.guardrails as notice}
+        <div class="border-l-4 border-zinc-950 bg-white px-3 py-2 text-sm font-medium text-ink-900 shadow-sm">
+          {notice}
+        </div>
+      {/each}
+    </section>
+
+    <section class="border border-ink-300 bg-white px-4 py-3 text-sm">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <div class="font-semibold text-ink-900">Public proof</div>
+          <p class="mt-1 text-ink-500">{detail.proof_notice}</p>
+        </div>
+        <span class="rounded border border-zinc-950 bg-zinc-950 px-2 py-1 text-xs font-semibold text-white">
+          {detail.public_safe ? 'Posting: W5/W7 accepted (local)' : 'Posting: NO-GO'}
+        </span>
+      </div>
+      <p class="mt-2 text-xs text-ink-500">
+        Acceptance: {detail.public_acceptance.accepted ? detail.public_acceptance.accepted_by.join(', ') : 'W5/W7 not recorded'}
+      </p>
+    </section>
+
     {#if detail.status === 'failed' && detail.error}
       <div class="rounded border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
         {detail.error}
@@ -82,6 +107,9 @@
       >
         Download processed file
       </a>
+      <p class="text-xs text-ink-500">
+        This download is a local processing artifact only; it is not public proof clearance.
+      </p>
     {/if}
 
     {#if detail.apply_summary}

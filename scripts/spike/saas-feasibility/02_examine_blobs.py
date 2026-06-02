@@ -17,9 +17,7 @@ from pathlib import Path
 import pikepdf
 from pikepdf import Stream
 
-DEFAULT_AI = Path(
-    "/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/DRAWING 4 SECTION [Converted].ai"
-)
+DEFAULT_AI = Path("sample-section.ai")
 
 
 def main(path: Path) -> None:

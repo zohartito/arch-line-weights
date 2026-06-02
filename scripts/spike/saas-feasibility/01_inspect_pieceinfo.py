@@ -9,7 +9,7 @@ This is read-only. Do not modify the source file.
 Run:
     python3 01_inspect_pieceinfo.py [path/to/file.ai]
 
-Defaults to the user's USC ARCH 202B section drawing.
+Defaults to a generic sample section placeholder.
 """
 
 from __future__ import annotations
@@ -20,9 +20,7 @@ from pathlib import Path
 import pikepdf
 from pikepdf import Dictionary, Name, Stream
 
-DEFAULT_AI = Path(
-    "/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/DRAWING 4 SECTION [Converted].ai"
-)
+DEFAULT_AI = Path("sample-section.ai")
 
 
 def short(obj, maxlen: int = 200) -> str:

@@ -99,6 +99,7 @@ nav:
       - tutorials/your-first-section-drawing.md
   - How-to:
       - Apply line weights: how-to/apply-line-weights.md
+      - Supported inputs: how-to/supported-inputs.md
       - Generate poché: how-to/generate-poche.md
       - Material hatching: how-to/material-hatching.md
       - Use with Rhino: how-to/use-with-rhino.md

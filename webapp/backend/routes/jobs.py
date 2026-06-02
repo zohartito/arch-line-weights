@@ -14,9 +14,10 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
+from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 
-from pydantic import ValidationError
+from arch_line_weights.input_format import diagnostic_for_command
 
 from ..compute import JobStore, run_job
 from ..config import Settings, get_settings
@@ -104,6 +105,18 @@ async def create_job(
         raise HTTPException(
             status_code=413,
             detail=f"upload exceeded {settings.max_upload_bytes:,} bytes",
+        )
+
+    input_diag = diagnostic_for_command(paths.input_path, "apply-saas")
+    if not input_diag.command_support["apply-saas"]:
+        storage.cleanup_job(record.job_id)
+        raise HTTPException(
+            status_code=415,
+            detail={
+                "message": input_diag.unsupported_reason,
+                "suggested_next_step": input_diag.suggested_next_step,
+                "input_format": input_diag.to_dict(),
+            },
         )
 
     # Run synchronously in a threadpool so the event loop stays responsive

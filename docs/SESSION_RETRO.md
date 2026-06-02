@@ -14,14 +14,14 @@ Day-1 public source release.
 - Poché generation became conservative: high-confidence cut layers get filled;
   ambiguous geometry is reported or left for review.
 
-## Verified Results
+## Verification Posture
 
-- `apply-jsx` on `WALL SECTION [Converted].ai` modified 512 paths across
-  25 leaf layers with 0 errors.
-- `arch-lw poche` then produced 30 poché polygons across 8 cut layers with
-  0 failed layers.
-- `apply-saas` on `macro_for_archlw.ai` processed a 98 MB / 1.28M-stroke axon
-  fixture with exit 0 in about 1:53.
+- Prior private dogfood produced useful bridge, poché, and large-file signals.
+- Those private filenames and artifacts are intentionally omitted from this
+  public technical archive.
+- Posting/public proof remains NO-GO unless W5/W7 explicitly accepts it.
+- Synthetic proof does not close #30, and the private USC regression stays
+  private.
 
 ## Lessons Kept
 

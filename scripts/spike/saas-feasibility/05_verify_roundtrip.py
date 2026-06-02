@@ -29,7 +29,7 @@ def reverse(path: Path) -> bytes:
 
 
 def main() -> None:
-    src = Path("/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/DRAWING 4 SECTION [Converted].ai")
+    src = Path("sample-section.ai")
     null_dst = Path("/tmp/spike_roundtrip_null.ai")
     mod_dst = Path("/tmp/spike_roundtrip_modify.ai")
 

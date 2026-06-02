@@ -63,8 +63,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
   diagnostic evidence instead of filled by default.
 - Concrete/foundation helper geometry can no longer wildly expand an existing
   cut-only face. This specifically addresses the lower-left false blob seen in
-  `iso axon section  [Converted]` while preserving conservative cut-derived
-  poché.
+  private regression review while preserving conservative cut-derived poché.
 - Large roof/slab/foundation completions now need material-like rectangularity,
   short-side/aspect limits, and stronger anchoring; triangular roof surfaces,
   compact foundation blobs, and tiny backup-wall fragments are rejected by
@@ -80,35 +79,21 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Validation
 
-- Real run on
-  `iso axon section  [Converted].ai` produced
-  `v0614-no-concrete-blob.ai`: 51 polygons across 8/8 structural cut layers,
-  no 20-minute hang, and the oversized lower-left concrete-base helper fill
-  was removed.
-- Real run with `ARCH_LW_POCHE_OVERLAY=1` produced
-  `v0615-overlay.ai`; the overlay layer is present at the top of the
-  Illustrator stack. Visual review still shows the deeper issue: missing mass
-  is mostly incomplete component topology, not only draw order.
-- Real run with cut-stroke styling and dynamic completion produced
-  `v0617-cut-style-completion.ai`; it recovered additional roof/foundation
-  mass but overfilled a roof triangle, which became a rectangularity regression.
-- Real run after rectangularity guards produced `v0618-rectangular-completion.ai`;
-  the large roof overfill is gone, but the drawing is still not considered a
-  final print candidate until component-level review/reporting covers the
-  remaining missing foundation/wall/floor zones.
-- Real run after report + hierarchy tuning produced `v0619-report-hierarchy.ai`
-  and `iso-axon-v0619-report.json`: 48 safe polygons across 7 injectable
-  structural cut layers, 8 cut layers considered, 1 low-confidence diagnostic
-  roof-cap layer, and clearer review reasons for rejected roof/foundation/beam
-  completion candidates.
-- A controlled low-confidence experiment produced
-  `v0620-lowconf-roofcap.ai`, which injected the roof-cap bbox but created a
-  visible roof/rainscreen blob. That confirms low-confidence bbox fills should
-  remain diagnostic-only by default.
-- Real run after timber beam cell preservation produced
-  `v0622-beam-cells.ai`; this did not change the iso axon polygon count, which
-  confirms the remaining misses on that drawing need component-graph completion
-  and/or manual deadline cleanup, not just cell preservation.
+- Private local regression runs showed the lower-left concrete-base helper
+  overfill was removed without restoring broad helper collection.
+- Overlay review confirmed the deeper issue is incomplete component topology,
+  not only draw order.
+- Cut-stroke styling plus dynamic completion recovered additional candidate
+  mass but exposed an overfill case, which became a rectangularity regression.
+- Rectangularity guards removed the large roof overfill, but the private
+  regression is still not a final print candidate until component-level
+  review/reporting covers the remaining missing foundation/wall/floor zones.
+- Report and hierarchy tuning produced clearer review reasons for rejected
+  roof/foundation/beam completion candidates while keeping low-confidence
+  candidates diagnostic-only by default.
+- Timber beam cell preservation did not resolve the remaining private-regression
+  misses, which confirms that component-graph completion and/or manual deadline
+  cleanup are still needed.
 - Focused regression suite:
   `PYTHONPATH=src pyenv exec python -m pytest tests/test_apply_saas.py tests/test_architectural_mode.py tests/test_apply_saas_poche.py -q`
   currently passes `89` tests.
@@ -124,7 +109,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Issue #19** — Illustrator-backed visual QA and per-layer review report.
 - **Issue #20** — isometric entourage layer/library.
 - **Issue #7** — real-Illustrator visual validation pass (partially closed
-  by the v0.6.x real-world runs on `macro.ai` and `wall section iso cut .ai`).
+  by private v0.6.x real-world runs; raw filenames and proof artifacts stay
+  out of public docs).
 - **Issue #4** — B9 commercial license swap, deferred until ~3 days before
   v1.0.1 publish (per LESSONS_LEARNED #36).
 - **Phase A1/A2 personal-use validation** (Issues #1, #2) — accumulating
@@ -170,10 +156,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Validation
 
-- Real run on
-  `iso axon section  [Converted].ai`:
-  `51 polygons injected across 8/8 structural cut layers`; runtime completed
-  without bridge-best stalls and with `35 colors mapped`.
+- Private local regression run completed without bridge-best stalls and with
+  the expected stroke-color mapping path.
 - Computer Use visual check showed cleaner hierarchy and no low-confidence
   facade/roof-cap bbox blob, but also confirmed a remaining limitation:
   some true cut solids appear only as visible-curve geometry, so the output
@@ -220,10 +204,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Validation
 
-- Real run on
-  `iso axon section  [Converted].ai`:
-  `49 polygons injected across 7/7 structural cut layers`; facade/window/glass/
-  connector/cladding layers were excluded from fill.
+- Private local regression run confirmed facade/window/glass/connector/cladding
+  layers were excluded from fill.
 - Computer Use visual check in Illustrator confirmed the large false facade
   blob is gone and connector hierarchy is calmer. Remaining limitation:
   source geometry still provides partial cut-face boundaries, so some poché
@@ -258,8 +240,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- 43 MB `iso axon section  [Converted].ai` no longer maps 0 colors under
-  `--auto`; converted CMYK files now classify and rewrite line weights.
+- Large converted CMYK files no longer map 0 colors under `--auto`; converted
+  files now classify and rewrite line weights.
 - Pathological `15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44` no longer burns
   20+ minutes in bridge-best backtracking.
 - Low-confidence facade-return and roof-cap fallback blobs are no longer
@@ -342,8 +324,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Issue #14** — `[Converted]` matcher missed disk filenames with
-  trailing whitespace (e.g. `wall section iso cut .ai`, which Illustrator
-  surfaces as `wall section iso cut  [Converted].ai`). `_is_converted_match`
+  trailing whitespace (for example, a private filename with an extra trailing
+  space before Illustrator surfaced it as `[Converted]`). `_is_converted_match`
   now peels the `[Converted]` decoration via regex, normalizes both sides
   with full-Unicode `str.rstrip()`, and compares stems. `query_active_doc()`
   uses `rstrip("\r\n")` so internal trailing whitespace survives the
@@ -476,9 +458,9 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Reference run
 
-- USC ARCH 202B drawing: `arch-lw poche HIERARCHY.ai --style material
-  --scale 0.02` → 233 black polygons + ~5,000 hatch lines across 14
-  cut layers in ~30 s. 23/23 tests passing.
+- Private local material-hatching smoke run completed successfully; raw drawing
+  details, counts, and output artifacts are intentionally not public release
+  evidence.
 
 ## [0.4.0] — 2026-04-30
 
@@ -566,8 +548,9 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Reference run
 
-- Same 24 MB / 340 K-stroke / 62-layer USC ARCH 202B section drawing:
-  11 min, 0 errors, all 62 layers preserved.
+- Private local section fixture confirmed layer-preserving JSX behavior; raw
+  drawing details, counts, and output artifacts are intentionally not public
+  release evidence.
 
 ## [0.1.0] — 2026-04-29
 

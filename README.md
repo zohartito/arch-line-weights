@@ -23,24 +23,15 @@ inside Illustrator only to have ExtendScript hang for hours — this is for you.
   `usc` studio workflows.
 
 ```
-$ arch-lw apply "DRAWING 4 SECTION [Converted].ai" --auto --preset usc
-# 37 colors mapped using auto:usc
---- 1.0 pt ---
-  RGB( 40, 40, 40)    5,862 strokes
-  ...
-applied 340,323 strokes across 49 color changes
-   0.08 pt  →  298,443 strokes
-   0.18 pt  →    6,381 strokes
-   0.25 pt  →      494 strokes
-    0.3 pt  →   25,120 strokes
-    0.5 pt  →    3,967 strokes
-    1.0 pt  →    5,918 strokes
-
-wrote DRAWING 4 SECTION [Converted] HIERARCHY.ai  (4,081,388 bytes)
+$ arch-lw apply examples/sample-linework.pdf --auto --preset section
+# 12 colors mapped using auto:section
+applied 8,420 strokes across 12 color changes
+wrote examples/sample-linework HIERARCHY.pdf
 ```
 
-Total runtime: under 2 minutes for the original 24 MB / 340 K-stroke USC
-reference file.
+Runtime depends on drawing size, file format, and whether Illustrator-backed
+layer-preserving commands are used. Examples are workflow orientation only and
+are not public proof clearance.
 
 ---
 
@@ -93,6 +84,50 @@ The JSON contains every stroke RGB and how many strokes use it. The dominant
 colors (highest counts) are almost always **material hatch / texture** — they
 should land in the lightest tier.
 
+### Put a Rhino export on a sheet
+
+If a Rhino Make2D export opens off the Illustrator artboard, normalize the
+layout before running hierarchy or poché. In Rhino, first select the Make2D
+curves and run:
+
+```
+_-RunPythonScript "/path/to/integrations/rhino/export_selected_make2d_manifest.py"
+```
+
+That writes an `.ai` / `.pdf` export plus a `.manifest.json` sidecar. Then run:
+
+```
+arch-lw layout-jsx rhino-make2d.ai \
+  --artboard 24x36in \
+  --fit fit \
+  --margin 0.5in \
+  --report-json layout-report.json
+```
+
+This opens the export in Illustrator, sets the requested artboard size, centers
+or fits visible unlocked artwork, saves `<src> LAYOUT-jsx.ai`, and writes a
+layout report. Use `--dry-run --jsx-path layout.jsx` to inspect the generated
+script without contacting Illustrator or writing output artwork.
+
+For a single report that chains layout with optional hierarchy and poché:
+
+```
+arch-lw bridge-rhino-ai \
+  --input rhino-make2d.ai \
+  --artboard 24x36in \
+  --fit fit \
+  --margin 0.5in \
+  --preset usc \
+  --source rhino \
+  --for-print \
+  --apply-jsx \
+  --poche \
+  --report-dir proof
+```
+
+Layout success is not launch proof. The proof gate still depends on the
+verification reports and visual QA acceptance.
+
 ### Two apply modes — pick by what you need
 
 | Mode | Speed | Layers | Use when |
@@ -127,6 +162,21 @@ Input caveats for that path:
   on the `HIERARCHY-jsx` output.
 - Legacy Rhino PostScript `.ai` exports may need Illustrator File > Save As /
   re-save before v1 can process them.
+
+Supported input matrix:
+
+| Input kind | Recommended commands | Notes |
+|---|---|---|
+| Native Illustrator `.ai` with `/NumBlock` | `inspect`, `apply-saas`, `apply-saas --poche` | Best headless, layer-preserving path. |
+| PDF-only or `[Converted]` `.ai` | `inspect`, `apply-jsx`, then `poche` | Use the Illustrator bridge when layers must be preserved. |
+| Plain `.pdf` | `inspect`, `apply` | Fast PDF-stream rewrite; no Illustrator layer editing claim. |
+| Reference/report/image-only `.pdf` | `inspect` diagnostic only | Not a line-weight output path; export a vector drawing sheet instead. |
+| Legacy Rhino PostScript `.ai` | Illustrator Save As first | Convert to modern/PDF-compatible `.ai`, then re-run `inspect`. |
+
+Commands now preflight the input shape and return a diagnostic with the
+detected kind, supported command map, and recommended next step when the wrong
+file shape is used. If a PDF has no vector drawing marks or rewriteable strokes,
+`apply` stops before writing a no-op output.
 
 `apply-jsx` uses a **semantic layer-name classifier**: anything in a
 `Visible::ClippingPlaneIntersections::*` OCG is the section cut (1.0 pt);
@@ -171,19 +221,20 @@ From a source checkout:
   -o /tmp/sample-linework-HIERARCHY.pdf
 ```
 
-### Day-1 proof images
+### Proof status
 
-The section proof uses the Illustrator bridge path (`apply-jsx` followed by
-`arch-lw poche`) on `WALL SECTION [Converted].ai`.
+Public proof assets are not committed in this repository. Posting and public
+proof remain **NO-GO** unless W5/W7 explicitly accepts the packet. Synthetic
+proof can exercise the harness, but it does not close #30, and the private USC
+regression stays private. Use the local designer console or proof packet export
+for review material that includes `W5-W7-ACCEPTANCE-HANDOFF.json`.
 
-![Day-1 section proof close-up: solid cut mass, openings left white](docs/img/day1-proof/05-closeup-cut-mass-windows-white.png)
+To inspect the proof manifest or validate a local proof packet, run:
 
-Proof assets:
-
-- [Before: raw Rhino/Make2D export](docs/img/day1-proof/01-before-raw.png)
-- [After: hierarchy + solid-black poché](docs/img/day1-proof/03-after-poche-full.png)
-- [Layers panel: preserved `ClippingPlaneIntersections` layers](docs/img/day1-proof/04-layers-panel-clipping-poche.png)
-- [Final poché PDF](docs/img/day1-proof/section-HIERARCHY-jsx-POCHE.pdf)
+```bash
+.venv/bin/arch-lw proof-check tests/fixtures/make2d/manifest.yml --plan-only
+.venv/bin/arch-lw proof-check tests/fixtures/make2d/manifest.yml --output-dir proof --write proof-check.json
+```
 
 ---
 

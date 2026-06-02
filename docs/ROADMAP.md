@@ -16,17 +16,16 @@ commitment.
 - Bluebeam review is unverified. Use Illustrator and Acrobat for the validated
   Day-1 review loop.
 
-## Validated Proof Points
+## Proof Posture
 
-- Section proof passed through the Illustrator bridge path:
-  `apply-jsx` on `WALL SECTION [Converted].ai` modified 512 paths across
-  25 leaf layers with 0 errors, then `arch-lw poche` produced 30 poché
-  polygons across 8 cut layers with 0 failed layers.
-- Axon stress proof passed on `macro_for_archlw.ai`: 98 MB / 1.28M strokes,
-  `apply-saas` exit 0, about 1:53 runtime.
-
-The axon run is large-file performance evidence. It is not section evidence,
-because that fixture had no `ClippingPlaneIntersections` cut layers.
+- Section-bridge and large-file stress runs have been exercised locally.
+  Public proof assets are not committed. Posting/public proof is **NO-GO**
+  unless W5/W7 explicitly accepts the packet. Synthetic proof does not close
+  #30.
+- The private USC regression stays private and is not represented by committed
+  screenshots, PDFs, raw reports, or local file paths.
+- Prior private dogfood showed useful bridge and large-file signals, but those
+  private filenames and artifacts are intentionally not public proof claims.
 
 ## Known Input Caveats
 

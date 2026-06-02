@@ -197,7 +197,7 @@ Add unit tests around the layer names from the 2026-05-05 debug log:
   `membrane`, `epdm`, `insulation`, `connector`, `bracket`, `cleat`, or `clip`
   must not become black poche.
 
-Regression checks for the architectural section mode on the iso axon section:
+Regression checks for the architectural section mode on the private section regression drawing:
 
 ```bash
 apply-saas --auto --preset section --poche --architectural
