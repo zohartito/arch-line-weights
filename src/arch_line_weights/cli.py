@@ -1538,7 +1538,10 @@ def _expected_count_errors(report_path: Path, expected_counts: dict[str, int]) -
 @click.option(
     "--materialize-synthetic",
     is_flag=True,
-    help="Write deterministic public synthetic proof artifacts for eligible synthetic pass fixtures before validation.",
+    help=(
+        "Write deterministic public synthetic proof artifacts for eligible pass, expected-fail, "
+        "and unsupported fixtures before validation."
+    ),
 )
 @click.option("--pretty/--no-pretty", default=True, help="Pretty-print JSON output.")
 def proof_check_cmd(

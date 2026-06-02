@@ -9,7 +9,7 @@ auth-restored comment bodies and state changes are queued in
 
 - Active branch: `codex/open-issue-verification-core`
 - Active integration PR: #37
-- Last pushed head before the #42 tail worktree update: `3a2b11684516e459f6ad11b00d818d3bf2b501dd`
+- Current pushed head: `2c12a9ffcdb0ff2c450a6679155c903a44a4fb5a`
 - Additional absorbed commits now on the local #37 stack:
   - `aec7674` absorbs #38 / #20, entourage SVG asset generator.
   - `585fcc4` absorbs #39 / #23, conservative single-layer cleanup mode.
@@ -20,19 +20,39 @@ auth-restored comment bodies and state changes are queued in
     regression behavior: same-component visible/tangent helper routing,
     fragmented concrete edge recovery, and slim concrete-base completion above
     the old static area cap.
+  - `987e58f` adds deterministic public synthetic proof-packet materialization.
+  - `2c12a9f` adds proof-check expectation semantics for public pass,
+    expected-fail, and unsupported synthetic sentinels.
 - Local dirty file intentionally left unstaged: `webapp/frontend/vercel.json`
   changes `installCommand` from `npm ci` to `npm install`; do not commit it
   without the Vercel failure context.
+
+## Live Open Items Refreshed
+
+Public GitHub API refresh on 2026-06-02 after pushing `2c12a9f` still shows
+these open items:
+
+- Open PRs: #34, #36, #37, #38, #39, #40, #41, #42, #43, #44, #45.
+- Open issues: #1, #2, #3, #4, #7, #19, #20, #21, #23, #29, #30, #31,
+  #32, #33.
+- PRs queued for close-as-superseded/subset-absorbed after auth returns:
+  #34, #36, #38, #39, #40, #41, #42, #43, #44, #45.
+- Issues queued as possible closures after auth returns and scope is accepted:
+  #20 and #23.
+- Issues intentionally kept open: #1, #2, #3, #4, #7, #19, #21, #29, #30,
+  #31, #32, #33.
 
 ## Verification Evidence
 
 Verification evidence for the current branch checkpoint:
 
-- `.venv/bin/python -m pytest -q` -> `674 passed, 7 skipped, 1 xfailed`
+- `.venv/bin/python -m pytest -q` -> `681 passed, 7 skipped, 1 xfailed`
 - `.venv/bin/python -m ruff check src tests webapp/backend` -> pass
 - `.venv/bin/python -m ruff format --check src tests webapp/backend webapp/tests` -> pass
 - `.venv/bin/mkdocs build` -> pass
 - `.venv/bin/python -m pytest webapp/tests -q` -> `44 passed`
+- `.venv/bin/arch-lw proof-check tests/fixtures/make2d/manifest.yml --fixture public_foundation_window_section_synthetic --fixture public_false_fill_void_expected_fail_synthetic --fixture public_unsupported_payload_synthetic --materialize-synthetic --output-dir /tmp/archlw-public-proof-sentinels --no-pretty` -> pass
+- `.venv/bin/arch-lw proof-check tests/fixtures/make2d/manifest.yml --materialize-synthetic --output-dir /tmp/archlw-proof-materialized-all-sentinels --no-pretty` -> expected fail only on the private/manual-review fixture
 - Earlier frontend gate on this #37 stack, before the backend/doc-only #42 tail:
   - `npm --prefix webapp/frontend run check` -> 0 errors, 0 warnings
   - `npm --prefix webapp/frontend run build` -> pass, with existing SvelteKit
@@ -79,14 +99,15 @@ the current pushed head and verification evidence:
 - #41: safe endgame delivery control plan subset absorbed into #37 via
   cherry-pick `52f16c2`; the full broad branch remains human-gated.
 - #42: concrete-base synthetic regression behavior is now ported and pushed on
-  #37 via `9b2efd0`; close the PR only. Do not close issue #30 from this
-  synthetic evidence.
+  #37 via `9b2efd0`, with later proof sentinel verification through `2c12a9f`;
+  close the PR only. Do not close issue #30 from this synthetic evidence.
 - #43: older local designer-console prototype is obsolete/replaced by the
   current #37 console/webapp stack, not literally absorbed file-for-file.
 - #44: designer-console prototype is present on #37/current branch; close as
-  superseded after review.
+  superseded after confirming no unique branch-only changes remain.
 - #45: private-proof quarantine and launch-safety guardrails are present on
-  #37/current branch; close as superseded after review.
+  #37/current branch; close as superseded after confirming no unique branch-only
+  changes remain.
 
 ## Keep Open / Human-Gated
 
@@ -95,9 +116,10 @@ Keep these open:
 - #29: proof-pack truth remains the launch blocker.
 - #30: private foundation/concrete acceptance is still required; synthetic
   regressions do not close it.
-- #31 and #32: close-candidates after #37 verification, but prior comments left
-  them open pending accepted W5/W7 review-packet contract. Keep open unless that
-  acceptance criterion is explicitly satisfied.
+- #31 and #32: close-candidates after #37 verification. `2c12a9f` adds public
+  pass/expected-fail/unsupported proof-check sentinels, but prior comments still
+  leave them open pending accepted W5/W7 review-packet contract. Keep open unless
+  that acceptance criterion is explicitly satisfied.
 - #19 and #7: still need Illustrator-backed/private visual evidence.
 - #1, #2, #3, #4: user-side validation, posting, customer discovery, and legal
   licensing decisions.
@@ -127,7 +149,7 @@ Latest #37 stack now also absorbs #38, #39, the safe #34/#41 subsets, and the
 #42 concrete-base synthetic regression behavior.
 
 Verified locally:
-- root pytest: 674 passed, 7 skipped, 1 xfailed
+- root pytest: 681 passed, 7 skipped, 1 xfailed
 - ruff check: pass
 - ruff format check: pass
 - mkdocs build: pass
@@ -136,6 +158,8 @@ Verified locally:
 - focused entourage/cleanup tests: 12 passed
 - focused #42 tail tests: 86 passed
 - report/proof/doc nearby tests after #42 tail: 63 passed
+- public proof-check pass/expected-fail/unsupported sentinels: pass
+- all-fixtures proof-check: expected fail only on private/manual-review fixture
 
 Superseded PRs to close against this stack: #34, #36, #38, #39, #40, #41, #42, #43, #44, #45.
 Important boundaries remain unchanged: #29 and #30 stay open; synthetic proof
