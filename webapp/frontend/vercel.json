@@ -1,6 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "comment": "PR previews: root directory webapp/frontend in Vercel project settings",
   "framework": "sveltekit",
   "installCommand": "npm ci",
   "buildCommand": "npm run build",
