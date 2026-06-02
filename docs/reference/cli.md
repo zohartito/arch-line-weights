@@ -132,6 +132,27 @@ Architectural mode separates black poché from cut-line styling. A layer can be
 `poche=False` and still receive a strong cut stroke, for example glazing,
 frames, SHS/HSS, rainscreen returns, or panel cuts.
 
+## `arch-lw cleanup`
+
+Conservatively clean a low-semantic, one-layer AI drawing by classifying paths
+from geometry length instead of layer names. This is intended for Make2D or
+Illustrator exports where layer hierarchy is too sparse for semantic hierarchy.
+
+```bash
+arch-lw cleanup SRC [OPTIONS]
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `-o, --output PATH` | `<src> CLEANUP.<ext>` | Output path |
+| `--report PATH` | — | JSON report with deleted, duplicate, lightened, medium, heavy, unchanged, and uncertain counts |
+
+The command writes a new file and keeps the original input unchanged. It deletes
+only tiny high-confidence debris and exact duplicate paths, then inserts
+conservative per-path stroke weights for detail, medium, and profile-length
+strokes. It does not repair invalid Rhino source solids or hide uncertain
+internal lines; those remain review items in the report.
+
 ## `arch-lw poche`
 
 Generate poché on cut layers via shapely linemerge + polygonize + auto-bridge + fallback.
