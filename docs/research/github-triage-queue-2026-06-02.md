@@ -9,7 +9,7 @@ auth-restored comment bodies and state changes are queued in
 
 - Active branch: `codex/open-issue-verification-core`
 - Active integration PR: #37
-- Current pushed head: `2c12a9ffcdb0ff2c450a6679155c903a44a4fb5a`
+- Reviewed checkpoint: `18f85a50deba3f1e601c932d754cc16bf28cbcb4`
 - Additional absorbed commits now on the local #37 stack:
   - `aec7674` absorbs #38 / #20, entourage SVG asset generator.
   - `585fcc4` absorbs #39 / #23, conservative single-layer cleanup mode.
@@ -23,13 +23,15 @@ auth-restored comment bodies and state changes are queued in
   - `987e58f` adds deterministic public synthetic proof-packet materialization.
   - `2c12a9f` adds proof-check expectation semantics for public pass,
     expected-fail, and unsupported synthetic sentinels.
+  - `18f85a5` refreshes the GitHub triage checkpoint and corrects
+    `proof-check --materialize-synthetic` help text.
 - Local dirty file intentionally left unstaged: `webapp/frontend/vercel.json`
   changes `installCommand` from `npm ci` to `npm install`; do not commit it
   without the Vercel failure context.
 
 ## Live Open Items Refreshed
 
-Public GitHub API refresh on 2026-06-02 after pushing `2c12a9f` still shows
+Public GitHub API refresh on 2026-06-02 after pushing `18f85a5` still shows
 these open items:
 
 - Open PRs: #34, #36, #37, #38, #39, #40, #41, #42, #43, #44, #45.
@@ -53,6 +55,8 @@ Verification evidence for the current branch checkpoint:
 - `.venv/bin/python -m pytest webapp/tests -q` -> `44 passed`
 - `.venv/bin/arch-lw proof-check tests/fixtures/make2d/manifest.yml --fixture public_foundation_window_section_synthetic --fixture public_false_fill_void_expected_fail_synthetic --fixture public_unsupported_payload_synthetic --materialize-synthetic --output-dir /tmp/archlw-public-proof-sentinels --no-pretty` -> pass
 - `.venv/bin/arch-lw proof-check tests/fixtures/make2d/manifest.yml --materialize-synthetic --output-dir /tmp/archlw-proof-materialized-all-sentinels --no-pretty` -> expected fail only on the private/manual-review fixture
+- `git branch --contains 86fca6a5ee52d15a671d2072acbf47e813dc9ae6 --all` -> current branch contains PR #44 head
+- tracked-file retired proof asset check -> no retired Day-1 proof asset tree or stale proof `.gitattributes` entry at HEAD
 - Earlier frontend gate on this #37 stack, before the backend/doc-only #42 tail:
   - `npm --prefix webapp/frontend run check` -> 0 errors, 0 warnings
   - `npm --prefix webapp/frontend run build` -> pass, with existing SvelteKit
@@ -103,11 +107,15 @@ the current pushed head and verification evidence:
   close the PR only. Do not close issue #30 from this synthetic evidence.
 - #43: older local designer-console prototype is obsolete/replaced by the
   current #37 console/webapp stack, not literally absorbed file-for-file.
-- #44: designer-console prototype is present on #37/current branch; close as
-  superseded after confirming no unique branch-only changes remain.
+- #44: designer-console prototype is contained by current head `18f85a5`
+  (`86fca6a` is an ancestor of the current branch) and superseded by the
+  current #37 console/W5-W7 proof-packet stack. Close as superseded.
 - #45: private-proof quarantine and launch-safety guardrails are present on
-  #37/current branch; close as superseded after confirming no unique branch-only
-  changes remain.
+  current head `18f85a5`. The exact PR commits are not ancestors, but the
+  current branch carries the quarantine/redaction via `9a81755`, `737a7dc`,
+  `07c65fb`, `30b6951`, `49f4932`, `63f451e`, and `5532292`; current HEAD also
+  removes the retired Day-1 proof asset tree and strengthens research/script
+  launch-safety scans. Close as superseded; do not merge.
 
 ## Keep Open / Human-Gated
 
@@ -146,7 +154,7 @@ Post to #37 after GitHub auth is restored:
 Checkpoint after integrating the current verification-core stack.
 
 Latest #37 stack now also absorbs #38, #39, the safe #34/#41 subsets, and the
-#42 concrete-base synthetic regression behavior.
+#42 concrete-base synthetic regression behavior. Current branch head: 18f85a5.
 
 Verified locally:
 - root pytest: 681 passed, 7 skipped, 1 xfailed
@@ -160,6 +168,8 @@ Verified locally:
 - report/proof/doc nearby tests after #42 tail: 63 passed
 - public proof-check pass/expected-fail/unsupported sentinels: pass
 - all-fixtures proof-check: expected fail only on private/manual-review fixture
+- PR #44 head is an ancestor of current branch
+- PR #45 quarantine is superseded by current branch and stricter launch-safety tests
 
 Superseded PRs to close against this stack: #34, #36, #38, #39, #40, #41, #42, #43, #44, #45.
 Important boundaries remain unchanged: #29 and #30 stay open; synthetic proof
