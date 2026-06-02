@@ -298,11 +298,7 @@ def _clean_structural_polygons(polys: list[Polygon]) -> list[Polygon]:
     if isinstance(merged, Polygon):
         return [merged] if merged.is_valid and merged.area > 1.0 else []
     try:
-        return [
-            p
-            for p in merged.geoms
-            if isinstance(p, Polygon) and p.is_valid and p.area > 1.0
-        ]
+        return [p for p in merged.geoms if isinstance(p, Polygon) and p.is_valid and p.area > 1.0]
     except AttributeError:
         return valid
 
@@ -372,10 +368,7 @@ def _polygon_rectangularity(poly: Polygon) -> float:
         return 0.0
     if len(coords) < 4:
         return 0.0
-    lengths = [
-        LineString([coords[i], coords[i + 1]]).length
-        for i in range(min(4, len(coords) - 1))
-    ]
+    lengths = [LineString([coords[i], coords[i + 1]]).length for i in range(min(4, len(coords) - 1))]
     lengths = [length for length in lengths if length > 1e-6]
     if len(lengths) < 2:
         return 0.0
@@ -419,8 +412,7 @@ def _structural_open_loop_candidates(
         if candidate.is_empty or not candidate.is_valid or candidate.area <= 1.0:
             continue
         unique_vertices = {
-            (round(float(x), 6), round(float(y), 6))
-            for x, y in candidate.exterior.coords[:-1]
+            (round(float(x), 6), round(float(y), 6)) for x, y in candidate.exterior.coords[:-1]
         }
         if len(unique_vertices) < 4:
             continue
@@ -497,9 +489,7 @@ def _try_structural_parallel_edges(
     max_thickness = max(12.0, min(185.0, median_seg * 0.75))
     min_overlap = max(5.0, min(30.0, median_seg * 0.08))
     max_angle_delta = math.cos(math.radians(8.0))
-    tagged = [(seg, "cut") for seg in cut_segments] + [
-        (seg, "helper") for seg in helper_segments
-    ]
+    tagged = [(seg, "cut") for seg in cut_segments] + [(seg, "helper") for seg in helper_segments]
 
     candidates: list[Polygon] = []
     for idx, (a, a_kind) in enumerate(tagged):
@@ -528,9 +518,7 @@ def _try_structural_parallel_edges(
                 (b_coords[0][0] + b_coords[-1][0]) / 2.0,
                 (b_coords[0][1] + b_coords[-1][1]) / 2.0,
             )
-            offset = abs(
-                (b_mid[0] - a_mid[0]) * normal[0] + (b_mid[1] - a_mid[1]) * normal[1]
-            )
+            offset = abs((b_mid[0] - a_mid[0]) * normal[0] + (b_mid[1] - a_mid[1]) * normal[1])
             if offset < 2.0 or offset > max_thickness:
                 continue
 
@@ -607,9 +595,7 @@ def _post_filter_structural_polygons(layer_name: str, polygons: list[Polygon]) -
         width = maxx - minx
         height = maxy - miny
         longest = max(width, height)
-        if ("BACKUP_WALL" in upper or "CLT_BACKUP" in upper) and (
-            poly.area < 120.0 and longest < 20.0
-        ):
+        if ("BACKUP_WALL" in upper or "CLT_BACKUP" in upper) and (poly.area < 120.0 and longest < 20.0):
             continue
         rectangularity = _polygon_rectangularity(poly)
         if "TEC_ROOF_CLT" in upper:
@@ -688,11 +674,7 @@ def _structural_open_loop_improves(
     structural = _clean_structural_polygons(current + structural)
     current_area = sum(p.area for p in current)
     structural_area = sum(p.area for p in structural)
-    if (
-        current
-        and len(structural) <= len(current)
-        and structural_area > current_area * 1.85
-    ):
+    if current and len(structural) <= len(current) and structural_area > current_area * 1.85:
         return []
     if len(structural) > len(current):
         return structural
@@ -915,9 +897,7 @@ def polygonize_layer(
         try:
             alpha_polys = _try_alpha_shape(lines)
             if alpha_polys:
-                return alpha_polys, FillResult(
-                    layer_name, "alpha_shape", 0.55, len(alpha_polys), n_segments
-                )
+                return alpha_polys, FillResult(layer_name, "alpha_shape", 0.55, len(alpha_polys), n_segments)
         except Exception:
             pass
 
@@ -945,9 +925,7 @@ def polygonize_layer(
                 augmented_llm = lines + llm_bridges
                 polys_llm = _polys_at_tolerance(augmented_llm, 0.0)
                 if polys_llm:
-                    return polys_llm, FillResult(
-                        layer_name, "llm_topology", 0.65, len(polys_llm), n_segments
-                    )
+                    return polys_llm, FillResult(layer_name, "llm_topology", 0.65, len(polys_llm), n_segments)
     except Exception:
         pass
 

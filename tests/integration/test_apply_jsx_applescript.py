@@ -57,8 +57,7 @@ def _illustrator_running() -> bool:
         return False
     try:
         result = subprocess.run(
-            ["osascript", "-e", 'tell application "System Events" to '
-             '(name of every application process)'],
+            ["osascript", "-e", 'tell application "System Events" to (name of every application process)'],
             check=False,
             capture_output=True,
             text=True,
@@ -75,8 +74,7 @@ SKIP_NO_OSASCRIPT = pytest.mark.skipif(
 )
 SKIP_NO_ILLUSTRATOR_INSTALLED = pytest.mark.skipif(
     not _illustrator_installed(),
-    reason="Adobe Illustrator app bundle not in /Applications "
-    "(syntax check needs the dictionary loaded)",
+    reason="Adobe Illustrator app bundle not in /Applications (syntax check needs the dictionary loaded)",
 )
 SKIP_NO_ILLUSTRATOR_RUNNING = pytest.mark.skipif(
     not _illustrator_running(),
@@ -148,6 +146,7 @@ def test_applescript_syntax_compiles():
     This is the test that would have caught v0.6.1 and v0.6.3 from
     shipping with the broken `name of active document` syntax.
     """
+    import ast
     import tempfile
     from pathlib import Path
 
@@ -155,29 +154,22 @@ def test_applescript_syntax_compiles():
 
     # Pull the script string out of the helper so we test the actual
     # bytes that would run, not a lookalike.
-    src = (
-        Path(apply_jsx.__file__).read_text(encoding="utf-8")
-    )
-    # Locate the script literal — it's the multi-line concatenation
-    # starting with 'tell application "Adobe Illustrator"'. Extract by
-    # matching the literal that appears in the source.
-    marker_start = src.find('script = (')
-    assert marker_start > 0, "could not locate script literal in apply_jsx.py"
-    # Find the end-tell line that closes the literal.
-    end_marker = "'end tell'"
-    marker_end = src.find(end_marker, marker_start)
-    assert marker_end > 0
-    raw = src[marker_start: marker_end + len(end_marker)]
-
-    # Reconstruct the actual AppleScript by extracting all single-quoted
-    # string segments and joining them.
-    import re
-
-    # Each source line in the literal is a Python string; concatenate.
-    # The strings contain literal `\n` escape sequences that we need to
-    # interpret as actual newlines for osacompile to see proper line breaks.
-    lines = re.findall(r"'([^']*)'", raw)
-    applescript = "".join(lines).replace("\\n", "\n")
+    src = Path(apply_jsx.__file__).read_text(encoding="utf-8")
+    module = ast.parse(src)
+    applescript = None
+    for node in ast.walk(module):
+        if not isinstance(node, ast.FunctionDef) or node.name != "query_active_doc":
+            continue
+        for child in ast.walk(node):
+            if not isinstance(child, ast.Assign):
+                continue
+            if not any(isinstance(target, ast.Name) and target.id == "script" for target in child.targets):
+                continue
+            value = ast.literal_eval(child.value)
+            assert isinstance(value, str)
+            applescript = value
+            break
+    assert applescript is not None, "could not locate script assignment in query_active_doc"
     assert "Adobe Illustrator" in applescript
     assert "\n" in applescript, "newlines not interpreted; osacompile will fail"
 
@@ -203,6 +195,5 @@ def test_applescript_syntax_compiles():
         Path(src_path).unlink(missing_ok=True)
         Path(out_path).unlink(missing_ok=True)
     assert result.returncode == 0, (
-        f"AppleScript failed to compile (this is the v0.6.1/v0.6.3 "
-        f"regression class):\n{result.stderr}"
+        f"AppleScript failed to compile (this is the v0.6.1/v0.6.3 regression class):\n{result.stderr}"
     )

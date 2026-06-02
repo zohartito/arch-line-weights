@@ -97,7 +97,10 @@ def test_full_upload_run_poll_download(app_client, synthetic_ai: Path) -> None:
     assert created["public_safe"] is False
     assert created["public_acceptance"] == {"accepted": False, "accepted_by": []}
     assert "Posting/public proof is NO-GO unless W5/W7 explicitly accepts it." in created["guardrails"]
-    assert created["proof_notice"] == "Legacy job outputs are local processing artifacts, not public proof clearance."
+    assert (
+        created["proof_notice"]
+        == "Legacy job outputs are local processing artifacts, not public proof clearance."
+    )
 
     # 2. Poll status
     detail = client.get(f"/api/jobs/{job_id}").json()
@@ -108,7 +111,10 @@ def test_full_upload_run_poll_download(app_client, synthetic_ai: Path) -> None:
     assert detail["public_safe"] is False
     assert detail["public_acceptance"] == {"accepted": False, "accepted_by": []}
     assert "Synthetic proof does not close #30." in detail["guardrails"]
-    assert detail["proof_notice"] == "Legacy job outputs are local processing artifacts, not public proof clearance."
+    assert (
+        detail["proof_notice"]
+        == "Legacy job outputs are local processing artifacts, not public proof clearance."
+    )
     assert detail["apply_summary"] is not None
     assert detail["poche_summary"] is not None
     assert detail["download_url"] is not None
@@ -239,9 +245,7 @@ def test_alpha_shape_round_trip(app_client, synthetic_ai: Path) -> None:
     assert detail["flags_applied"]["alpha_shape"] is False
 
 
-def test_llm_fallback_round_trip_without_api_key(
-    app_client, synthetic_ai: Path, monkeypatch
-) -> None:
+def test_llm_fallback_round_trip_without_api_key(app_client, synthetic_ai: Path, monkeypatch) -> None:
     """``llm_fallback=true`` must round-trip and *not* explode without ANTHROPIC_API_KEY.
 
     The synthetic fixture's single rectangle closes cleanly via ``linemerge_bare``,

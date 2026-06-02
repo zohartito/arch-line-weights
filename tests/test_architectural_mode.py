@@ -174,20 +174,11 @@ def test_visible_fixed_stair_is_structural_but_not_poche():
 def test_architectural_cut_color_resolver_makes_non_poche_cuts_read_as_cut():
     resolve = architectural_layer_color_resolver(preset="section")
 
-    assert (
-        resolve(
-            "axon::Visible::ClippingPlaneIntersections::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44"
-        )
-        == (0, 0, 0)
-    )
-    assert (
-        resolve("axon::Visible::ClippingPlaneIntersections::24_SHS_100_OUTRIGGERS_REMAP")
-        == (0, 0, 0)
-    )
-    assert (
-        resolve("axon::Visible::ClippingPlaneIntersections::03c_WINDOW_IGU_GLASS")
-        == (0, 76, 160)
-    )
+    assert resolve(
+        "axon::Visible::ClippingPlaneIntersections::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44"
+    ) == (0, 0, 0)
+    assert resolve("axon::Visible::ClippingPlaneIntersections::24_SHS_100_OUTRIGGERS_REMAP") == (0, 0, 0)
+    assert resolve("axon::Visible::ClippingPlaneIntersections::03c_WINDOW_IGU_GLASS") == (0, 76, 160)
     assert resolve("axon::Visible::Curves::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44") is None
 
 

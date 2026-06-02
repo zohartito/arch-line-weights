@@ -36,9 +36,7 @@ PUBLIC_PROOF_GUARDRAILS = [
     "Synthetic proof does not close #30.",
     "Private USC regression stays private.",
 ]
-LEGACY_JOB_PROOF_NOTICE = (
-    "Legacy job outputs are local processing artifacts, not public proof clearance."
-)
+LEGACY_JOB_PROOF_NOTICE = "Legacy job outputs are local processing artifacts, not public proof clearance."
 
 
 class PublicAcceptance(BaseModel):

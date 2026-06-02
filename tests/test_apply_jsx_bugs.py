@@ -142,10 +142,7 @@ def test_is_converted_match_basic_no_extension():
 
 def test_is_converted_match_does_not_match_unrelated_doc():
     """A `[Converted]` doc with a different basename must NOT match."""
-    assert (
-        _is_converted_match("other_drawing [Converted].ai", None, "/path/to/macro.ai")
-        is False
-    )
+    assert _is_converted_match("other_drawing [Converted].ai", None, "/path/to/macro.ai") is False
 
 
 def test_is_converted_match_does_not_match_non_converted_doc():
@@ -163,9 +160,7 @@ def test_is_converted_match_with_saved_path_to_same_file(tmp_path):
     accept the [Converted] state as a match."""
     src = tmp_path / "macro.ai"
     src.write_text("dummy")
-    assert (
-        _is_converted_match("macro [Converted].ai", str(src), str(src)) is True
-    )
+    assert _is_converted_match("macro [Converted].ai", str(src), str(src)) is True
 
 
 def test_is_converted_match_with_saved_path_to_different_file(tmp_path):
@@ -174,9 +169,7 @@ def test_is_converted_match_with_saved_path_to_different_file(tmp_path):
     other.write_text("dummy")
     src = tmp_path / "macro.ai"
     src.write_text("dummy")
-    assert (
-        _is_converted_match("macro [Converted].ai", str(other), str(src)) is False
-    )
+    assert _is_converted_match("macro [Converted].ai", str(other), str(src)) is False
 
 
 # --------------------------------------------------------------------------- #

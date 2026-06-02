@@ -287,17 +287,17 @@ def query_active_doc() -> tuple[str | None, str | None]:
     # the intended "currently focused document" behavior.
     script = (
         'tell application "Adobe Illustrator"\n'
-        '  if (count of documents) is 0 then\n'
+        "  if (count of documents) is 0 then\n"
         '    return ""\n'
-        '  end if\n'
-        '  set docName to (get name of front document)\n'
-        '  try\n'
-        '    set docPath to POSIX path of (file path of front document)\n'
-        '  on error\n'
+        "  end if\n"
+        "  set docName to (get name of front document)\n"
+        "  try\n"
+        "    set docPath to POSIX path of (file path of front document)\n"
+        "  on error\n"
         '    set docPath to ""\n'
-        '  end try\n'
+        "  end try\n"
         '  return docName & "|" & docPath\n'
-        'end tell'
+        "end tell"
     )
     try:
         raw = subprocess.run(
@@ -520,10 +520,7 @@ class _HeartbeatPoller(threading.Thread):
                 else:
                     # No new bytes — check staleness.
                     elapsed = time.time() - last_mtime
-                    if (
-                        not self.stale_warning_emitted
-                        and elapsed > self.stale_threshold_sec
-                    ):
+                    if not self.stale_warning_emitted and elapsed > self.stale_threshold_sec:
                         self._printer(
                             f"  warning: no JSX heartbeat for {int(elapsed)} s — Illustrator may be hung "
                             "(NOT aborting; cancel with Ctrl-C if needed)"
@@ -614,9 +611,7 @@ def validate_apply_jsx_result(
     reported_output = os.path.abspath(str(apply_result["output"]))
     expected_abs = os.path.abspath(str(expected_output or reported_output))
     if reported_output != expected_abs:
-        raise RuntimeError(
-            f"apply-jsx reported output {reported_output!r}; expected {expected_abs!r}"
-        )
+        raise RuntimeError(f"apply-jsx reported output {reported_output!r}; expected {expected_abs!r}")
 
     report_failure = apply_jsx_report_failure(str(apply_result.get("report") or ""))
     if report_failure is not None:

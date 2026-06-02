@@ -383,9 +383,7 @@ def multipoly_aware(fn):
     @functools.wraps(fn)
     def wrapper(polygon, scale, **kw):
         if isinstance(polygon, MultiPolygon):
-            return functools.reduce(
-                operator.iadd, (wrapper(p, scale, **kw) for p in polygon.geoms), []
-            )
+            return functools.reduce(operator.iadd, (wrapper(p, scale, **kw) for p in polygon.geoms), [])
         return fn(polygon, scale, **kw)
 
     return wrapper
@@ -520,9 +518,7 @@ def hatch_insulation_polyiso(polygon, scale, **kw):
     Source: Detail 2023 issue 7 (insulation hatching survey).
     """
     base = parallel_hatch(polygon, mm_to_pt(0.8, scale), 45.0)
-    triangles = stipple_triangles(
-        polygon, mm_to_pt(8.0, scale), size=mm_to_pt(1.2, scale)
-    )
+    triangles = stipple_triangles(polygon, mm_to_pt(8.0, scale), size=mm_to_pt(1.2, scale))
     return base + triangles
 
 

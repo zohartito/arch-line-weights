@@ -344,9 +344,7 @@ def synthesize_poche_overlay_layer(
         b"%AI5_BeginLayer\r"
         b"1 1 1 1 0 0 1 -1 240 190 130 0 100 0 Lb\r"
         b"(" + layer_name.encode("utf-8") + b") Ln\r"
-        b"0 AE\r"
-        + body
-        + b"\rLB\r"
+        b"0 AE\r" + body + b"\rLB\r"
         b"%AI5_EndLayer--\r"
     )
 
@@ -430,9 +428,7 @@ def compute_polygons_for_layers(
         ov = overrides.get(layer_name)
         if ov is None:
             for pattern, val in overrides.items():
-                if pattern.endswith("*") and layer_name.endswith(
-                    pattern[:-1].split("::")[-1]
-                ):
+                if pattern.endswith("*") and layer_name.endswith(pattern[:-1].split("::")[-1]):
                     ov = val
                     break
 
@@ -458,9 +454,9 @@ def compute_polygons_for_layers(
 
             completion_paths = structural_completion_paths_by_layer.get(layer_name)
             if completion_paths:
-                report.structural_helper_counts[layer_name] = (
-                    report.structural_helper_counts.get(layer_name, 0) + len(completion_paths)
-                )
+                report.structural_helper_counts[layer_name] = report.structural_helper_counts.get(
+                    layer_name, 0
+                ) + len(completion_paths)
                 base_polys = polys if should_inject_fill(fr) else []
                 completion_polys, candidates = complete_structural_cut_polygons(
                     layer_name,
@@ -471,16 +467,14 @@ def compute_polygons_for_layers(
                 for candidate in candidates:
                     if candidate.accepted:
                         _log.info(
-                            "accepted Make2D completion for %s: area=%.1f "
-                            "cut_shared=%.1f",
+                            "accepted Make2D completion for %s: area=%.1f cut_shared=%.1f",
                             layer_name,
                             candidate.polygon.area,
                             candidate.cut_shared_length,
                         )
                     else:
                         _log.debug(
-                            "rejected Make2D completion for %s: %s "
-                            "area=%.1f cut_shared=%.1f",
+                            "rejected Make2D completion for %s: %s area=%.1f cut_shared=%.1f",
                             layer_name,
                             candidate.reason,
                             candidate.polygon.area,
@@ -507,8 +501,7 @@ def compute_polygons_for_layers(
             # Also record in PocheReport.polygons for compatibility with the
             # rest of the codebase that expects a dict-of-coordinate-lists
             report.polygons[layer_name] = [
-                [[round(x, 4), round(y, 4)] for x, y in p.exterior.coords]
-                for p in polys
+                [[round(x, 4), round(y, 4)] for x, y in p.exterior.coords] for p in polys
             ]
 
     return polygons_by_layer, report
@@ -743,9 +736,7 @@ def apply_saas_with_poche(
 
                 all_paths = enumerate_layer_paths_from_payload(payload)
                 cut_paths = {
-                    k: v
-                    for k, v in all_paths.items()
-                    if _CUT_LAYER_FILTER.search(k.encode("utf-8"))
+                    k: v for k, v in all_paths.items() if _CUT_LAYER_FILTER.search(k.encode("utf-8"))
                 }
                 cut_paths = {
                     k: v
@@ -763,15 +754,13 @@ def apply_saas_with_poche(
                     all_paths,
                 )
                 if _architectural_completion_enabled():
-                    structural_completion_paths_by_layer = (
-                        structural_completion_paths_for_layers(
-                            cut_paths,
-                            all_paths,
-                            preset=preset,
-                            scale=scale,
-                            for_print=for_print,
-                            source=source,
-                        )
+                    structural_completion_paths_by_layer = structural_completion_paths_for_layers(
+                        cut_paths,
+                        all_paths,
+                        preset=preset,
+                        scale=scale,
+                        for_print=for_print,
+                        source=source,
                     )
             else:
                 cut_paths = enumerate_layer_paths_from_payload(
@@ -814,9 +803,7 @@ def apply_saas_with_poche(
                     result=poche_result,
                 )
             else:
-                new_payload = inject_poche_polygons(
-                    new_payload, polygons_by_layer, result=poche_result
-                )
+                new_payload = inject_poche_polygons(new_payload, polygons_by_layer, result=poche_result)
 
         apply_result.payload_size_out = len(new_payload)
 
@@ -858,9 +845,7 @@ def decompress_test_payload(framed: bytes) -> bytes:
     """Helper inverse to :func:`compress_test_payload`."""
     if not framed.startswith(PREFIX):
         raise ValueError(f"framed bytes must start with {PREFIX!r}")
-    return zstd.ZstdDecompressor().decompress(
-        framed[len(PREFIX) :], max_output_size=1 << 30
-    )
+    return zstd.ZstdDecompressor().decompress(framed[len(PREFIX) :], max_output_size=1 << 30)
 
 
 def write_synthetic_test_ai(path: str | Path, layer_name: str = "TEST_CUT") -> None:

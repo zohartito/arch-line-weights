@@ -117,13 +117,15 @@ def _parse_poche_log(log_text: str) -> tuple[dict[str, int], list[dict[str, Any]
     layers = []
     for match in layer_re.finditer(log_text):
         data = match.groupdict()
-        layers.append({
-            "strategy": data["strategy"],
-            "polygons": int(data["polygons"]),
-            "confidence": float(data["confidence"]),
-            "bridge_strategy_name": data["bridge"],
-            "mark": data["mark"],
-        })
+        layers.append(
+            {
+                "strategy": data["strategy"],
+                "polygons": int(data["polygons"]),
+                "confidence": float(data["confidence"]),
+                "bridge_strategy_name": data["bridge"],
+                "mark": data["mark"],
+            }
+        )
     return summary, layers
 
 
@@ -150,9 +152,7 @@ def test_day1_manifest_records_missing_structured_truth_sources():
     assert case["generated_outputs"]["structured_poche_report_json"]["filename"] == (
         "arch_lw_poche_report.json"
     )
-    assert case["generated_outputs"]["cut_geometry_dump_json"]["filename"] == (
-        "arch_lw_cut_geometry.json"
-    )
+    assert case["generated_outputs"]["cut_geometry_dump_json"]["filename"] == ("arch_lw_cut_geometry.json")
 
 
 def test_day1_raw_capture_provenance_points_to_expected_make2d_source():
@@ -186,12 +186,16 @@ def test_day1_screenshot_deltas_are_measurable_and_bounded():
     case = _load_case()
     screenshots = case["screenshots"]
 
-    changed, ratio = _changed_pixels(_resolve_asset(screenshots["raw"]), _resolve_asset(screenshots["hierarchy"]))
+    changed, ratio = _changed_pixels(
+        _resolve_asset(screenshots["raw"]), _resolve_asset(screenshots["hierarchy"])
+    )
     bounds = case["expected_image_deltas"]["raw_to_hierarchy"]
     assert bounds["changed_pixels_min"] <= changed <= bounds["changed_pixels_max"]
     assert bounds["ratio_min"] <= ratio <= bounds["ratio_max"]
 
-    changed, ratio = _changed_pixels(_resolve_asset(screenshots["hierarchy"]), _resolve_asset(screenshots["poche"]))
+    changed, ratio = _changed_pixels(
+        _resolve_asset(screenshots["hierarchy"]), _resolve_asset(screenshots["poche"])
+    )
     bounds = case["expected_image_deltas"]["hierarchy_to_poche"]
     assert bounds["changed_pixels_min"] <= changed <= bounds["changed_pixels_max"]
     assert bounds["ratio_min"] <= ratio <= bounds["ratio_max"]
@@ -288,9 +292,7 @@ def test_day1_harness_can_generate_cut_geometry_summary_json(tmp_path):
     paths_by_layer = {}
     for idx, expected in enumerate(case["poche"]["expected_fills"], start=1):
         layer = expected["layer_id"]
-        paths_by_layer[layer] = [
-            [[0, idx], [10, idx], [10, idx + 1], [0, idx + 1], [0, idx]]
-        ]
+        paths_by_layer[layer] = [[[0, idx], [10, idx], [10, idx + 1], [0, idx + 1], [0, idx]]]
         fill = FillResult(
             layer,
             expected["strategy"],

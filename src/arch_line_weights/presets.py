@@ -162,7 +162,7 @@ SECTION_ISO_SCREEN = [
 ]
 
 USC_STUDIO_PRINT = [
-    Tier("cut", mm(0.70), "USC 1/4\" studio cut line — Ching/Ramsey-heavy section convention"),
+    Tier("cut", mm(0.70), 'USC 1/4" studio cut line — Ching/Ramsey-heavy section convention'),
     Tier("profile", mm(0.50), "Foreground profile and primary structure"),
     Tier("edges", mm(0.35), "Object edges, secondary structure, frames, and plane changes"),
     Tier("material", mm(0.18), "Material indication, cladding, and surface breaks"),

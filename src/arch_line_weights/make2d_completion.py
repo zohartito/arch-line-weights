@@ -143,10 +143,7 @@ def _candidate_polygons(
     valid = [
         p
         for p in raw
-        if isinstance(p, Polygon)
-        and not p.is_empty
-        and p.is_valid
-        and p.area >= _MIN_COMPLETION_AREA
+        if isinstance(p, Polygon) and not p.is_empty and p.is_valid and p.area >= _MIN_COMPLETION_AREA
     ]
     if not valid:
         return []
@@ -162,10 +159,7 @@ def _candidate_polygons(
         return [
             p
             for p in merged_polys.geoms
-            if isinstance(p, Polygon)
-            and not p.is_empty
-            and p.is_valid
-            and p.area >= _MIN_COMPLETION_AREA
+            if isinstance(p, Polygon) and not p.is_empty and p.is_valid and p.area >= _MIN_COMPLETION_AREA
         ]
     except AttributeError:
         return valid
@@ -216,10 +210,7 @@ def _oriented_dimensions(poly: Polygon) -> tuple[float, float] | None:
         return None
     if len(coords) < 4:
         return None
-    lengths = [
-        LineString([coords[i], coords[i + 1]]).length
-        for i in range(min(4, len(coords) - 1))
-    ]
+    lengths = [LineString([coords[i], coords[i + 1]]).length for i in range(min(4, len(coords) - 1))]
     lengths = [length for length in lengths if length > 1e-6]
     if len(lengths) < 2:
         return None
@@ -447,10 +438,7 @@ def complete_structural_cut_polygons(
                     source_role="visible_curve",
                     polygon=poly,
                     provenance="cut+same-component-visible/tangent",
-                    reason=(
-                        f"rejected: cut anchor {shared:.1f} below required "
-                        f"{required:.1f}"
-                    ),
+                    reason=(f"rejected: cut anchor {shared:.1f} below required {required:.1f}"),
                     cut_shared=shared,
                 )
             )

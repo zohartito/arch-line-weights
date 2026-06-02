@@ -334,9 +334,7 @@ def test_mixed_classification_each_source_handles_own_layers():
     aia_a = classify_layer("A-WALL-FULL", source=Source.AUTOCAD)
     assert aia_a.tier == "cut"
     # ...and Rhino layers fall to default (no `::` semantics in AIA library).
-    rhino_a = classify_layer(
-        "axon::Visible::Curves::TEC_TIMBER", source=Source.AUTOCAD
-    )
+    rhino_a = classify_layer("axon::Visible::Curves::TEC_TIMBER", source=Source.AUTOCAD)
     assert rhino_a.tier == "default"
 
 

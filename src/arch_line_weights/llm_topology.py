@@ -239,10 +239,7 @@ def infer_closing_plan(
 
         api_key = os.environ.get(ANTHROPIC_API_KEY_ENV)
         if not api_key:
-            _debug(
-                f"{ANTHROPIC_API_KEY_ENV} not set; skipping LLM rescue rung "
-                f"for layer {layer_name!r}"
-            )
+            _debug(f"{ANTHROPIC_API_KEY_ENV} not set; skipping LLM rescue rung for layer {layer_name!r}")
             return None
 
         try:
@@ -314,9 +311,7 @@ CLOSURE_PLAN_TOOL: dict = {
                     "minItems": 2,
                     "maxItems": 2,
                 },
-                "description": (
-                    "List of [start_idx, end_idx] endpoint-index pairs."
-                ),
+                "description": ("List of [start_idx, end_idx] endpoint-index pairs."),
             },
             "confidence": {
                 "type": "number",
@@ -359,9 +354,7 @@ def _build_user_message(
     ys = [p[1] for p in anchors]
     bbox = (min(xs), min(ys), max(xs), max(ys)) if anchors else (0, 0, 0, 0)
 
-    endpoints_text = "\n".join(
-        f"{i}: ({x:.2f}, {y:.2f})" for i, (x, y) in enumerate(anchors)
-    )
+    endpoints_text = "\n".join(f"{i}: ({x:.2f}, {y:.2f})" for i, (x, y) in enumerate(anchors))
 
     return (
         f"Layer: {leaf}\n"

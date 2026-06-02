@@ -183,7 +183,9 @@ def validate_proof_packet(
     """
     artifacts = _proof_packet_artifacts(plan)
     missing_artifacts = [
-        label for label, path in artifacts.items() if not path.exists() or path.is_dir() or path.stat().st_size <= 0
+        label
+        for label, path in artifacts.items()
+        if not path.exists() or path.is_dir() or path.stat().st_size <= 0
     ]
 
     report: dict[str, Any] = {}
@@ -405,7 +407,9 @@ def review_region_pixel_errors(
         required_min_dark_ratio = (
             explicit_min_dark_ratio if explicit_min_dark_ratio is not None else min_dark_ratio
         )
-        required_min_dark_delta = region.min_dark_delta if region.min_dark_delta is not None else min_dark_delta
+        required_min_dark_delta = (
+            region.min_dark_delta if region.min_dark_delta is not None else min_dark_delta
+        )
         after_dark_ratio = _dark_pixel_ratio_in_region(
             image,
             rect=region.rect,
@@ -532,7 +536,10 @@ def _report_identity_errors(report: dict[str, Any]) -> list[str]:
 def _report_visual_errors(report: dict[str, Any], plan: ProofPacketPlan) -> tuple[list[str], list[str]]:
     visual_artifacts = report.get("visual_artifacts")
     if not isinstance(visual_artifacts, dict):
-        return ["visual artifacts mapping is required", "visual artifacts missing rendered view checklist"], []
+        return [
+            "visual artifacts mapping is required",
+            "visual artifacts missing rendered view checklist",
+        ], []
 
     errors: list[str] = []
     missing: list[str] = []
@@ -615,7 +622,9 @@ def _review_region_pixel_errors(
             continue
         before_path = rendered_before_paths.get(region.id)
         before_image = None
-        required_min_dark_delta = region.min_dark_delta if region.min_dark_delta is not None else min_dark_delta
+        required_min_dark_delta = (
+            region.min_dark_delta if region.min_dark_delta is not None else min_dark_delta
+        )
         needs_before_image = region.kind == "poche_presence" and required_min_dark_delta > 0
         try:
             with Image.open(after_path) as after_image:
@@ -679,9 +688,13 @@ def _rendered_view_artifact_paths(
     plan: ProofPacketPlan,
     artifact_key: str,
 ) -> dict[str, Path]:
-    visual_artifacts = report.get("visual_artifacts") if isinstance(report.get("visual_artifacts"), dict) else {}
+    visual_artifacts = (
+        report.get("visual_artifacts") if isinstance(report.get("visual_artifacts"), dict) else {}
+    )
     rendered_views = (
-        visual_artifacts.get("rendered_views") if isinstance(visual_artifacts.get("rendered_views"), list) else []
+        visual_artifacts.get("rendered_views")
+        if isinstance(visual_artifacts.get("rendered_views"), list)
+        else []
     )
     paths: dict[str, Path] = {}
     for raw_view in rendered_views:
@@ -708,9 +721,13 @@ def _public_proof_identity(report: dict[str, Any]) -> dict[str, str]:
 
 
 def _public_rendered_views(report: dict[str, Any]) -> list[dict[str, str]]:
-    visual_artifacts = report.get("visual_artifacts") if isinstance(report.get("visual_artifacts"), dict) else {}
+    visual_artifacts = (
+        report.get("visual_artifacts") if isinstance(report.get("visual_artifacts"), dict) else {}
+    )
     rendered_views = (
-        visual_artifacts.get("rendered_views") if isinstance(visual_artifacts.get("rendered_views"), list) else []
+        visual_artifacts.get("rendered_views")
+        if isinstance(visual_artifacts.get("rendered_views"), list)
+        else []
     )
     public_views: list[dict[str, str]] = []
     for raw_view in rendered_views:
@@ -762,9 +779,7 @@ def _public_acceptance(report: dict[str, Any]) -> dict[str, Any]:
 
     public_proof = raw.get("public_proof") if isinstance(raw.get("public_proof"), dict) else raw
     accepted_by = _accepted_reviewers(public_proof.get("accepted_by"))
-    accepted = public_proof.get("accepted") is True and bool(
-        set(accepted_by) & _PUBLIC_ACCEPTANCE_REVIEWERS
-    )
+    accepted = public_proof.get("accepted") is True and bool(set(accepted_by) & _PUBLIC_ACCEPTANCE_REVIEWERS)
     acceptance: dict[str, Any] = {
         "accepted": accepted,
         "accepted_by": accepted_by,

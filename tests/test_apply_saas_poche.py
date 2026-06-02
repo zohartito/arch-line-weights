@@ -178,15 +178,7 @@ def test_find_layer_envelope_returns_none_for_missing_name():
 
 def test_find_layer_envelope_ignores_matching_setup_text():
     payload = (
-        b"%!PS-Adobe-3.0\r"
-        b"(LayerA) Ln\r"
-        b"%AI5_BeginLayer\r"
-        b"(LayerA) Ln\r"
-        b"0 0 m\r"
-        b"10 0 L\r"
-        b"S\r"
-        b"LB\r"
-        b"%AI5_EndLayer--\r"
+        b"%!PS-Adobe-3.0\r(LayerA) Ln\r%AI5_BeginLayer\r(LayerA) Ln\r0 0 m\r10 0 L\rS\rLB\r%AI5_EndLayer--\r"
     )
 
     env = find_layer_envelope(payload, "LayerA")
@@ -257,9 +249,7 @@ def test_inject_multiple_layers_in_one_pass():
     tri_b = Polygon([(50, 50), (60, 50), (55, 60)])
 
     result = PocheSaasResult()
-    new_payload = inject_poche_polygons(
-        payload, {"LayerA": [tri_a], "LayerB": [tri_b]}, result=result
-    )
+    new_payload = inject_poche_polygons(payload, {"LayerA": [tri_a], "LayerB": [tri_b]}, result=result)
 
     assert result.layers_injected == 2
     assert result.polygons_injected == 2
@@ -378,9 +368,7 @@ def test_structural_helper_paths_match_same_material_leaf_only():
         cut_name: [[[0, 0], [100, 0]]],
         "axon::Visible::Curves::TEC_CLT_SLABS": [[[0, 10], [100, 10]]],
         "axon::Visible::Tangents::TEC_CLT_SLABS": [[[100, 0], [100, 10]]],
-        "axon::Visible::Curves::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44": [
-            [[0, 20], [100, 20]]
-        ],
+        "axon::Visible::Curves::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44": [[[0, 20], [100, 20]]],
         "axon::Visible::Curves::TEC_CONCRETE_BASE": [[[0, 30], [100, 30]]],
     }
 
@@ -422,9 +410,7 @@ def test_compute_polygons_does_not_inject_low_confidence_fallback(monkeypatch):
         return [candidate], FillResult("LayerA", "alpha_shape", 0.55, 1, 3)
 
     monkeypatch.setattr("arch_line_weights.poche_saas.polygonize_layer", fake_polygonize)
-    polygons_by_layer, report = compute_polygons_for_layers(
-        {"LayerA": [[[0, 0], [10, 0]]]}
-    )
+    polygons_by_layer, report = compute_polygons_for_layers({"LayerA": [[[0, 0], [10, 0]]]})
 
     assert polygons_by_layer == {}
     assert report.polygons == {}
@@ -442,9 +428,7 @@ def test_compute_polygons_can_opt_into_low_confidence_injection(monkeypatch):
     monkeypatch.setenv("ARCH_LW_POCHE_ALLOW_LOW_CONFIDENCE", "1")
     monkeypatch.setattr("arch_line_weights.poche_saas.polygonize_layer", fake_polygonize)
 
-    polygons_by_layer, report = compute_polygons_for_layers(
-        {"LayerA": [[[0, 0], [10, 0]]]}
-    )
+    polygons_by_layer, report = compute_polygons_for_layers({"LayerA": [[[0, 0], [10, 0]]]})
 
     assert polygons_by_layer == {"LayerA": [candidate]}
     assert "LayerA" in report.polygons
@@ -458,9 +442,7 @@ def test_structural_completion_paths_match_same_component_only():
         "axon::Visible::Curves::TEC_CLT_SLABS": [[[0, 20], [100, 20]]],
         "axon::Visible::Tangents::TEC_CLT_SLABS": [[[100, 0], [100, 20]]],
         "axon::Visible::Curves::TEC_STEEL_CONNECTOR 4": [[[0, 40], [100, 40]]],
-        "axon::Visible::Curves::22_WINDOW_GLASS_REMAP_49FT_V68": [
-            [[0, 60], [100, 60]]
-        ],
+        "axon::Visible::Curves::22_WINDOW_GLASS_REMAP_49FT_V68": [[[0, 60], [100, 60]]],
     }
 
     completion = structural_completion_paths_for_layers(cut_paths, all_paths)
@@ -772,10 +754,7 @@ def test_apply_saas_with_poche_end_to_end_on_synthetic_fixture():
         # Fill operator is in the payload (the `f` we synthesized)
         assert b"\rf\r" in new_payload
         # The original layer name marker is preserved
-        assert (
-            b"(axon::Visible::ClippingPlaneIntersections::TEST_CUT) Ln\r"
-            in new_payload
-        )
+        assert b"(axon::Visible::ClippingPlaneIntersections::TEST_CUT) Ln\r" in new_payload
 
 
 def test_apply_saas_with_poche_can_write_overlay_layer_without_env():
@@ -827,9 +806,7 @@ def test_inspect_falls_back_to_private_payload_cmyk_colors(tmp_path):
     priv = pikepdf.Dictionary({"/NumBlock": len(chunks)})
     for i, chunk in enumerate(chunks, start=1):
         priv[f"/AIPrivateData{i}"] = pdf.make_stream(chunk)
-    page.obj["/PieceInfo"] = pikepdf.Dictionary(
-        {"/Illustrator": pikepdf.Dictionary({"/Private": priv})}
-    )
+    page.obj["/PieceInfo"] = pikepdf.Dictionary({"/Illustrator": pikepdf.Dictionary({"/Private": priv})})
     pdf.save(str(src))
     pdf.close()
 

@@ -47,8 +47,7 @@ class Settings(BaseSettings):
     # the developer's home directory.
     storage_root: Path = Field(
         default_factory=lambda: Path(
-            os.environ.get("ARCHLW_STORAGE_ROOT")
-            or str(Path(tempfile.gettempdir()) / "archlw-webapp")
+            os.environ.get("ARCHLW_STORAGE_ROOT") or str(Path(tempfile.gettempdir()) / "archlw-webapp")
         )
     )
 
@@ -57,9 +56,7 @@ class Settings(BaseSettings):
     max_upload_bytes: int = 50 * 1024 * 1024
 
     # CORS — broad in dev, narrow in prod. Comma-separated origin list.
-    cors_origins: Annotated[list[str], NoDecode] = Field(
-        default_factory=local_vite_cors_origins
-    )
+    cors_origins: Annotated[list[str], NoDecode] = Field(default_factory=local_vite_cors_origins)
 
     @field_validator("cors_origins", mode="before")
     @classmethod

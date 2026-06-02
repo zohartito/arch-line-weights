@@ -1422,7 +1422,9 @@ def proof_check_cmd(
 
     proof_manifest = load_manifest(manifest)
     selected_ids = set(fixture_ids)
-    fixtures = [fixture for fixture in proof_manifest.fixtures if not selected_ids or fixture.id in selected_ids]
+    fixtures = [
+        fixture for fixture in proof_manifest.fixtures if not selected_ids or fixture.id in selected_ids
+    ]
     if selected_ids:
         known_ids = {fixture.id for fixture in proof_manifest.fixtures}
         unknown_ids = sorted(selected_ids - known_ids)

@@ -349,6 +349,7 @@ def alpha_shape_best(
 
     try:
         from shapely.geometry import MultiPoint
+
         hull_area = float(MultiPoint(points).convex_hull.area)
     except Exception:
         hull_area = bbox_area
@@ -444,6 +445,7 @@ def alpha_shape_all_regions(
 
     try:
         from shapely.geometry import MultiPoint
+
         hull_area = float(MultiPoint(points).convex_hull.area)
     except Exception:
         hull_area = bbox_area

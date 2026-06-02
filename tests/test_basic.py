@@ -407,11 +407,7 @@ def _write_minimal_ai_fixture(path: str, layer_name: str = "TEST_LAYER") -> None
     # /PieceInfo /Illustrator marker — makes _looks_like_illustrator() return True
     # so a hypothetical `.pdf`-extensioned Illustrator file still routes to pikepdf.
     page.obj["/PieceInfo"] = pikepdf.Dictionary(
-        {
-            "/Illustrator": pikepdf.Dictionary(
-                {"/Private": pikepdf.Dictionary({"/NumBlock": 0})}
-            )
-        }
+        {"/Illustrator": pikepdf.Dictionary({"/Private": pikepdf.Dictionary({"/NumBlock": 0})})}
     )
 
     # Stamp PDF metadata so detect_source has something to look at.

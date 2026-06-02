@@ -130,7 +130,10 @@ def test_committed_make2d_manifest_tracks_public_and_private_review_lanes() -> N
         "cut_mass_closeup",
     }
     assert private_fixture.review_regions[0].kind == "poche_presence"
-    assert any("source drawings and rendered artifacts stay out of git" in caveat for caveat in private_fixture.caveats)
+    assert any(
+        "source drawings and rendered artifacts stay out of git" in caveat
+        for caveat in private_fixture.caveats
+    )
     assert any("W5/W7 visual acceptance" in caveat for caveat in private_fixture.caveats)
 
 
@@ -423,9 +426,7 @@ def test_validate_proof_packet_needs_review_for_visual_acceptance_gate(tmp_path:
                     "review": {
                         "needs_review": True,
                         "visual_acceptance_required": True,
-                        "reasons": [
-                            "inferred concrete/foundation fill requires W5/W7 visual acceptance"
-                        ],
+                        "reasons": ["inferred concrete/foundation fill requires W5/W7 visual acceptance"],
                     },
                 },
             ],
@@ -471,9 +472,7 @@ def test_validate_proof_packet_accepts_w5_w7_visual_layer_gate(
                     "review": {
                         "needs_review": True,
                         "visual_acceptance_required": True,
-                        "reasons": [
-                            "inferred concrete/foundation fill requires W5/W7 visual acceptance"
-                        ],
+                        "reasons": ["inferred concrete/foundation fill requires W5/W7 visual acceptance"],
                     },
                 },
             ],
@@ -670,7 +669,9 @@ def test_validate_proof_packet_rejects_effectively_unchanged_rendered_views_when
 
     assert validation.status == "failed"
     assert any("rendered view full_board is effectively unchanged" in reason for reason in validation.reasons)
-    assert any("rendered view cut_mass_detail is effectively unchanged" in reason for reason in validation.reasons)
+    assert any(
+        "rendered view cut_mass_detail is effectively unchanged" in reason for reason in validation.reasons
+    )
 
 
 def test_has_dark_pixels_in_region_detects_expected_poche_presence() -> None:
@@ -911,7 +912,9 @@ def test_committed_manifest_review_region_can_fail_synthetic_packet(
         ],
     }
     _write_packet_artifacts(plan, report=_safe_pass_report(visual_artifacts=visual_artifacts))
-    closeup = next(view for view in fixture.visual_artifacts.rendered_views if view.kind == "cut_mass_closeup")
+    closeup = next(
+        view for view in fixture.visual_artifacts.rendered_views if view.kind == "cut_mass_closeup"
+    )
     Image.new("RGB", (800, 600), "white").save(plan.output_dir / closeup.before)
     Image.new("RGB", (800, 600), "white").save(plan.output_dir / closeup.after)
 
@@ -952,8 +955,14 @@ def _write_packet_artifacts(
             path.write_text(json.dumps(report), encoding="utf-8")
         else:
             path.write_bytes(b"synthetic proof artifact")
-    visual_artifacts = report.get("visual_artifacts") if isinstance(report.get("visual_artifacts"), dict) else {}
-    views = visual_artifacts.get("rendered_views") if isinstance(visual_artifacts.get("rendered_views"), list) else []
+    visual_artifacts = (
+        report.get("visual_artifacts") if isinstance(report.get("visual_artifacts"), dict) else {}
+    )
+    views = (
+        visual_artifacts.get("rendered_views")
+        if isinstance(visual_artifacts.get("rendered_views"), list)
+        else []
+    )
     for view in views:
         if not isinstance(view, dict):
             continue

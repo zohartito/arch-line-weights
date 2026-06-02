@@ -532,9 +532,7 @@ def as_jsx_function(
     default = DEFAULTS.get(source, DEFAULT)
 
     if preset is not None:
-        tier_overrides = tier_weights_for_preset(
-            preset, scale=scale, for_print=for_print, source=source
-        )
+        tier_overrides = tier_weights_for_preset(preset, scale=scale, for_print=for_print, source=source)
     else:
         tier_overrides = None
 
@@ -640,7 +638,4 @@ def explain_source_match(name: str, source: Source) -> str:
     """
     a = classify_layer(name, source=source)
     src_label = a.source.value if isinstance(a.source, Source) else str(a.source)
-    return (
-        f"{a.weight_pt} pt — {a.tier} ({a.why}) "
-        f"[source={src_label}, confidence={a.confidence:.2f}]"
-    )
+    return f"{a.weight_pt} pt — {a.tier} ({a.why}) [source={src_label}, confidence={a.confidence:.2f}]"

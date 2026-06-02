@@ -152,9 +152,9 @@ class ConsoleRun:
         ]
         overall_status = _overall_status(self.stages)
         public_acceptance = _public_acceptance()
-        posting_clearance = "GO" if (
-            overall_status == "passed" and bool(public_acceptance["accepted"])
-        ) else "NO-GO"
+        posting_clearance = (
+            "GO" if (overall_status == "passed" and bool(public_acceptance["accepted"])) else "NO-GO"
+        )
         return {
             "schema_version": 1,
             "run_id": self.run_id,
@@ -196,10 +196,7 @@ class ConsoleRun:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ConsoleRun":
-        stages = {
-            key: ConsoleStage(**stage_data)
-            for key, stage_data in data.get("stages", {}).items()
-        }
+        stages = {key: ConsoleStage(**stage_data) for key, stage_data in data.get("stages", {}).items()}
         return cls(
             run_id=str(data["run_id"]),
             workflow=str(data["workflow"]),
@@ -248,10 +245,7 @@ class DesignerConsoleStore:
             input_path=str(stored_input),
             root=str(run_root),
             created_at=_now_iso(),
-            stages={
-                key: ConsoleStage(key=key, label=label)
-                for key, label in STAGE_DEFINITIONS
-            },
+            stages={key: ConsoleStage(key=key, label=label) for key, label in STAGE_DEFINITIONS},
         )
         self.save(run)
         return run
@@ -392,7 +386,9 @@ class DesignerConsoleStore:
             )
             report_data = _load_json_report(raw_report_path, result.get("report"))
             status = _report_status(report_data, default="passed")
-            _require_stage_output(status=status, output_path=Path(result["output"]), report_label="layout-jsx")
+            _require_stage_output(
+                status=status, output_path=Path(result["output"]), report_label="layout-jsx"
+            )
             run.artifacts["layout_output"] = str(output)
             stage.finish(
                 status=status,
@@ -676,9 +672,7 @@ class DesignerConsoleStore:
         stage.finish(
             status=status,
             what_changed=[f"Created local proof packet {packet_path.name}."],
-            what_skipped=[
-                "Raw local reports and source drawings were not included in the sanitized packet."
-            ],
+            what_skipped=["Raw local reports and source drawings were not included in the sanitized packet."],
             why=[
                 "Sanitized summary contains no local path patterns.",
                 PUBLIC_ACCEPTANCE_MISSING,

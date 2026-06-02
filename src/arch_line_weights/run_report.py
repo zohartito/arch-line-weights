@@ -63,8 +63,7 @@ def _known_limitation_dict(item: Mapping[str, Any]) -> dict[str, Any]:
         "scope": str(item.get("scope") or "foundation_concrete"),
         "reason": str(item.get("reason") or "Known visual proof limitation."),
         "next_action": str(
-            item.get("next_action")
-            or "Fix the known proof limitation and recapture proof before launch."
+            item.get("next_action") or "Fix the known proof limitation and recapture proof before launch."
         ),
         "evidence": evidence,
     }
@@ -270,8 +269,7 @@ def build_apply_saas_report(
                 "evidence": {
                     "used_cut_layer": True,
                     "used_poche_close_layer": False,
-                    "used_structural_helpers": bool(layer_candidates)
-                    or bool(structural_helper_count),
+                    "used_structural_helpers": bool(layer_candidates) or bool(structural_helper_count),
                     "structural_helper_count": structural_helper_count,
                     "used_visible_completion": fill.strategy == "structural_visible_completion",
                 },
@@ -392,9 +390,7 @@ def _poche_summary_status(summary: Mapping[str, Any], error: str | None) -> tupl
 
     why: list[str] = []
     if summary.get("no_go_limitations", 0):
-        why.append(
-            f"{summary['no_go_limitations']} launch-blocking poché coverage limitation(s) recorded"
-        )
+        why.append(f"{summary['no_go_limitations']} launch-blocking poché coverage limitation(s) recorded")
     if summary["cut_layers_considered"] == 0:
         why.append("No cut layers were considered")
     if summary["polygons_injected"] == 0:
@@ -417,9 +413,7 @@ def _poche_summary_status(summary: Mapping[str, Any], error: str | None) -> tupl
 
     if summary["layers_low_confidence"] or summary["layers_skipped"]:
         if summary["layers_low_confidence"]:
-            why.append(
-                f"{summary['layers_low_confidence']} low-confidence layer(s) were diagnostic-only."
-            )
+            why.append(f"{summary['layers_low_confidence']} low-confidence layer(s) were diagnostic-only.")
         if summary["layers_skipped"]:
             why.append(f"{summary['layers_skipped']} layer(s) were skipped.")
         return "needs_review", why, "Review low-confidence or skipped cut layers before using the output."
@@ -618,9 +612,7 @@ def _geometry_next_action(status: str, ambiguous_regions: list[dict[str, Any]]) 
 def _poche_geometry_summary_status(summary: Mapping[str, Any]) -> tuple[str, list[str], str]:
     why: list[str] = []
     if summary.get("no_go_limitations", 0):
-        why.append(
-            f"{summary['no_go_limitations']} launch-blocking poché coverage limitation(s) recorded"
-        )
+        why.append(f"{summary['no_go_limitations']} launch-blocking poché coverage limitation(s) recorded")
         return (
             "no_go",
             why,
@@ -734,9 +726,7 @@ def build_poche_geometry_report(
         "layers_considered": len(layers),
         "source_cut_contours_total": sum(layer["source_cut_contours_count"] for layer in layers),
         "source_segments_total": sum(layer["source_segment_count"] for layer in layers),
-        "generated_poche_polygons_total": sum(
-            layer["generated_poche_polygons_count"] for layer in layers
-        ),
+        "generated_poche_polygons_total": sum(layer["generated_poche_polygons_count"] for layer in layers),
         "injected_polygons_total": sum(layer["injected_polygon_count"] for layer in layers),
         "ambiguous_regions_total": sum(len(layer["ambiguous_regions"]) for layer in layers),
         "limitations_count": len(limitations),
