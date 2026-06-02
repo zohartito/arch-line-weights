@@ -1163,6 +1163,10 @@ def polygonize_dump(
                     ov = val
                     break
 
+        helper_paths = structural_completion_paths_by_layer.get(layer_name, [])
+        if helper_paths:
+            report.structural_helper_counts[layer_name] = len(helper_paths)
+
         polys, result = polygonize_layer(
             layer_name,
             paths,
@@ -1170,9 +1174,7 @@ def polygonize_dump(
             ov,
             use_alpha_shape=use_alpha_shape,
             bridge_strategy=bridge_strategy,
-            structural_helper_lines=_lines_from_anchors(
-                structural_completion_paths_by_layer.get(layer_name, [])
-            ),
+            structural_helper_lines=_lines_from_anchors(helper_paths),
         )
         report.fills.append(result)
         if polys and should_inject_fill(result):
