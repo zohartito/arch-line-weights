@@ -30,6 +30,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import click
 import pikepdf
 import zstandard as zstd
 
@@ -108,6 +109,38 @@ class ApplySaasResult:
     layer_dash_overrides: int = 0
 
 
+_NO_NATIVE_PAYLOAD_MSG = (
+    "This .ai has no Illustrator native private payload (/NumBlock). "
+    "apply-saas needs a native Illustrator .ai. For PDF-only/converted "
+    "exports, use: arch-lw apply-jsx then arch-lw poche."
+)
+
+
+class NoNativePayloadError(click.ClickException, ValueError):
+    """Clean user-facing error for files without Illustrator native payload."""
+
+
+def _require_native_private(pdf: pikepdf.Pdf) -> pikepdf.Object:
+    """Return the ``/PieceInfo /Illustrator /Private`` dict or raise cleanly.
+
+    PDF-only / "converted" exports lack the Illustrator native private payload,
+    so ``/PieceInfo``, ``/Illustrator``, ``/Private`` or ``/NumBlock`` may be
+    missing. Accessing them raises a raw ``KeyError`` that confuses users; we
+    translate that into a user-facing :class:`ValueError` (the error style this
+    module already uses) that points to the apply-jsx + poche workflow.
+    """
+    page = pdf.pages[0]
+    if "/PieceInfo" not in page.obj:
+        raise NoNativePayloadError(_NO_NATIVE_PAYLOAD_MSG)
+    try:
+        priv = page.obj["/PieceInfo"]["/Illustrator"]["/Private"]
+    except KeyError as exc:
+        raise NoNativePayloadError(_NO_NATIVE_PAYLOAD_MSG) from exc
+    if "/NumBlock" not in priv:
+        raise NoNativePayloadError(_NO_NATIVE_PAYLOAD_MSG)
+    return priv
+
+
 def _read_payload(pdf: pikepdf.Pdf) -> bytes:
     """Concatenate AIPrivateData streams, strip prefix, zstd-decompress.
 
@@ -115,10 +148,7 @@ def _read_payload(pdf: pikepdf.Pdf) -> bytes:
     we transparently handle both Illustrator-saved files (no filter) and
     pikepdf-resaved files (which may pick up a FlateDecode filter).
     """
-    page = pdf.pages[0]
-    if "/PieceInfo" not in page.obj:
-        raise ValueError("page has no /PieceInfo — not an Illustrator-saved .ai")
-    priv = page.obj["/PieceInfo"]["/Illustrator"]["/Private"]
+    priv = _require_native_private(pdf)
     n = int(priv["/NumBlock"])
     chunks = [priv[f"/AIPrivateData{i}"].read_bytes() for i in range(1, n + 1)]
     blob = b"".join(chunks)
@@ -455,8 +485,7 @@ def apply_to_file(
     result = ApplySaasResult(input_size=os.path.getsize(src))
 
     with pikepdf.open(src, allow_overwriting_input=False) as pdf:
-        page = pdf.pages[0]
-        priv = page.obj["/PieceInfo"]["/Illustrator"]["/Private"]
+        priv = _require_native_private(pdf)
         chunks_in = int(priv["/NumBlock"])
         result.chunks_in = chunks_in
 

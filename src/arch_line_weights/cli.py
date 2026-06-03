@@ -478,7 +478,8 @@ def apply_jsx_cmd(
     "alpha_shape and concave_hull). Opt-in only — sends layer names + "
     "endpoint coordinates (no filenames, no metadata) to Anthropic Claude "
     "Haiku for a closure plan when all geometric rungs fail. Requires the "
-    "anthropic package (install via `pip install arch-line-weights[llm]`) "
+    "anthropic package (install the `llm` extra from a source checkout, e.g. "
+    "`.venv/bin/python -m pip install -e '.[llm]'`) "
     "and ANTHROPIC_API_KEY in the environment. ~$0.003/stubborn layer. "
     "See docs/research/ai-augmented-mode.md.",
 )
@@ -872,7 +873,8 @@ def apply_saas_cmd(
     "alpha_shape and concave_hull). Opt-in only — sends layer names + "
     "endpoint coordinates (no filenames, no metadata) to Anthropic Claude "
     "Haiku for a closure plan when all geometric rungs fail. Requires the "
-    "anthropic package (install via `pip install arch-line-weights[llm]`) "
+    "anthropic package (install the `llm` extra from a source checkout, e.g. "
+    "`.venv/bin/python -m pip install -e '.[llm]'`) "
     "and ANTHROPIC_API_KEY in the environment. ~$0.003/stubborn layer. "
     "See docs/research/ai-augmented-mode.md.",
 )
