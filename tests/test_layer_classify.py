@@ -334,9 +334,7 @@ def test_mixed_classification_each_source_handles_own_layers():
     aia_a = classify_layer("A-WALL-FULL", source=Source.AUTOCAD)
     assert aia_a.tier == "cut"
     # ...and Rhino layers fall to default (no `::` semantics in AIA library).
-    rhino_a = classify_layer(
-        "axon::Visible::Curves::TEC_TIMBER", source=Source.AUTOCAD
-    )
+    rhino_a = classify_layer("axon::Visible::Curves::TEC_TIMBER", source=Source.AUTOCAD)
     assert rhino_a.tier == "default"
 
 
@@ -372,3 +370,53 @@ def test_explain_source_match_for_rhino():
     )
     assert "rhino" in msg
     assert "cut" in msg
+
+
+# --------------------------------------------------------------------------- #
+# §1.6 AIA semantic role keys — MCUT / MBND / NPLT / generic OTLN
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize(
+    "layer,expected_weight,expected_tier",
+    [
+        # -MCUT -> heaviest (cut)
+        ("A-WALL-MCUT", 1.0, "cut"),
+        ("S-COLS-MCUT", 1.0, "cut"),
+        # -MBND -> medium (edges_secondary)
+        ("A-WALL-MBND", 0.3, "edges_secondary"),
+        ("A-ROOF-MBND", 0.3, "edges_secondary"),
+        # generic -OTLN -> heavy (structure_primary), only when unclaimed
+        ("A-DETL-OTLN", 0.5, "structure_primary"),
+        ("A-WALL-OTLN", 0.5, "structure_primary"),
+        # -NPLT -> excluded (0 weight), beats every major group
+        ("A-WALL-NPLT", 0.0, "excluded"),
+        ("A-ANNO-NPLT", 0.0, "excluded"),
+        ("A-GRID-NPLT", 0.0, "excluded"),
+    ],
+)
+def test_autocad_aia_semantic_keys(layer, expected_weight, expected_tier):
+    """§1.6 explicit AIA role keys map to the right tier/weight."""
+    a = classify_layer(layer, source=Source.AUTOCAD)
+    assert a.weight_pt == expected_weight, f"{layer}: got {a.weight_pt} ({a.tier})"
+    assert a.tier == expected_tier
+    assert a.source == Source.AUTOCAD
+
+
+def test_otln_specific_majors_still_win_over_generic_rule():
+    """Generic -OTLN- is last, so the existing specific outline rules are preserved."""
+    assert classify_layer("A-ROOF-OTLN", source=Source.AUTOCAD).tier == "cut"
+    assert classify_layer("A-FLOR-OTLN", source=Source.AUTOCAD).tier == "edges_secondary"
+
+
+def test_nplt_excludes_even_a_full_cut_wall():
+    """NPLT wins over the inferred WALL-FULL cut rule."""
+    a = classify_layer("A-WALL-FULL-NPLT", source=Source.AUTOCAD)
+    assert a.tier == "excluded"
+    assert a.weight_pt == 0.0
+
+
+def test_aia_semantic_keys_do_not_affect_rhino_source():
+    """The new keys live only in AUTOCAD_RULES — Rhino dispatch is unchanged."""
+    a = classify_layer("A-WALL-MCUT", source=Source.RHINO)
+    assert a.tier == "default"

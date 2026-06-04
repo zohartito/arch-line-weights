@@ -21,6 +21,8 @@ from decimal import Decimal
 import pikepdf
 from pikepdf import Operator
 
+from .linetypes import DASH_PATTERNS_PT, LineType
+
 STROKE_OPS = {"S", "s", "B", "B*", "b", "b*"}
 
 
@@ -33,6 +35,8 @@ class ApplyResult:
     output_size: int = 0
     input_size: int = 0
     pieceinfo_stripped: bool = False
+    linetypes_applied: dict[str, int] = field(default_factory=dict)
+    excluded_strokes: int = 0
 
 
 def apply_to_file(
@@ -42,8 +46,16 @@ def apply_to_file(
     *,
     default_width: float = 0.25,
     strip_pieceinfo: bool = True,
+    rgb_to_linetype: dict[tuple[int, int, int], LineType] | None = None,
 ) -> ApplyResult:
-    """Apply per-color stroke widths to `src`, save to `dst`."""
+    """Apply per-color stroke widths to `src`, save to `dst`.
+
+    When ``rgb_to_linetype`` is given, a PDF dash operator is injected before
+    each matching stroke (CONTINUOUS emits nothing; NON_PLOTTING is counted in
+    ``result.excluded_strokes`` but not deleted — dropping a paint op can orphan
+    `q`/clip state, so true exclusion is deferred to the marked-content path).
+    With no ``rgb_to_linetype`` the output is byte-identical to a weight-only run.
+    """
     if os.path.abspath(src) == os.path.abspath(dst):
         raise ValueError("dst must differ from src to keep the original safe")
 
@@ -52,7 +64,7 @@ def apply_to_file(
 
     for page in pdf.pages:
         instructions = list(pikepdf.parse_content_stream(page))
-        new_inst = _rewrite(instructions, rgb_to_weight, default_width, result)
+        new_inst = _rewrite(instructions, rgb_to_weight, default_width, result, rgb_to_linetype)
         new_bytes = pikepdf.unparse_content_stream(new_inst)
         page.Contents = pdf.make_stream(new_bytes)
 
@@ -68,14 +80,35 @@ def apply_to_file(
     return result
 
 
+def _dash_operands(linetype: LineType) -> list | None:
+    """Build pikepdf operands for a `d` (dash) op, or None for a solid line."""
+    pattern = DASH_PATTERNS_PT.get(linetype)
+    if pattern is None:
+        return None
+    on_off, phase = pattern
+    return [pikepdf.Array([Decimal(f"{n:g}") for n in on_off]), Decimal(f"{phase:g}")]
+
+
+def _solid_dash_operands() -> list:
+    """Operands for `[] 0 d` — reset the dash state to a solid line."""
+    return [pikepdf.Array([]), Decimal("0")]
+
+
 def _rewrite(
     instructions: Iterable,
     rgb_to_weight: dict[tuple[int, int, int], float],
     default_width: float,
     result: ApplyResult,
+    rgb_to_linetype: dict[tuple[int, int, int], LineType] | None = None,
 ) -> list:
     out: list = []
     current_rgb: tuple[int, int, int] | None = None
+    # Only touch the dash state when at least one real dash pattern is requested;
+    # then set it on EVERY stroke (solid `[] 0 d` reset by default) so a pattern
+    # never leaks into later strokes via persistent graphics state.
+    emit_dashes = rgb_to_linetype is not None and any(
+        lt in DASH_PATTERNS_PT for lt in rgb_to_linetype.values()
+    )
 
     for operands, op in instructions:
         op_str = str(op)
@@ -96,6 +129,24 @@ def _rewrite(
                     result.unmatched_colors[current_rgb] = result.unmatched_colors.get(current_rgb, 0) + 1
             else:
                 w = default_width
+
+            linetype = (
+                rgb_to_linetype.get(current_rgb)
+                if rgb_to_linetype is not None and current_rgb is not None
+                else None
+            )
+            if linetype is LineType.NON_PLOTTING:
+                # v1: count + surface, never delete (dropping a paint op can
+                # orphan q/clip state — deferred to the marked-content path).
+                result.excluded_strokes += 1
+            if emit_dashes:
+                dash = _dash_operands(linetype) if linetype is not None else None
+                out.append((dash if dash is not None else _solid_dash_operands(), Operator("d")))
+                if dash is not None:
+                    result.linetypes_applied[linetype.value] = (
+                        result.linetypes_applied.get(linetype.value, 0) + 1
+                    )
+
             result.weights_applied[w] = result.weights_applied.get(w, 0) + 1
             result.strokes_processed += 1
             out.append(([Decimal(f"{w:g}")], Operator("w")))
