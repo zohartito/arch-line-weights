@@ -90,6 +90,19 @@ def run_arch_lw(pdf_path, mode, preset, scale, for_print, mapping_file):
     return out_path, report
 
 
+def _gh_input(name, default=None):
+    return globals().get(name, default)
+
+
+run = bool(_gh_input("run", False))
+pdf_path = _gh_input("pdf_path", "")
+mode = _gh_input("mode", "layer")
+preset = _gh_input("preset", "section")
+scale = _gh_input("scale", "1/4")
+for_print = bool(_gh_input("for_print", False))
+mapping_file = _gh_input("mapping_file", None)
+
+
 # --- GH component body ---
 out_path = ""
 report = ""
