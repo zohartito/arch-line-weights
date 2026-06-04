@@ -14,7 +14,7 @@ from .apply import apply_to_file
 from .apply_jsx import apply_via_jsx
 from .apply_saas import apply_to_file as apply_to_file_saas
 from .apply_saas import default_output_path as default_output_path_saas
-from .classify import auto_by_luminance, explain_mapping, from_user_mapping
+from .classify import auto_by_luminance, auto_by_role, explain_mapping, from_user_mapping
 from .inspect import color_to_rgb255, inspect_file
 from .layer_classify import (
     Source,
@@ -22,9 +22,11 @@ from .layer_classify import (
     detect_source,
     explain_source_match,
 )
+from .linetypes import aia_status_from_name, apply_status, linetype_for_layer
 from .poche import apply_poche
 from .presets import PRESETS, select_preset
 from .progress import DEFAULT_PROGRESS_FILE, make_reporter
+from .role_signal import no_role_signal, no_role_signal_message
 
 # CLI-facing source choices. Keep AUTO first so it's the default.
 _SOURCE_CHOICES = [Source.AUTO.value, Source.RHINO.value, Source.AUTOCAD.value]
@@ -71,6 +73,21 @@ def _require_nonempty_auto_mapping(
     )
 
 
+def _linetype_note(name: str, source: Source) -> str:
+    """Short 'linetype (flags)' note for a layer name (item 4 surfacing)."""
+    lt = apply_status(linetype_for_layer(name, source=source), aia_status_from_name(name))
+    flags = [f for f, on in (("excluded", lt.excluded), ("screened", lt.screened)) if on]
+    return f"{lt.linetype.value}" + (f" ({', '.join(flags)})" if flags else "")
+
+
+def _layer_plan_line(name: str, source: Source) -> str:
+    """One-line 'layer → weight · linetype' plan for the per-layer surfacing (item 4)."""
+    ta = classify_layer(name, source=source)
+    excluded = ta.tier == "excluded"
+    weight = "EXCLUDED" if excluded else f"{ta.weight_pt} pt"
+    return f"{name} → {weight} · {_linetype_note(name, source)} [{ta.tier}, conf={ta.confidence:.2f}]"
+
+
 @click.group()
 @click.version_option(__version__, prog_name="arch-lw")
 def cli():
@@ -115,6 +132,13 @@ def inspect(src: Path, pretty: bool, source: str):
     else:
         click.echo(f"# layer-name source: {resolved.value} (forced via --source)", err=True)
 
+    # Per-layer role plan (item 4): show what each named layer would get, when
+    # there are layers and a usable source (forced, or auto-detected > 0).
+    if layer_names and (source != Source.AUTO.value or conf > 0.0):
+        click.echo("# per-layer plan (layer → weight · linetype):", err=True)
+        for layer in layer_names:
+            click.echo(f"#   {_layer_plan_line(layer, resolved)}", err=True)
+
 
 @cli.command()
 @click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
@@ -151,7 +175,19 @@ def inspect(src: Path, pretty: bool, source: str):
 @click.option(
     "--auto",
     is_flag=True,
-    help="Auto-bucket colors into the preset's tiers by luminance + frequency.",
+    help="Assign weights by drawing role (cut → spatial edge → planar corner → "
+    "surface → layout) mapped to the preset's ISO ladder. The v1 default.",
+)
+@click.option(
+    "--legacy-weights",
+    is_flag=True,
+    help="Use the pre-v1 luminance + frequency bucketing for --auto instead of the role ladder.",
+)
+@click.option(
+    "--strict/--no-strict",
+    default=True,
+    show_default=True,
+    help="Fail (exit 2) when no role signal is found. --no-strict warns and exits 0.",
 )
 @click.option(
     "--default-width",
@@ -187,6 +223,8 @@ def apply(
     scale: str,
     for_print: bool,
     auto: bool,
+    legacy_weights: bool,
+    strict: bool,
     default_width: float,
     keep_pieceinfo: bool,
     dry_run: bool,
@@ -213,6 +251,7 @@ def apply(
     else:
         click.echo(f"# layer-source: {resolved_source.value} (forced)", err=True)
 
+    rgb_to_linetype = None
     if mapping_file:
         raw = json.loads(mapping_file.read_text())
         mapping: dict[tuple[int, int, int], float] = {}
@@ -223,10 +262,21 @@ def apply(
                 continue
             mapping[rgb] = float(w)
         mapping = from_user_mapping(mapping)
-    else:
+    elif no_role_signal(rep, source_conf):
+        # Item 5: no role signal → warn loudly and stop. Never a silent no-op.
+        click.echo(no_role_signal_message(rep, resolved_source, source_conf, name=src.name), err=True)
+        sys.exit(2 if strict else 0)
+    elif legacy_weights:
         tiers = select_preset(preset, scale=scale, for_print=for_print)
         mapping = auto_by_luminance(rep, tiers)
         _require_nonempty_auto_mapping(mapping, src=src, preset=preset)
+    else:
+        mapping, rgb_to_linetype = auto_by_role(rep, preset, scale, for_print)
+        if not mapping:
+            # e.g. strokes exist but none are RGB (CMYK/Gray only): no usable
+            # role signal for this RGB pipeline — warn, don't write defaults.
+            click.echo(no_role_signal_message(rep, resolved_source, source_conf, name=src.name), err=True)
+            sys.exit(2 if strict else 0)
 
     click.echo(
         f"# {len(mapping)} colors mapped using {'user file' if mapping_file else f'auto:{preset}'}",
@@ -248,6 +298,7 @@ def apply(
         mapping,
         default_width=default_width,
         strip_pieceinfo=not keep_pieceinfo,
+        rgb_to_linetype=rgb_to_linetype,
     )
 
     click.echo("", err=True)
@@ -261,6 +312,13 @@ def apply(
         click.echo(f"unmatched (defaulted to {default_width} pt):", err=True)
         for rgb, n in sorted(result.unmatched_colors.items(), key=lambda kv: -kv[1])[:10]:
             click.echo(f"  RGB{rgb}: {n}", err=True)
+    if result.linetypes_applied:
+        click.echo("", err=True)
+        click.echo("linetypes applied:", err=True)
+        for lt_name, n in sorted(result.linetypes_applied.items()):
+            click.echo(f"  {lt_name}: {n:,}", err=True)
+    if result.excluded_strokes:
+        click.echo(f"non-plotting strokes flagged (kept, not deleted): {result.excluded_strokes:,}", err=True)
     click.echo("", err=True)
     click.echo(f"wrote {output}  ({result.output_size:,} bytes)", err=True)
 
@@ -279,15 +337,13 @@ def apply(
     type=click.Choice(sorted(PRESETS)),
     default="section",
     show_default=True,
-    help="Tier ladder used by the embedded JSX classifier. Matches "
-    "`apply-saas --preset`. Issue #13.",
+    help="Tier ladder used by the embedded JSX classifier. Matches `apply-saas --preset`. Issue #13.",
 )
 @click.option(
     "--scale",
     default="1/4",
     show_default=True,
-    help="Plot scale for ISO 128 weight selection (1/16, 1/8, 1/4, 1/2). "
-    "Used with --for-print.",
+    help="Plot scale for ISO 128 weight selection (1/16, 1/8, 1/4, 1/2). Used with --for-print.",
 )
 @click.option(
     "--for-print",
@@ -440,7 +496,7 @@ def apply_jsx_cmd(
     "--poche-overrides",
     "poche_overrides_path",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
-    help='JSON of per-layer poché strategy overrides; same schema as `arch-lw poche --overrides`.',
+    help="JSON of per-layer poché strategy overrides; same schema as `arch-lw poche --overrides`.",
 )
 @click.option(
     "--poche-overlay/--inline-poche",
@@ -556,9 +612,7 @@ def apply_saas_cmd(
     plain `.pdf` files (no PieceInfo), use `apply` instead.
     """
     if not (auto or mapping_file or architectural):
-        raise click.UsageError(
-            "provide --mapping FILE, --auto (with optional --preset), or --architectural"
-        )
+        raise click.UsageError("provide --mapping FILE, --auto (with optional --preset), or --architectural")
     if auto and mapping_file:
         raise click.UsageError("--auto and --mapping are mutually exclusive")
 
@@ -732,8 +786,7 @@ def apply_saas_cmd(
 
     click.echo("", err=True)
     click.echo(
-        f"rewrote {result.widths_rewritten:,} stroke-width ops across "
-        f"{result.xa_seen:,} stroke-color sets",
+        f"rewrote {result.widths_rewritten:,} stroke-width ops across {result.xa_seen:,} stroke-color sets",
         err=True,
     )
     click.echo(
@@ -952,9 +1005,7 @@ def poche_cmd(
         marker = "✓" if fr.confidence >= 0.85 else ("~" if fr.confidence > 0 else "✗")
         # Surface bridge_strategy_name when set (only the auto_bridge rung
         # populates it, and only when bridge_strategy="best" was selected).
-        bridge_suffix = (
-            f"  bridge={fr.bridge_strategy_name}" if fr.bridge_strategy_name else ""
-        )
+        bridge_suffix = f"  bridge={fr.bridge_strategy_name}" if fr.bridge_strategy_name else ""
         click.echo(
             f"  {marker} {short:50}  {fr.strategy:18}  polys={fr.polygon_count:>3}  "
             f"conf={fr.confidence:.2f}{bridge_suffix}",
@@ -1045,10 +1096,12 @@ def explain_layer(layer_name: str, source: str):
             err=True,
         )
         click.echo(explain_source_match(layer_name, detected))
+        click.echo(f"# linetype: {_linetype_note(layer_name, detected)}")
     else:
         forced = Source(source)
         click.echo(f"# source: {forced.value} (forced via --source)", err=True)
         click.echo(explain_source_match(layer_name, forced))
+        click.echo(f"# linetype: {_linetype_note(layer_name, forced)}")
 
 
 # Re-export so the unused `classify_layer` import stays referenced and

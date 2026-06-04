@@ -153,6 +153,47 @@ DEFAULT = TierAssignment(0.25, "default", "no pattern match — assigned middle 
 # typical architectural drawings.
 
 AUTOCAD_RULES: list[tuple[str | tuple[str, ...], TierAssignment]] = [
+    # §1.6 AIA semantic role keys — explicit minor-group tokens that carry the
+    # graphic role directly. Listed FIRST so an authored key beats any inferred
+    # major/minor combination (the spec: layer-name keys outrank color).
+    #
+    # -NPLT (non-plotting) wins over everything: a non-plotting grid/datum is
+    # excluded from output regardless of its major group.
+    (
+        ("-NPLT-", "-NPLT "),
+        TierAssignment(
+            0.0,
+            "excluded",
+            "AIA NCS NPLT — non-plotting construction line (excluded from output)",
+            source=Source.AUTOCAD,
+            confidence=0.85,
+        ),
+    ),
+    # -MCUT (material cut by the section plane) -> heaviest, same tier as the
+    # inferred section cut.
+    (
+        ("-MCUT-", "-MCUT "),
+        TierAssignment(
+            1.0,
+            "cut",
+            "AIA NCS MCUT — material cut by section (heaviest)",
+            source=Source.AUTOCAD,
+            confidence=0.85,
+        ),
+    ),
+    # -MBND (material beyond the cut) -> medium. Collapsed from the spec's
+    # "medium/light" to the medium rung; the per-preset crosswalk lightens it
+    # for no-cut drawings (elevation edges_secondary -> openings).
+    (
+        ("-MBND-", "-MBND "),
+        TierAssignment(
+            0.3,
+            "edges_secondary",
+            "AIA NCS MBND — material beyond cut (medium)",
+            source=Source.AUTOCAD,
+            confidence=0.85,
+        ),
+    ),
     # 1. REFERENCE — `*-REFR-` minor group (e.g. A-ANNO-REFR is reference,
     #    not annotation, per the NCS minor-group spec). Must come BEFORE
     #    annotation otherwise `-ANNO-` would consume A-ANNO-REFR.
@@ -291,6 +332,20 @@ AUTOCAD_RULES: list[tuple[str | tuple[str, ...], TierAssignment]] = [
             0.3,
             "edges_secondary",
             "AIA NCS DOOR / FLOR / EQPM / FURN / STRS — secondary edges",
+            source=Source.AUTOCAD,
+            confidence=0.85,
+        ),
+    ),
+    # 10. OTLN (generic outline / profile) -> heavy. Placed LAST so more
+    # specific majors win first: `-ROOF-OTLN-` stays "cut" (rule 7 above) and
+    # `-FLOR-OTLN` stays "edges_secondary" (rule 9); only an otherwise
+    # unclaimed outline falls through to this heavy default. §1.6.
+    (
+        ("-OTLN-", "-OTLN "),
+        TierAssignment(
+            0.5,
+            "structure_primary",
+            "AIA NCS OTLN — generic outline / profile (heavy)",
             source=Source.AUTOCAD,
             confidence=0.85,
         ),
@@ -532,9 +587,7 @@ def as_jsx_function(
     default = DEFAULTS.get(source, DEFAULT)
 
     if preset is not None:
-        tier_overrides = tier_weights_for_preset(
-            preset, scale=scale, for_print=for_print, source=source
-        )
+        tier_overrides = tier_weights_for_preset(preset, scale=scale, for_print=for_print, source=source)
     else:
         tier_overrides = None
 
@@ -640,7 +693,4 @@ def explain_source_match(name: str, source: Source) -> str:
     """
     a = classify_layer(name, source=source)
     src_label = a.source.value if isinstance(a.source, Source) else str(a.source)
-    return (
-        f"{a.weight_pt} pt — {a.tier} ({a.why}) "
-        f"[source={src_label}, confidence={a.confidence:.2f}]"
-    )
+    return f"{a.weight_pt} pt — {a.tier} ({a.why}) [source={src_label}, confidence={a.confidence:.2f}]"
