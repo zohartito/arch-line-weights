@@ -71,6 +71,13 @@ def _require_nonempty_auto_mapping(
     )
 
 
+def _inspect_or_click_error(src: Path):
+    try:
+        return inspect_file(str(src))
+    except RuntimeError as exc:
+        raise click.ClickException(f"Failed to inspect {src}: {exc}") from None
+
+
 @click.group()
 @click.version_option(__version__, prog_name="arch-lw")
 def cli():
@@ -98,7 +105,7 @@ def cli():
 )
 def inspect(src: Path, pretty: bool, source: str):
     """Report the color / stroke-width distribution of a .ai or .pdf file."""
-    rep = inspect_file(str(src))
+    rep = _inspect_or_click_error(src)
     indent = 2 if pretty else None
     click.echo(json.dumps(rep.to_dict(), indent=indent))
 
@@ -198,7 +205,7 @@ def apply(
     if auto and mapping_file:
         raise click.UsageError("--auto and --mapping are mutually exclusive")
 
-    rep = inspect_file(str(src))
+    rep = _inspect_or_click_error(src)
 
     # Layer-source resolution. Print so users see what convention drove the
     # classifier; lets them re-run with `--source autocad` if detection is wrong.
@@ -562,7 +569,7 @@ def apply_saas_cmd(
     if auto and mapping_file:
         raise click.UsageError("--auto and --mapping are mutually exclusive")
 
-    rep = inspect_file(str(src))
+    rep = _inspect_or_click_error(src)
 
     pdf_metadata = getattr(rep, "pdf_metadata", None) or {}
     layer_names = getattr(rep, "layer_names", None) or []
