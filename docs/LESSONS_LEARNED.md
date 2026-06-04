@@ -20,3 +20,7 @@ Business planning notes were removed before the Day-1 source release.
 7. Keep release docs tied to verified workflows: source/GitHub install,
    Illustrator/Acrobat review, unverified Bluebeam, and local-only webapp
    experiments.
+8. Multi-machine/Synology drift needs a recovery runbook, not improvisation.
+   Inventory every copy, reconcile into a separate tree, overlay onto a fresh
+   GitHub clone without deleting GitHub-only files, and verify before cleanup.
+   See `docs/research/repository-recovery-runbook.md`.
