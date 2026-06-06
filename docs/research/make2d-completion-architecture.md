@@ -57,10 +57,15 @@ Automatic fill rules:
 - Helper-only closed shapes are not automatic poché.
 - For automatic black fill, helper-derived candidates must share meaningful
   boundary with the target clipping-plane layer.
+- Accepted/rejected candidate reports must include the reason, provenance,
+  bounds, area, confidence, and measured cut-anchor length.
 - Concrete/foundation helper geometry cannot wildly expand an already valid
   cut-only face.
 - Facade, glass, membrane, connector, and screen layers remain out of poché
   even when they can be polygonized.
+- Covered structural cut-mass vocabulary includes CLT slabs, first-floor
+  floor/slab plates, roof CLT, roof cut mass, foundation/concrete, backup walls,
+  timber beam cells, and timber beam caps.
 
 Line-weight implications:
 
@@ -71,24 +76,25 @@ Line-weight implications:
 - Facade screens and panel texture should recede unless the user explicitly
   asks for an elevation/detail emphasis.
 
-## Current Outputs
+## Current Coverage
 
-- `private-regression-output.ai`: recovered more mass, but accepted helper-only
-  false blobs.
-- `private-regression-output.ai`: removed the lower-left concrete-base expansion
-  and stayed conservative.
-- `private-regression-output.ai`: adds a top `ARCH_LW_POCHE` layer; useful for draw-order
-  review but does not solve missing component topology.
+- Targeted synthetic regressions accept bounded, cut-anchored completion for
+  first-floor plates, roof cut mass, concrete base, foundation strips, roof CLT,
+  repeated timber beam cells, and timber beam caps.
+- Helper-only closed shapes and large/compact false blobs are rejected and
+  preserved in the candidate report with the rejection reason.
+- Connector hardware, glazing, cladding, membranes, and secondary steel remain
+  subordinate to structural cut mass; they can receive cut-line styling without
+  becoming black poché.
+- Private Illustrator visual QA is still required before using the private USC
+  proof as launch evidence.
 
 ## Next Implementation Steps
 
-1. Promote candidate reporting to a user-facing `diagnose-poche` or
-   `--poche-report` output.
-2. Add `ArchitecturalComponent` grouping and component-level candidate scores.
-3. Add fixture tests for known zones in `private section regression drawing.ai`.
-4. Let line-weight hierarchy consume the component graph, starting with
-   connectors/secondary steel/facade screens.
-5. Add visual QA screenshots for prior private run/prior private run/prior private run comparisons.
+1. Add `ArchitecturalComponent` grouping and component-level candidate scores.
+2. Add more public synthetic fixtures that mimic the private section regression
+   zones without exposing private geometry.
+3. Extend visual QA snapshots once public-safe fixture views are available.
 
 The books/reference library should feed this stage as executable rules and
 tests, not as raw committed PDFs or live book-reading during each run.

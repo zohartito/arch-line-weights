@@ -30,6 +30,27 @@ from arch_line_weights.poche_saas import _is_cut_layer
             True,
         ),
         (
+            "axon::Visible::ClippingPlaneIntersections::TEC_FIRST_FLOOR_PLATE",
+            "cut",
+            1.0,
+            True,
+            True,
+        ),
+        (
+            "axon::Visible::ClippingPlaneIntersections::ROOF_CUT_MASS",
+            "cut",
+            1.0,
+            True,
+            True,
+        ),
+        (
+            "axon::Visible::ClippingPlaneIntersections::TEC_TIMBER_BEAM_CAP",
+            "cut",
+            1.0,
+            True,
+            True,
+        ),
+        (
             "axon::Visible::ClippingPlaneIntersections::26_CLT_GAP_ROOF_CAP",
             "cut",
             1.0,
