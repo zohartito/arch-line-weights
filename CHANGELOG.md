@@ -33,7 +33,7 @@ All notable changes to this project are documented here. Format loosely follows
   Trusted Publishing setup remain.
 
 ### Improved
-- Reference-run results on USC ARCH 202B section drawing:
+- Reference-run results on a local reference section drawing:
   - **v0.5**: 14 / 6 / 1 (clean / imperfect / failed)
   - **v0.6**: **18 / 2 / 1** — auto-bridge rescued TEC_FOUNDATION,
     TEC_CONCRETE_BASE, 03d_WINDOW_ALUM_FRAME, TEC_STAIRS, and partially

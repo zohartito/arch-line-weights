@@ -1,6 +1,6 @@
 # Stubborn cut layers — deep dive
 
-> Sub-agent research, 2026-04-30. Three layers in the USC ARCH 202B reference
+> Sub-agent research, 2026-04-30. Three layers in the private architecture reference
 > drawing resist the v0.4 rescue ladder (`linemerge → snap-sweep → auto-bridge
 > → concave_hull → bbox`). Each requires a user-side `__POCHE_CLOSE__`
 > workaround today. This doc evaluates eight algorithmic approaches, makes a

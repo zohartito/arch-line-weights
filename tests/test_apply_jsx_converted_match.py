@@ -199,14 +199,8 @@ def test_empty_stem_does_not_match():
     """``[Converted].ai`` (no stem at all) must NOT match anything — the
     decoration peeler returns an empty string, which can't equal a real
     source stem."""
-    assert (
-        _is_converted_match("[Converted].ai", None, "/path/macro.ai")
-        is False
-    )
-    assert (
-        _is_converted_match(" [Converted].ai", None, "/path/macro.ai")
-        is False
-    )
+    assert _is_converted_match("[Converted].ai", None, "/path/macro.ai") is False
+    assert _is_converted_match(" [Converted].ai", None, "/path/macro.ai") is False
 
 
 # --------------------------------------------------------------------------- #

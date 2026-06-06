@@ -371,9 +371,7 @@ def test_infer_uses_default_model_when_not_overridden(monkeypatch):
     fake_client = MagicMock()
     fake_client.messages.create.return_value = _stub_response([[0, 1]])
 
-    infer_closing_plan(
-        "layer", _square_anchors(), _square_lines(), client=fake_client
-    )
+    infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client)
     call = fake_client.messages.create.call_args
     assert call.kwargs["model"] == DEFAULT_MODEL
 
@@ -386,9 +384,7 @@ def test_infer_respects_model_env_var(monkeypatch):
     fake_client = MagicMock()
     fake_client.messages.create.return_value = _stub_response([[0, 1]])
 
-    infer_closing_plan(
-        "layer", _square_anchors(), _square_lines(), client=fake_client
-    )
+    infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client)
     call = fake_client.messages.create.call_args
     assert call.kwargs["model"] == "claude-haiku-4-5"
 
@@ -401,9 +397,7 @@ def test_infer_uses_prompt_caching_on_system_prompt(monkeypatch):
     fake_client = MagicMock()
     fake_client.messages.create.return_value = _stub_response([[0, 1]])
 
-    infer_closing_plan(
-        "layer", _square_anchors(), _square_lines(), client=fake_client
-    )
+    infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client)
     call = fake_client.messages.create.call_args
     system_blocks = call.kwargs["system"]
     assert isinstance(system_blocks, list)
@@ -417,9 +411,7 @@ def test_infer_uses_tool_use_for_strict_json(monkeypatch):
     fake_client = MagicMock()
     fake_client.messages.create.return_value = _stub_response([[0, 1]])
 
-    infer_closing_plan(
-        "layer", _square_anchors(), _square_lines(), client=fake_client
-    )
+    infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client)
     call = fake_client.messages.create.call_args
     assert call.kwargs["tools"] == [CLOSURE_PLAN_TOOL]
     assert call.kwargs["tool_choice"] == {
@@ -435,9 +427,7 @@ def test_infer_network_error_returns_none(monkeypatch):
     fake_client = MagicMock()
     fake_client.messages.create.side_effect = ConnectionError("boom")
 
-    plan = infer_closing_plan(
-        "layer", _square_anchors(), _square_lines(), client=fake_client
-    )
+    plan = infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client)
     assert plan is None
 
 
@@ -447,13 +437,9 @@ def test_infer_invalid_response_returns_none(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "fake-key")
     fake_client = MagicMock()
     # confidence > 1.0 — fails validation
-    fake_client.messages.create.return_value = _stub_response(
-        [[0, 1]], confidence=1.5
-    )
+    fake_client.messages.create.return_value = _stub_response([[0, 1]], confidence=1.5)
 
-    plan = infer_closing_plan(
-        "layer", _square_anchors(), _square_lines(), client=fake_client
-    )
+    plan = infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client)
     assert plan is None
 
 
@@ -574,8 +560,8 @@ def test_polygonize_layer_uses_llm_rung_when_geometric_fail(monkeypatch):
     monkeypatch.setitem(__import__("sys").modules, "anthropic", fake_anthropic)
 
     paths = [
-        [[0.0, 0.0], [10.0, 0.0]],       # endpoints 0, 1
-        [[0.0, 200.0], [10.0, 200.0]],   # endpoints 2, 3
+        [[0.0, 0.0], [10.0, 0.0]],  # endpoints 0, 1
+        [[0.0, 200.0], [10.0, 200.0]],  # endpoints 2, 3
     ]
     polys, fr = polygonize_layer("23_WINDOW_FRAMES_REMAP", paths)
 
@@ -600,9 +586,7 @@ def test_polygonize_layer_skips_to_concave_when_llm_returns_useless_plan(
     fake_anthropic = MagicMock()
     fake_client = MagicMock()
     # Empty plan — no bridges proposed.
-    fake_client.messages.create.return_value = _stub_response(
-        [], confidence=0.1, rationale="no idea"
-    )
+    fake_client.messages.create.return_value = _stub_response([], confidence=0.1, rationale="no idea")
     fake_anthropic.Anthropic.return_value = fake_client
     monkeypatch.setitem(__import__("sys").modules, "anthropic", fake_anthropic)
 
@@ -728,13 +712,9 @@ def test_cost_reporting_debug_on(monkeypatch, capsys):
     monkeypatch.setenv("ARCH_LW_DEBUG", "1")
 
     fake_client = MagicMock()
-    fake_client.messages.create.return_value = _stub_response(
-        [[0, 1]], input_tokens=1000, output_tokens=200
-    )
+    fake_client.messages.create.return_value = _stub_response([[0, 1]], input_tokens=1000, output_tokens=200)
 
-    infer_closing_plan(
-        "layer", _square_anchors(), _square_lines(), client=fake_client
-    )
+    infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client)
     captured = capsys.readouterr()
     assert "[arch-lw llm]" in captured.err
     assert "in=1000" in captured.err
@@ -749,9 +729,7 @@ def test_cost_reporting_debug_off(monkeypatch, capsys):
 
     fake_client = MagicMock()
     fake_client.messages.create.return_value = _stub_response([[0, 1]])
-    infer_closing_plan(
-        "layer", _square_anchors(), _square_lines(), client=fake_client
-    )
+    infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client)
     captured = capsys.readouterr()
     assert "[arch-lw llm]" not in captured.err
 
@@ -771,6 +749,7 @@ def test_sdk_missing_returns_none(monkeypatch):
     # mid-test, so we install a faulty meta-path finder that raises
     # ImportError specifically for this name.
     import sys
+
     sys.modules.pop("anthropic", None)
 
     class _BlockAnthropic:
@@ -790,9 +769,7 @@ def test_sdk_missing_returns_none(monkeypatch):
     blocker = _BlockAnthropic()
     sys.meta_path.insert(0, blocker)
     try:
-        plan = infer_closing_plan(
-            "layer", _square_anchors(), _square_lines()
-        )
+        plan = infer_closing_plan("layer", _square_anchors(), _square_lines())
         assert plan is None
     finally:
         sys.meta_path.remove(blocker)

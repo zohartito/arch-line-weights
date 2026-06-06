@@ -21,6 +21,7 @@ from decimal import Decimal
 import pikepdf
 from pikepdf import Operator
 
+from .input_format import raise_if_unsupported
 from .linetypes import DASH_PATTERNS_PT, LineType
 
 STROKE_OPS = {"S", "s", "B", "B*", "b", "b*"}
@@ -58,6 +59,7 @@ def apply_to_file(
     """
     if os.path.abspath(src) == os.path.abspath(dst):
         raise ValueError("dst must differ from src to keep the original safe")
+    raise_if_unsupported(src, "apply")
 
     pdf = pikepdf.open(src)
     result = ApplyResult(input_size=os.path.getsize(src))

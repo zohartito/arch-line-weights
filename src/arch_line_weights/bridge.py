@@ -361,9 +361,7 @@ def _backtrack_search(
         nonlocal visits
         visits += 1
         if deadline is not None and visits % check_interval == 0 and time.monotonic() >= deadline:
-            raise BridgeSearchTimeout(
-                f"backtracking exceeded deadline after {visits:,} search nodes"
-            )
+            raise BridgeSearchTimeout(f"backtracking exceeded deadline after {visits:,} search nodes")
         n_polys = _polygon_count(segments + bridges)
         score = (n_polys, -len(bridges))
         if (score[0], score[1]) > (best_score[0], best_score[1]):
@@ -382,9 +380,7 @@ def _backtrack_search(
             if bridge is None:
                 continue
             # Check the bridge doesn't cross any *previously chosen* bridge.
-            crosses_chosen = any(
-                bridge.crosses(prev) or bridge.overlaps(prev) for prev in bridges
-            )
+            crosses_chosen = any(bridge.crosses(prev) or bridge.overlaps(prev) for prev in bridges)
             if crosses_chosen:
                 continue
 
@@ -841,12 +837,14 @@ def infer_bridges_best(
                     deadline=deadline,
                 )
                 n_db = _polygon_count(aug_db)
-                results.append((
-                    _strategy_score(n_db, conf_db, expected),
-                    aug_db,
-                    conf_db,
-                    "dbscan_collapse+backtrack",
-                ))
+                results.append(
+                    (
+                        _strategy_score(n_db, conf_db, expected),
+                        aug_db,
+                        conf_db,
+                        "dbscan_collapse+backtrack",
+                    )
+                )
         except BridgeSearchTimeout as e:
             _log.warning(
                 "infer_bridges_best:%s strategy=dbscan_collapse+backtrack timed out after %.2fs: %s; "

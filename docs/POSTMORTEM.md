@@ -8,7 +8,7 @@
 
 Project: `arch-line-weights` — apply architectural line-weight hierarchy +
 poché to color-coded vector drawings (typically Rhino-exported `.ai`).
-Reference test file: USC ARCH 202B section drawing, 24 MB, 340,323 strokes,
+Reference test file: private architecture section regression drawing, 24 MB, 340,323 strokes,
 62 OCG layers, 21 of which are `Visible::ClippingPlaneIntersections::*` (the
 section cuts that should become poché).
 
@@ -237,7 +237,9 @@ prototype that ports the apply / poché pipelines to pure Python.
 
 ## Attempt 9 (2026-05-01) — first real-world plan drawing run
 
-**What:** Apply line-weight hierarchy to `/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 211/macro.ai` — an urban-scale plan drawing, ~237 MB original / 98 MB saved, ~1.25M strokes, 50 distinct stroke colors. First non-section drawing the tool has been used on.
+**What:** Apply line-weight hierarchy to a private urban-scale plan drawing:
+~237 MB original / 98 MB saved, ~1.25M strokes, 50 distinct stroke colors.
+First non-section drawing the tool has been used on.
 
 **Result:** **Headless `apply-saas` succeeded in 5 min on the 98 MB file.** First real-world validation of the v0.5 plan preset family. `apply-jsx` failed twice and then hung past its 60-min osascript timeout, requiring force-quit.
 

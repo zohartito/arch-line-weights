@@ -19,6 +19,7 @@ Outputs:
 
 Docs: https://developer.rhino3d.com/guides/scripting/scripting-gh-python/
 """
+
 import os
 import shutil
 import subprocess
@@ -79,15 +80,31 @@ def run_arch_lw(pdf_path, mode, preset, scale, for_print, mapping_file):
             cmd += ["--mapping", mapping_file]
     try:
         proc = subprocess.run(
-            cmd, capture_output=True, text=True,
-            timeout=TIMEOUT_SEC, check=False,
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=TIMEOUT_SEC,
+            check=False,
         )
-    except subprocess.TimeoutExpired as te:
-        raise RuntimeError("arch-lw exceeded {}s; aborted.".format(TIMEOUT_SEC))
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(f"arch-lw exceeded {TIMEOUT_SEC}s; aborted.") from exc
     report = (proc.stderr or "") + ("\n--- stdout ---\n" + proc.stdout if proc.stdout else "")
     if proc.returncode != 0:
-        raise RuntimeError("arch-lw exit {}\n{}".format(proc.returncode, report))
+        raise RuntimeError(f"arch-lw exit {proc.returncode}\n{report}")
     return out_path, report
+
+
+def _gh_input(name, default=None):
+    return globals().get(name, default)
+
+
+run = bool(_gh_input("run", False))
+pdf_path = _gh_input("pdf_path", "")
+mode = _gh_input("mode", "layer")
+preset = _gh_input("preset", "section")
+scale = _gh_input("scale", "1/4")
+for_print = bool(_gh_input("for_print", False))
+mapping_file = _gh_input("mapping_file", None)
 
 
 # --- GH component body ---
@@ -107,7 +124,7 @@ if run:
         )
         success = Path(out_path).exists()
     except Exception as e:
-        report = "[arch-lw error] {}: {}".format(type(e).__name__, e)
+        report = f"[arch-lw error] {type(e).__name__}: {e}"
         success = False
 else:
     report = "Set `run = True` to execute."

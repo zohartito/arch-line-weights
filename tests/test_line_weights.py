@@ -36,9 +36,7 @@ def test_iso_ladder_is_sqrt2_geometric_series():
     """ISO 128-20 specifies a √2 ratio between adjacent rungs."""
     for prev, nxt in pairwise(ISO_LADDER_MM):
         ratio = nxt / prev
-        assert ratio == pytest.approx(2**0.5, rel=0.05), (
-            f"{prev}→{nxt} ratio {ratio} not √2"
-        )
+        assert ratio == pytest.approx(2**0.5, rel=0.05), f"{prev}→{nxt} ratio {ratio} not √2"
 
 
 def test_ladder_endpoints():
@@ -140,9 +138,7 @@ def test_assignment_rejects_off_ladder():
 
 
 def test_assignment_carries_notes():
-    a = LineWeightAssignment(
-        color="section_cut", weight=LineWeight.W_0_70, notes="Ramsey/Sleeper §1.4"
-    )
+    a = LineWeightAssignment(color="section_cut", weight=LineWeight.W_0_70, notes="Ramsey/Sleeper §1.4")
     assert a.notes == "Ramsey/Sleeper §1.4"
 
 
@@ -173,8 +169,7 @@ def test_iso_print_tiers_use_ladder_weights():
             if tier.name.startswith("special"):
                 continue
             assert tier.weight_pt in ISO_LADDER_PT, (
-                f"{tier.name}={tier.weight_pt} pt is off the ISO ladder "
-                f"(allowed: {list(ISO_LADDER_PT)})"
+                f"{tier.name}={tier.weight_pt} pt is off the ISO ladder (allowed: {list(ISO_LADDER_PT)})"
             )
 
 

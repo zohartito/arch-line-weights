@@ -14,6 +14,7 @@ Docs:
   https://developer.rhino3d.com/guides/rhinopython/python-rhino8/
   https://developer.rhino3d.com/api/RhinoCommon/html/N_Eto_Forms.htm
 """
+
 # r: rhinoscriptsyntax
 import os
 import shutil
@@ -21,9 +22,9 @@ import subprocess
 import threading
 from pathlib import Path
 
-import Rhino
-import Eto.Forms as forms
 import Eto.Drawing as drawing
+import Eto.Forms as forms
+import Rhino
 
 DEFAULT_SUB = "apply-jsx"  # or "poche"
 TIMEOUT_SEC = 30 * 60
@@ -59,9 +60,7 @@ class ProgressDialog(forms.Dialog[bool]):
         self.Content = layout
 
     def append(self, text):
-        Rhino.RhinoApp.InvokeOnUiThread(
-            lambda: setattr(self.log, "Text", self.log.Text + text)
-        )
+        Rhino.RhinoApp.InvokeOnUiThread(lambda: setattr(self.log, "Text", self.log.Text + text))
 
     def finish(self, ok):
         Rhino.RhinoApp.InvokeOnUiThread(lambda: setattr(self.bar, "Indeterminate", False))
@@ -84,23 +83,26 @@ def _run_cli_streaming(cli, src, dlg):
     dlg.append("$ " + " ".join(cmd) + "\n\n")
     try:
         proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            text=True, bufsize=1,
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
         )
         for line in proc.stdout:
             dlg.append(line)
         proc.wait(timeout=TIMEOUT_SEC)
         ok = proc.returncode == 0
-        dlg.append("\n[exit {}]\n".format(proc.returncode))
+        dlg.append(f"\n[exit {proc.returncode}]\n")
         dlg.finish(ok)
         if ok:
             _open_external(out_path)
     except subprocess.TimeoutExpired:
         proc.kill()
-        dlg.append("\n[timeout > {}s]\n".format(TIMEOUT_SEC))
+        dlg.append(f"\n[timeout > {TIMEOUT_SEC}s]\n")
         dlg.finish(False)
     except Exception as e:
-        dlg.append("\n[error] {}: {}\n".format(type(e).__name__, e))
+        dlg.append(f"\n[error] {type(e).__name__}: {e}\n")
         dlg.finish(False)
 
 
@@ -109,7 +111,8 @@ def main():
     if not cli:
         forms.MessageBox.Show(
             "arch-lw is not on PATH.\nInstall it and reopen Rhino.",
-            "arch-lw missing", forms.MessageBoxButtons.OK,
+            "arch-lw missing",
+            forms.MessageBoxButtons.OK,
             forms.MessageBoxType.Error,
         )
         return
@@ -117,8 +120,7 @@ def main():
     if not src:
         return
     dlg = ProgressDialog()
-    threading.Thread(target=_run_cli_streaming,
-                     args=(cli, src, dlg), daemon=True).start()
+    threading.Thread(target=_run_cli_streaming, args=(cli, src, dlg), daemon=True).start()
     dlg.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
 
 

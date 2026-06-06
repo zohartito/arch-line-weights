@@ -4,7 +4,7 @@ Date: 2026-05-05
 
 ## Summary
 
-The 43 MB `iso axon section  [Converted].ai` failure was two separate bugs
+The 43 MB `private section regression drawing.ai` failure was two separate bugs
 showing up at once:
 
 1. `bridge_strategy=best` could spend unbounded time in the depth-first

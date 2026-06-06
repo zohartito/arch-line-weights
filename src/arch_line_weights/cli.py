@@ -6,6 +6,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 import click
 
@@ -14,7 +15,11 @@ from .apply import apply_to_file
 from .apply_jsx import apply_via_jsx
 from .apply_saas import apply_to_file as apply_to_file_saas
 from .apply_saas import default_output_path as default_output_path_saas
+from .bridge_rhino_ai import bridge_rhino_ai
 from .classify import auto_by_luminance, auto_by_role, explain_mapping, from_user_mapping
+from .cleanup import cleanup_file
+from .cleanup import default_output_path as default_output_path_cleanup
+from .input_format import UnsupportedInputError, raise_if_unsupported
 from .inspect import color_to_rgb255, inspect_file
 from .layer_classify import (
     Source,
@@ -22,6 +27,7 @@ from .layer_classify import (
     detect_source,
     explain_source_match,
 )
+from .layout_jsx import layout_via_jsx, parse_artboard_size, parse_length
 from .linetypes import aia_status_from_name, apply_status, linetype_for_layer
 from .poche import apply_poche
 from .presets import PRESETS, select_preset
@@ -88,6 +94,33 @@ def _layer_plan_line(name: str, source: Source) -> str:
     return f"{name} → {weight} · {_linetype_note(name, source)} [{ta.tier}, conf={ta.confidence:.2f}]"
 
 
+def _require_supported_input(src: Path, command: str):
+    try:
+        return raise_if_unsupported(src, command)
+    except UnsupportedInputError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+
+def _command_summary(command: str, src: Path) -> str:
+    return f"arch-lw {command} {src}"
+
+
+def _require_rewriteable_inspection(rep, *, src: Path, command: str) -> None:
+    input_format = getattr(rep, "input_format", None) or {}
+    if getattr(rep, "total_stroked", 0) > 0:
+        return
+    reason = input_format.get("no_drawing_reason") or ("No rewriteable stroked geometry was found.")
+    raise click.UsageError(
+        f"{command} found no rewriteable stroke geometry in {src.name!r}. "
+        f"{reason} Nothing was written; run `arch-lw inspect` to confirm "
+        "that this is a drawing export rather than a reference/report PDF."
+    )
+
+
+def _default_poche_output_path(src: Path) -> Path:
+    return src.with_name(f"{src.stem.replace(' HIERARCHY', '')} POCHE{src.suffix}")
+
+
 @click.group()
 @click.version_option(__version__, prog_name="arch-lw")
 def cli():
@@ -115,8 +148,12 @@ def cli():
 )
 def inspect(src: Path, pretty: bool, source: str):
     """Report the color / stroke-width distribution of a .ai or .pdf file."""
-    rep = inspect_file(str(src))
     indent = 2 if pretty else None
+    try:
+        rep = inspect_file(str(src))
+    except UnsupportedInputError as exc:
+        click.echo(json.dumps({"input_format": exc.diagnostic.to_dict()}, indent=indent))
+        raise click.ClickException(str(exc)) from exc
     click.echo(json.dumps(rep.to_dict(), indent=indent))
 
     # Layer-source detection (Phase E5). Print to stderr so JSON on stdout
@@ -231,12 +268,14 @@ def apply(
     source: str,
 ):
     """Rewrite the file with per-color stroke widths."""
+    _require_supported_input(src, "apply")
     if not (auto or mapping_file):
         raise click.UsageError("provide --mapping FILE or --auto (with optional --preset)")
     if auto and mapping_file:
         raise click.UsageError("--auto and --mapping are mutually exclusive")
 
     rep = inspect_file(str(src))
+    _require_rewriteable_inspection(rep, src=src, command="apply")
 
     # Layer-source resolution. Print so users see what convention drove the
     # classifier; lets them re-run with `--source autocad` if detection is wrong.
@@ -400,6 +439,7 @@ def apply_jsx_cmd(
     structure into 1 Illustrator layer. 'apply-jsx' is the right default for
     Rhino-exported drawings with meaningful OCG layer names.
     """
+    _require_supported_input(src, "apply-jsx")
     out = str(output) if output else None
     if source != Source.AUTO.value:
         click.echo(f"# layer-source: {source} (forced)", err=True)
@@ -432,6 +472,260 @@ def apply_jsx_cmd(
         printer=lambda s: click.echo(s, err=True),
     )
     click.echo(result["report"])
+
+
+@cli.command("layout-jsx")
+@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option(
+    "-o",
+    "--output",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Output path. Defaults to '<src> LAYOUT-jsx.<ext>'.",
+)
+@click.option(
+    "--artboard",
+    default="24x36in",
+    show_default=True,
+    help="Artboard size as WIDTHxHEIGHT. Bare values are inches; 'pt' is also supported.",
+)
+@click.option(
+    "--fit",
+    "fit_mode",
+    type=click.Choice(["center", "fit"]),
+    default="center",
+    show_default=True,
+    help="'center' keeps scale and recenters; 'fit' scales down to fit within the margin.",
+)
+@click.option(
+    "--margin",
+    default="0.5in",
+    show_default=True,
+    help="Margin used by --fit. Bare values are inches; 'pt' is also supported.",
+)
+@click.option(
+    "--allow-enlarge",
+    is_flag=True,
+    help="Allow --fit to scale artwork up when it is smaller than the target artboard.",
+)
+@click.option(
+    "--report-json",
+    "report_json",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Write/read a structured JSON layout report.",
+)
+@click.option(
+    "--jsx-path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Path for the generated Illustrator JSX bridge script.",
+)
+@click.option(
+    "--timeout",
+    "timeout_min",
+    type=click.IntRange(1, 240),
+    default=None,
+    help="JSX timeout in minutes (default 30, max 240). Honors ARCH_LW_JSX_TIMEOUT_MIN when omitted.",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Render the JSX/report contract without opening Illustrator or writing output artwork.",
+)
+def layout_jsx_cmd(
+    src: Path,
+    output: Path | None,
+    artboard: str,
+    fit_mode: str,
+    margin: str,
+    allow_enlarge: bool,
+    report_json: Path | None,
+    jsx_path: Path | None,
+    timeout_min: int | None,
+    dry_run: bool,
+):
+    """Open a Rhino/Illustrator export, set artboard size, fit/center, and save.
+
+    \b
+    This is the narrow bridge for Make2D output after Rhino export and before
+    line hierarchy/poché work. It does not classify strokes or change drawing
+    content; it makes the Illustrator document inspectable and centered on a
+    known sheet size.
+    """
+    try:
+        parse_artboard_size(artboard)
+    except ValueError as exc:
+        raise click.UsageError(f"invalid artboard: {exc}") from exc
+    try:
+        parse_length(margin)
+    except ValueError as exc:
+        raise click.UsageError(f"invalid margin: {exc}") from exc
+
+    try:
+        result = layout_via_jsx(
+            str(src),
+            dst=str(output) if output else None,
+            artboard=artboard,
+            fit_mode=fit_mode,
+            margin=margin,
+            allow_enlarge=allow_enlarge,
+            report_json=str(report_json) if report_json else None,
+            jsx_path=str(jsx_path) if jsx_path else None,
+            timeout_min=timeout_min,
+            dry_run=dry_run,
+        )
+    except ValueError as exc:
+        raise click.UsageError(str(exc)) from exc
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    if dry_run:
+        click.echo(f"layout: dry run wrote JSX {result['jsx_path']}", err=True)
+    else:
+        click.echo(f"layout: wrote {result['output']}", err=True)
+    click.echo(f"layout: report {result['report_json']}", err=True)
+    if result.get("report"):
+        click.echo(result["report"])
+
+
+@cli.command("bridge-rhino-ai")
+@click.option(
+    "--input",
+    "input_path",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Rhino Export Selected `.ai` or `.pdf` file.",
+)
+@click.option(
+    "-o",
+    "--output",
+    "layout_output",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Layout output path. Defaults to '<input> LAYOUT-jsx.<ext>'.",
+)
+@click.option(
+    "--artboard",
+    default="24x36in",
+    show_default=True,
+    help="Target artboard size as WIDTHxHEIGHT.",
+)
+@click.option(
+    "--fit",
+    "fit_mode",
+    type=click.Choice(["center", "fit"]),
+    default="center",
+    show_default=True,
+    help="Keep scale and center, or scale down to fit within the margin.",
+)
+@click.option("--margin", default="0.5in", show_default=True, help="Margin used by --fit.")
+@click.option("--allow-enlarge", is_flag=True, help="Allow --fit to scale artwork up.")
+@click.option(
+    "--preset",
+    type=click.Choice(sorted(PRESETS)),
+    default="section",
+    show_default=True,
+    help="Preset passed to optional --apply-jsx.",
+)
+@click.option(
+    "--source",
+    type=click.Choice(_SOURCE_CHOICES),
+    default=Source.RHINO.value,
+    show_default=True,
+    help="Layer-name convention recorded for reports and optional poché.",
+)
+@click.option("--scale", default="1/4", show_default=True, help="Plot scale for optional --apply-jsx.")
+@click.option("--for-print", is_flag=True, help="Use print weights in optional --apply-jsx.")
+@click.option("--apply-jsx", "run_apply_jsx", is_flag=True, help="Run hierarchy after layout.")
+@click.option("--poche", "run_poche", is_flag=True, help="Run poché after --apply-jsx.")
+@click.option(
+    "--poche-style",
+    type=click.Choice(["solid", "material"]),
+    default="solid",
+    show_default=True,
+    help="Style passed to optional poché.",
+)
+@click.option(
+    "--bridge-strategy",
+    type=click.Choice(_BRIDGE_STRATEGY_CHOICES),
+    default=_BRIDGE_STRATEGY_DEFAULT,
+    show_default=True,
+    help="Bridge selector passed to optional poché.",
+)
+@click.option(
+    "--report-dir",
+    type=click.Path(file_okay=False, path_type=Path),
+    help="Directory for bridge/layout/poché reports and generated JSX.",
+)
+@click.option(
+    "--timeout",
+    "timeout_min",
+    type=click.IntRange(1, 240),
+    default=None,
+    help="Illustrator JSX timeout in minutes.",
+)
+@click.option("--dry-run", is_flag=True, help="Plan stages and render layout JSX/report without GUI work.")
+def bridge_rhino_ai_cmd(
+    input_path: Path,
+    layout_output: Path | None,
+    artboard: str,
+    fit_mode: str,
+    margin: str,
+    allow_enlarge: bool,
+    preset: str,
+    source: str,
+    scale: str,
+    for_print: bool,
+    run_apply_jsx: bool,
+    run_poche: bool,
+    poche_style: str,
+    bridge_strategy: str,
+    report_dir: Path | None,
+    timeout_min: int | None,
+    dry_run: bool,
+):
+    """Run the Rhino Make2D -> Illustrator layout bridge.
+
+    \b
+    The first stage always runs `layout-jsx`. Optional stages continue into
+    `apply-jsx` and `poche`, but launch-proof decisions still depend on the
+    verification reports and visual QA gates.
+    """
+    if run_poche and not run_apply_jsx:
+        raise click.UsageError("--poche requires --apply-jsx")
+    try:
+        parse_artboard_size(artboard)
+        parse_length(margin)
+    except ValueError as exc:
+        raise click.UsageError(str(exc)) from exc
+
+    try:
+        result = bridge_rhino_ai(
+            str(input_path),
+            layout_output=str(layout_output) if layout_output else None,
+            artboard=artboard,
+            fit_mode=fit_mode,
+            margin=margin,
+            allow_enlarge=allow_enlarge,
+            preset=preset,
+            source=source,
+            scale=scale,
+            for_print=for_print,
+            run_apply_jsx=run_apply_jsx,
+            run_poche=run_poche,
+            report_dir=str(report_dir) if report_dir else None,
+            timeout_min=timeout_min,
+            bridge_strategy=bridge_strategy,
+            poche_style=poche_style,
+            dry_run=dry_run,
+        )
+    except ValueError as exc:
+        raise click.UsageError(str(exc)) from exc
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    click.echo(f"bridge: {result['summary']['status']}", err=True)
+    click.echo(f"bridge: report {result['report_json']}", err=True)
+    for stage in result["stages"]:
+        click.echo(f"  {stage['name']}: {stage['status']} -> {stage.get('output', '')}", err=True)
+    click.echo(json.dumps(result, indent=2, sort_keys=True))
 
 
 @cli.command("apply-saas")
@@ -611,12 +905,14 @@ def apply_saas_cmd(
     Best for SaaS / batch workflows on Rhino-exported `.ai` files. For
     plain `.pdf` files (no PieceInfo), use `apply` instead.
     """
+    input_diag = _require_supported_input(src, "apply-saas")
     if not (auto or mapping_file or architectural):
         raise click.UsageError("provide --mapping FILE, --auto (with optional --preset), or --architectural")
     if auto and mapping_file:
         raise click.UsageError("--auto and --mapping are mutually exclusive")
 
     rep = inspect_file(str(src))
+    _require_rewriteable_inspection(rep, src=src, command="apply-saas")
 
     pdf_metadata = getattr(rep, "pdf_metadata", None) or {}
     layer_names = getattr(rep, "layer_names", None) or []
@@ -859,12 +1155,63 @@ def apply_saas_cmd(
             },
             poche_report=poche_report,
             poche_result=poche_result,
+            input_format=input_diag.to_dict(),
+            command=_command_summary("apply-saas", src),
         )
         report_path.parent.mkdir(parents=True, exist_ok=True)
         report_path.write_text(json.dumps(run_report, indent=2, sort_keys=True) + "\n")
         click.echo(f"report: wrote {report_path}", err=True)
 
     click.echo("", err=True)
+    click.echo(f"wrote {output}  ({result.output_size:,} bytes)", err=True)
+
+
+@cli.command("cleanup")
+@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option(
+    "-o",
+    "--output",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Output path. Defaults to '<src> CLEANUP.<ext>'.",
+)
+@click.option(
+    "--report",
+    "report_path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Write a JSON cleanup report with deleted/lightened/medium/heavy counts.",
+)
+def cleanup_cmd(src: Path, output: Path | None, report_path: Path | None):
+    """Conservatively clean up a low-semantic one-layer AI drawing."""
+    if output is None:
+        output = Path(default_output_path_cleanup(src))
+
+    try:
+        result = cleanup_file(str(src), str(output))
+    except Exception as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    report = result.report.to_dict()
+    report["source"] = {
+        "mode": "cleanup",
+        "input": src.name,
+        "output": output.name,
+    }
+    if report_path is not None:
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+        click.echo(f"report: wrote {report_path}", err=True)
+
+    summary = report["summary"]
+    click.echo(
+        "cleanup: "
+        f"deleted={summary['deleted']} "
+        f"lightened={summary['lightened']} "
+        f"medium={summary['medium']} "
+        f"heavy={summary['heavy']}",
+        err=True,
+    )
+    for warning in report["warnings"]:
+        click.echo(f"warning: {warning}", err=True)
     click.echo(f"wrote {output}  ({result.output_size:,} bytes)", err=True)
 
 
@@ -939,6 +1286,20 @@ def apply_saas_cmd(
     help="Layer-name convention used to identify cut layers (only Rhino "
     "ClippingPlaneIntersections is currently a poché target; AIA NCS support is preliminary).",
 )
+@click.option(
+    "--report",
+    "--report-json",
+    "report_path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=None,
+    help="Write a durable JSON poché report for verification gates.",
+)
+@click.option(
+    "--geometry-json",
+    "geometry_json",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Write a redacted cut-geometry summary JSON for verification gates.",
+)
 def poche_cmd(
     src: Path,
     output: Path | None,
@@ -949,6 +1310,8 @@ def poche_cmd(
     bridge_strategy: str,
     llm_fallback: bool,
     source: str,
+    report_path: Path | None,
+    geometry_json: Path | None,
 ):
     """Generate solid-black poché on cut layers via shapely linemerge + polygonize.
 
@@ -974,7 +1337,9 @@ def poche_cmd(
         }
       }
     """
-    out = str(output) if output else None
+    input_diag = _require_supported_input(src, "poche")
+    resolved_output = output if output else _default_poche_output_path(src)
+    out = str(resolved_output)
     over = str(overrides_path) if overrides_path else None
     if source != Source.AUTO.value:
         click.echo(f"# layer-source: {source} (forced)", err=True)
@@ -984,15 +1349,41 @@ def poche_cmd(
         os.environ["ARCH_LW_LLM_FALLBACK"] = "1"
         click.echo("# llm-fallback: enabled (rung 5)", err=True)
     click.echo(f"applying poche to {src} (style={style}, scale=1:{int(1 / hatch_scale)})...", err=True)
-    report = apply_poche(
-        str(src),
-        out,
-        overrides_path=over,
-        style=style,
-        scale=hatch_scale,
-        use_alpha_shape=alpha_shape,
-        bridge_strategy=bridge_strategy,
-    )
+    try:
+        report = apply_poche(
+            str(src),
+            out,
+            overrides_path=over,
+            style=style,
+            scale=hatch_scale,
+            use_alpha_shape=alpha_shape,
+            bridge_strategy=bridge_strategy,
+            geometry_report_path=str(geometry_json) if geometry_json else None,
+        )
+    except Exception as exc:
+        if report_path is not None:
+            from .run_report import build_poche_report
+
+            run_report = build_poche_report(
+                input_path=src,
+                output_path=resolved_output,
+                source={
+                    "mode": "poche",
+                    "style": style,
+                    "scale": hatch_scale,
+                    "layer_source": source,
+                    "bridge_strategy": bridge_strategy,
+                    "min_inject_confidence": 0.85,
+                },
+                poche_report=None,
+                error=str(exc),
+                input_format=input_diag.to_dict(),
+                command=_command_summary("poche", src),
+            )
+            report_path.parent.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(json.dumps(run_report, indent=2, sort_keys=True) + "\n")
+            click.echo(f"report: wrote {report_path}", err=True)
+        raise
     click.echo("", err=True)
     click.echo(f"polygons created: {report.total_polygons}", err=True)
     click.echo(f"  clean (linemerge):     {report.working_layers} layers", err=True)
@@ -1011,6 +1402,345 @@ def poche_cmd(
             f"conf={fr.confidence:.2f}{bridge_suffix}",
             err=True,
         )
+    if report_path is not None:
+        from .run_report import build_poche_report
+
+        run_report = build_poche_report(
+            input_path=src,
+            output_path=resolved_output,
+            source={
+                "mode": "poche",
+                "style": style,
+                "scale": hatch_scale,
+                "layer_source": source,
+                "bridge_strategy": bridge_strategy,
+                "min_inject_confidence": 0.85,
+            },
+            poche_report=report,
+            input_format=input_diag.to_dict(),
+            command=_command_summary("poche", src),
+        )
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(json.dumps(run_report, indent=2, sort_keys=True) + "\n")
+        click.echo(f"report: wrote {report_path}", err=True)
+
+
+def _path_payload(path: Path) -> str:
+    return path.as_posix()
+
+
+def _fixture_artifact_payload(artifacts) -> dict[str, Any]:
+    return {
+        "before": _path_payload(artifacts.before),
+        "after": _path_payload(artifacts.after),
+        "diff": _path_payload(artifacts.diff),
+        "rendered_views": [
+            {
+                "id": view.id,
+                "kind": view.kind,
+                "before": _path_payload(view.before),
+                "after": _path_payload(view.after),
+                "diff": _path_payload(view.diff),
+            }
+            for view in artifacts.rendered_views
+        ],
+    }
+
+
+def _review_region_payload(region) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "id": region.id,
+        "kind": region.kind,
+        "rect": list(region.rect),
+    }
+    if region.min_dark_ratio is not None:
+        payload["min_dark_ratio"] = region.min_dark_ratio
+    if region.min_dark_delta is not None:
+        payload["min_dark_delta"] = region.min_dark_delta
+    return payload
+
+
+def _proof_check_status(validation_statuses: list[str], *, plan_only: bool) -> str:
+    if plan_only:
+        return "planned"
+    if "no_go" in validation_statuses:
+        return "no_go"
+    if "failed" in validation_statuses:
+        return "failed"
+    if "needs_review" in validation_statuses:
+        return "needs_review"
+    return "passed"
+
+
+def _apply_expected_fixture_status(
+    *,
+    fixture_status: str,
+    expected_status: str,
+    validation_status: str,
+    reasons: list[str],
+) -> tuple[str, str, list[str]]:
+    if fixture_status != expected_status:
+        return (
+            "failed",
+            "unexpected_fail",
+            [
+                *reasons,
+                f"manifest status {fixture_status} does not match expected_report.status {expected_status}",
+            ],
+        )
+
+    if validation_status == "no_go":
+        return "no_go", "unexpected_fail", reasons
+
+    if expected_status == "pass":
+        if validation_status == "passed":
+            return "passed", "satisfied", reasons
+        return (
+            "failed",
+            "unexpected_fail",
+            [
+                *reasons,
+                f"pass fixture validated as {validation_status}; expected passed",
+            ],
+        )
+    if expected_status == "expected_fail":
+        if validation_status == "failed":
+            return "expected_fail", "satisfied", reasons
+        if validation_status == "passed":
+            return (
+                "failed",
+                "unexpected_pass",
+                [
+                    *reasons,
+                    "expected_fail fixture validated as passed; expected a caught failure",
+                ],
+            )
+        return (
+            "failed",
+            "unexpected_fail",
+            [
+                *reasons,
+                f"expected_fail fixture validated as {validation_status}; expected a caught failure",
+            ],
+        )
+    if expected_status == "unsupported":
+        if validation_status == "failed" and any(
+            "missing payload" in reason.lower() or "unsupported" in reason.lower() for reason in reasons
+        ):
+            return "unsupported", "satisfied", reasons
+        if validation_status == "passed":
+            return (
+                "failed",
+                "unexpected_pass",
+                [
+                    *reasons,
+                    "unsupported fixture validated as passed; expected an unsupported/missing-payload condition",
+                ],
+            )
+        return (
+            "failed",
+            "unexpected_fail",
+            [
+                *reasons,
+                f"unsupported fixture validated as {validation_status}; expected an unsupported/missing-payload condition",
+            ],
+        )
+    return validation_status, "not_applicable", reasons
+
+
+def _expected_count_errors(report_path: Path, expected_counts: dict[str, int]) -> list[str]:
+    if not expected_counts or not report_path.is_file():
+        return []
+    try:
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return []
+    summary = report.get("summary") if isinstance(report, dict) else None
+    if not isinstance(summary, dict):
+        return ["expected_report.counts could not be checked because report.summary is missing"]
+
+    errors: list[str] = []
+    for key, expected in sorted(expected_counts.items()):
+        actual = summary.get(key)
+        if actual != expected:
+            errors.append(f"expected_report.counts.{key} expected {expected}, found {actual!r}")
+    return errors
+
+
+@cli.command("proof-check")
+@click.argument("manifest", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option(
+    "--output-dir",
+    type=click.Path(file_okay=False, path_type=Path),
+    default=Path("proof"),
+    show_default=True,
+    help="Directory containing or planned to contain per-fixture proof packet artifacts.",
+)
+@click.option(
+    "--fixture",
+    "fixture_ids",
+    multiple=True,
+    help="Fixture id to include. May be passed multiple times; defaults to all fixtures.",
+)
+@click.option(
+    "--plan-only",
+    is_flag=True,
+    help="Only emit manifest/proof-packet plan JSON; do not validate local artifacts.",
+)
+@click.option(
+    "--write",
+    "write_path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Write the proof-check JSON report to a file in addition to stdout.",
+)
+@click.option(
+    "--materialize-synthetic",
+    is_flag=True,
+    help=(
+        "Write deterministic public synthetic proof artifacts for eligible pass, expected-fail, "
+        "and unsupported fixtures before validation."
+    ),
+)
+@click.option("--pretty/--no-pretty", default=True, help="Pretty-print JSON output.")
+def proof_check_cmd(
+    manifest: Path,
+    output_dir: Path,
+    fixture_ids: tuple[str, ...],
+    plan_only: bool,
+    write_path: Path | None,
+    materialize_synthetic: bool,
+    pretty: bool,
+):
+    """Read a Make2D proof manifest and validate/plan proof packet artifacts."""
+    from .proof import (
+        PROOF_PACKET_GUARDRAILS,
+        build_proof_packet_plan,
+        load_manifest,
+        materialize_synthetic_proof_packet,
+        validate_proof_packet,
+    )
+
+    proof_manifest = load_manifest(manifest)
+    selected_ids = set(fixture_ids)
+    fixtures = [
+        fixture for fixture in proof_manifest.fixtures if not selected_ids or fixture.id in selected_ids
+    ]
+    if selected_ids:
+        known_ids = {fixture.id for fixture in proof_manifest.fixtures}
+        unknown_ids = sorted(selected_ids - known_ids)
+        if unknown_ids:
+            raise click.UsageError(f"unknown fixture id(s): {', '.join(unknown_ids)}")
+
+    fixture_payloads: list[dict[str, Any]] = []
+    validation_statuses: list[str] = []
+    expectation_statuses: list[str] = []
+    for fixture in fixtures:
+        plan = build_proof_packet_plan(
+            fixture_id=fixture.id,
+            output_dir=output_dir,
+            commands=fixture.commands,
+        )
+        validation_payload: dict[str, Any] = {"status": "not_run", "reasons": []}
+        if not plan_only:
+            if (
+                materialize_synthetic
+                and fixture.status in {"pass", "expected_fail", "unsupported"}
+                and "synthetic" in fixture.id.lower()
+            ):
+                materialize_synthetic_proof_packet(plan, fixture)
+            validation = validate_proof_packet(
+                plan,
+                review_regions=fixture.review_regions,
+                fail_on_unchanged=True,
+            )
+            reasons = list(validation.reasons)
+            expected_count_errors = _expected_count_errors(plan.report_path, fixture.expected_report.counts)
+            reasons.extend(expected_count_errors)
+            status = validation.status
+            if expected_count_errors and status != "no_go":
+                status = "failed"
+            observed_status = status
+            status, expectation_status, reasons = _apply_expected_fixture_status(
+                fixture_status=fixture.status,
+                expected_status=fixture.expected_report.status,
+                validation_status=status,
+                reasons=reasons,
+            )
+            validation_payload = {
+                "status": status,
+                "observed_status": observed_status,
+                "expected_status": fixture.expected_report.status,
+                "expectation_status": expectation_status,
+                "reasons": reasons,
+                "missing_artifacts": list(validation.missing_artifacts),
+                "unsafe_references": list(validation.unsafe_references),
+                "public_summary": validation.public_summary,
+            }
+            validation_statuses.append(status)
+            expectation_statuses.append(expectation_status)
+
+        fixture_payloads.append(
+            {
+                "id": fixture.id,
+                "manifest_status": fixture.status,
+                "source_path": _path_payload(fixture.source_path),
+                "commands": fixture.commands,
+                "expected_report": {
+                    "status": fixture.expected_report.status,
+                    "counts": fixture.expected_report.counts,
+                },
+                "visual_artifacts": _fixture_artifact_payload(fixture.visual_artifacts),
+                "geometry_artifacts": {
+                    "cut_dump": _path_payload(fixture.geometry_artifacts.cut_dump),
+                    "layer_audit": _path_payload(fixture.geometry_artifacts.layer_audit),
+                },
+                "review_regions": [_review_region_payload(region) for region in fixture.review_regions],
+                "caveats": fixture.caveats,
+                "proof_packet": {
+                    "directory": _path_payload(plan.output_dir),
+                    "report": _path_payload(plan.report_path),
+                    "before": _path_payload(plan.before_path),
+                    "after": _path_payload(plan.after_path),
+                    "diff": _path_payload(plan.diff_path),
+                    "cut_geometry": _path_payload(plan.cut_geometry_path),
+                    "layer_audit": _path_payload(plan.layer_audit_path),
+                },
+                "validation": validation_payload,
+            }
+        )
+
+    validation_status = _proof_check_status(validation_statuses, plan_only=plan_only)
+    summary = {
+        "fixtures": len(fixture_payloads),
+        "passed": validation_statuses.count("passed"),
+        "expected_fail": validation_statuses.count("expected_fail"),
+        "unsupported": validation_statuses.count("unsupported"),
+        "expectations_satisfied": expectation_statuses.count("satisfied"),
+        "unexpected_pass": expectation_statuses.count("unexpected_pass"),
+        "unexpected_fail": expectation_statuses.count("unexpected_fail"),
+        "needs_review": validation_statuses.count("needs_review"),
+        "failed": validation_statuses.count("failed"),
+        "no_go": validation_statuses.count("no_go"),
+        "needs_manual_review": sum(1 for fixture in fixtures if fixture.status == "needs_manual_review"),
+    }
+    payload = {
+        "schema_version": 1,
+        "status": validation_status,
+        "manifest": _path_payload(manifest),
+        "output_dir": _path_payload(output_dir),
+        "guardrails": list(PROOF_PACKET_GUARDRAILS),
+        "summary": summary,
+        "fixtures": fixture_payloads,
+    }
+    indent = 2 if pretty else None
+    encoded = json.dumps(payload, indent=indent, sort_keys=True) + "\n"
+    click.echo(encoded, nl=False)
+    if write_path is not None:
+        write_path.parent.mkdir(parents=True, exist_ok=True)
+        write_path.write_text(encoded, encoding="utf-8")
+        click.echo(f"proof-check: wrote {write_path}", err=True)
+    if validation_status in {"failed", "no_go"}:
+        raise click.ClickException(f"proof-check status is {validation_status}")
 
 
 @cli.command("preview")
@@ -1064,6 +1794,21 @@ def preview_cmd(before: Path, after: Path, output: Path, mode: str, dpi: int, gh
         click.echo("rendering pixel diff...", err=True)
         diff_image(str(before), str(after), str(output), dpi=dpi, renderer=renderer)
     click.echo(f"wrote {output}", err=True)
+
+
+@cli.command("diagnose")
+@click.argument("report", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--json", "as_json", is_flag=True, help="Emit the diagnosis as JSON.")
+def diagnose_cmd(report: Path, as_json: bool):
+    """Summarize an arch-lw JSON run report for review."""
+    from .diagnose_report import format_diagnosis, summarize_report
+
+    data = json.loads(report.read_text())
+    summary = summarize_report(data)
+    if as_json:
+        click.echo(json.dumps(summary, indent=2, sort_keys=True))
+    else:
+        click.echo(format_diagnosis(summary))
 
 
 @cli.command("explain-layer")

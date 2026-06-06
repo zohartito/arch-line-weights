@@ -19,9 +19,7 @@ from pathlib import Path
 import pikepdf
 import zstandard as zstd
 
-DEFAULT_AI = Path(
-    "/Users/zohartito/SynologyDrive/USC/Spring 2026/ARCH 202B/DRAWING 4 SECTION [Converted].ai"
-)
+DEFAULT_AI = Path("sample-section.ai")
 PREFIX = b"%AI24_ZStandard_Data"
 CHUNK = 65536
 
