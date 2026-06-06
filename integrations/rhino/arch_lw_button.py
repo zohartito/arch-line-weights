@@ -14,6 +14,7 @@ Docs:
   https://developer.rhino3d.com/guides/rhinopython/python-rhino8/
   https://developer.rhino3d.com/api/RhinoCommon/html/N_Eto_Forms.htm
 """
+
 # r: rhinoscriptsyntax
 import os
 import shutil
@@ -59,9 +60,7 @@ class ProgressDialog(forms.Dialog[bool]):
         self.Content = layout
 
     def append(self, text):
-        Rhino.RhinoApp.InvokeOnUiThread(
-            lambda: setattr(self.log, "Text", self.log.Text + text)
-        )
+        Rhino.RhinoApp.InvokeOnUiThread(lambda: setattr(self.log, "Text", self.log.Text + text))
 
     def finish(self, ok):
         Rhino.RhinoApp.InvokeOnUiThread(lambda: setattr(self.bar, "Indeterminate", False))
@@ -84,8 +83,11 @@ def _run_cli_streaming(cli, src, dlg):
     dlg.append("$ " + " ".join(cmd) + "\n\n")
     try:
         proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            text=True, bufsize=1,
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
         )
         for line in proc.stdout:
             dlg.append(line)
@@ -109,7 +111,8 @@ def main():
     if not cli:
         forms.MessageBox.Show(
             "arch-lw is not on PATH.\nInstall it and reopen Rhino.",
-            "arch-lw missing", forms.MessageBoxButtons.OK,
+            "arch-lw missing",
+            forms.MessageBoxButtons.OK,
             forms.MessageBoxType.Error,
         )
         return
@@ -117,8 +120,7 @@ def main():
     if not src:
         return
     dlg = ProgressDialog()
-    threading.Thread(target=_run_cli_streaming,
-                     args=(cli, src, dlg), daemon=True).start()
+    threading.Thread(target=_run_cli_streaming, args=(cli, src, dlg), daemon=True).start()
     dlg.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
 
 

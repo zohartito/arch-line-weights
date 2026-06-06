@@ -34,6 +34,6 @@ def test_inspect_legacy_postscript_raises_actionable_error(tmp_path):
     with pytest.raises(RuntimeError) as exc:
         inspect_file(str(ps))
     msg = str(exc.value)
-    assert "legacy PostScript" in msg          # names the real cause
-    assert "PDF Compatible" in msg             # points at the actual fix
-    assert "smaller copy" not in msg           # not the misleading old hint
+    assert "legacy PostScript" in msg  # names the real cause
+    assert "PDF Compatible" in msg  # points at the actual fix
+    assert "smaller copy" not in msg  # not the misleading old hint

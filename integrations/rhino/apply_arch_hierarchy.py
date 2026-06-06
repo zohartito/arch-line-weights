@@ -19,7 +19,7 @@ Outputs:
 
 Docs: https://developer.rhino3d.com/guides/scripting/scripting-gh-python/
 """
-# ruff: noqa: F821
+
 import os
 import shutil
 import subprocess
@@ -80,8 +80,11 @@ def run_arch_lw(pdf_path, mode, preset, scale, for_print, mapping_file):
             cmd += ["--mapping", mapping_file]
     try:
         proc = subprocess.run(
-            cmd, capture_output=True, text=True,
-            timeout=TIMEOUT_SEC, check=False,
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=TIMEOUT_SEC,
+            check=False,
         )
     except subprocess.TimeoutExpired as exc:
         raise RuntimeError(f"arch-lw exceeded {TIMEOUT_SEC}s; aborted.") from exc
