@@ -11,6 +11,7 @@ working ``[Converted].ai`` versions are.
 
 import pytest
 
+from arch_line_weights.input_format import UnsupportedInputError
 from arch_line_weights.inspect import _is_legacy_postscript, inspect_file
 
 
@@ -31,9 +32,9 @@ def test_inspect_legacy_postscript_raises_actionable_error(tmp_path):
     # Minimal legacy PostScript header: enough that both PDF readers fail and
     # the format sniffer fires.
     ps.write_bytes(b"%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 0 0 100 100\n")
-    with pytest.raises(RuntimeError) as exc:
+    with pytest.raises(UnsupportedInputError) as exc:
         inspect_file(str(ps))
     msg = str(exc.value)
-    assert "legacy PostScript" in msg  # names the real cause
-    assert "PDF Compatible" in msg  # points at the actual fix
+    assert "legacy postscript" in msg.lower()  # names the real cause
+    assert "PDF-compatible" in msg  # points at the actual fix
     assert "smaller copy" not in msg  # not the misleading old hint
