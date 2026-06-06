@@ -27,8 +27,8 @@ from .layer_classify import (
     detect_source,
     explain_source_match,
 )
-from .linetypes import aia_status_from_name, apply_status, linetype_for_layer
 from .layout_jsx import layout_via_jsx, parse_artboard_size, parse_length
+from .linetypes import aia_status_from_name, apply_status, linetype_for_layer
 from .poche import apply_poche
 from .presets import PRESETS, select_preset
 from .progress import DEFAULT_PROGRESS_FILE, make_reporter
