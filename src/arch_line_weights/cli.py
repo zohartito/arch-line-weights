@@ -33,6 +33,12 @@ from .poche import apply_poche
 from .presets import PRESETS, select_preset
 from .progress import DEFAULT_PROGRESS_FILE, make_reporter
 from .role_signal import no_role_signal, no_role_signal_message
+from .visual_check import (
+    VALID_VISUAL_CHECK_STATUSES,
+    build_visual_check_summary,
+    format_visual_check_markdown,
+    open_in_illustrator,
+)
 
 # CLI-facing source choices. Keep AUTO first so it's the default.
 _SOURCE_CHOICES = [Source.AUTO.value, Source.RHINO.value, Source.AUTOCAD.value]
@@ -1809,6 +1815,85 @@ def diagnose_cmd(report: Path, as_json: bool):
         click.echo(json.dumps(summary, indent=2, sort_keys=True))
     else:
         click.echo(format_diagnosis(summary))
+
+
+@cli.command("visual-check")
+@click.argument("subject", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--before", type=click.Path(dir_okay=False, path_type=Path), help="Local before-view artifact.")
+@click.option("--after", type=click.Path(dir_okay=False, path_type=Path), help="Local after-view artifact.")
+@click.option("--diff", type=click.Path(dir_okay=False, path_type=Path), help="Local diff artifact.")
+@click.option(
+    "--report", "report_path", type=click.Path(dir_okay=False, path_type=Path), help="Local run report."
+)
+@click.option(
+    "--status",
+    type=click.Choice(list(VALID_VISUAL_CHECK_STATUSES)),
+    default="needs_review",
+    show_default=True,
+    help="Visual review status to record.",
+)
+@click.option("--reviewer", help="Reviewer name or handoff code, e.g. W5 or W7.")
+@click.option("--issue", "issues", multiple=True, help="GitHub issue covered by this visual review.")
+@click.option("--note", "notes", multiple=True, help="Public-safe review note. Local paths will be redacted.")
+@click.option(
+    "--json-output", type=click.Path(dir_okay=False, path_type=Path), help="Write redacted JSON summary."
+)
+@click.option(
+    "--markdown-output",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Write redacted Markdown summary.",
+)
+@click.option(
+    "--open-illustrator", is_flag=True, help="Open the subject in Adobe Illustrator before reporting."
+)
+@click.option(
+    "--illustrator-app", default="Adobe Illustrator", show_default=True, help="macOS app name to open."
+)
+def visual_check_cmd(
+    subject: Path,
+    before: Path | None,
+    after: Path | None,
+    diff: Path | None,
+    report_path: Path | None,
+    status: str,
+    reviewer: str | None,
+    issues: tuple[str, ...],
+    notes: tuple[str, ...],
+    json_output: Path | None,
+    markdown_output: Path | None,
+    open_illustrator: bool,
+    illustrator_app: str,
+):
+    """Write a path-redacted local Illustrator visual QA summary."""
+    if open_illustrator:
+        open_in_illustrator(subject, app_name=illustrator_app)
+
+    try:
+        summary = build_visual_check_summary(
+            subject,
+            before=before,
+            after=after,
+            diff=diff,
+            report=report_path,
+            status=status,
+            reviewer=reviewer,
+            issues=issues,
+            notes=notes,
+            opened_in_illustrator=open_illustrator,
+        )
+        markdown = format_visual_check_markdown(summary)
+    except ValueError as exc:
+        raise click.UsageError(str(exc)) from exc
+
+    if json_output is not None:
+        json_output.parent.mkdir(parents=True, exist_ok=True)
+        json_output.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        click.echo(f"visual-check: wrote {json_output.name}", err=True)
+    if markdown_output is not None:
+        markdown_output.parent.mkdir(parents=True, exist_ok=True)
+        markdown_output.write_text(markdown, encoding="utf-8")
+        click.echo(f"visual-check: wrote {markdown_output.name}", err=True)
+    click.echo(markdown, nl=False)
 
 
 @cli.command("explain-layer")

@@ -228,6 +228,38 @@ evidence: do not commit raw proof-check reports that contain machine-local paths
 materialize public pass, expected-fail, and unsupported sentinels, but it does
 not create private/manual-review proof, record acceptance, or close #30.
 
+## `arch-lw visual-check`
+
+Record a local Illustrator visual QA decision without leaking private paths.
+
+```bash
+arch-lw visual-check output.ai \
+  --after after.png \
+  --report run-report.json \
+  --issue 30 \
+  --status needs_review \
+  --markdown-output visual-check.md \
+  --json-output visual-check.json
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--before PATH` | - | Local before-view artifact, stored by basename only |
+| `--after PATH` | - | Local after-view artifact, stored by basename only |
+| `--diff PATH` | - | Local diff artifact, stored by basename only |
+| `--report PATH` | - | Local run report, stored by basename only |
+| `--status {needs_review,accepted,rejected,blocked}` | `needs_review` | Review decision |
+| `--reviewer TEXT` | - | Reviewer name or handoff code |
+| `--issue TEXT` | repeatable | Issue covered by the visual review |
+| `--note TEXT` | repeatable | Public-safe note; local paths are redacted |
+| `--json-output PATH` | - | Write the redacted JSON summary |
+| `--markdown-output PATH` | - | Write the redacted Markdown summary |
+| `--open-illustrator` | off | Open the subject in Adobe Illustrator before reporting |
+
+`visual-check` is a local evidence log, not public proof. It redacts local paths
+to basenames and repeats the guardrail that private drawings, screenshots, raw
+reports, and local paths stay out of git.
+
 ## `arch-lw explain-layer`
 
 Show what tier+weight the classifier assigns.
