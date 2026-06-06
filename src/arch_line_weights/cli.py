@@ -151,6 +151,13 @@ def _echo_drawing_type_guess(
         click.echo(f"# selected preset: {preset} (default)", err=True)
 
 
+def _echo_depth_evidence(summary: dict) -> None:
+    source = summary.get("source", "fallback")
+    confidence = float(summary.get("confidence", 0.0))
+    explanation = summary.get("explanation", "")
+    click.echo(f"# depth: {source} (confidence={confidence:.2f}) - {explanation}", err=True)
+
+
 @click.group()
 @click.version_option(__version__, prog_name="arch-lw")
 def cli():
@@ -200,6 +207,7 @@ def inspect(src: Path, pretty: bool, source: str):
         click.echo(f"# layer-name source: {resolved.value} (forced via --source)", err=True)
 
     _echo_drawing_type_guess(getattr(rep, "drawing_type", None) or {})
+    _echo_depth_evidence(getattr(rep, "depth_evidence", None) or {})
 
     # Per-layer role plan (item 4): show what each named layer would get, when
     # there are layers and a usable source (forced, or auto-detected > 0).
@@ -327,6 +335,7 @@ def apply(
         height_pt=getattr(rep, "height_pt", None),
     ).to_dict()
     _echo_drawing_type_guess(drawing_guess, preset=preset, explicit_preset=explicit_preset)
+    _echo_depth_evidence(getattr(rep, "depth_evidence", None) or {})
     resolved_source, source_conf = _resolve_source(source, pdf_metadata, layer_names)
     if source == Source.AUTO.value:
         click.echo(

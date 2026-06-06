@@ -31,6 +31,7 @@ from dataclasses import dataclass, field
 
 import pikepdf
 
+from .depth import summarize_depth_evidence
 from .drawing_type import classify_drawing_type
 from .input_format import raise_if_unsupported
 
@@ -81,6 +82,8 @@ class InspectionReport:
     # callers that hand-construct InspectionReport don't break.
     pdf_metadata: dict = field(default_factory=dict)
     layer_names: list[str] = field(default_factory=list)
+    depth_by_color: dict = field(default_factory=dict)
+    depth_evidence: dict = field(default_factory=dict)
     drawing_type: dict = field(default_factory=dict)
     input_format: dict = field(default_factory=dict)
 
@@ -98,6 +101,8 @@ class InspectionReport:
             "width_by_color": {k: dict(v) for k, v in self.width_by_color.items()},
             "pdf_metadata": dict(self.pdf_metadata),
             "layer_names": list(self.layer_names),
+            "depth_by_color": dict(self.depth_by_color),
+            "depth_evidence": dict(self.depth_evidence),
             "drawing_type": dict(self.drawing_type),
             "input_format": dict(self.input_format),
         }
@@ -570,6 +575,7 @@ def inspect_file(path: str) -> InspectionReport:
         try:
             rep = _inspect_ai(path)
             _attach_input_format(rep, input_diag)
+            _attach_depth_evidence(rep)
             _attach_drawing_type(rep)
             return rep
         except Exception as e:
@@ -577,6 +583,7 @@ def inspect_file(path: str) -> InspectionReport:
         try:
             rep = _inspect_pdf(path)
             _attach_input_format(rep, input_diag)
+            _attach_depth_evidence(rep)
             _attach_drawing_type(rep)
             return rep
         except Exception as e:
@@ -585,6 +592,7 @@ def inspect_file(path: str) -> InspectionReport:
         try:
             rep = _inspect_pdf(path)
             _attach_input_format(rep, input_diag)
+            _attach_depth_evidence(rep)
             _attach_drawing_type(rep)
             return rep
         except Exception as e:
@@ -592,6 +600,7 @@ def inspect_file(path: str) -> InspectionReport:
         try:
             rep = _inspect_ai(path)
             _attach_input_format(rep, input_diag)
+            _attach_depth_evidence(rep)
             _attach_drawing_type(rep)
             return rep
         except Exception as e:
@@ -653,4 +662,14 @@ def _attach_drawing_type(rep: InspectionReport) -> None:
         layer_names=rep.layer_names,
         width_pt=rep.width_pt,
         height_pt=rep.height_pt,
+    ).to_dict()
+
+
+def _attach_depth_evidence(rep: InspectionReport) -> None:
+    """Attach the public depth-evidence summary to an inspection."""
+
+    rep.depth_evidence = summarize_depth_evidence(
+        pdf_metadata=rep.pdf_metadata,
+        layer_names=rep.layer_names,
+        depth_by_color=rep.depth_by_color,
     ).to_dict()

@@ -25,6 +25,10 @@ arch-lw inspect SRC [--pretty/--no-pretty]
 The JSON report includes `drawing_type.kind`, `confidence`, `explanation`, and
 `signals`. The command also prints a stderr hint such as `# drawing-type: plan`
 so dry runs and logs preserve the inferred plan/section/elevation/axon context.
+It also includes `depth_evidence.source`, `confidence`, and `explanation`;
+`source=z` means Z/depth metadata is available, `source=overlap` means
+foreground/overlap cues are available, and `source=fallback` means the v1 role
+ladder remains unchanged.
 
 ## `arch-lw apply`
 
@@ -50,6 +54,11 @@ arch-lw apply SRC [OPTIONS]
 `apply --dry-run` prints the inferred drawing type and the selected preset. If
 the user supplied `--preset`, that preset is reported as an explicit override;
 otherwise the default `section` preset remains visible.
+
+When trusted per-color depth evidence exists, `apply --auto` uses it to recede
+non-protected roles. Cut profiles and protected spatial edges are not weakened;
+low-confidence depth evidence falls back to the v1 role ladder and is reported
+as `# depth: fallback`.
 
 ## `arch-lw apply-jsx`
 
