@@ -14,7 +14,7 @@ the default weight.
 from __future__ import annotations
 
 import os
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from decimal import Decimal
 
@@ -38,6 +38,13 @@ class ApplyResult:
     pieceinfo_stripped: bool = False
     linetypes_applied: dict[str, int] = field(default_factory=dict)
     excluded_strokes: int = 0
+    layer_weight_overrides: int = 0
+    layer_color_overrides: int = 0
+    layer_dash_overrides: int = 0
+    marked_content_ops_seen: int = 0
+    marked_content_layers_seen: int = 0
+    marked_content_malformed: int = 0
+    warnings: list[str] = field(default_factory=list)
 
 
 def apply_to_file(
@@ -48,6 +55,9 @@ def apply_to_file(
     default_width: float = 0.25,
     strip_pieceinfo: bool = True,
     rgb_to_linetype: dict[tuple[int, int, int], LineType] | None = None,
+    layer_weight_resolver: Callable[[str], float | None] | None = None,
+    layer_color_resolver: Callable[[str], tuple[int, int, int] | None] | None = None,
+    layer_solid_line_resolver: Callable[[str], bool] | None = None,
 ) -> ApplyResult:
     """Apply per-color stroke widths to `src`, save to `dst`.
 
@@ -66,7 +76,18 @@ def apply_to_file(
 
     for page in pdf.pages:
         instructions = list(pikepdf.parse_content_stream(page))
-        new_inst = _rewrite(instructions, rgb_to_weight, default_width, result, rgb_to_linetype)
+        property_layers = _page_property_layers(page)
+        new_inst = _rewrite(
+            instructions,
+            rgb_to_weight,
+            default_width,
+            result,
+            rgb_to_linetype,
+            property_layers=property_layers,
+            layer_weight_resolver=layer_weight_resolver,
+            layer_color_resolver=layer_color_resolver,
+            layer_solid_line_resolver=layer_solid_line_resolver,
+        )
         new_bytes = pikepdf.unparse_content_stream(new_inst)
         page.Contents = pdf.make_stream(new_bytes)
 
@@ -76,6 +97,21 @@ def apply_to_file(
         for k in ("/LastModified", "/Thumb"):
             if k in page.obj:
                 del page.obj[k]
+
+    if (
+        layer_weight_resolver is not None
+        or layer_color_resolver is not None
+        or layer_solid_line_resolver is not None
+    ) and result.marked_content_layers_seen == 0:
+        if result.marked_content_ops_seen == 0:
+            _warn_once(
+                result, "no marked-content OCG layer bindings found; using color/default stroke mapping"
+            )
+        else:
+            _warn_once(
+                result,
+                "marked-content OCG layer bindings were present but unresolved; using color/default stroke mapping",
+            )
 
     pdf.save(dst)
     result.output_size = os.path.getsize(dst)
@@ -96,24 +132,161 @@ def _solid_dash_operands() -> list:
     return [pikepdf.Array([]), Decimal("0")]
 
 
+def _rgb_operands(rgb: tuple[int, int, int]) -> list[Decimal]:
+    return [Decimal(f"{max(0, min(255, channel)) / 255:g}") for channel in rgb]
+
+
+def _warn_once(result: ApplyResult, message: str) -> None:
+    if message not in result.warnings:
+        result.warnings.append(message)
+
+
+def _ocg_name(value) -> str | None:
+    try:
+        name = value.get("/Name")
+    except Exception:
+        return None
+    if name is None:
+        return None
+    text = str(name).strip()
+    return text or None
+
+
+def _page_property_layers(page) -> dict[str, str]:
+    try:
+        resources = page.obj.get("/Resources", {})
+        properties = resources.get("/Properties", {})
+    except Exception:
+        return {}
+    out: dict[str, str] = {}
+    try:
+        items = properties.items()
+    except Exception:
+        return out
+    for key, value in items:
+        name = _ocg_name(value)
+        if name:
+            out[str(key)] = name
+    return out
+
+
+def _layer_from_property_object(prop, property_layers: dict[str, str]) -> str | None:
+    if isinstance(prop, pikepdf.Name):
+        return property_layers.get(str(prop))
+    direct = _ocg_name(prop)
+    if direct:
+        return direct
+    try:
+        nested = prop.get("/OC")
+    except Exception:
+        return None
+    if isinstance(nested, pikepdf.Name):
+        return property_layers.get(str(nested))
+    return _ocg_name(nested)
+
+
+def _layer_from_bdc_operands(
+    operands,
+    property_layers: dict[str, str],
+    result: ApplyResult,
+) -> str | None:
+    tag = str(operands[0]) if operands else ""
+    if tag != "/OC":
+        return None
+    if len(operands) < 2:
+        result.marked_content_malformed += 1
+        _warn_once(result, "BDC /OC without a property operand; using color/default stroke mapping")
+        return None
+    prop = operands[1]
+    layer = _layer_from_property_object(prop, property_layers)
+    if layer:
+        result.marked_content_layers_seen += 1
+        return layer
+    prop_name = str(prop) if isinstance(prop, pikepdf.Name) else "<inline>"
+    _warn_once(
+        result,
+        f"unresolved marked-content OCG property {prop_name}; using color/default stroke mapping",
+    )
+    return None
+
+
+def _current_layer(layer_stack: list[str | None]) -> str | None:
+    for layer_name in reversed(layer_stack):
+        if layer_name:
+            return layer_name
+    return None
+
+
 def _rewrite(
     instructions: Iterable,
     rgb_to_weight: dict[tuple[int, int, int], float],
     default_width: float,
     result: ApplyResult,
     rgb_to_linetype: dict[tuple[int, int, int], LineType] | None = None,
+    *,
+    property_layers: dict[str, str] | None = None,
+    layer_weight_resolver: Callable[[str], float | None] | None = None,
+    layer_color_resolver: Callable[[str], tuple[int, int, int] | None] | None = None,
+    layer_solid_line_resolver: Callable[[str], bool] | None = None,
 ) -> list:
     out: list = []
     current_rgb: tuple[int, int, int] | None = None
+    layer_stack: list[str | None] = []
+    property_layers = property_layers or {}
     # Only touch the dash state when at least one real dash pattern is requested;
     # then set it on EVERY stroke (solid `[] 0 d` reset by default) so a pattern
     # never leaks into later strokes via persistent graphics state.
-    emit_dashes = rgb_to_linetype is not None and any(
-        lt in DASH_PATTERNS_PT for lt in rgb_to_linetype.values()
-    )
+    emit_dashes = (
+        rgb_to_linetype is not None and any(lt in DASH_PATTERNS_PT for lt in rgb_to_linetype.values())
+    ) or layer_solid_line_resolver is not None
+
+    def layer_weight(layer_name: str | None) -> float | None:
+        if not layer_name or layer_weight_resolver is None:
+            return None
+        weight = layer_weight_resolver(layer_name)
+        if weight is not None:
+            result.layer_weight_overrides += 1
+        return weight
+
+    def layer_color(layer_name: str | None) -> tuple[int, int, int] | None:
+        if not layer_name or layer_color_resolver is None:
+            return None
+        color = layer_color_resolver(layer_name)
+        if color is not None:
+            result.layer_color_overrides += 1
+        return color
+
+    def layer_solid_line(layer_name: str | None) -> bool:
+        if not layer_name or layer_solid_line_resolver is None:
+            return False
+        solid = bool(layer_solid_line_resolver(layer_name))
+        if solid:
+            result.layer_dash_overrides += 1
+        return solid
 
     for operands, op in instructions:
         op_str = str(op)
+
+        if op_str == "BDC":
+            result.marked_content_ops_seen += 1
+            layer_stack.append(_layer_from_bdc_operands(operands, property_layers, result))
+            out.append((operands, op))
+            continue
+        if op_str == "BMC":
+            result.marked_content_ops_seen += 1
+            layer_stack.append(None)
+            out.append((operands, op))
+            continue
+        if op_str == "EMC":
+            if layer_stack:
+                layer_stack.pop()
+            else:
+                result.marked_content_malformed += 1
+                _warn_once(result, "EMC without matching BDC/BMC; using color/default stroke mapping")
+            out.append((operands, op))
+            continue
+
+        active_layer = _current_layer(layer_stack)
 
         if op_str == "RG" and len(operands) >= 3:
             try:
@@ -125,12 +298,19 @@ def _rewrite(
             out.append((operands, op))
 
         elif op_str in STROKE_OPS:
-            if current_rgb is not None:
+            semantic_weight = layer_weight(active_layer)
+            if semantic_weight is not None:
+                w = semantic_weight
+            elif current_rgb is not None:
                 w = rgb_to_weight.get(current_rgb, default_width)
                 if current_rgb not in rgb_to_weight:
                     result.unmatched_colors[current_rgb] = result.unmatched_colors.get(current_rgb, 0) + 1
             else:
                 w = default_width
+
+            semantic_color = layer_color(active_layer)
+            if semantic_color is not None:
+                out.append((_rgb_operands(semantic_color), Operator("RG")))
 
             linetype = (
                 rgb_to_linetype.get(current_rgb)
@@ -141,8 +321,9 @@ def _rewrite(
                 # v1: count + surface, never delete (dropping a paint op can
                 # orphan q/clip state — deferred to the marked-content path).
                 result.excluded_strokes += 1
+            solid_line = layer_solid_line(active_layer)
             if emit_dashes:
-                dash = _dash_operands(linetype) if linetype is not None else None
+                dash = _dash_operands(linetype) if linetype is not None and not solid_line else None
                 out.append((dash if dash is not None else _solid_dash_operands(), Operator("d")))
                 if dash is not None:
                     result.linetypes_applied[linetype.value] = (
@@ -156,5 +337,12 @@ def _rewrite(
 
         else:
             out.append((operands, op))
+
+    if layer_stack:
+        result.marked_content_malformed += len(layer_stack)
+        _warn_once(
+            result,
+            "marked-content sequence ended with unclosed BDC/BMC; using resolved layers only where available",
+        )
 
     return out

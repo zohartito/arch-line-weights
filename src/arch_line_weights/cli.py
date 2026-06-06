@@ -222,6 +222,11 @@ def inspect(src: Path, pretty: bool, source: str):
     "surface → layout) mapped to the preset's ISO ladder. The v1 default.",
 )
 @click.option(
+    "--architectural",
+    is_flag=True,
+    help="Use marked-content OCG layer roles to override live PDF stream stroke weights/colors when binding is reliable.",
+)
+@click.option(
     "--legacy-weights",
     is_flag=True,
     help="Use the pre-v1 luminance + frequency bucketing for --auto instead of the role ladder.",
@@ -266,6 +271,7 @@ def apply(
     scale: str,
     for_print: bool,
     auto: bool,
+    architectural: bool,
     legacy_weights: bool,
     strict: bool,
     default_width: float,
@@ -275,8 +281,8 @@ def apply(
 ):
     """Rewrite the file with per-color stroke widths."""
     _require_supported_input(src, "apply")
-    if not (auto or mapping_file):
-        raise click.UsageError("provide --mapping FILE or --auto (with optional --preset)")
+    if not (auto or mapping_file or architectural):
+        raise click.UsageError("provide --mapping FILE, --auto (with optional --preset), or --architectural")
     if auto and mapping_file:
         raise click.UsageError("--auto and --mapping are mutually exclusive")
 
@@ -307,6 +313,8 @@ def apply(
                 continue
             mapping[rgb] = float(w)
         mapping = from_user_mapping(mapping)
+    elif architectural:
+        mapping = {}
     elif no_role_signal(rep, source_conf):
         # Item 5: no role signal → warn loudly and stop. Never a silent no-op.
         click.echo(no_role_signal_message(rep, resolved_source, source_conf, name=src.name), err=True)
@@ -329,6 +337,35 @@ def apply(
     )
     for line in explain_mapping(mapping, rep):
         click.echo(line, err=True)
+    layer_weight_resolver = None
+    layer_color_resolver = None
+    layer_solid_line_resolver = None
+    if architectural:
+        from .architectural import (
+            architectural_layer_color_resolver,
+            architectural_layer_solid_line_resolver,
+            architectural_layer_weight_resolver,
+        )
+
+        layer_weight_resolver = architectural_layer_weight_resolver(
+            preset=preset,
+            scale=scale,
+            for_print=for_print,
+            source=resolved_source,
+        )
+        layer_color_resolver = architectural_layer_color_resolver(
+            preset=preset,
+            scale=scale,
+            for_print=for_print,
+            source=resolved_source,
+        )
+        layer_solid_line_resolver = architectural_layer_solid_line_resolver(
+            preset=preset,
+            scale=scale,
+            for_print=for_print,
+            source=resolved_source,
+        )
+        click.echo("# architectural: marked-content layer overrides enabled", err=True)
 
     if dry_run:
         click.echo("--dry-run: no file written.", err=True)
@@ -344,6 +381,9 @@ def apply(
         default_width=default_width,
         strip_pieceinfo=not keep_pieceinfo,
         rgb_to_linetype=rgb_to_linetype,
+        layer_weight_resolver=layer_weight_resolver,
+        layer_color_resolver=layer_color_resolver,
+        layer_solid_line_resolver=layer_solid_line_resolver,
     )
 
     click.echo("", err=True)
@@ -364,6 +404,23 @@ def apply(
             click.echo(f"  {lt_name}: {n:,}", err=True)
     if result.excluded_strokes:
         click.echo(f"non-plotting strokes flagged (kept, not deleted): {result.excluded_strokes:,}", err=True)
+    if result.layer_weight_overrides:
+        click.echo(
+            f"architectural layer overrides: {result.layer_weight_overrides:,} strokes",
+            err=True,
+        )
+    if result.layer_color_overrides:
+        click.echo(
+            f"architectural color overrides: {result.layer_color_overrides:,} strokes",
+            err=True,
+        )
+    if result.layer_dash_overrides:
+        click.echo(
+            f"architectural dash overrides: {result.layer_dash_overrides:,} strokes",
+            err=True,
+        )
+    for warning in result.warnings:
+        click.echo(f"warning: {warning}", err=True)
     click.echo("", err=True)
     click.echo(f"wrote {output}  ({result.output_size:,} bytes)", err=True)
 

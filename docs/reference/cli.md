@@ -34,10 +34,11 @@ arch-lw apply SRC [OPTIONS]
 |---|---|---|
 | `-o, --output PATH` | `<src> HIERARCHY.<ext>` | Output path |
 | `--mapping FILE` | — | JSON: `{"RGB(r,g,b)": weight_pt}` |
-| `--preset {section,plan,elevation,detail,usc}` | `section` | Tier ladder for `--auto` |
+| `--preset {axon,detail,elevation,paraline,plan,section,usc}` | `section` | Tier ladder for `--auto` |
 | `--scale {1/16,1/8,1/4,1/2}` | `1/4` | Plot scale for ISO 128 weights |
 | `--for-print` | off | Use ISO 128 print weights |
 | `--auto` | off | Auto-bucket colors |
+| `--architectural` | off | Use marked-content OCG layer roles to override stroke weights/colors when binding is reliable |
 | `--default-width FLOAT` | `0.25` | Width for unmatched colors |
 | `--keep-pieceinfo` | off | Don't strip AI cache |
 | `--dry-run` | off | Preview mapping only |
@@ -90,7 +91,7 @@ arch-lw bridge-rhino-ai --input SRC [OPTIONS]
 | `--fit {center,fit}` | `center` | Center at current scale, or fit within margin |
 | `--margin LENGTH` | `0.5in` | Margin for `--fit` |
 | `--allow-enlarge` | off | Let `--fit` scale small artwork up |
-| `--preset {section,plan,elevation,detail,usc}` | `section` | Preset for optional `--apply-jsx` |
+| `--preset {axon,detail,elevation,paraline,plan,section,usc}` | `section` | Preset for optional `--apply-jsx` |
 | `--source {auto,rhino,autocad}` | `rhino` | Layer-name convention for reports and optional poché |
 | `--scale TEXT` | `1/4` | Plot scale for optional `--apply-jsx --for-print` |
 | `--for-print` | off | Use print weights in optional `--apply-jsx` |
@@ -115,7 +116,7 @@ arch-lw apply-saas SRC [OPTIONS]
 |---|---|---|
 | `-o, --output PATH` | `<src> HIERARCHY-saas.<ext>` | Output path |
 | `--mapping FILE` | — | JSON: `{"RGB(r,g,b)": weight_pt}` |
-| `--preset {section,plan,elevation,detail,usc}` | `section` | Tier ladder for `--auto` |
+| `--preset {axon,detail,elevation,paraline,plan,section,usc}` | `section` | Tier ladder for `--auto` |
 | `--scale TEXT` | `1/4` | Plot scale for `--for-print` |
 | `--for-print` | off | Use ISO 128 print weights |
 | `--auto` | off | Auto-bucket native RGB/CMYK stroke colors |
