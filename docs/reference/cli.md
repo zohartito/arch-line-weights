@@ -171,6 +171,14 @@ conservative per-path stroke weights for detail, medium, and profile-length
 strokes. It does not repair invalid Rhino source solids or hide uncertain
 internal lines; those remain review items in the report.
 
+Cleanup reports include `geometric_roles` counts and `geometry_review` totals
+for low-semantic linework. The role inference is conservative: closed dominant
+loops can become cut profiles, dominant open profiles can become silhouettes,
+right-angle bends can become planar corners, mid-length paths can be
+surface/material lines, and tiny strokes can be layout/reference. Ambiguous
+equal-weight geometry is flagged for review instead of treated as a confident
+guess.
+
 ## `arch-lw poche`
 
 Generate poché on cut layers via shapely linemerge + polygonize + auto-bridge + fallback.

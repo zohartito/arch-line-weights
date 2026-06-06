@@ -10,6 +10,7 @@ from pathlib import Path
 import pikepdf
 
 from .apply_saas import _read_payload, _write_payload
+from .geometry_roles import GeometryPath, infer_geometric_roles
 
 _NUM = rb"[0-9.eE\-+]+"
 _LN_RE = re.compile(rb"\(([^)]+)\) Ln$")
@@ -38,6 +39,8 @@ class CleanupLayerReport:
     heavy: int = 0
     unchanged: int = 0
     uncertain: int = 0
+    geometric_roles: dict[str, int] = field(default_factory=dict)
+    geometry_review: int = 0
 
     def to_dict(self) -> dict:
         return {
@@ -50,6 +53,8 @@ class CleanupLayerReport:
             "heavy": self.heavy,
             "unchanged": self.unchanged,
             "uncertain": self.uncertain,
+            "geometric_roles": dict(self.geometric_roles),
+            "geometry_review": self.geometry_review,
         }
 
 
@@ -107,6 +112,7 @@ def cleanup_payload(
     out: list[bytes] = []
     reports_by_layer: dict[str, CleanupLayerReport] = {}
     seen_paths_by_layer: dict[str, set[tuple[tuple[float, float], ...]]] = {}
+    geometry_paths_by_layer: dict[str, list[GeometryPath]] = {}
 
     in_layer = False
     current_layer: str | None = None
@@ -123,6 +129,10 @@ def cleanup_payload(
     def layer_seen_paths() -> set[tuple[tuple[float, float], ...]]:
         name = current_layer or "<unknown>"
         return seen_paths_by_layer.setdefault(name, set())
+
+    def layer_geometry_paths() -> list[GeometryPath]:
+        name = current_layer or "<unknown>"
+        return geometry_paths_by_layer.setdefault(name, [])
 
     def flush_current_path() -> None:
         nonlocal current_path, current_points
@@ -175,6 +185,7 @@ def cleanup_payload(
                     stroke_op=line,
                     thresholds=thresholds,
                     seen_paths=layer_seen_paths(),
+                    geometry_paths=layer_geometry_paths(),
                 )
                 current_path = []
                 current_points = []
@@ -188,6 +199,7 @@ def cleanup_payload(
         rewritten += b"\r"
 
     report = CleanupReport(layers=list(reports_by_layer.values()))
+    _attach_geometric_role_counts(report, geometry_paths_by_layer)
     if len(report.layers) <= 1 and report.layers:
         report.warnings.append(
             "single/low-semantic layer hierarchy detected; path-length cleanup was applied conservatively"
@@ -274,9 +286,11 @@ def _emit_classified_path(
     stroke_op: bytes,
     thresholds: CleanupThresholds,
     seen_paths: set[tuple[tuple[float, float], ...]],
+    geometry_paths: list[GeometryPath],
 ) -> None:
     length = _path_length(points)
     report.stroked_paths += 1
+    geometry_paths.append(GeometryPath(f"{report.name}:{report.stroked_paths}", list(points)))
     canonical = _canonical_path(points)
 
     if canonical in seen_paths:
@@ -300,6 +314,22 @@ def _emit_classified_path(
 
     out.extend(path_lines)
     out.append(stroke_op)
+
+
+def _attach_geometric_role_counts(
+    report: CleanupReport,
+    geometry_paths_by_layer: dict[str, list[GeometryPath]],
+) -> None:
+    for layer in report.layers:
+        assignments = infer_geometric_roles(geometry_paths_by_layer.get(layer.name, []))
+        counts: dict[str, int] = {}
+        review = 0
+        for assignment in assignments:
+            counts[assignment.role.value] = counts.get(assignment.role.value, 0) + 1
+            if assignment.needs_review:
+                review += 1
+        layer.geometric_roles = counts
+        layer.geometry_review = review
 
 
 __all__ = [
