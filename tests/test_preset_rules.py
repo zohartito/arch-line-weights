@@ -53,6 +53,14 @@ def test_axon_reuses_elevation_weights() -> None:
     assert ladder_for_preset("axon") == ladder_for_preset("elevation")
 
 
+def test_paraline_aliases_axon_no_cut_rule() -> None:
+    rule = rule_for_preset("paraline")
+    assert rule.preset == "axon"
+    assert rule.cut_driven is False
+    assert rule.has_groundline is False
+    assert ladder_for_preset("paraline") == ladder_for_preset("elevation")
+
+
 def test_figure_ground_rule_is_pure_three_tier() -> None:
     assert figure_ground_rule() == (
         Role.SPATIAL_EDGE,

@@ -373,3 +373,32 @@ def test_auto_by_role_axon_reuses_elevation_weights():
     axon_weights = sorted(auto_by_role(rep, "axon", "1/4", True)[0].values())
     elevation_weights = sorted(auto_by_role(rep, "elevation", "1/4", True)[0].values())
     assert axon_weights == elevation_weights
+
+
+def test_cli_apply_accepts_axon_preset_and_matches_elevation_bytes(tmp_path):
+    src = tmp_path / "synthetic-axon.ai"
+    _write_ai(
+        src,
+        [(0, 0, 0), (128, 128, 128), (220, 220, 220)],
+        layer_names=[
+            "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
+            "axon::Visible::Curves::WINDOW_FRAME",
+            "axon::Visible::Curves::FLOOR_DATUMS",
+        ],
+    )
+    axon_out = tmp_path / "axon.ai"
+    elevation_out = tmp_path / "elevation.ai"
+    runner = CliRunner()
+
+    axon = runner.invoke(
+        cli,
+        ["apply", "--auto", "--preset", "axon", "--for-print", str(src), "-o", str(axon_out)],
+    )
+    elevation = runner.invoke(
+        cli,
+        ["apply", "--auto", "--preset", "elevation", "--for-print", str(src), "-o", str(elevation_out)],
+    )
+
+    assert axon.exit_code == 0, _all_output(axon)
+    assert elevation.exit_code == 0, _all_output(elevation)
+    assert _content_bytes(axon_out) == _content_bytes(elevation_out)

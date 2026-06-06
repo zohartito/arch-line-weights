@@ -9,6 +9,7 @@ from __future__ import annotations
 from arch_line_weights.presets import (
     DETAIL_ISO_PRINT,
     DETAIL_ISO_SCREEN,
+    ELEVATION,
     ELEVATION_ISO_PRINT,
     ELEVATION_ISO_SCREEN,
     PLAN_ISO_PRINT,
@@ -99,6 +100,18 @@ def test_elevation_has_no_cut_tier():
     assert "cut_primary" not in tier_names
     # but it does have a silhouette
     assert "silhouette" in tier_names
+
+
+def test_axon_and_paraline_presets_are_registered_as_elevation_no_cut_family():
+    """Axon/paraline are first-class presets that reuse elevation's no-cut ladder."""
+    assert "axon" in PRESETS
+    assert "paraline" in PRESETS
+    assert get_preset("axon") == ELEVATION
+    assert get_preset("paraline") == ELEVATION
+    assert select_preset("axon", "1/4", for_print=False) == ELEVATION_ISO_SCREEN
+    assert select_preset("paraline", "1/4", for_print=False) == ELEVATION_ISO_SCREEN
+    assert select_preset("axon", "1/4", for_print=True) == ELEVATION_ISO_PRINT
+    assert select_preset("paraline", "1/4", for_print=True) == ELEVATION_ISO_PRINT
 
 
 def test_elevation_silhouette_is_heaviest():
