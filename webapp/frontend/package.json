@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "description": "SvelteKit + Tailwind front-end for the arch-line-weights webapp scaffold.",
+  "engines": {
+    "node": "22.x"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite dev",
@@ -13,6 +16,7 @@
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^3.2.0",
+    "@sveltejs/adapter-vercel": "^5.10.3",
     "@sveltejs/kit": "^2.5.0",
     "@sveltejs/vite-plugin-svelte": "^3.1.0",
     "autoprefixer": "^10.4.19",

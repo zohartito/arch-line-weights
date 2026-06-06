@@ -1,9 +1,10 @@
 # Rhino integration
 
-Three drop-in files for Rhino 8 (macOS + Windows):
+Four drop-in files for Rhino 8 (macOS + Windows):
 
 | File | Where it goes | What it does |
 |---|---|---|
+| `export_selected_make2d_manifest.py` | `~/Library/Application Support/McNeel/Rhinoceros/8.0/scripts/` (mac) or `%APPDATA%\McNeel\Rhinoceros\8.0\scripts\` (win) | Export the current Make2D selection to `.ai` / `.pdf` and write a sidecar manifest |
 | `apply_arch_hierarchy.py` | inside a GHPython component (Python 3 runtime) | Wraps `arch-lw apply-jsx` / `arch-lw poche` so it can be called from Grasshopper |
 | `arch_lw_button.py` | `~/Library/Application Support/McNeel/Rhinoceros/8.0/scripts/` (mac) or `%APPDATA%\McNeel\Rhinoceros\8.0\scripts\` (win) | Toolbar button with Eto progress dialog; pick a file, run, open result in Illustrator |
 | `tag_rhino_layers_for_poche.py` | same scripts dir | Pre-export step: append `__TIER:<class>` suffix to Rhino layer names so the classifier is deterministic |
@@ -11,6 +12,26 @@ Three drop-in files for Rhino 8 (macOS + Windows):
 All three assume `arch-lw` is on PATH (or in `/usr/local/bin`,
 `/opt/homebrew/bin`, `~/.local/bin`, `~/.pyenv/shims` on macOS, or
 `%LOCALAPPDATA%\Programs\arch-lw` on Windows).
+
+## Export Selected Make2D
+
+Use this when you already have flat Make2D curves selected in Rhino:
+
+```text
+_-RunPythonScript "/path/to/export_selected_make2d_manifest.py"
+```
+
+The script asks where to save the export, runs Rhino's command-line
+`Export` on the current selection, and writes:
+
+```text
+01-rhino-make2d-export.ai
+01-rhino-make2d-export.manifest.json
+```
+
+The manifest records selected-object count, layer counts, model units, active
+view orthographic state, and the next `arch-lw layout-jsx` command. Use an
+orthographic view or layout/detail view when preserving scale matters.
 
 ## GhPython 3 component setup
 

@@ -34,6 +34,7 @@ import click
 import pikepdf
 import zstandard as zstd
 
+from .input_format import raise_if_unsupported
 from .progress import ProgressReporter
 
 # AI24 native-payload framing constants. Every Rhino-export .ai we've inspected
@@ -64,6 +65,7 @@ def default_output_path(src: str | os.PathLike[str]) -> str:
     p = Path(src)
     return str(p.with_name(f"{p.stem}{DEFAULT_OUTPUT_SUFFIX}{p.suffix}"))
 
+
 # AI native stroke-color set. Illustrator can emit either:
 #
 # * "<C> <M> <Y> <K> <R> <G> <B> XA" — last 3 floats are RGB 0..1
@@ -75,9 +77,7 @@ _XA_RE = re.compile(
     rb"\r(" + _NUM + rb") (" + _NUM + rb") (" + _NUM + rb") (" + _NUM + rb") "
     rb"(" + _NUM + rb") (" + _NUM + rb") (" + _NUM + rb") XA\r"
 )
-_K_RE = re.compile(
-    rb"\r(" + _NUM + rb") (" + _NUM + rb") (" + _NUM + rb") (" + _NUM + rb") K\r"
-)
+_K_RE = re.compile(rb"\r(" + _NUM + rb") (" + _NUM + rb") (" + _NUM + rb") (" + _NUM + rb") K\r")
 
 # AI native stroke-width op: " <w> w" — w is a float in points. Width can be
 # set on its own line or as part of a setup line like "1 J 1 j 0.5 w 4 M []0 d".
@@ -217,11 +217,7 @@ def _rgb255_to_cmyk(
 
 def _format_stroke_color(rgb: tuple[int, int, int]) -> bytes:
     c, m, y, k = _rgb255_to_cmyk(rgb)
-    return (
-        b"\r"
-        + b" ".join(_format_float(v) for v in (c, m, y, k))
-        + b" K\r"
-    )
+    return b"\r" + b" ".join(_format_float(v) for v in (c, m, y, k)) + b" K\r"
 
 
 def _cmyk_to_rgb255(c: float, m: float, y: float, k: float) -> tuple[int, int, int]:
@@ -478,6 +474,7 @@ def apply_to_file(
     """
     if os.path.abspath(src) == os.path.abspath(dst):
         raise ValueError("dst must differ from src to keep the original safe")
+    raise_if_unsupported(src, "apply-saas")
 
     if reporter is None:
         reporter = ProgressReporter(enabled=False)

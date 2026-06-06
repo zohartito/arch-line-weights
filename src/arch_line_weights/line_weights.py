@@ -100,14 +100,10 @@ def validate_weight(value: float | str | LineWeight) -> LineWeight:
             try:
                 value = float(value)
             except ValueError as exc:
-                raise ValueError(
-                    f"{value!r} is not a valid LineWeight name or numeric mm value"
-                ) from exc
+                raise ValueError(f"{value!r} is not a valid LineWeight name or numeric mm value") from exc
 
     if not isinstance(value, (int, float)):
-        raise ValueError(
-            f"validate_weight expects float | str | LineWeight, got {type(value).__name__}"
-        )
+        raise ValueError(f"validate_weight expects float | str | LineWeight, got {type(value).__name__}")
 
     nearest = min(LineWeight, key=lambda w: abs(w.value - float(value)))
     # `> SNAP_TOL_MM + 1e-9` allows the exact boundary (±0.005 mm) through.

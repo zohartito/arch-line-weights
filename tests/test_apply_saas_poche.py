@@ -17,6 +17,7 @@ Covers four scopes:
 
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 
@@ -29,7 +30,7 @@ from arch_line_weights.make2d_completion import (
     complete_structural_cut_polygons,
     structural_completion_paths_for_layers,
 )
-from arch_line_weights.poche import FillResult
+from arch_line_weights.poche import FillResult, polygonize_dump, render_dump_jsx
 from arch_line_weights.poche_saas import (
     PocheSaasResult,
     _architectural_completion_enabled,
@@ -178,15 +179,7 @@ def test_find_layer_envelope_returns_none_for_missing_name():
 
 def test_find_layer_envelope_ignores_matching_setup_text():
     payload = (
-        b"%!PS-Adobe-3.0\r"
-        b"(LayerA) Ln\r"
-        b"%AI5_BeginLayer\r"
-        b"(LayerA) Ln\r"
-        b"0 0 m\r"
-        b"10 0 L\r"
-        b"S\r"
-        b"LB\r"
-        b"%AI5_EndLayer--\r"
+        b"%!PS-Adobe-3.0\r(LayerA) Ln\r%AI5_BeginLayer\r(LayerA) Ln\r0 0 m\r10 0 L\rS\rLB\r%AI5_EndLayer--\r"
     )
 
     env = find_layer_envelope(payload, "LayerA")
@@ -257,9 +250,7 @@ def test_inject_multiple_layers_in_one_pass():
     tri_b = Polygon([(50, 50), (60, 50), (55, 60)])
 
     result = PocheSaasResult()
-    new_payload = inject_poche_polygons(
-        payload, {"LayerA": [tri_a], "LayerB": [tri_b]}, result=result
-    )
+    new_payload = inject_poche_polygons(payload, {"LayerA": [tri_a], "LayerB": [tri_b]}, result=result)
 
     assert result.layers_injected == 2
     assert result.polygons_injected == 2
@@ -378,9 +369,7 @@ def test_structural_helper_paths_match_same_material_leaf_only():
         cut_name: [[[0, 0], [100, 0]]],
         "axon::Visible::Curves::TEC_CLT_SLABS": [[[0, 10], [100, 10]]],
         "axon::Visible::Tangents::TEC_CLT_SLABS": [[[100, 0], [100, 10]]],
-        "axon::Visible::Curves::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44": [
-            [[0, 20], [100, 20]]
-        ],
+        "axon::Visible::Curves::15_CU_PUNCH_RETURNS_SOUTH_BAY_ALIGNED_V44": [[[0, 20], [100, 20]]],
         "axon::Visible::Curves::TEC_CONCRETE_BASE": [[[0, 30], [100, 30]]],
     }
 
@@ -422,9 +411,7 @@ def test_compute_polygons_does_not_inject_low_confidence_fallback(monkeypatch):
         return [candidate], FillResult("LayerA", "alpha_shape", 0.55, 1, 3)
 
     monkeypatch.setattr("arch_line_weights.poche_saas.polygonize_layer", fake_polygonize)
-    polygons_by_layer, report = compute_polygons_for_layers(
-        {"LayerA": [[[0, 0], [10, 0]]]}
-    )
+    polygons_by_layer, report = compute_polygons_for_layers({"LayerA": [[[0, 0], [10, 0]]]})
 
     assert polygons_by_layer == {}
     assert report.polygons == {}
@@ -442,9 +429,7 @@ def test_compute_polygons_can_opt_into_low_confidence_injection(monkeypatch):
     monkeypatch.setenv("ARCH_LW_POCHE_ALLOW_LOW_CONFIDENCE", "1")
     monkeypatch.setattr("arch_line_weights.poche_saas.polygonize_layer", fake_polygonize)
 
-    polygons_by_layer, report = compute_polygons_for_layers(
-        {"LayerA": [[[0, 0], [10, 0]]]}
-    )
+    polygons_by_layer, report = compute_polygons_for_layers({"LayerA": [[[0, 0], [10, 0]]]})
 
     assert polygons_by_layer == {"LayerA": [candidate]}
     assert "LayerA" in report.polygons
@@ -458,9 +443,7 @@ def test_structural_completion_paths_match_same_component_only():
         "axon::Visible::Curves::TEC_CLT_SLABS": [[[0, 20], [100, 20]]],
         "axon::Visible::Tangents::TEC_CLT_SLABS": [[[100, 0], [100, 20]]],
         "axon::Visible::Curves::TEC_STEEL_CONNECTOR 4": [[[0, 40], [100, 40]]],
-        "axon::Visible::Curves::22_WINDOW_GLASS_REMAP_49FT_V68": [
-            [[0, 60], [100, 60]]
-        ],
+        "axon::Visible::Curves::22_WINDOW_GLASS_REMAP_49FT_V68": [[[0, 60], [100, 60]]],
     }
 
     completion = structural_completion_paths_for_layers(cut_paths, all_paths)
@@ -471,6 +454,110 @@ def test_structural_completion_paths_match_same_component_only():
             [[100, 0], [100, 20]],
         ]
     }
+
+
+def test_jsx_poche_dump_collects_visible_helper_layers():
+    jsx = render_dump_jsx("/tmp/in.ai", "/tmp/out.json")
+
+    assert "::VISIBLE::CURVES::" in jsx
+    assert "::VISIBLE::TANGENTS::" in jsx
+    assert "CLIPPINGPLANEINTERSECTIONS" in jsx
+    assert "FOUNDATION" in jsx
+    assert "CONCRETE" in jsx
+    assert "TIMBER" not in jsx
+    assert "CLT" not in jsx
+
+
+def test_polygonize_dump_uses_same_component_helpers_without_filling_them(tmp_path):
+    cut_name = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+    helper_name = "axon::Visible::Curves::TEC_CONCRETE_BASE"
+    unrelated_helper = "axon::Visible::Curves::TEC_CLT_SLABS"
+    geometry = {
+        cut_name: [
+            [[0, 0], [140, 0]],
+            [[140, 40], [0, 40]],
+        ],
+        helper_name: [
+            [[0, 0], [0, 40]],
+            [[140, 0], [140, 40]],
+        ],
+        unrelated_helper: [
+            [[0, 90], [140, 90]],
+        ],
+    }
+    geometry_path = tmp_path / "geometry.json"
+    geometry_path.write_text(json.dumps(geometry))
+
+    report = polygonize_dump(str(geometry_path))
+
+    assert [fill.layer for fill in report.fills] == [cut_name]
+    assert report.fills[0].strategy == "structural_open_loop"
+    assert report.fills[0].confidence >= 0.85
+    assert cut_name in report.polygons
+    assert helper_name not in report.polygons
+    assert unrelated_helper not in report.polygons
+
+
+def test_polygonize_dump_limits_jsx_helpers_to_foundation_concrete(tmp_path):
+    concrete_cut = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+    timber_cut = "axon::Visible::ClippingPlaneIntersections::TEC_TIMBER_BEAMS"
+    geometry = {
+        concrete_cut: [
+            [[0, 0], [140, 0]],
+            [[140, 40], [0, 40]],
+        ],
+        "axon::Visible::Curves::TEC_CONCRETE_BASE": [
+            [[0, 0], [0, 40]],
+            [[140, 0], [140, 40]],
+        ],
+        timber_cut: [
+            [[0, 90], [140, 90]],
+            [[140, 130], [0, 130]],
+        ],
+        "axon::Visible::Curves::TEC_TIMBER_BEAMS": [
+            [[0, 90], [0, 130]],
+            [[140, 90], [140, 130]],
+        ],
+    }
+    geometry_path = tmp_path / "geometry.json"
+    geometry_path.write_text(json.dumps(geometry))
+
+    report = polygonize_dump(str(geometry_path))
+    by_layer = {fill.layer: fill for fill in report.fills}
+
+    assert by_layer[concrete_cut].strategy == "structural_open_loop"
+    assert by_layer[timber_cut].strategy != "structural_open_loop"
+
+
+def test_polygonize_dump_recovers_fragmented_c2_c3_concrete_edges(tmp_path):
+    concrete_stem = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+    geometry = {
+        concrete_stem: [
+            [[0, 0], [48, 0]],
+            [[52, 0], [100, 0]],
+            [[100, 22], [52, 22]],
+            [[48, 22], [0, 22]],
+        ],
+        "axon::Visible::Curves::TEC_CONCRETE_BASE": [
+            [[0, 0], [0, 22]],
+            [[100, 0], [100, 22]],
+        ],
+    }
+    geometry_path = tmp_path / "geometry.json"
+    geometry_path.write_text(json.dumps(geometry))
+
+    report = polygonize_dump(str(geometry_path))
+    by_layer = {fill.layer: fill for fill in report.fills}
+
+    assert by_layer[concrete_stem].strategy == "structural_open_loop"
+    assert by_layer[concrete_stem].polygon_count == 1
+    assert report.polygons[concrete_stem][0] == [
+        [0.0, 0.0],
+        [0.0, 22.0],
+        [100.0, 22.0],
+        [100.0, 0.0],
+        [0.0, 0.0],
+    ]
 
 
 def test_structural_completion_accepts_cut_anchored_missing_face():
@@ -527,6 +614,25 @@ def test_structural_completion_accepts_slim_foundation_above_static_area_limit()
 
     assert len(accepted) == 1
     assert round(accepted[0].area) == 3600
+    assert any(candidate.accepted for candidate in candidates)
+
+
+def test_structural_completion_accepts_slim_concrete_base_above_static_area_limit():
+    accepted, candidates = complete_structural_cut_polygons(
+        "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
+        [
+            [[0, 0], [140, 0]],
+            [[140, 40], [0, 40]],
+        ],
+        [
+            [[0, 0], [0, 40]],
+            [[140, 0], [140, 40]],
+        ],
+        [],
+    )
+
+    assert len(accepted) == 1
+    assert round(accepted[0].area) == 5600
     assert any(candidate.accepted for candidate in candidates)
 
 
@@ -772,10 +878,7 @@ def test_apply_saas_with_poche_end_to_end_on_synthetic_fixture():
         # Fill operator is in the payload (the `f` we synthesized)
         assert b"\rf\r" in new_payload
         # The original layer name marker is preserved
-        assert (
-            b"(axon::Visible::ClippingPlaneIntersections::TEST_CUT) Ln\r"
-            in new_payload
-        )
+        assert b"(axon::Visible::ClippingPlaneIntersections::TEST_CUT) Ln\r" in new_payload
 
 
 def test_apply_saas_with_poche_can_write_overlay_layer_without_env():
@@ -827,9 +930,7 @@ def test_inspect_falls_back_to_private_payload_cmyk_colors(tmp_path):
     priv = pikepdf.Dictionary({"/NumBlock": len(chunks)})
     for i, chunk in enumerate(chunks, start=1):
         priv[f"/AIPrivateData{i}"] = pdf.make_stream(chunk)
-    page.obj["/PieceInfo"] = pikepdf.Dictionary(
-        {"/Illustrator": pikepdf.Dictionary({"/Private": priv})}
-    )
+    page.obj["/PieceInfo"] = pikepdf.Dictionary({"/Illustrator": pikepdf.Dictionary({"/Private": priv})})
     pdf.save(str(src))
     pdf.close()
 

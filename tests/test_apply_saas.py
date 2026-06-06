@@ -468,12 +468,7 @@ def test_apply_saas_and_apply_pdf_agree_on_weight_for_color():
     assert pdf_result.weights_applied == {1.0: 1, 0.13: 1}
 
     # AI native side: same two colors, expect same weight distribution
-    payload = (
-        b"\r0 0 0 0 1 0 0 XA\r"
-        b"\r0.5 w\r"
-        b"\r0 0 0 1 0 0 0 XA\r"
-        b"\r0.5 w\r"
-    )
+    payload = b"\r0 0 0 0 1 0 0 XA\r\r0.5 w\r\r0 0 0 1 0 0 0 XA\r\r0.5 w\r"
     saas_result = ApplySaasResult()
     rewrite_payload(payload, mapping, default_width=0.25, result=saas_result)
     assert saas_result.weights_applied == pdf_result.weights_applied

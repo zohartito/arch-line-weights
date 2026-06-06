@@ -137,9 +137,7 @@ def test_backtrack_succeeds_where_greedy_struggles():
     n_b = _polygon_count(aug_b)
 
     # Backtracking must at least match greedy on polygon yield.
-    assert n_b >= n_g, (
-        f"backtracking under-performed greedy: greedy={n_g} backtrack={n_b}"
-    )
+    assert n_b >= n_g, f"backtracking under-performed greedy: greedy={n_g} backtrack={n_b}"
     # And it should have found *some* closing polygon.
     assert n_b >= 1
     # We do not require fewer bridges; the success criterion is yield.

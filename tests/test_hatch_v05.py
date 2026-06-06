@@ -208,7 +208,9 @@ def test_existing_materials_still_registered():
 
 def test_existing_layer_resolutions_still_work():
     """Regression: existing keyword resolutions haven't broken."""
-    assert material_for_layer("Visible::ClippingPlaneIntersections::TEC_CONCRETE_FOUNDATION") == "concrete_solid"
+    assert (
+        material_for_layer("Visible::ClippingPlaneIntersections::TEC_CONCRETE_FOUNDATION") == "concrete_solid"
+    )
     assert material_for_layer("STEEL_BEAM") == "steel_solid"
     assert material_for_layer("CLT_PANEL") == "clt_solid"
     assert material_for_layer("EARTH_BACKFILL") == "earth"

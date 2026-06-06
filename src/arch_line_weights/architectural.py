@@ -147,8 +147,18 @@ _SECTION_SCREEN_WEIGHTS = {
 _PRESET_TIER = {
     "cut": {"section": "cut", "plan": "walls_cut", "elevation": "silhouette", "detail": "cut_primary"},
     "profile": {"section": "profile", "plan": "casework", "elevation": "profile", "detail": "profile"},
-    "structure_primary": {"section": "profile", "plan": "casework", "elevation": "profile", "detail": "cut_secondary"},
-    "structure_secondary": {"section": None, "plan": "furniture", "elevation": "openings", "detail": "profile"},
+    "structure_primary": {
+        "section": "profile",
+        "plan": "casework",
+        "elevation": "profile",
+        "detail": "cut_secondary",
+    },
+    "structure_secondary": {
+        "section": None,
+        "plan": "furniture",
+        "elevation": "openings",
+        "detail": "profile",
+    },
     "frames": {"section": "edges", "plan": "furniture", "elevation": "openings", "detail": "profile"},
     "edges_secondary": {"section": "edges", "plan": "furniture", "elevation": "openings", "detail": "edges"},
     "connectors": {"section": "special", "plan": "pattern", "elevation": "joints", "detail": "edges"},

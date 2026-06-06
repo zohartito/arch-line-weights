@@ -237,8 +237,9 @@ class ProgressReporter:
     def __exit__(self, exc_type, exc, tb) -> None:
         # Best-effort terminal banner if we crashed mid-stage.
         if self.enabled and exc is not None and self._current_stage is not None:
-            self._emit("FAIL", self._current_stage, "-", self._percent_estimate(),
-                       {"exc": type(exc).__name__})
+            self._emit(
+                "FAIL", self._current_stage, "-", self._percent_estimate(), {"exc": type(exc).__name__}
+            )
         self.close()
 
     # ----------------------------------------------------------------- #
@@ -405,9 +406,7 @@ class ProgressReporter:
                 return 100
             return 0
         if self._current_stage == "polygonize":
-            return self._percent_estimate_during_polygonize(
-                self._completed_layers, self._total_layers
-            )
+            return self._percent_estimate_during_polygonize(self._completed_layers, self._total_layers)
         # Outside polygonize, return the start-of-current-stage percent.
         return _cumulative_percent_at_start_of(self._current_stage)
 

@@ -143,10 +143,7 @@ def _candidate_polygons(
     valid = [
         p
         for p in raw
-        if isinstance(p, Polygon)
-        and not p.is_empty
-        and p.is_valid
-        and p.area >= _MIN_COMPLETION_AREA
+        if isinstance(p, Polygon) and not p.is_empty and p.is_valid and p.area >= _MIN_COMPLETION_AREA
     ]
     if not valid:
         return []
@@ -162,10 +159,7 @@ def _candidate_polygons(
         return [
             p
             for p in merged_polys.geoms
-            if isinstance(p, Polygon)
-            and not p.is_empty
-            and p.is_valid
-            and p.area >= _MIN_COMPLETION_AREA
+            if isinstance(p, Polygon) and not p.is_empty and p.is_valid and p.area >= _MIN_COMPLETION_AREA
         ]
     except AttributeError:
         return valid
@@ -216,10 +210,7 @@ def _oriented_dimensions(poly: Polygon) -> tuple[float, float] | None:
         return None
     if len(coords) < 4:
         return None
-    lengths = [
-        LineString([coords[i], coords[i + 1]]).length
-        for i in range(min(4, len(coords) - 1))
-    ]
+    lengths = [LineString([coords[i], coords[i + 1]]).length for i in range(min(4, len(coords) - 1))]
     lengths = [length for length in lengths if length > 1e-6]
     if len(lengths) < 2:
         return None
@@ -243,7 +234,7 @@ def _large_candidate_is_plausible(
 ) -> bool:
     """Allow large repairs only when they look like strongly anchored cut strips."""
     upper = layer_name.upper()
-    if "TEC_CONCRETE_BASE" in upper or "ROOF_CAP" in upper:
+    if "ROOF_CAP" in upper:
         return False
     dims = _oriented_dimensions(poly)
     if dims is None:
@@ -251,6 +242,14 @@ def _large_candidate_is_plausible(
     short, long = dims
     aspect = long / max(short, 1e-6)
     rectangularity = _rectangularity(poly, short, long)
+    if "TEC_CONCRETE_BASE" in upper:
+        return (
+            poly.area <= 6500.0
+            and aspect >= 2.25
+            and short <= 70.0
+            and rectangularity >= 0.75
+            and shared >= max(50.0, required * 1.75)
+        )
     if "TEC_FOUNDATION" in upper:
         return (
             poly.area <= 5000.0
@@ -447,10 +446,7 @@ def complete_structural_cut_polygons(
                     source_role="visible_curve",
                     polygon=poly,
                     provenance="cut+same-component-visible/tangent",
-                    reason=(
-                        f"rejected: cut anchor {shared:.1f} below required "
-                        f"{required:.1f}"
-                    ),
+                    reason=(f"rejected: cut anchor {shared:.1f} below required {required:.1f}"),
                     cut_shared=shared,
                 )
             )

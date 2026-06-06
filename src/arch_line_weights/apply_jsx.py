@@ -34,6 +34,7 @@ non-section drawing run (see docs/POSTMORTEM.md Attempt 9):
 from __future__ import annotations
 
 import contextlib
+import json
 import os
 import re
 import subprocess
@@ -41,6 +42,7 @@ import textwrap
 import threading
 import time
 from pathlib import Path
+from typing import Any
 
 from .layer_classify import as_jsx_function
 
@@ -279,24 +281,23 @@ def query_active_doc() -> tuple[str | None, str | None]:
     Illustrator reported.
     """
     # NB: Illustrator's AppleScript dictionary disambiguation is finicky.
-    # `name of active document` raises "expected end of line, but found
-    # class name" on Illustrator 2026 (Adobe build 30.x). Two fixes
-    # combine reliably: use `current document` instead of `active
-    # document`, AND wrap the property access in `(get ... of ...)` so
-    # the parser binds the property to the receiver explicitly.
+    # `name of active document` and `current document` raise "expected end
+    # of line, but found class name" on Illustrator 2026 (Adobe build 30.x).
+    # `front document` compiles against the Illustrator dictionary and keeps
+    # the intended "currently focused document" behavior.
     script = (
         'tell application "Adobe Illustrator"\n'
-        '  if (count of documents) is 0 then\n'
+        "  if (count of documents) is 0 then\n"
         '    return ""\n'
-        '  end if\n'
-        '  set docName to (get name of current document)\n'
-        '  try\n'
-        '    set docPath to POSIX path of (file path of current document)\n'
-        '  on error\n'
+        "  end if\n"
+        "  set docName to (get name of front document)\n"
+        "  try\n"
+        "    set docPath to POSIX path of (file path of front document)\n"
+        "  on error\n"
         '    set docPath to ""\n'
-        '  end try\n'
+        "  end try\n"
         '  return docName & "|" & docPath\n'
-        'end tell'
+        "end tell"
     )
     try:
         raw = subprocess.run(
@@ -519,10 +520,7 @@ class _HeartbeatPoller(threading.Thread):
                 else:
                     # No new bytes — check staleness.
                     elapsed = time.time() - last_mtime
-                    if (
-                        not self.stale_warning_emitted
-                        and elapsed > self.stale_threshold_sec
-                    ):
+                    if not self.stale_warning_emitted and elapsed > self.stale_threshold_sec:
                         self._printer(
                             f"  warning: no JSX heartbeat for {int(elapsed)} s — Illustrator may be hung "
                             "(NOT aborting; cancel with Ctrl-C if needed)"
@@ -563,6 +561,64 @@ def default_output_path(src: str | os.PathLike[str]) -> str:
     """
     p = Path(src)
     return str(p.with_name(f"{p.stem}{DEFAULT_OUTPUT_SUFFIX}{p.suffix}"))
+
+
+# --------------------------------------------------------------------------- #
+# Report/output validation
+# --------------------------------------------------------------------------- #
+
+
+def apply_jsx_report_failure(report: str) -> str | None:
+    """Return a normalized failure reason when an apply-jsx report is not usable."""
+    text = report.strip()
+    if not text:
+        return "apply-jsx report was empty"
+
+    upper = text.upper()
+    if upper.startswith("ERROR") or "ERROR:" in upper:
+        return "apply-jsx report contains ERROR"
+    if upper.startswith("EXCEPTION") or "EXCEPTION:" in upper:
+        return "apply-jsx report contains EXCEPTION"
+
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
+        payload = None
+    if isinstance(payload, dict):
+        summary = payload.get("summary")
+        status = summary.get("status") if isinstance(summary, dict) else payload.get("status")
+        if str(status).lower() in {"failed", "no_go"}:
+            return f"apply-jsx report status is {status}"
+
+    lower = text.lower()
+    if "no_go" in lower:
+        return "apply-jsx report contains no_go"
+    if "failed" in lower:
+        return "apply-jsx report contains failed"
+
+    return None
+
+
+def validate_apply_jsx_result(
+    apply_result: dict[str, Any],
+    *,
+    expected_output: str | os.PathLike[str] | None = None,
+) -> None:
+    """Reject apply-jsx runs that did not produce trustworthy hierarchy output."""
+    if not apply_result.get("output"):
+        raise RuntimeError("apply-jsx did not report an output path")
+
+    reported_output = os.path.abspath(str(apply_result["output"]))
+    expected_abs = os.path.abspath(str(expected_output or reported_output))
+    if reported_output != expected_abs:
+        raise RuntimeError(f"apply-jsx reported output {reported_output!r}; expected {expected_abs!r}")
+
+    report_failure = apply_jsx_report_failure(str(apply_result.get("report") or ""))
+    if report_failure is not None:
+        raise RuntimeError(report_failure)
+
+    if not Path(expected_abs).exists():
+        raise RuntimeError(f"apply-jsx did not write expected hierarchy output: {expected_abs}")
 
 
 # --------------------------------------------------------------------------- #
@@ -706,10 +762,12 @@ def apply_via_jsx(
 
     if not os.path.exists(report_path):
         raise RuntimeError(f"JSX did not produce a report at {report_path}")
-    return {
+    result = {
         "report_path": report_path,
         "output": dst,
         "report": Path(report_path).read_text(),
         "heartbeat_lines": poller.lines_seen,
         "use_open_doc": use_open_doc,
     }
+    validate_apply_jsx_result(result, expected_output=dst)
+    return result

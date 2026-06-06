@@ -205,9 +205,10 @@ def test_layer_records_polygon_count_strategy_confidence(tmp_path: Path):
 def test_layer_records_short_name(tmp_path: Path):
     """Layer DONE event should carry just the short name (after final ``::``)."""
     rep, p, _ = _make_reporter(tmp_path)
-    with rep.stage("polygonize", layers=1), rep.layer(
-        1, 1, "axon::Visible::ClippingPlaneIntersections::TEC_FOO", 12
-    ) as info:
+    with (
+        rep.stage("polygonize", layers=1),
+        rep.layer(1, 1, "axon::Visible::ClippingPlaneIntersections::TEC_FOO", 12) as info,
+    ):
         info.polygon_count = 1
         info.strategy = "concave_hull"
         info.confidence = 0.55

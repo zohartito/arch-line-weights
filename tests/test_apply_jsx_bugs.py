@@ -14,6 +14,8 @@ the way the JSX would, and asserting the wrapper picks up the lines.
 from __future__ import annotations
 
 import time
+from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
@@ -26,6 +28,7 @@ from arch_line_weights.apply_jsx import (
     TIMEOUT_ENV_VAR,
     _HeartbeatPoller,
     _is_converted_match,
+    apply_via_jsx,
     render_jsx,
     resolve_timeout_minutes,
 )
@@ -139,10 +142,7 @@ def test_is_converted_match_basic_no_extension():
 
 def test_is_converted_match_does_not_match_unrelated_doc():
     """A `[Converted]` doc with a different basename must NOT match."""
-    assert (
-        _is_converted_match("other_drawing [Converted].ai", None, "/path/to/macro.ai")
-        is False
-    )
+    assert _is_converted_match("other_drawing [Converted].ai", None, "/path/to/macro.ai") is False
 
 
 def test_is_converted_match_does_not_match_non_converted_doc():
@@ -160,9 +160,7 @@ def test_is_converted_match_with_saved_path_to_same_file(tmp_path):
     accept the [Converted] state as a match."""
     src = tmp_path / "macro.ai"
     src.write_text("dummy")
-    assert (
-        _is_converted_match("macro [Converted].ai", str(src), str(src)) is True
-    )
+    assert _is_converted_match("macro [Converted].ai", str(src), str(src)) is True
 
 
 def test_is_converted_match_with_saved_path_to_different_file(tmp_path):
@@ -171,9 +169,7 @@ def test_is_converted_match_with_saved_path_to_different_file(tmp_path):
     other.write_text("dummy")
     src = tmp_path / "macro.ai"
     src.write_text("dummy")
-    assert (
-        _is_converted_match("macro [Converted].ai", str(other), str(src)) is False
-    )
+    assert _is_converted_match("macro [Converted].ai", str(other), str(src)) is False
 
 
 # --------------------------------------------------------------------------- #
@@ -225,6 +221,41 @@ def test_cli_apply_jsx_rejects_timeout_above_max():
     # IntRange will reject 999 before we even hit the path resolver.
     assert result.exit_code != 0
     assert "999" in result.output or "Invalid" in result.output
+
+
+def test_apply_via_jsx_rejects_error_report(tmp_path):
+    src = tmp_path / "section.ai"
+    src.write_text("%AI\n")
+    dst = tmp_path / "section HIERARCHY-jsx.ai"
+
+    def fake_run_jsx(_jsx_path, timeout):
+        dst.write_text("%AI output\n")
+        Path("/tmp/arch_lw_report.txt").write_text("ERROR: target doc not open")
+
+    with (
+        patch("arch_line_weights.apply_jsx.query_active_doc", return_value=(None, None)),
+        patch("arch_line_weights.apply_jsx.open_in_illustrator"),
+        patch("arch_line_weights.apply_jsx.run_jsx_in_illustrator", side_effect=fake_run_jsx),
+        pytest.raises(RuntimeError, match="apply-jsx report contains ERROR"),
+    ):
+        apply_via_jsx(str(src), str(dst), printer=lambda _line: None)
+
+
+def test_apply_via_jsx_rejects_missing_output_after_report(tmp_path):
+    src = tmp_path / "section.ai"
+    src.write_text("%AI\n")
+    dst = tmp_path / "section HIERARCHY-jsx.ai"
+
+    def fake_run_jsx(_jsx_path, timeout):
+        Path("/tmp/arch_lw_report.txt").write_text("DONE\nsaved as: synthetic\n")
+
+    with (
+        patch("arch_line_weights.apply_jsx.query_active_doc", return_value=(None, None)),
+        patch("arch_line_weights.apply_jsx.open_in_illustrator"),
+        patch("arch_line_weights.apply_jsx.run_jsx_in_illustrator", side_effect=fake_run_jsx),
+        pytest.raises(RuntimeError, match="apply-jsx did not write expected hierarchy output"),
+    ):
+        apply_via_jsx(str(src), str(dst), printer=lambda _line: None)
 
 
 # --------------------------------------------------------------------------- #

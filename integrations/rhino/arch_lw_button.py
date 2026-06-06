@@ -21,9 +21,9 @@ import subprocess
 import threading
 from pathlib import Path
 
-import Rhino
-import Eto.Forms as forms
 import Eto.Drawing as drawing
+import Eto.Forms as forms
+import Rhino
 
 DEFAULT_SUB = "apply-jsx"  # or "poche"
 TIMEOUT_SEC = 30 * 60
@@ -91,16 +91,16 @@ def _run_cli_streaming(cli, src, dlg):
             dlg.append(line)
         proc.wait(timeout=TIMEOUT_SEC)
         ok = proc.returncode == 0
-        dlg.append("\n[exit {}]\n".format(proc.returncode))
+        dlg.append(f"\n[exit {proc.returncode}]\n")
         dlg.finish(ok)
         if ok:
             _open_external(out_path)
     except subprocess.TimeoutExpired:
         proc.kill()
-        dlg.append("\n[timeout > {}s]\n".format(TIMEOUT_SEC))
+        dlg.append(f"\n[timeout > {TIMEOUT_SEC}s]\n")
         dlg.finish(False)
     except Exception as e:
-        dlg.append("\n[error] {}: {}\n".format(type(e).__name__, e))
+        dlg.append(f"\n[error] {type(e).__name__}: {e}\n")
         dlg.finish(False)
 
 
