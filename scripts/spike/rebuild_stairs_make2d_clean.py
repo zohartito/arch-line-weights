@@ -30,7 +30,9 @@ def _bbox(geom: r3.GeometryBase) -> tuple[float, float, float, float, float, flo
     return (box.Min.X, box.Min.Y, box.Min.Z, box.Max.X, box.Max.Y, box.Max.Z)
 
 
-def _add_layer(model: r3.File3dm, name: str, color: tuple[int, int, int, int], *, visible: bool = True) -> int:
+def _add_layer(
+    model: r3.File3dm, name: str, color: tuple[int, int, int, int], *, visible: bool = True
+) -> int:
     layer = r3.Layer()
     layer.Name = name
     layer.Color = color

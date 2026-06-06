@@ -150,9 +150,7 @@ def _draw_header(width: int, record: DemoRecord) -> Image.Image:
     return banner
 
 
-def _render_side_by_side_panel(
-    before: Path, after: Path, dpi: int
-) -> Image.Image:
+def _render_side_by_side_panel(before: Path, after: Path, dpi: int) -> Image.Image:
     """Render a single page side-by-side at a single DPI (compact gallery panel).
 
     For multi-scale renders, callers should use the full ``preview.side_by_side``
@@ -161,12 +159,8 @@ def _render_side_by_side_panel(
     renderer = PyMuPDFRenderer()
     b_img = renderer.render_page(before, 0, dpi)
     a_img = renderer.render_page(after, 0, dpi)
-    b_panel = _label_panel(
-        b_img, f"BEFORE  {before.name}", f"page 1 @ {dpi} dpi (PDF stream)"
-    )
-    a_panel = _label_panel(
-        a_img, f"AFTER  {after.name}", f"page 1 @ {dpi} dpi (PDF stream)"
-    )
+    b_panel = _label_panel(b_img, f"BEFORE  {before.name}", f"page 1 @ {dpi} dpi (PDF stream)")
+    a_panel = _label_panel(a_img, f"AFTER  {after.name}", f"page 1 @ {dpi} dpi (PDF stream)")
     return _hstack([b_panel, a_panel])
 
 
@@ -188,9 +182,7 @@ def _run_apply_saas(src: Path, dst: Path) -> tuple[float, str | None]:
     ]
     t0 = time.perf_counter()
     try:
-        proc = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=600
-        )
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
         elapsed = time.perf_counter() - t0
         if proc.returncode != 0:
             tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-3:]
@@ -231,9 +223,7 @@ def _parse_apply_saas_stats(stderr: str) -> dict:
     return out
 
 
-def _collect_record(
-    src: Path, dst: Path, runtime: float, error: str | None, stderr: str
-) -> DemoRecord:
+def _collect_record(src: Path, dst: Path, runtime: float, error: str | None, stderr: str) -> DemoRecord:
     rep = inspect_file(str(src))
     layer_names = list(rep.layer_names or [])
     stats = _parse_apply_saas_stats(stderr)
@@ -252,9 +242,7 @@ def _collect_record(
     )
 
 
-def _make_demo_png(
-    src_copy: Path, dst: Path, record: DemoRecord, out_png: Path, dpi: int
-) -> None:
+def _make_demo_png(src_copy: Path, dst: Path, record: DemoRecord, out_png: Path, dpi: int) -> None:
     """Compose the final ``{stem}_demo.png`` (header + side-by-side panel)."""
     if not dst.exists():
         # Render a single before-only panel so the gallery still shows
@@ -363,15 +351,9 @@ drawing run through <code>arch-lw apply-saas --auto --poche</code>.</p>
     return out
 
 
-def build_gallery(
-    input_dir: Path, output_dir: Path, dpi: int = DEFAULT_DPI
-) -> list[DemoRecord]:
+def build_gallery(input_dir: Path, output_dir: Path, dpi: int = DEFAULT_DPI) -> list[DemoRecord]:
     output_dir.mkdir(parents=True, exist_ok=True)
-    inputs = sorted(
-        p
-        for p in input_dir.iterdir()
-        if p.is_file() and p.suffix.lower() in SUPPORTED_SUFFIXES
-    )
+    inputs = sorted(p for p in input_dir.iterdir() if p.is_file() and p.suffix.lower() in SUPPORTED_SUFFIXES)
     if not inputs:
         print(f"no .ai/.pdf files in {input_dir}", file=sys.stderr)
         return []
@@ -435,9 +417,7 @@ def build_gallery(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Generate a portfolio-ready before/after gallery."
-    )
+    parser = argparse.ArgumentParser(description="Generate a portfolio-ready before/after gallery.")
     parser.add_argument(
         "--input",
         type=Path,

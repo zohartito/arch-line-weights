@@ -229,10 +229,14 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument("--db", type=Path, default=DEFAULT_DB)
     parser.add_argument("--book", action="append", help="Index only one manifest book id. Repeatable.")
-    parser.add_argument("--force", action="store_true", help="Re-index even if the source file hash is unchanged.")
+    parser.add_argument(
+        "--force", action="store_true", help="Re-index even if the source file hash is unchanged."
+    )
     parser.add_argument("--limit-pages", type=int, help="Smoke-test mode: index only the first N pages.")
     parser.add_argument("--query", help="Search an existing or newly built index.")
-    parser.add_argument("--query-book", action="append", help="Restrict --query to one manifest book id. Repeatable.")
+    parser.add_argument(
+        "--query-book", action="append", help="Restrict --query to one manifest book id. Repeatable."
+    )
     parser.add_argument("--query-limit", type=int, default=8)
     return parser.parse_args(argv)
 
