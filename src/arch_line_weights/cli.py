@@ -19,6 +19,7 @@ from .bridge_rhino_ai import bridge_rhino_ai
 from .classify import auto_by_luminance, auto_by_role, explain_mapping, from_user_mapping
 from .cleanup import cleanup_file
 from .cleanup import default_output_path as default_output_path_cleanup
+from .drawing_type import classify_drawing_type
 from .input_format import UnsupportedInputError, raise_if_unsupported
 from .inspect import color_to_rgb255, inspect_file
 from .layer_classify import (
@@ -127,6 +128,29 @@ def _default_poche_output_path(src: Path) -> Path:
     return src.with_name(f"{src.stem.replace(' HIERARCHY', '')} POCHE{src.suffix}")
 
 
+def _parameter_was_commandline(name: str) -> bool:
+    ctx = click.get_current_context(silent=True)
+    if ctx is None or not hasattr(ctx, "get_parameter_source"):
+        return False
+    source = ctx.get_parameter_source(name)
+    return getattr(source, "name", "") == "COMMANDLINE"
+
+
+def _echo_drawing_type_guess(
+    guess: dict, *, preset: str | None = None, explicit_preset: bool = False
+) -> None:
+    kind = guess.get("kind", "section")
+    confidence = float(guess.get("confidence", 0.0))
+    explanation = guess.get("explanation", "")
+    click.echo(f"# drawing-type: {kind} (confidence={confidence:.2f}) - {explanation}", err=True)
+    if preset is None:
+        return
+    if explicit_preset:
+        click.echo(f"# selected preset: {preset} (explicit --preset override)", err=True)
+    else:
+        click.echo(f"# selected preset: {preset} (default)", err=True)
+
+
 @click.group()
 @click.version_option(__version__, prog_name="arch-lw")
 def cli():
@@ -174,6 +198,8 @@ def inspect(src: Path, pretty: bool, source: str):
         )
     else:
         click.echo(f"# layer-name source: {resolved.value} (forced via --source)", err=True)
+
+    _echo_drawing_type_guess(getattr(rep, "drawing_type", None) or {})
 
     # Per-layer role plan (item 4): show what each named layer would get, when
     # there are layers and a usable source (forced, or auto-detected > 0).
@@ -293,6 +319,14 @@ def apply(
     # classifier; lets them re-run with `--source autocad` if detection is wrong.
     pdf_metadata = getattr(rep, "pdf_metadata", None) or {}
     layer_names = getattr(rep, "layer_names", None) or []
+    explicit_preset = _parameter_was_commandline("preset")
+    drawing_guess = classify_drawing_type(
+        pdf_metadata=pdf_metadata,
+        layer_names=layer_names,
+        width_pt=getattr(rep, "width_pt", None),
+        height_pt=getattr(rep, "height_pt", None),
+    ).to_dict()
+    _echo_drawing_type_guess(drawing_guess, preset=preset, explicit_preset=explicit_preset)
     resolved_source, source_conf = _resolve_source(source, pdf_metadata, layer_names)
     if source == Source.AUTO.value:
         click.echo(

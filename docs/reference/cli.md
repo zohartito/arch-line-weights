@@ -22,6 +22,10 @@ Report color / stroke-width distribution of a `.ai` or `.pdf`.
 arch-lw inspect SRC [--pretty/--no-pretty]
 ```
 
+The JSON report includes `drawing_type.kind`, `confidence`, `explanation`, and
+`signals`. The command also prints a stderr hint such as `# drawing-type: plan`
+so dry runs and logs preserve the inferred plan/section/elevation/axon context.
+
 ## `arch-lw apply`
 
 Rewrite via `pikepdf` (fast, but flattens layers).
@@ -42,6 +46,10 @@ arch-lw apply SRC [OPTIONS]
 | `--default-width FLOAT` | `0.25` | Width for unmatched colors |
 | `--keep-pieceinfo` | off | Don't strip AI cache |
 | `--dry-run` | off | Preview mapping only |
+
+`apply --dry-run` prints the inferred drawing type and the selected preset. If
+the user supplied `--preset`, that preset is reported as an explicit override;
+otherwise the default `section` preset remains visible.
 
 ## `arch-lw apply-jsx`
 

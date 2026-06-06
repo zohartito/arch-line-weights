@@ -31,6 +31,7 @@ from dataclasses import dataclass, field
 
 import pikepdf
 
+from .drawing_type import classify_drawing_type
 from .input_format import raise_if_unsupported
 
 # PyMuPDF is imported lazily inside ``_inspect_pdf`` so a missing/broken
@@ -80,6 +81,7 @@ class InspectionReport:
     # callers that hand-construct InspectionReport don't break.
     pdf_metadata: dict = field(default_factory=dict)
     layer_names: list[str] = field(default_factory=list)
+    drawing_type: dict = field(default_factory=dict)
     input_format: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
@@ -96,6 +98,7 @@ class InspectionReport:
             "width_by_color": {k: dict(v) for k, v in self.width_by_color.items()},
             "pdf_metadata": dict(self.pdf_metadata),
             "layer_names": list(self.layer_names),
+            "drawing_type": dict(self.drawing_type),
             "input_format": dict(self.input_format),
         }
 
@@ -567,12 +570,14 @@ def inspect_file(path: str) -> InspectionReport:
         try:
             rep = _inspect_ai(path)
             _attach_input_format(rep, input_diag)
+            _attach_drawing_type(rep)
             return rep
         except Exception as e:
             pikepdf_err = e
         try:
             rep = _inspect_pdf(path)
             _attach_input_format(rep, input_diag)
+            _attach_drawing_type(rep)
             return rep
         except Exception as e:
             pymupdf_err = e
@@ -580,12 +585,14 @@ def inspect_file(path: str) -> InspectionReport:
         try:
             rep = _inspect_pdf(path)
             _attach_input_format(rep, input_diag)
+            _attach_drawing_type(rep)
             return rep
         except Exception as e:
             pymupdf_err = e
         try:
             rep = _inspect_ai(path)
             _attach_input_format(rep, input_diag)
+            _attach_drawing_type(rep)
             return rep
         except Exception as e:
             pikepdf_err = e
@@ -636,3 +643,14 @@ def _attach_input_format(rep: InspectionReport, input_diag) -> None:
                 "No vector drawing marks were found; this may be an empty drawing export."
             )
     rep.input_format = diagnostic
+
+
+def _attach_drawing_type(rep: InspectionReport) -> None:
+    """Attach the public drawing-type classifier summary to an inspection."""
+
+    rep.drawing_type = classify_drawing_type(
+        pdf_metadata=rep.pdf_metadata,
+        layer_names=rep.layer_names,
+        width_pt=rep.width_pt,
+        height_pt=rep.height_pt,
+    ).to_dict()
