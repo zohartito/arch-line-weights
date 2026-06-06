@@ -61,6 +61,23 @@ def test_apply_postscript_ai_fails_before_parser_traceback(tmp_path):
     assert "Traceback" not in result.output
 
 
+def test_apply_malformed_input_fails_cleanly_without_traceback(tmp_path):
+    src = tmp_path / "malformed.ai"
+    dst = tmp_path / "out.ai"
+    src.write_bytes(b"this is not a PDF or Illustrator file\n")
+
+    result = CliRunner().invoke(
+        cli,
+        ["apply", str(src), "--auto", "-o", str(dst)],
+    )
+
+    assert result.exit_code == 1
+    assert not dst.exists()
+    assert "file header is not recognized" in result.output.lower()
+    assert "PDF-compatible .ai or .pdf" in result.output
+    assert "Traceback" not in result.output
+
+
 def test_inspect_zip_header_mismatch_reports_unsupported_input(tmp_path):
     src = tmp_path / "mislabeled.pdf"
     src.write_bytes(b"PK\x03\x04fake zip payload")
