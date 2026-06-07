@@ -10,11 +10,12 @@ Phase 3 will add smarter classification (saturation, hue family, frequency).
 
 from __future__ import annotations
 
+from .depth import depth_ranks_for_colors
 from .inspect import InspectionReport, color_to_rgb255
 from .linetypes import LineType
 from .preset_rules import rule_for_preset
 from .presets import Tier
-from .role_ladder import Role, weight_for_role
+from .role_ladder import Role, modulate_by_depth, weight_for_role
 
 
 def from_user_mapping(
@@ -137,10 +138,14 @@ def auto_by_role(
     n_colors = len(rgb_counts)
     n_roles = len(role_order)
 
-    role_weight = {
-        role: weight_for_role(role, preset=weight_preset, scale=scale, for_print=for_print).weight_pt
+    role_assignments = {
+        role: weight_for_role(role, preset=weight_preset, scale=scale, for_print=for_print)
         for role in role_order
     }
+    depth_ranks = depth_ranks_for_colors(
+        [rgb for rgb, _count in rgb_counts],
+        getattr(report, "depth_by_color", None),
+    )
 
     for idx, (rgb, _count) in enumerate(rgb_counts):
         if n_colors == 1:
@@ -148,7 +153,19 @@ def auto_by_role(
         else:
             bucket = round((idx / (n_colors - 1)) * (n_roles - 1))
             role = role_order[bucket]
-        weights[rgb] = role_weight[role]
+        assignment = role_assignments[role]
+        depth = depth_ranks.get(rgb)
+        if depth is not None:
+            assignment = modulate_by_depth(
+                role,
+                assignment,
+                depth.rank,
+                depth.total,
+                weight_preset,
+                scale,
+                for_print,
+            )
+        weights[rgb] = assignment.weight_pt
         linetypes[rgb] = LineType.CONTINUOUS
     return weights, linetypes
 

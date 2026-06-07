@@ -19,6 +19,7 @@ from .bridge_rhino_ai import bridge_rhino_ai
 from .classify import auto_by_luminance, auto_by_role, explain_mapping, from_user_mapping
 from .cleanup import cleanup_file
 from .cleanup import default_output_path as default_output_path_cleanup
+from .drawing_type import classify_drawing_type
 from .input_format import UnsupportedInputError, raise_if_unsupported
 from .inspect import color_to_rgb255, inspect_file
 from .layer_classify import (
@@ -33,6 +34,12 @@ from .poche import apply_poche
 from .presets import PRESETS, select_preset
 from .progress import DEFAULT_PROGRESS_FILE, make_reporter
 from .role_signal import no_role_signal, no_role_signal_message
+from .visual_check import (
+    VALID_VISUAL_CHECK_STATUSES,
+    build_visual_check_summary,
+    format_visual_check_markdown,
+    open_in_illustrator,
+)
 
 # CLI-facing source choices. Keep AUTO first so it's the default.
 _SOURCE_CHOICES = [Source.AUTO.value, Source.RHINO.value, Source.AUTOCAD.value]
@@ -121,6 +128,36 @@ def _default_poche_output_path(src: Path) -> Path:
     return src.with_name(f"{src.stem.replace(' HIERARCHY', '')} POCHE{src.suffix}")
 
 
+def _parameter_was_commandline(name: str) -> bool:
+    ctx = click.get_current_context(silent=True)
+    if ctx is None or not hasattr(ctx, "get_parameter_source"):
+        return False
+    source = ctx.get_parameter_source(name)
+    return getattr(source, "name", "") == "COMMANDLINE"
+
+
+def _echo_drawing_type_guess(
+    guess: dict, *, preset: str | None = None, explicit_preset: bool = False
+) -> None:
+    kind = guess.get("kind", "section")
+    confidence = float(guess.get("confidence", 0.0))
+    explanation = guess.get("explanation", "")
+    click.echo(f"# drawing-type: {kind} (confidence={confidence:.2f}) - {explanation}", err=True)
+    if preset is None:
+        return
+    if explicit_preset:
+        click.echo(f"# selected preset: {preset} (explicit --preset override)", err=True)
+    else:
+        click.echo(f"# selected preset: {preset} (default)", err=True)
+
+
+def _echo_depth_evidence(summary: dict) -> None:
+    source = summary.get("source", "fallback")
+    confidence = float(summary.get("confidence", 0.0))
+    explanation = summary.get("explanation", "")
+    click.echo(f"# depth: {source} (confidence={confidence:.2f}) - {explanation}", err=True)
+
+
 @click.group()
 @click.version_option(__version__, prog_name="arch-lw")
 def cli():
@@ -169,6 +206,9 @@ def inspect(src: Path, pretty: bool, source: str):
     else:
         click.echo(f"# layer-name source: {resolved.value} (forced via --source)", err=True)
 
+    _echo_drawing_type_guess(getattr(rep, "drawing_type", None) or {})
+    _echo_depth_evidence(getattr(rep, "depth_evidence", None) or {})
+
     # Per-layer role plan (item 4): show what each named layer would get, when
     # there are layers and a usable source (forced, or auto-detected > 0).
     if layer_names and (source != Source.AUTO.value or conf > 0.0):
@@ -216,6 +256,11 @@ def inspect(src: Path, pretty: bool, source: str):
     "surface → layout) mapped to the preset's ISO ladder. The v1 default.",
 )
 @click.option(
+    "--architectural",
+    is_flag=True,
+    help="Use marked-content OCG layer roles to override live PDF stream stroke weights/colors when binding is reliable.",
+)
+@click.option(
     "--legacy-weights",
     is_flag=True,
     help="Use the pre-v1 luminance + frequency bucketing for --auto instead of the role ladder.",
@@ -260,6 +305,7 @@ def apply(
     scale: str,
     for_print: bool,
     auto: bool,
+    architectural: bool,
     legacy_weights: bool,
     strict: bool,
     default_width: float,
@@ -269,8 +315,8 @@ def apply(
 ):
     """Rewrite the file with per-color stroke widths."""
     _require_supported_input(src, "apply")
-    if not (auto or mapping_file):
-        raise click.UsageError("provide --mapping FILE or --auto (with optional --preset)")
+    if not (auto or mapping_file or architectural):
+        raise click.UsageError("provide --mapping FILE, --auto (with optional --preset), or --architectural")
     if auto and mapping_file:
         raise click.UsageError("--auto and --mapping are mutually exclusive")
 
@@ -281,6 +327,15 @@ def apply(
     # classifier; lets them re-run with `--source autocad` if detection is wrong.
     pdf_metadata = getattr(rep, "pdf_metadata", None) or {}
     layer_names = getattr(rep, "layer_names", None) or []
+    explicit_preset = _parameter_was_commandline("preset")
+    drawing_guess = classify_drawing_type(
+        pdf_metadata=pdf_metadata,
+        layer_names=layer_names,
+        width_pt=getattr(rep, "width_pt", None),
+        height_pt=getattr(rep, "height_pt", None),
+    ).to_dict()
+    _echo_drawing_type_guess(drawing_guess, preset=preset, explicit_preset=explicit_preset)
+    _echo_depth_evidence(getattr(rep, "depth_evidence", None) or {})
     resolved_source, source_conf = _resolve_source(source, pdf_metadata, layer_names)
     if source == Source.AUTO.value:
         click.echo(
@@ -301,6 +356,8 @@ def apply(
                 continue
             mapping[rgb] = float(w)
         mapping = from_user_mapping(mapping)
+    elif architectural:
+        mapping = {}
     elif no_role_signal(rep, source_conf):
         # Item 5: no role signal → warn loudly and stop. Never a silent no-op.
         click.echo(no_role_signal_message(rep, resolved_source, source_conf, name=src.name), err=True)
@@ -323,6 +380,35 @@ def apply(
     )
     for line in explain_mapping(mapping, rep):
         click.echo(line, err=True)
+    layer_weight_resolver = None
+    layer_color_resolver = None
+    layer_solid_line_resolver = None
+    if architectural:
+        from .architectural import (
+            architectural_layer_color_resolver,
+            architectural_layer_solid_line_resolver,
+            architectural_layer_weight_resolver,
+        )
+
+        layer_weight_resolver = architectural_layer_weight_resolver(
+            preset=preset,
+            scale=scale,
+            for_print=for_print,
+            source=resolved_source,
+        )
+        layer_color_resolver = architectural_layer_color_resolver(
+            preset=preset,
+            scale=scale,
+            for_print=for_print,
+            source=resolved_source,
+        )
+        layer_solid_line_resolver = architectural_layer_solid_line_resolver(
+            preset=preset,
+            scale=scale,
+            for_print=for_print,
+            source=resolved_source,
+        )
+        click.echo("# architectural: marked-content layer overrides enabled", err=True)
 
     if dry_run:
         click.echo("--dry-run: no file written.", err=True)
@@ -338,6 +424,9 @@ def apply(
         default_width=default_width,
         strip_pieceinfo=not keep_pieceinfo,
         rgb_to_linetype=rgb_to_linetype,
+        layer_weight_resolver=layer_weight_resolver,
+        layer_color_resolver=layer_color_resolver,
+        layer_solid_line_resolver=layer_solid_line_resolver,
     )
 
     click.echo("", err=True)
@@ -358,6 +447,23 @@ def apply(
             click.echo(f"  {lt_name}: {n:,}", err=True)
     if result.excluded_strokes:
         click.echo(f"non-plotting strokes flagged (kept, not deleted): {result.excluded_strokes:,}", err=True)
+    if result.layer_weight_overrides:
+        click.echo(
+            f"architectural layer overrides: {result.layer_weight_overrides:,} strokes",
+            err=True,
+        )
+    if result.layer_color_overrides:
+        click.echo(
+            f"architectural color overrides: {result.layer_color_overrides:,} strokes",
+            err=True,
+        )
+    if result.layer_dash_overrides:
+        click.echo(
+            f"architectural dash overrides: {result.layer_dash_overrides:,} strokes",
+            err=True,
+        )
+    for warning in result.warnings:
+        click.echo(f"warning: {warning}", err=True)
     click.echo("", err=True)
     click.echo(f"wrote {output}  ({result.output_size:,} bytes)", err=True)
 
@@ -1809,6 +1915,85 @@ def diagnose_cmd(report: Path, as_json: bool):
         click.echo(json.dumps(summary, indent=2, sort_keys=True))
     else:
         click.echo(format_diagnosis(summary))
+
+
+@cli.command("visual-check")
+@click.argument("subject", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--before", type=click.Path(dir_okay=False, path_type=Path), help="Local before-view artifact.")
+@click.option("--after", type=click.Path(dir_okay=False, path_type=Path), help="Local after-view artifact.")
+@click.option("--diff", type=click.Path(dir_okay=False, path_type=Path), help="Local diff artifact.")
+@click.option(
+    "--report", "report_path", type=click.Path(dir_okay=False, path_type=Path), help="Local run report."
+)
+@click.option(
+    "--status",
+    type=click.Choice(list(VALID_VISUAL_CHECK_STATUSES)),
+    default="needs_review",
+    show_default=True,
+    help="Visual review status to record.",
+)
+@click.option("--reviewer", help="Reviewer name or handoff code, e.g. W5 or W7.")
+@click.option("--issue", "issues", multiple=True, help="GitHub issue covered by this visual review.")
+@click.option("--note", "notes", multiple=True, help="Public-safe review note. Local paths will be redacted.")
+@click.option(
+    "--json-output", type=click.Path(dir_okay=False, path_type=Path), help="Write redacted JSON summary."
+)
+@click.option(
+    "--markdown-output",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Write redacted Markdown summary.",
+)
+@click.option(
+    "--open-illustrator", is_flag=True, help="Open the subject in Adobe Illustrator before reporting."
+)
+@click.option(
+    "--illustrator-app", default="Adobe Illustrator", show_default=True, help="macOS app name to open."
+)
+def visual_check_cmd(
+    subject: Path,
+    before: Path | None,
+    after: Path | None,
+    diff: Path | None,
+    report_path: Path | None,
+    status: str,
+    reviewer: str | None,
+    issues: tuple[str, ...],
+    notes: tuple[str, ...],
+    json_output: Path | None,
+    markdown_output: Path | None,
+    open_illustrator: bool,
+    illustrator_app: str,
+):
+    """Write a path-redacted local Illustrator visual QA summary."""
+    if open_illustrator:
+        open_in_illustrator(subject, app_name=illustrator_app)
+
+    try:
+        summary = build_visual_check_summary(
+            subject,
+            before=before,
+            after=after,
+            diff=diff,
+            report=report_path,
+            status=status,
+            reviewer=reviewer,
+            issues=issues,
+            notes=notes,
+            opened_in_illustrator=open_illustrator,
+        )
+        markdown = format_visual_check_markdown(summary)
+    except ValueError as exc:
+        raise click.UsageError(str(exc)) from exc
+
+    if json_output is not None:
+        json_output.parent.mkdir(parents=True, exist_ok=True)
+        json_output.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        click.echo(f"visual-check: wrote {json_output.name}", err=True)
+    if markdown_output is not None:
+        markdown_output.parent.mkdir(parents=True, exist_ok=True)
+        markdown_output.write_text(markdown, encoding="utf-8")
+        click.echo(f"visual-check: wrote {markdown_output.name}", err=True)
+    click.echo(markdown, nl=False)
 
 
 @cli.command("explain-layer")

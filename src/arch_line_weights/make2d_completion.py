@@ -189,9 +189,9 @@ def has_cut_anchor(poly: Polygon, cut_lines: list[LineString]) -> bool:
 
 def _completion_area_limit(layer_name: str) -> float:
     upper = layer_name.upper()
-    if "TEC_CLT_SLABS" in upper:
+    if "TEC_CLT_SLABS" in upper or "FLOOR_PLATE" in upper or "SLAB_PLATE" in upper:
         return 7000.0
-    if "TEC_ROOF_CLT" in upper or "ROOF_CAP" in upper:
+    if "TEC_ROOF_CLT" in upper or "ROOF_CUT_MASS" in upper or "ROOF_CAP" in upper:
         return 3500.0
     if "TEC_FOUNDATION" in upper or "TEC_CONCRETE_BASE" in upper:
         return 2500.0
@@ -258,7 +258,13 @@ def _large_candidate_is_plausible(
             and rectangularity >= 0.65
             and shared >= max(35.0, required * 1.5)
         )
-    if "TEC_ROOF_CLT" in upper or "TEC_CLT_SLABS" in upper:
+    if (
+        "TEC_ROOF_CLT" in upper
+        or "ROOF_CUT_MASS" in upper
+        or "TEC_CLT_SLABS" in upper
+        or "FLOOR_PLATE" in upper
+        or "SLAB_PLATE" in upper
+    ):
         return (
             poly.area <= 45000.0
             and aspect >= 2.0
@@ -418,7 +424,7 @@ def complete_structural_cut_polygons(
     component = component_key(layer_name)
     candidates: list[CompletionCandidate] = []
     accepted: list[Polygon] = []
-    is_timber_beam = "TEC_TIMBER_BEAMS" in layer_name.upper()
+    is_timber_beam = "TEC_TIMBER_BEAMS" in layer_name.upper() or "BEAM_CAP" in layer_name.upper()
     for poly in _candidate_polygons(
         cut_lines + helper_lines,
         merge_adjacent=not is_timber_beam,

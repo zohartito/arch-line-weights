@@ -60,7 +60,9 @@ def _add_box(model: r3.File3dm, layer_index: int, name: str, bounds: Bounds) -> 
     model.Objects.AddBrep(brep, attr)
 
 
-def _record_source_parts(source: r3.File3dm) -> tuple[list[tuple[str, Bounds]], list[tuple[str, Bounds]], tuple[str, Bounds] | None]:
+def _record_source_parts(
+    source: r3.File3dm,
+) -> tuple[list[tuple[str, Bounds]], list[tuple[str, Bounds]], tuple[str, Bounds] | None]:
     landings: list[tuple[str, Bounds]] = []
     flights: list[tuple[str, Bounds]] = []
     spine: tuple[str, Bounds] | None = None

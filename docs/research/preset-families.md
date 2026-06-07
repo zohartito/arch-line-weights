@@ -119,6 +119,15 @@ mm).
 > almost never use hidden lines — what they need is a tier that holds
 > joint/reveal lines just under the openings tier.
 
+### 2.3.1 AXON / PARALINE
+
+Axonometric and paraline views are also **no-cut figure-ground** drawings when
+they are not explicitly sectioned. `--preset axon` and `--preset paraline`
+therefore reuse the elevation weight ladder: silhouette/spatial edges remain
+heaviest, planar corners follow, and surface/material linework recedes. Unlike
+elevation, a floating axon has no groundline role, so the preset rule keeps
+`has_groundline=False`.
+
 ### 2.4 DETAIL (1/2"=1' or larger)
 
 Per ISO 128-2:2020 §6 (scale-dependent line widths) and Ching p.27, detail

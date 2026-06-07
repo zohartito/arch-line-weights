@@ -103,3 +103,4 @@ Edit `RULES` in the script to match your office naming conventions. Set `DRY_RUN
 
 - [Tutorial: your first section drawing](../tutorials/your-first-section-drawing.md)
 - [Troubleshoot](troubleshoot.md)
+- [Rhino Make2D export assistant recommendation](../research/rhino-make2d-export-assistant-recommendation.md)

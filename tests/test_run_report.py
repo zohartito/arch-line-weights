@@ -156,6 +156,47 @@ def test_report_includes_completion_candidate_rejections():
     assert data["layers"][0]["review"]["needs_review"] is True
 
 
+def test_report_preserves_accepted_and_rejected_completion_candidate_evidence():
+    layer = "axon::Visible::ClippingPlaneIntersections::TEC_FIRST_FLOOR_PLATE"
+    accepted = CompletionCandidate(
+        component_key="TEC_FIRST_FLOOR_PLATE",
+        target_layer=layer,
+        source_role="visible_curve",
+        polygon=Polygon([(0, 0), (180, 0), (180, 36), (0, 36)]),
+        confidence=0.88,
+        provenance="cut+same-component-visible/tangent",
+        accepted=True,
+        reason="accepted: bounded and anchored to clipping-plane edge",
+        cut_shared_length=432.0,
+    )
+    rejected = CompletionCandidate(
+        component_key="TEC_FIRST_FLOOR_PLATE",
+        target_layer=layer,
+        source_role="visible_curve",
+        polygon=Polygon([(250, 250), (300, 250), (300, 300), (250, 300)]),
+        confidence=0.0,
+        provenance="cut+same-component-visible/tangent",
+        accepted=False,
+        reason="rejected: cut anchor 0.0 below required 20.0",
+        cut_shared_length=0.0,
+    )
+
+    data = _report(
+        [FillResult(layer, "structural_visible_completion", 0.88, 1, 4)],
+        polygons={layer: [[[0, 0], [180, 0], [180, 36], [0, 36], [0, 0]]]},
+        candidates=[accepted, rejected],
+        injected=1,
+    )
+
+    candidates = data["completion_candidates"]
+    assert [candidate["accepted"] for candidate in candidates] == [True, False]
+    assert candidates[0]["reason"].startswith("accepted:")
+    assert candidates[0]["confidence"] == 0.88
+    assert candidates[0]["cut_shared_length"] == 432.0
+    assert candidates[1]["reason"].startswith("rejected:")
+    assert candidates[1]["cut_shared_length"] == 0.0
+
+
 def test_apply_saas_report_schema_v2_includes_input_format_and_visual_artifacts():
     layer = "LayerA"
     data = build_apply_saas_report(

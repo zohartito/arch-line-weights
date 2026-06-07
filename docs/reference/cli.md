@@ -22,6 +22,14 @@ Report color / stroke-width distribution of a `.ai` or `.pdf`.
 arch-lw inspect SRC [--pretty/--no-pretty]
 ```
 
+The JSON report includes `drawing_type.kind`, `confidence`, `explanation`, and
+`signals`. The command also prints a stderr hint such as `# drawing-type: plan`
+so dry runs and logs preserve the inferred plan/section/elevation/axon context.
+It also includes `depth_evidence.source`, `confidence`, and `explanation`;
+`source=z` means Z/depth metadata is available, `source=overlap` means
+foreground/overlap cues are available, and `source=fallback` means the v1 role
+ladder remains unchanged.
+
 ## `arch-lw apply`
 
 Rewrite via `pikepdf` (fast, but flattens layers).
@@ -34,13 +42,23 @@ arch-lw apply SRC [OPTIONS]
 |---|---|---|
 | `-o, --output PATH` | `<src> HIERARCHY.<ext>` | Output path |
 | `--mapping FILE` | — | JSON: `{"RGB(r,g,b)": weight_pt}` |
-| `--preset {section,plan,elevation,detail,usc}` | `section` | Tier ladder for `--auto` |
+| `--preset {axon,detail,elevation,paraline,plan,section,usc}` | `section` | Tier ladder for `--auto` |
 | `--scale {1/16,1/8,1/4,1/2}` | `1/4` | Plot scale for ISO 128 weights |
 | `--for-print` | off | Use ISO 128 print weights |
 | `--auto` | off | Auto-bucket colors |
+| `--architectural` | off | Use marked-content OCG layer roles to override stroke weights/colors when binding is reliable |
 | `--default-width FLOAT` | `0.25` | Width for unmatched colors |
 | `--keep-pieceinfo` | off | Don't strip AI cache |
 | `--dry-run` | off | Preview mapping only |
+
+`apply --dry-run` prints the inferred drawing type and the selected preset. If
+the user supplied `--preset`, that preset is reported as an explicit override;
+otherwise the default `section` preset remains visible.
+
+When trusted per-color depth evidence exists, `apply --auto` uses it to recede
+non-protected roles. Cut profiles and protected spatial edges are not weakened;
+low-confidence depth evidence falls back to the v1 role ladder and is reported
+as `# depth: fallback`.
 
 ## `arch-lw apply-jsx`
 
@@ -90,7 +108,7 @@ arch-lw bridge-rhino-ai --input SRC [OPTIONS]
 | `--fit {center,fit}` | `center` | Center at current scale, or fit within margin |
 | `--margin LENGTH` | `0.5in` | Margin for `--fit` |
 | `--allow-enlarge` | off | Let `--fit` scale small artwork up |
-| `--preset {section,plan,elevation,detail,usc}` | `section` | Preset for optional `--apply-jsx` |
+| `--preset {axon,detail,elevation,paraline,plan,section,usc}` | `section` | Preset for optional `--apply-jsx` |
 | `--source {auto,rhino,autocad}` | `rhino` | Layer-name convention for reports and optional poché |
 | `--scale TEXT` | `1/4` | Plot scale for optional `--apply-jsx --for-print` |
 | `--for-print` | off | Use print weights in optional `--apply-jsx` |
@@ -115,7 +133,7 @@ arch-lw apply-saas SRC [OPTIONS]
 |---|---|---|
 | `-o, --output PATH` | `<src> HIERARCHY-saas.<ext>` | Output path |
 | `--mapping FILE` | — | JSON: `{"RGB(r,g,b)": weight_pt}` |
-| `--preset {section,plan,elevation,detail,usc}` | `section` | Tier ladder for `--auto` |
+| `--preset {axon,detail,elevation,paraline,plan,section,usc}` | `section` | Tier ladder for `--auto` |
 | `--scale TEXT` | `1/4` | Plot scale for `--for-print` |
 | `--for-print` | off | Use ISO 128 print weights |
 | `--auto` | off | Auto-bucket native RGB/CMYK stroke colors |
@@ -152,6 +170,14 @@ only tiny high-confidence debris and exact duplicate paths, then inserts
 conservative per-path stroke weights for detail, medium, and profile-length
 strokes. It does not repair invalid Rhino source solids or hide uncertain
 internal lines; those remain review items in the report.
+
+Cleanup reports include `geometric_roles` counts and `geometry_review` totals
+for low-semantic linework. The role inference is conservative: closed dominant
+loops can become cut profiles, dominant open profiles can become silhouettes,
+right-angle bends can become planar corners, mid-length paths can be
+surface/material lines, and tiny strokes can be layout/reference. Ambiguous
+equal-weight geometry is flagged for review instead of treated as a confident
+guess.
 
 ## `arch-lw poche`
 
@@ -227,6 +253,38 @@ evidence: do not commit raw proof-check reports that contain machine-local paths
 `--materialize-synthetic` is only a public synthetic rehearsal helper. It can
 materialize public pass, expected-fail, and unsupported sentinels, but it does
 not create private/manual-review proof, record acceptance, or close #30.
+
+## `arch-lw visual-check`
+
+Record a local Illustrator visual QA decision without leaking private paths.
+
+```bash
+arch-lw visual-check output.ai \
+  --after after.png \
+  --report run-report.json \
+  --issue 30 \
+  --status needs_review \
+  --markdown-output visual-check.md \
+  --json-output visual-check.json
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--before PATH` | - | Local before-view artifact, stored by basename only |
+| `--after PATH` | - | Local after-view artifact, stored by basename only |
+| `--diff PATH` | - | Local diff artifact, stored by basename only |
+| `--report PATH` | - | Local run report, stored by basename only |
+| `--status {needs_review,accepted,rejected,blocked}` | `needs_review` | Review decision |
+| `--reviewer TEXT` | - | Reviewer name or handoff code |
+| `--issue TEXT` | repeatable | Issue covered by the visual review |
+| `--note TEXT` | repeatable | Public-safe note; local paths are redacted |
+| `--json-output PATH` | - | Write the redacted JSON summary |
+| `--markdown-output PATH` | - | Write the redacted Markdown summary |
+| `--open-illustrator` | off | Open the subject in Adobe Illustrator before reporting |
+
+`visual-check` is a local evidence log, not public proof. It redacts local paths
+to basenames and repeats the guardrail that private drawings, screenshots, raw
+reports, and local paths stay out of git.
 
 ## `arch-lw explain-layer`
 

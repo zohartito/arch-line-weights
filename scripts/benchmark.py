@@ -150,9 +150,7 @@ def _build_mapping(src: Path) -> dict[tuple[int, int, int], float]:
     return auto_by_luminance(rep, tiers)
 
 
-def _time_apply_saas(
-    src: Path, runs: int, mapping: dict[tuple[int, int, int], float]
-) -> StageTiming:
+def _time_apply_saas(src: Path, runs: int, mapping: dict[tuple[int, int, int], float]) -> StageTiming:
     """B6 only: time ``apply_to_file`` (no poché)."""
     t = StageTiming(stage="apply-saas")
     last_result = None
@@ -172,9 +170,7 @@ def _time_apply_saas(
     return t
 
 
-def _time_apply_saas_poche(
-    src: Path, runs: int, mapping: dict[tuple[int, int, int], float]
-) -> StageTiming:
+def _time_apply_saas_poche(src: Path, runs: int, mapping: dict[tuple[int, int, int], float]) -> StageTiming:
     """B6 + B7: time ``apply_saas_with_poche``."""
     t = StageTiming(stage="apply-saas --poche")
     last_apply = None
@@ -184,18 +180,14 @@ def _time_apply_saas_poche(
             dst = Path(tmp) / f"out_{i}.ai"
             t0 = time.perf_counter()
             try:
-                last_apply, last_poche, _report = apply_saas_with_poche(
-                    str(src), str(dst), mapping
-                )
+                last_apply, last_poche, _report = apply_saas_with_poche(str(src), str(dst), mapping)
             except Exception as exc:
                 t.error = str(exc)
                 return t
             t.times_seconds.append(time.perf_counter() - t0)
         if last_apply is not None:
             t.output_bytes = last_apply.output_size
-            t.weights_applied = {
-                f"{w}": n for w, n in last_apply.weights_applied.items()
-            }
+            t.weights_applied = {f"{w}": n for w, n in last_apply.weights_applied.items()}
         if last_poche is not None:
             t.polygons_injected = last_poche.polygons_injected
             t.layers_injected = last_poche.layers_injected
@@ -240,9 +232,7 @@ def _time_apply_jsx(src: Path, runs: int, *, per_run_timeout: int = 300) -> Stag
                 )
             except subprocess.TimeoutExpired:
                 t.skipped = True
-                t.skip_reason = (
-                    f"apply-jsx exceeded {per_run_timeout}s — Illustrator may be unresponsive"
-                )
+                t.skip_reason = f"apply-jsx exceeded {per_run_timeout}s — Illustrator may be unresponsive"
                 return t
             elapsed = time.perf_counter() - t0
             if proc.returncode != 0:
@@ -257,9 +247,7 @@ def _time_apply_jsx(src: Path, runs: int, *, per_run_timeout: int = 300) -> Stag
     return t
 
 
-def benchmark_file(
-    src: Path, runs: int, *, jsx_runs: int = 1, jsx_timeout: int = 300
-) -> FileBenchmark:
+def benchmark_file(src: Path, runs: int, *, jsx_runs: int = 1, jsx_timeout: int = 300) -> FileBenchmark:
     """Run all three stages on a single input and return the combined result."""
     rep = inspect_file(str(src))
     layer_names = list(rep.layer_names or [])
@@ -291,9 +279,7 @@ def _fmt_bytes(n: int) -> str:
     return f"{n:,}" if n else "—"
 
 
-def _markdown_section(
-    benchmarks: list[FileBenchmark], started_at: datetime, runs: int
-) -> str:
+def _markdown_section(benchmarks: list[FileBenchmark], started_at: datetime, runs: int) -> str:
     """One header + one table per benchmark run, appended to benchmarks.md."""
     lines: list[str] = []
     stamp = started_at.strftime("%Y-%m-%d %H:%M:%S %Z")
@@ -382,18 +368,12 @@ def _gather_inputs(arg: Path) -> list[Path]:
             raise SystemExit(f"unsupported file type: {arg.suffix}")
         return [arg]
     if arg.is_dir():
-        return sorted(
-            p
-            for p in arg.iterdir()
-            if p.is_file() and p.suffix.lower() in SUPPORTED_SUFFIXES
-        )
+        return sorted(p for p in arg.iterdir() if p.is_file() and p.suffix.lower() in SUPPORTED_SUFFIXES)
     raise SystemExit(f"--input not found: {arg}")
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Benchmark the arch-line-weights pipeline."
-    )
+    parser = argparse.ArgumentParser(description="Benchmark the arch-line-weights pipeline.")
     parser.add_argument(
         "--input",
         type=Path,
@@ -453,9 +433,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\n=> {src.name}  ({src.stat().st_size:,} bytes)", file=sys.stderr)
         # --no-jsx → force apply-jsx skip without probing osascript/Illustrator
         jsx_runs = 0 if args.no_jsx else args.jsx_runs
-        b = benchmark_file(
-            src, args.runs, jsx_runs=jsx_runs, jsx_timeout=args.jsx_timeout
-        )
+        b = benchmark_file(src, args.runs, jsx_runs=jsx_runs, jsx_timeout=args.jsx_timeout)
         if args.no_jsx:
             b.apply_jsx.skipped = True
             b.apply_jsx.skip_reason = "skipped via --no-jsx"

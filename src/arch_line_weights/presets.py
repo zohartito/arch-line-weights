@@ -82,6 +82,8 @@ PRESETS: dict[str, list[Tier]] = {
     "usc": USC,
     "plan": PLAN,
     "elevation": ELEVATION,
+    "axon": ELEVATION,
+    "paraline": ELEVATION,
     "detail": DETAIL,
 }
 
@@ -295,6 +297,8 @@ _ISO_PRINT_FAMILIES: dict[str, list[Tier]] = {
     "usc": USC_STUDIO_PRINT,
     "plan": PLAN_ISO_PRINT,
     "elevation": ELEVATION_ISO_PRINT,
+    "axon": ELEVATION_ISO_PRINT,
+    "paraline": ELEVATION_ISO_PRINT,
     "detail": DETAIL_ISO_PRINT,
 }
 
@@ -303,6 +307,8 @@ _ISO_SCREEN_FAMILIES: dict[str, list[Tier]] = {
     "usc": USC_STUDIO_SCREEN,
     "plan": PLAN_ISO_SCREEN,
     "elevation": ELEVATION_ISO_SCREEN,
+    "axon": ELEVATION_ISO_SCREEN,
+    "paraline": ELEVATION_ISO_SCREEN,
     "detail": DETAIL_ISO_SCREEN,
 }
 

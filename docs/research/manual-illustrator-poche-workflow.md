@@ -237,6 +237,31 @@ Every run should produce a review report with accepted fills, rejected
 candidates, inferred closures, layer style overrides, and warnings. Longer term,
 it should produce visual QA snapshots or a review overlay.
 
+## 8. Local Visual-Check Summary
+
+When the evidence comes from a private drawing, keep the raw drawing,
+screenshots, PDFs, reports, and local paths outside git. Use `arch-lw
+visual-check` to record only a redacted local decision:
+
+```bash
+arch-lw visual-check output.ai \
+  --before before.png \
+  --after after.png \
+  --diff diff.png \
+  --report run-report.json \
+  --issue 7 \
+  --issue 30 \
+  --status needs_review \
+  --markdown-output visual-check.md \
+  --json-output visual-check.json
+```
+
+The command stores artifact basenames, not full paths, and reminds reviewers
+that PDF preview is not authoritative for AI-native Illustrator payloads.
+`accepted` means the local Illustrator comparison passed; it does not make raw
+private proof public-safe. Public proof remains NO-GO unless W5/W7 accepts a
+public-safe packet.
+
 ## Mapping To Arch-Line-Weights Stages
 
 | Manual step | Program stage | Required behavior |

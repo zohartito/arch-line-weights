@@ -68,6 +68,8 @@ def test_cleanup_payload_classifies_fixed_stair_single_layer_conservatively():
     assert report["summary"]["lightened"] == 1
     assert report["summary"]["medium"] == 1
     assert report["summary"]["heavy"] == 1
+    assert report["layers"][0]["geometric_roles"]["spatial-edge"] == 1
+    assert report["layers"][0]["geometric_roles"]["surface"] >= 1
     assert "single/low-semantic layer" in report["warnings"][0]
 
     assert b"0.4 0 L\rS\r" not in result.payload

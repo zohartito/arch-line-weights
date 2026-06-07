@@ -598,6 +598,44 @@ def test_structural_completion_accepts_large_strongly_anchored_roof_strip():
     assert any(candidate.accepted for candidate in candidates)
 
 
+def test_structural_completion_accepts_first_floor_plate_strip():
+    accepted, candidates = complete_structural_cut_polygons(
+        "axon::Visible::ClippingPlaneIntersections::TEC_FIRST_FLOOR_PLATE",
+        [
+            [[0, 0], [180, 0]],
+            [[180, 36], [0, 36]],
+        ],
+        [
+            [[0, 0], [0, 36]],
+            [[180, 0], [180, 36]],
+        ],
+        [],
+    )
+
+    assert len(accepted) == 1
+    assert round(accepted[0].area) == 6480
+    assert any(candidate.accepted for candidate in candidates)
+
+
+def test_structural_completion_accepts_generic_roof_cut_mass_strip():
+    accepted, candidates = complete_structural_cut_polygons(
+        "axon::Visible::ClippingPlaneIntersections::ROOF_CUT_MASS",
+        [
+            [[0, 0], [360, 0]],
+            [[360, 64], [0, 64]],
+        ],
+        [
+            [[0, 0], [0, 64]],
+            [[360, 0], [360, 64]],
+        ],
+        [],
+    )
+
+    assert len(accepted) == 1
+    assert round(accepted[0].area) == 23040
+    assert any(candidate.accepted for candidate in candidates)
+
+
 def test_structural_completion_accepts_slim_foundation_above_static_area_limit():
     accepted, candidates = complete_structural_cut_polygons(
         "axon::Visible::ClippingPlaneIntersections::TEC_FOUNDATION",
@@ -689,6 +727,25 @@ def test_structural_completion_accepts_small_timber_beam_cut_square():
 
     assert len(accepted) == 1
     assert round(accepted[0].area) == 260
+    assert any(candidate.accepted for candidate in candidates)
+
+
+def test_structural_completion_accepts_small_timber_beam_cap():
+    accepted, candidates = complete_structural_cut_polygons(
+        "axon::Visible::ClippingPlaneIntersections::TEC_TIMBER_BEAM_CAP",
+        [
+            [[0, 0], [14, 0]],
+            [[14, 28], [0, 28]],
+        ],
+        [
+            [[0, 0], [0, 28]],
+            [[14, 0], [14, 28]],
+        ],
+        [],
+    )
+
+    assert len(accepted) == 1
+    assert round(accepted[0].area) == 392
     assert any(candidate.accepted for candidate in candidates)
 
 

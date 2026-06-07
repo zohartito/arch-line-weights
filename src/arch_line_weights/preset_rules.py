@@ -150,11 +150,11 @@ def figure_ground_rule() -> tuple[Role, ...]:
 def rule_for_preset(preset: str) -> PresetRule:
     """Return the :class:`PresetRule` for ``preset``.
 
-    ``"axon"`` is not a registered preset but resolves to the dedicated no-cut
+    ``"axon"`` and ``"paraline"`` resolve to the dedicated no-cut
     figure-ground rule (:func:`rule_for_axon`). Any other unknown preset falls
     back to the ``"section"`` rule, mirroring :func:`presets.select_preset`.
     """
-    if preset == "axon":
+    if preset in {"axon", "paraline"}:
         return rule_for_axon()
     return PRESET_RULES.get(preset, PRESET_RULES[_DEFAULT_PRESET])
 
@@ -182,13 +182,13 @@ def ladder_for_preset(
 
     Weights are resolved through
     :func:`arch_line_weights.role_ladder.weight_for_role`, so they come
-    straight from the existing preset tiers. ``"axon"`` reuses elevation's
-    figure-ground weights (it has no native tier ladder of its own). Any other
-    unknown ``preset`` falls back to section inside that call. Detail's wider
-    range comes from its native tier weights; ``range_widen_steps`` is recorded
-    metadata only and is not applied as an aggressive shift here.
+    straight from the existing preset tiers. ``"axon"``/``"paraline"`` reuse
+    elevation's figure-ground weights. Any other unknown ``preset`` falls back
+    to section inside that call. Detail's wider range comes from its native tier
+    weights; ``range_widen_steps`` is recorded metadata only and is not applied
+    as an aggressive shift here.
     """
-    resolved = "elevation" if preset == "axon" else preset
+    resolved = "elevation" if preset in {"axon", "paraline"} else preset
     return {
         role: weight_for_role(role, preset=resolved, scale=scale, for_print=for_print).weight_pt
         for role in ROLE_TO_PRESET_TIER
