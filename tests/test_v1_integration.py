@@ -235,10 +235,9 @@ def test_apply_twice_does_not_compound_widths(tmp_path):
     double/compound them. Pins CONTRIBUTING.md reproducibility (#2), which until now
     held only by construction.
 
-    Equality is on the *set* of width values, not raw bytes: the byte rewriter
-    re-emits the (already-correct) ``w`` op on a second pass, so files are not
-    byte-stable — but the effective widths do not compound, which is the guarantee
-    that matters here.
+    Re-apply now drops the prior ``w`` and re-emits the same one, so the decoded
+    content is byte-identical on the second pass — the strong form of #2, not just
+    "the set of widths matches".
     """
     rep = inspect_file(SAMPLE)
     weights, _ = auto_by_role(rep, "section", "1/4", True)
@@ -246,9 +245,7 @@ def test_apply_twice_does_not_compound_widths(tmp_path):
     twice = tmp_path / "twice.ai"
     apply_to_file(SAMPLE, str(once), weights)
     apply_to_file(str(once), str(twice), weights)
-    once_widths = sorted(set(re.findall(rb"[-\d.]+ w", _content_bytes(once))))
-    twice_widths = sorted(set(re.findall(rb"[-\d.]+ w", _content_bytes(twice))))
-    assert once_widths == twice_widths
+    assert _content_bytes(once) == _content_bytes(twice)
 
 
 def test_non_plotting_is_counted_not_deleted(tmp_path):

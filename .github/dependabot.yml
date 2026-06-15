@@ -1,0 +1,13 @@
+# Watch dependencies for the untrusted-input surface called out in SECURITY.md
+# (pypdf/pikepdf/shapely/Pillow/etc.) plus the GitHub Actions we run.
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
