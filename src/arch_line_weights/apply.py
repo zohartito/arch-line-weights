@@ -335,6 +335,12 @@ def _rewrite(
             out.append(([Decimal(f"{w:g}")], Operator("w")))
             out.append((operands, op))
 
+        elif op_str == "w":
+            # Drop pre-existing line-width ops: a `<width> w` is injected before
+            # every stroke above, so passing the old one through would accumulate a
+            # redundant `w` on each re-apply and break byte-idempotency.
+            continue
+
         else:
             out.append((operands, op))
 
