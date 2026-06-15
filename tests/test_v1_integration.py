@@ -230,6 +230,27 @@ def test_no_linetype_arg_is_byte_identical(tmp_path):
     assert not re.search(rb"\[\s*3\s+2\s*\]\s+0\s+d", _content_bytes(a))
 
 
+def test_apply_twice_does_not_compound_widths(tmp_path):
+    """Re-applying the same weights must land on the SAME absolute widths, never
+    double/compound them. Pins CONTRIBUTING.md reproducibility (#2), which until now
+    held only by construction.
+
+    Equality is on the *set* of width values, not raw bytes: the byte rewriter
+    re-emits the (already-correct) ``w`` op on a second pass, so files are not
+    byte-stable — but the effective widths do not compound, which is the guarantee
+    that matters here.
+    """
+    rep = inspect_file(SAMPLE)
+    weights, _ = auto_by_role(rep, "section", "1/4", True)
+    once = tmp_path / "once.ai"
+    twice = tmp_path / "twice.ai"
+    apply_to_file(SAMPLE, str(once), weights)
+    apply_to_file(str(once), str(twice), weights)
+    once_widths = sorted(set(re.findall(rb"[-\d.]+ w", _content_bytes(once))))
+    twice_widths = sorted(set(re.findall(rb"[-\d.]+ w", _content_bytes(twice))))
+    assert once_widths == twice_widths
+
+
 def test_non_plotting_is_counted_not_deleted(tmp_path):
     rep = inspect_file(SAMPLE)
     weights, _ = auto_by_role(rep, "section", "1/4", True)

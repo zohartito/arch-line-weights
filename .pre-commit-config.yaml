@@ -1,0 +1,22 @@
+# Pre-commit hooks for arch-line-weights.
+#
+# CONTRIBUTING.md tells contributors to run `pre-commit install`, but no config
+# existed — this closes that doc-vs-reality gap. Mirrors the CI lint gate (ruff)
+# so style failures surface locally before a PR. Promoted from
+# docs/research/pypi-ci-starter.md; the mypy(types-all) and prettier hooks from
+# that template are intentionally omitted — types-all is deprecated (breaks
+# `pre-commit install`) and prettier would churn the research docs.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.7.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-added-large-files
