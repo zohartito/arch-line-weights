@@ -1,0 +1,26 @@
+{
+  "name": "arch-line-weights",
+  "version": "1.0.0",
+  "description": "Apply architectural line-weight hierarchy and poché to Rhino-exported .ai/.pdf drawings. Bundles the apply-arch-hierarchy skill, which drives the `arch-lw` CLI (installed from this repo via `pip install arch-line-weights`) to rewrite stroke widths by color into a conventional cut > profile > edges > material > texture hierarchy.",
+  "author": {
+    "name": "zohartito",
+    "url": "https://github.com/zohartito"
+  },
+  "homepage": "https://zohartito.github.io/arch-line-weights/",
+  "repository": "https://github.com/zohartito/arch-line-weights",
+  "license": "MIT",
+  "keywords": [
+    "architecture",
+    "illustrator",
+    "rhino",
+    "pdf",
+    "stroke-width",
+    "line-weights",
+    "poche",
+    "cad",
+    "drawing"
+  ],
+  "skills": [
+    "./skills/apply-arch-hierarchy"
+  ]
+}
