@@ -5,6 +5,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
 
+<p align="center">
+  <img src="assets/before-raw.png" width="46%" alt="Before — raw Rhino Make2D, every stroke one uniform weight">
+  &nbsp;
+  <img src="assets/after-poche.png" width="46%" alt="After — arch-line-weights hierarchy with solid-black poché">
+</p>
+<p align="center"><sub><b>Left:</b> raw Rhino Make2D — every stroke one weight. &nbsp;·&nbsp; <b>Right:</b> after <code>arch-lw</code> — cut / profile / visible / hidden hierarchy + solid-black poché, original layers preserved.</sub></p>
+
 Apply architectural line-weight hierarchy, optional solid-black poché, and
 material hatching to Rhino-exported `.ai` or `.pdf` drawings.
 
