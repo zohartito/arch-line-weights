@@ -30,7 +30,7 @@ from arch_line_weights.make2d_completion import (
     complete_structural_cut_polygons,
     structural_completion_paths_for_layers,
 )
-from arch_line_weights.poche import FillResult, polygonize_dump, render_dump_jsx
+from arch_line_weights.poche import FillResult, polygonize_dump, render_apply_jsx, render_dump_jsx
 from arch_line_weights.poche_saas import (
     PocheSaasResult,
     _architectural_completion_enabled,
@@ -464,8 +464,38 @@ def test_jsx_poche_dump_collects_visible_helper_layers():
     assert "CLIPPINGPLANEINTERSECTIONS" in jsx
     assert "FOUNDATION" in jsx
     assert "CONCRETE" in jsx
-    assert "TIMBER" not in jsx
-    assert "CLT" not in jsx
+    assert "TIMBER" in jsx
+    assert "CLT" in jsx
+
+
+def test_apply_jsx_sends_solid_fills_behind_existing_linework():
+    jsx = render_apply_jsx(
+        "/tmp/in.ai",
+        "/tmp/out.ai",
+        "/tmp/report.txt",
+        {"Layer": [[[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]]]},
+    )
+
+    fill_index = jsx.index("newPath.filled = true;")
+    send_back_index = jsx.index("try { newPath.zOrder(ZOrderMethod.SENDTOBACK); } catch (e) {}")
+    hatch_index = jsx.index("// hatch lines on top of fill")
+
+    assert fill_index < send_back_index < hatch_index
+
+
+def test_apply_jsx_places_solid_fills_on_document_backing_layer():
+    jsx = render_apply_jsx(
+        "/tmp/in.ai",
+        "/tmp/out.ai",
+        "/tmp/report.txt",
+        {"Layer": [[[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]]]},
+    )
+
+    fill_layer_index = jsx.index('var POCHE_FILL_LAYER_NAME = "ARCH_LW_POCHE_FILL";')
+    send_layer_back_index = jsx.index("fillLayer.zOrder(ZOrderMethod.SENDTOBACK);")
+    add_path_index = jsx.index("var newPath = fillLayer.pathItems.add();")
+
+    assert fill_layer_index < send_layer_back_index < add_path_index
 
 
 def test_polygonize_dump_uses_same_component_helpers_without_filling_them(tmp_path):
@@ -498,9 +528,65 @@ def test_polygonize_dump_uses_same_component_helpers_without_filling_them(tmp_pa
     assert unrelated_helper not in report.polygons
 
 
-def test_polygonize_dump_limits_jsx_helpers_to_foundation_concrete(tmp_path):
-    concrete_cut = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+def test_polygonize_dump_uses_structural_completion_for_timber_helpers(
+    tmp_path,
+    monkeypatch,
+):
     timber_cut = "axon::Visible::ClippingPlaneIntersections::TEC_TIMBER_BEAMS"
+    geometry = {
+        timber_cut: [
+            [[0, 0], [220, 0]],
+            [[220, 32], [0, 32]],
+        ],
+        "axon::Visible::Curves::TEC_TIMBER_BEAMS": [
+            [[0, 0], [0, 32]],
+            [[220, 0], [220, 32]],
+        ],
+    }
+    geometry_path = tmp_path / "geometry.json"
+    geometry_path.write_text(json.dumps(geometry))
+
+    def fake_polygonize_layer(*_args, **_kwargs):
+        return [], FillResult(timber_cut, "failed", 0.0, 0, 2)
+
+    monkeypatch.setattr("arch_line_weights.poche.polygonize_layer", fake_polygonize_layer)
+
+    report = polygonize_dump(str(geometry_path))
+    by_layer = {fill.layer: fill for fill in report.fills}
+
+    assert by_layer[timber_cut].strategy == "structural_visible_completion"
+    assert by_layer[timber_cut].confidence >= 0.85
+    assert timber_cut in report.polygons
+
+
+def test_polygonize_dump_keeps_timber_tabs_at_cut_width_when_helpers_are_wider(tmp_path):
+    timber_cut = "axon::Visible::ClippingPlaneIntersections::TEC_TIMBER_BEAMS"
+    geometry = {
+        timber_cut: [
+            [[0, 0], [0, 72]],
+            [[40, 0], [40, 72]],
+        ],
+        "axon::Visible::Curves::TEC_TIMBER_BEAMS": [
+            [[-20, 0], [-20, 72]],
+            [[40, 0], [40, 72]],
+        ],
+    }
+    geometry_path = tmp_path / "geometry.json"
+    geometry_path.write_text(json.dumps(geometry))
+
+    report = polygonize_dump(str(geometry_path))
+
+    assert timber_cut in report.polygons
+    xs = [pt[0] for pt in report.polygons[timber_cut][0]]
+    ys = [pt[1] for pt in report.polygons[timber_cut][0]]
+    assert [min(xs), min(ys), max(xs), max(ys)] == [0.0, 0.0, 40.0, 72.0]
+
+
+def test_polygonize_dump_promotes_low_confidence_concrete_when_completion_is_anchored(
+    tmp_path,
+    monkeypatch,
+):
+    concrete_cut = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
     geometry = {
         concrete_cut: [
             [[0, 0], [140, 0]],
@@ -510,13 +596,110 @@ def test_polygonize_dump_limits_jsx_helpers_to_foundation_concrete(tmp_path):
             [[0, 0], [0, 40]],
             [[140, 0], [140, 40]],
         ],
-        timber_cut: [
-            [[0, 90], [140, 90]],
-            [[140, 130], [0, 130]],
+    }
+    geometry_path = tmp_path / "geometry.json"
+    geometry_path.write_text(json.dumps(geometry))
+
+    def fake_polygonize_layer(*_args, **_kwargs):
+        low_conf_poly = Polygon([(0, 0), (140, 0), (140, 40), (0, 40)])
+        return [low_conf_poly], FillResult(concrete_cut, "auto_bridge", 0.69, 1, 2)
+
+    monkeypatch.setattr("arch_line_weights.poche.polygonize_layer", fake_polygonize_layer)
+
+    report = polygonize_dump(str(geometry_path))
+
+    assert report.fills[0].strategy == "structural_visible_completion"
+    assert report.fills[0].confidence >= 0.85
+    assert concrete_cut in report.polygons
+
+
+def test_polygonize_dump_fills_visible_foundation_footing_without_rebar_symbols(tmp_path):
+    visible_foundation = "axon::Visible::Curves::TEC_FOUNDATION"
+    geometry = {
+        visible_foundation: [
+            [[10, 20], [15, 25], [20, 20], [15, 15], [10, 20]],
+            [[40, 20], [45, 25], [50, 20], [45, 15], [40, 20]],
+            [[0, 0], [288, 0]],
+            [[0, 72], [120, 72]],
+            [[120.5, 72], [288, 72]],
+            [[0, 0], [0, 72]],
+            [[288, 0], [288, 72]],
         ],
-        "axon::Visible::Curves::TEC_TIMBER_BEAMS": [
-            [[0, 90], [0, 130]],
-            [[140, 90], [140, 130]],
+    }
+    geometry_path = tmp_path / "geometry.json"
+    geometry_path.write_text(json.dumps(geometry))
+
+    report = polygonize_dump(str(geometry_path))
+
+    assert report.fills[0].layer == visible_foundation
+    assert report.fills[0].strategy == "structural_visible_completion"
+    assert visible_foundation in report.polygons
+    assert len(report.polygons[visible_foundation]) == 1
+    xs = [pt[0] for pt in report.polygons[visible_foundation][0]]
+    ys = [pt[1] for pt in report.polygons[visible_foundation][0]]
+    assert [min(xs), min(ys), max(xs), max(ys)] == [0.0, 0.0, 288.0, 72.0]
+
+
+def test_polygonize_dump_rejects_visible_foundation_column_stem(tmp_path):
+    visible_foundation = "axon::Visible::Curves::TEC_FOUNDATION"
+    geometry = {
+        visible_foundation: [
+            [[0, 0], [240, 0]],
+            [[0, 60], [240, 60]],
+            [[300, 0], [300, 240]],
+            [[340, 0], [340, 240]],
+        ],
+    }
+    geometry_path = tmp_path / "geometry.json"
+    geometry_path.write_text(json.dumps(geometry))
+
+    report = polygonize_dump(str(geometry_path))
+
+    assert visible_foundation in report.polygons
+    assert len(report.polygons[visible_foundation]) == 1
+    xs = [pt[0] for pt in report.polygons[visible_foundation][0]]
+    ys = [pt[1] for pt in report.polygons[visible_foundation][0]]
+    assert [min(xs), min(ys), max(xs), max(ys)] == [0.0, 0.0, 240.0, 60.0]
+
+
+def test_polygonize_dump_does_not_fill_visible_only_timber_targets(tmp_path):
+    visible_column = "axon::Visible::Curves::TEC_TIMBER_COLUMNS"
+    visible_beam = "axon::Visible::Curves::TEC_TIMBER_BEAMS"
+    geometry = {
+        visible_column: [
+            [[0, 0], [0, 240]],
+            [[48, 0], [48, 240]],
+            [[0, 0], [48, 0]],
+            [[0, 240], [48, 240]],
+        ],
+        visible_beam: [
+            [[120, 0], [360, 0]],
+            [[120, 40], [360, 40]],
+            [[120, 0], [120, 40]],
+            [[360, 0], [360, 40]],
+        ],
+    }
+    geometry_path = tmp_path / "geometry.json"
+    geometry_path.write_text(json.dumps(geometry))
+
+    report = polygonize_dump(str(geometry_path))
+
+    assert visible_column not in {fill.layer for fill in report.fills}
+    assert visible_beam not in {fill.layer for fill in report.fills}
+    assert visible_column not in report.polygons
+    assert visible_beam not in report.polygons
+
+
+def test_polygonize_dump_injects_marked_clt_slab_bands(tmp_path):
+    slab_cut = "axon::Visible::ClippingPlaneIntersections::TEC_CLT_SLABS"
+    geometry = {
+        slab_cut: [
+            [[0.0, 0.0], [220.0, 0.0]],
+            [[220.0, 0.0], [460.0, 0.0]],
+            [[0.0, 48.0], [220.0, 48.0]],
+            [[220.0, 48.0], [460.0, 48.0]],
+            [[0.0, 320.0], [360.0, 320.0]],
+            [[0.0, 368.0], [360.0, 368.0]],
         ],
     }
     geometry_path = tmp_path / "geometry.json"
@@ -525,8 +708,95 @@ def test_polygonize_dump_limits_jsx_helpers_to_foundation_concrete(tmp_path):
     report = polygonize_dump(str(geometry_path))
     by_layer = {fill.layer: fill for fill in report.fills}
 
-    assert by_layer[concrete_cut].strategy == "structural_open_loop"
-    assert by_layer[timber_cut].strategy != "structural_open_loop"
+    assert by_layer[slab_cut].strategy == "structural_open_loop"
+    assert by_layer[slab_cut].confidence >= 0.85
+    assert slab_cut in report.polygons
+    bounds = []
+    for coords in report.polygons[slab_cut]:
+        xs = [pt[0] for pt in coords]
+        ys = [pt[1] for pt in coords]
+        bounds.append([min(xs), min(ys), max(xs), max(ys)])
+    assert bounds == [[0.0, 0.0, 460.0, 48.0], [0.0, 320.0, 360.0, 368.0]]
+
+
+def test_polygonize_dump_preserves_marked_clt_slab_gap(tmp_path):
+    slab_cut = "axon::Visible::ClippingPlaneIntersections::TEC_CLT_SLABS"
+    geometry = {
+        slab_cut: [
+            [[-389.7, 0.0], [-185.5, 0.0]],
+            [[-185.5, 57.0], [-389.7, 57.0]],
+            [[-389.7, 0.0], [-389.7, 57.0]],
+            [[191.1, 57.0], [191.1, 0.4]],
+            [[-112.8, 0.4], [191.1, 0.4]],
+            [[191.1, 57.0], [-112.8, 57.0]],
+            [[-389.7, 57.0], [-664.5, 57.0]],
+            [[-664.5, 0.0], [-389.7, 0.0]],
+            [[-156.6, 57.0], [-185.5, 57.0]],
+            [[-185.5, 0.0], [-156.6, 0.0]],
+        ],
+    }
+    geometry_path = tmp_path / "geometry.json"
+    geometry_path.write_text(json.dumps(geometry))
+
+    report = polygonize_dump(str(geometry_path), bridge_strategy="best")
+
+    assert slab_cut in report.polygons
+    bounds = []
+    for coords in report.polygons[slab_cut]:
+        xs = [pt[0] for pt in coords]
+        ys = [pt[1] for pt in coords]
+        bounds.append([min(xs), min(ys), max(xs), max(ys)])
+    assert bounds == [[-664.5, 0.0, -156.6, 57.0], [-112.8, 0.4, 191.1, 57.0]]
+
+
+def test_polygonize_dump_uses_roof_helpers_for_open_cut_roof(tmp_path):
+    roof_cut = "axon::Visible::ClippingPlaneIntersections::TEC_ROOF_CLT"
+    geometry = {
+        roof_cut: [
+            [[191.0, 1321.0], [191.0, 1267.0]],
+            [[191.0, 1321.0], [-112.0, 1358.0]],
+        ],
+        "axon::Visible::Curves::TEC_ROOF_CLT": [
+            [[155.0, 1266.0], [-112.0, 1299.0]],
+        ],
+    }
+    geometry_path = tmp_path / "geometry.json"
+    geometry_path.write_text(json.dumps(geometry))
+
+    report = polygonize_dump(str(geometry_path))
+    by_layer = {fill.layer: fill for fill in report.fills}
+
+    assert by_layer[roof_cut].strategy == "structural_open_loop"
+    assert by_layer[roof_cut].confidence >= 0.85
+    assert roof_cut in report.polygons
+    xs = [pt[0] for pt in report.polygons[roof_cut][0]]
+    assert max(xs) == 191.0
+
+
+def test_polygonize_dump_keeps_marked_backup_wall_cap_above_concrete_stem(tmp_path):
+    backup_wall = "axon::Visible::ClippingPlaneIntersections::03b_CLT_BACKUP_WALL_5in"
+    concrete_stem = "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE"
+    geometry = {
+        concrete_stem: [
+            [[143, -73], [239, -73]],
+            [[239, -73], [239, 151]],
+            [[239, 151], [143, 151]],
+            [[143, 151], [143, -73]],
+        ],
+        backup_wall: [
+            [[213, 187], [213, 331]],
+            [[243, 187], [243, 331]],
+            [[213, 187], [243, 187]],
+            [[213, 331], [243, 331]],
+        ],
+    }
+    geometry_path = tmp_path / "geometry.json"
+    geometry_path.write_text(json.dumps(geometry))
+
+    report = polygonize_dump(str(geometry_path))
+
+    assert concrete_stem in report.polygons
+    assert backup_wall in report.polygons
 
 
 def test_polygonize_dump_recovers_fragmented_c2_c3_concrete_edges(tmp_path):
@@ -746,6 +1016,25 @@ def test_structural_completion_accepts_small_timber_beam_cap():
 
     assert len(accepted) == 1
     assert round(accepted[0].area) == 392
+    assert any(candidate.accepted for candidate in candidates)
+
+
+def test_structural_completion_accepts_long_slender_timber_beam_strip():
+    accepted, candidates = complete_structural_cut_polygons(
+        "axon::Visible::ClippingPlaneIntersections::TEC_TIMBER_BEAMS",
+        [
+            [[0, 0], [220, 0]],
+            [[220, 32], [0, 32]],
+        ],
+        [
+            [[0, 0], [0, 32]],
+            [[220, 0], [220, 32]],
+        ],
+        [],
+    )
+
+    assert len(accepted) == 1
+    assert round(accepted[0].area) == 7040
     assert any(candidate.accepted for candidate in candidates)
 
 
