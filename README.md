@@ -43,9 +43,12 @@ Current source install:
 git clone https://github.com/zohartito/arch-line-weights
 cd arch-line-weights
 python -m venv .venv
-.venv/bin/python -m pip install -e .
+.venv/bin/python -m pip install -e ".[test]"
 .venv/bin/arch-lw --help
 ```
+
+The `[test]` extra pulls in PyYAML, which the test/proof suite needs; without
+it the 15 proof tests fail with "PyYAML is required".
 
 Optional global install if `pipx` is available:
 
