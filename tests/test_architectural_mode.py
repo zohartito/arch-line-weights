@@ -335,6 +335,47 @@ def test_structural_open_loop_keeps_tall_backup_wall_strip():
     assert round(polys[0].area) == 540
 
 
+def test_structural_open_loop_keeps_compact_timber_beam_junction_tab():
+    polys = _try_structural_open_loop(
+        "axon::Visible::ClippingPlaneIntersections::TEC_TIMBER_BEAMS",
+        [
+            LineString([(0, 0), (0, 72)]),
+            LineString([(40, 0), (40, 72)]),
+        ],
+    )
+
+    assert len(polys) == 1
+    assert polys[0].bounds == (0.0, 0.0, 40.0, 72.0)
+
+
+def test_structural_open_loop_closes_parallel_backup_wall_edges():
+    polys = _try_structural_open_loop(
+        "axon::Visible::ClippingPlaneIntersections::03b_CLT_BACKUP_WALL_5in",
+        [
+            LineString([(0, 0), (0, 180)]),
+            LineString([(30, 0), (30, 180)]),
+            LineString([(16, 0), (30, 0)]),
+            LineString([(0, 220), (30, 220)]),
+            LineString([(0, 260), (30, 260)]),
+        ],
+    )
+
+    assert len(polys) == 1
+    assert round(polys[0].area) == 5400
+
+
+def test_structural_open_loop_keeps_long_clt_slab_cut_strip():
+    polys = _try_structural_open_loop(
+        "axon::Visible::ClippingPlaneIntersections::TEC_CLT_SLABS",
+        [
+            LineString([(0, 0), (500, 0), (500, 30), (0, 30)]),
+        ],
+    )
+
+    assert len(polys) == 1
+    assert polys[0].bounds == (0.0, 0.0, 500.0, 30.0)
+
+
 def test_structural_open_loop_rejects_huge_irregular_roof_after_cleaning():
     polys = _try_structural_open_loop(
         "axon::Visible::ClippingPlaneIntersections::TEC_ROOF_CLT",
@@ -455,6 +496,19 @@ def test_structural_open_loop_keeps_larger_collinear_void_open():
     assert result.strategy == "structural_open_loop"
     assert len(polys) == 2
     assert [round(poly.area) for poly in polys] == [880, 880]
+
+
+def test_structural_open_loop_fills_stepped_concrete_cap():
+    polys = _try_structural_open_loop(
+        "axon::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
+        [
+            LineString([(0, 0), (0, 100)]),
+            LineString([(100, 0), (100, 140)]),
+            LineString([(70, 140), (0, 140)]),
+        ],
+    )
+
+    assert any(poly.bounds == (0.0, 100.0, 100.0, 140.0) for poly in polys)
 
 
 def test_structural_helper_cannot_wildly_expand_existing_concrete_face():
