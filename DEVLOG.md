@@ -17,13 +17,16 @@ proof posture.
 
 ## Day 1 — 2026-06-17
 
-**Shipped:** established the build-in-public cadence — this log and `docs/GROWTH.md`.
+**Shipped:**
+- Established the build-in-public cadence — this log and `docs/GROWTH.md`.
+- First reproducible public demo (`examples/DEMO.md`): `apply --preset section` on the public sample
+  maps stroke color → weight (`40,40,40`→1.0 pt; `70,70,70`→0.3 pt; `200,175,130`→0.08 pt).
 
 **Status (honest):** public MIT CLI that inspects a Rhino-exported `.ai`/`.pdf`, remaps stroke
 widths by color, adds conservative section-cut poché, and applies material hatching, with presets
 (`section`, `plan`, `elevation`, `detail`, `usc`) and layer-preserving commands (`apply-jsx`,
-`apply-saas`). Public proof assets are **not yet cleared** (see `docs/ROADMAP.md` proof posture), so
-the next milestone is a public-safe before/after, not a feature.
+`apply-saas`). The public sample is a 3-stroke fixture — it demonstrates the mechanism but cannot
+carry a marketing before/after. Validated proof assets remain **NO-GO** (see `docs/ROADMAP.md`).
 
-**Next:** clear one public-safe before/after proof on a synthetic/sample drawing so honest daily
-posting can begin.
+**Next:** build a richer **synthetic, public-safe fixture** so a real before/after hero can be
+posted — the private USC drawing stays NO-GO.
