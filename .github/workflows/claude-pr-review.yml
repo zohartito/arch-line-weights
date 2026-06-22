@@ -10,7 +10,7 @@ jobs:
       pull-requests: write     # leave review comments
       id-token: write          # OIDC for the action
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with: { fetch-depth: 1 }
       - uses: anthropics/claude-code-action@v1
         with:
