@@ -10,9 +10,26 @@ jobs:
       pull-requests: write     # leave review comments
       id-token: write          # OIDC for the action
     steps:
+      # Secret guard: skip green when the auth secret is absent so repos
+      # without it configured don't get red-X failures on every PR.
+      # (The `secrets` context isn't allowed in job-level `if`, so the check
+      # lives in a step and gates the rest via its output.)
+      - name: Check for review token
+        id: token
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CLAUDE_CODE_OAUTH_TOKEN secret not set — skipping Claude PR review."
+          fi
       - uses: actions/checkout@v7
+        if: steps.token.outputs.available == 'true'
         with: { fetch-depth: 1 }
       - uses: anthropics/claude-code-action@v1
+        if: steps.token.outputs.available == 'true'
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           track_progress: true
