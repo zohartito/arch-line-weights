@@ -1,7 +1,9 @@
 name: PR Review
 on:
   pull_request:
-    types: [opened, synchronize, ready_for_review, reopened]
+    # Deliberately NOT triggering on `synchronize` to control metered cost —
+    # review runs once per PR open / ready / reopen, not on every push.
+    types: [opened, ready_for_review, reopened]
 jobs:
   review:
     runs-on: ubuntu-latest
