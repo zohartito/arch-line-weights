@@ -30,7 +30,8 @@ The script asks where to save the export, runs Rhino's command-line
 ```
 
 The manifest records selected-object count, layer counts, model units, active
-view orthographic state, and the next `arch-lw layout-jsx` command. Use an
+view orthographic state, and the next `arch-lw layout-jsx` argument array. Pass
+that array directly to a process runner rather than through a shell. Use an
 orthographic view or layout/detail view when preserving scale matters.
 
 ## GhPython 3 component setup

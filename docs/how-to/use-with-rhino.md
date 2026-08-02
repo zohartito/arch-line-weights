@@ -10,7 +10,9 @@ _-RunPythonScript "/path/to/integrations/rhino/export_selected_make2d_manifest.p
 
 It runs Rhino **Export Selected** on the current selection and writes a sidecar
 manifest with selected-object count, layer counts, model units, and active-view
-orthographic state.
+orthographic state. Its `next_step.argv` field stores the next command as
+separate arguments; pass them directly to a process runner rather than through
+a shell.
 
 Then normalize the Illustrator layout:
 
