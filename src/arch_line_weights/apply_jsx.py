@@ -381,8 +381,9 @@ def _is_converted_match(active_name: str | None, active_path: str | None, src: s
       * The ``[Converted]`` token, the whitespace surrounding it, and any
         Illustrator-appended extension are peeled from the active doc name
         before stem comparison.
-      * Comparison is case-sensitive on the stem itself but case-insensitive
-        when falling back to a basename-substring check (legacy looser path).
+      * Comparison is exact and case-sensitive after normalization. Prefix,
+        suffix, and substring matches are rejected because a pathless document
+        provides no second identity signal.
 
     These normalizations let a disk file like
     ``/path/wall section iso cut .ai`` (trailing space before ``.ai``)
@@ -405,48 +406,14 @@ def _is_converted_match(active_name: str | None, active_path: str | None, src: s
     src_stem_norm = _normalize_stem(src_stem)
     src_basename_norm = _normalize_stem(src_basename)
 
-    # Primary path: peel the [Converted] decoration and compare normalized
-    # stems for equality. We require the [Converted] token to be present,
-    # otherwise a regular saved doc whose path matches `src` would falsely
-    # match here (the wrapper relies on this False return to fall through
-    # to the standard `open POSIX file` path).
-    if "[Converted]" in name:
-        active_stem_norm = _strip_converted_decoration(name)
-        if active_stem_norm and active_stem_norm == src_stem_norm:
-            # Stems match after whitespace normalization; fall through to
-            # the path-consistency check below.
-            pass
-        else:
-            # Fall through to legacy candidate-suffix sweep.
-            active_stem_norm = None
-    else:
-        active_stem_norm = None
-    if active_stem_norm is None:
-        # Legacy candidate-suffix sweep — kept so any pre-existing exact
-        # name shape we already supported still matches. Compare against
-        # both the raw and the normalized basename / stem.
-        converted_suffixes = (
-            f"{src_basename} [Converted]",
-            f"{src_basename} [Converted].ai",
-            f"{src_stem} [Converted]",
-            f"{src_stem} [Converted].ai",
-            f"{src_basename_norm} [Converted]",
-            f"{src_basename_norm} [Converted].ai",
-            f"{src_stem_norm} [Converted]",
-            f"{src_stem_norm} [Converted].ai",
-        )
-        if not any(name == s or name.endswith(s) for s in converted_suffixes):
-            # Looser fallback: name must contain "[Converted]" AND share a
-            # basename substring with the source.
-            if "[Converted]" not in name:
-                return False
-            if (
-                src_stem.lower() not in name.lower()
-                and src_basename.lower() not in name.lower()
-                and src_stem_norm.lower() not in name.lower()
-                and src_basename_norm.lower() not in name.lower()
-            ):
-                return False
+    # Require the [Converted] token so an ordinary saved document falls
+    # through to the standard open-file path. The remaining name must equal
+    # the requested stem or basename after the documented normalization.
+    if "[Converted]" not in name:
+        return False
+    active_stem_norm = _strip_converted_decoration(name)
+    if not active_stem_norm or active_stem_norm not in {src_stem_norm, src_basename_norm}:
+        return False
 
     # Path check: a [Converted] virtual doc usually has no saved path. If
     # AppleScript returned a path, accept it only if it actually points at
