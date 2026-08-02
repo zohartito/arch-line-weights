@@ -67,11 +67,11 @@ HEARTBEAT_POLL_SEC = 2
 JSX_TEMPLATE = r"""#target illustrator
 
 (function () {
-    var TARGET   = "__TARGET__";
-    var OUTPUT   = "__OUTPUT__";
-    var PROGRESS = "__PROGRESS__";
-    var REPORT   = "__REPORT__";
-    var HEART    = "__HEARTBEAT__";
+    var TARGET   = __TARGET__;
+    var OUTPUT   = __OUTPUT__;
+    var PROGRESS = __PROGRESS__;
+    var REPORT   = __REPORT__;
+    var HEART    = __HEARTBEAT__;
     var USE_OPEN_DOC = __USE_OPEN_DOC__;
 
     try { app.userInteractionLevel = UserInteractionLevel.DONTDISPLAYALERTS; } catch (e) {}
@@ -228,11 +228,11 @@ def render_jsx(
     """
     classifier = as_jsx_function(preset=preset, scale=scale, for_print=for_print)
     return (
-        JSX_TEMPLATE.replace("__TARGET__", target)
-        .replace("__OUTPUT__", output)
-        .replace("__PROGRESS__", progress_path)
-        .replace("__REPORT__", report_path)
-        .replace("__HEARTBEAT__", heartbeat_path)
+        JSX_TEMPLATE.replace("__TARGET__", json.dumps(target, ensure_ascii=True))
+        .replace("__OUTPUT__", json.dumps(output, ensure_ascii=True))
+        .replace("__PROGRESS__", json.dumps(progress_path, ensure_ascii=True))
+        .replace("__REPORT__", json.dumps(report_path, ensure_ascii=True))
+        .replace("__HEARTBEAT__", json.dumps(heartbeat_path, ensure_ascii=True))
         .replace("__USE_OPEN_DOC__", "true" if use_open_doc else "false")
         .replace("__CLASSIFIER__", textwrap.indent(classifier, "    "))
     )
@@ -240,23 +240,29 @@ def render_jsx(
 
 def open_in_illustrator(path: str, *, timeout_sec: int = 1800) -> None:
     """Ask Illustrator to open `path` (uses AppleScript native `open` command)."""
-    script = f'''with timeout of {timeout_sec} seconds
+    script = f"""on run argv
+    set target_file to POSIX file (item 1 of argv)
+    with timeout of {timeout_sec} seconds
         tell application "Adobe Illustrator"
             activate
-            open POSIX file "{path}"
+            open target_file
         end tell
-    end timeout'''
-    subprocess.run(["osascript", "-e", script], check=True, timeout=timeout_sec)
+    end timeout
+end run"""
+    subprocess.run(["osascript", "-e", script, "--", path], check=True, timeout=timeout_sec)
 
 
 def run_jsx_in_illustrator(jsx_path: str, timeout: int = 3600) -> None:
     """Hand a JSX file to Illustrator via osascript do javascript."""
-    applescript = f'''with timeout of {timeout} seconds
+    applescript = f"""on run argv
+    set jsx_file to POSIX file (item 1 of argv)
+    with timeout of {timeout} seconds
         tell application "Adobe Illustrator"
-            do javascript (read POSIX file "{jsx_path}" as «class utf8»)
+            do javascript (read jsx_file as «class utf8»)
         end tell
-    end timeout'''
-    subprocess.run(["osascript", "-e", applescript], check=True, timeout=timeout + 60)
+    end timeout
+end run"""
+    subprocess.run(["osascript", "-e", applescript, "--", jsx_path], check=True, timeout=timeout + 60)
 
 
 # --------------------------------------------------------------------------- #
