@@ -76,16 +76,16 @@ def test_trailing_space_match_with_no_extension_in_active_name():
 # --------------------------------------------------------------------------- #
 
 
-def test_leading_space_in_active_doc_name():
-    """A leading space in the active-doc name (osascript artifact) must
-    not break the match."""
+def test_leading_space_in_pathless_active_doc_name_is_not_ignored():
+    """Without a saved path, leading characters are part of document
+    identity and must not be discarded."""
     assert (
         _is_converted_match(
             " macro [Converted].ai",
             None,
             "/path/macro.ai",
         )
-        is True
+        is False
     )
 
 
@@ -163,6 +163,19 @@ def test_unrelated_basename_does_not_match_even_with_converted():
             "other_drawing [Converted].ai",
             None,
             "/path/wall section iso cut .ai",
+        )
+        is False
+    )
+
+
+def test_pathless_converted_name_with_source_as_suffix_is_rejected():
+    """A pathless document must not match merely because its longer stem
+    ends with the requested source stem."""
+    assert (
+        _is_converted_match(
+            "attacker-macro [Converted].ai",
+            None,
+            "/path/macro.ai",
         )
         is False
     )
