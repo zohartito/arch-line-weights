@@ -95,7 +95,21 @@ def test_export_manifest_records_written_export_size(tmp_path, rhino_export_scri
     assert manifest["export_size_bytes"] == len(b"%PDF-1.6\n")
     assert manifest["manifest_path"] == str(manifest_path)
     assert manifest["next_step_available"] is True
-    assert manifest["next_step"].startswith("arch-lw layout-jsx")
+    assert manifest["next_step"] == {
+        "argv": [
+            "arch-lw",
+            "layout-jsx",
+            str(export_path),
+            "--artboard",
+            "24x36in",
+            "--fit",
+            "fit",
+            "--margin",
+            "0.5in",
+            "--report-json",
+            str(tmp_path / "written.layout-report.json"),
+        ]
+    }
     assert manifest["exporter"] == {
         "app": "Rhino",
         "helper": "export_selected_make2d_manifest.py",
@@ -111,6 +125,25 @@ def test_export_manifest_records_written_export_size(tmp_path, rhino_export_scri
         "template": "_-Export <export_path> _Enter",
         "path_quoted": True,
     }
+
+
+def test_export_manifest_keeps_hostile_path_in_structured_argv(tmp_path, rhino_export_script):
+    export_path = tmp_path / '$(touch PWNED)`whoami`"drawing.ai'
+    export_path.write_bytes(b"%PDF-1.6\n")
+    manifest_path = tmp_path / "hostile.manifest.json"
+
+    manifest = rhino_export_script._write_manifest(
+        manifest_path=manifest_path,
+        export_path=export_path,
+        selected=[1],
+        export_ok=True,
+    )
+
+    next_step = manifest["next_step"]
+    assert isinstance(next_step, dict)
+    assert next_step["argv"][0:2] == ["arch-lw", "layout-jsx"]
+    assert next_step["argv"][2] == str(export_path)
+    assert all(isinstance(argument, str) for argument in next_step["argv"])
 
 
 def test_json_safe_normalizes_non_standard_values(rhino_export_script):

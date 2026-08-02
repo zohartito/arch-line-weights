@@ -10,7 +10,7 @@ data in the repository:
   - selected_object_count
   - layer_counts
   - orthographic view state
-  - next command hint: arch-lw layout-jsx
+  - next command arguments: arch-lw layout-jsx
 """
 
 # ruff: noqa: UP032 - Rhino's script runtime rejects f-strings.
@@ -150,18 +150,24 @@ def _write_manifest(
 
     next_step = None
     if effective_export_ok:
-        next_step = (
-            "arch-lw layout-jsx {path} --artboard {artboard} --fit fit "
-            "--margin {margin} --report-json {report}"
-        ).format(
-            path=_command_quote(export_path),
-            artboard=DEFAULT_ARTBOARD,
-            margin=DEFAULT_MARGIN,
-            report=_command_quote(_replace_suffix(export_path, ".layout-report.json")),
-        )
+        next_step = {
+            "argv": [
+                "arch-lw",
+                "layout-jsx",
+                str(export_path),
+                "--artboard",
+                DEFAULT_ARTBOARD,
+                "--fit",
+                "fit",
+                "--margin",
+                DEFAULT_MARGIN,
+                "--report-json",
+                _replace_suffix(export_path, ".layout-report.json"),
+            ]
+        }
 
     manifest = {
-        "schema_version": 1,
+        "schema_version": 2,
         "summary": {
             "status": "passed" if effective_export_ok else "failed",
             "next_action": (
@@ -228,7 +234,11 @@ def main():
     )
     Rhino.RhinoApp.WriteLine("[arch-lw] wrote manifest: {}".format(manifest_path))
     if manifest["next_step_available"]:
-        Rhino.RhinoApp.WriteLine("[arch-lw] next: {}".format(manifest["next_step"]))
+        Rhino.RhinoApp.WriteLine(
+            "[arch-lw] next argv (pass directly, without a shell): {}".format(
+                json.dumps(manifest["next_step"]["argv"])
+            )
+        )
     else:
         Rhino.RhinoApp.WriteLine("[arch-lw] next: {}".format(manifest["summary"]["next_action"]))
     if not export_ok:
