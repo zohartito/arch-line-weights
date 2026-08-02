@@ -1496,8 +1496,8 @@ def polygonize_dump(
 DUMP_JSX_TEMPLATE = r"""#target illustrator
 
 (function () {
-    var TARGET = "__TARGET__";
-    var OUT = "__OUT__";
+    var TARGET = __TARGET__;
+    var OUT = __OUT__;
 
     function jsonEscape(s) {
         s = String(s); var out = '"';
@@ -1584,9 +1584,9 @@ DUMP_JSX_TEMPLATE = r"""#target illustrator
 APPLY_JSX_TEMPLATE = r"""#target illustrator
 
 (function () {
-    var TARGET = "__TARGET__";
-    var OUTPUT = "__OUTPUT__";
-    var REPORT = "__REPORT__";
+    var TARGET = __TARGET__;
+    var OUTPUT = __OUTPUT__;
+    var REPORT = __REPORT__;
 
     try { app.userInteractionLevel = UserInteractionLevel.DONTDISPLAYALERTS; } catch (e) {}
 
@@ -1716,7 +1716,9 @@ def _bake_polygons_jsx(polygons: dict) -> str:
 
 
 def render_dump_jsx(target: str, out_json: str) -> str:
-    return DUMP_JSX_TEMPLATE.replace("__TARGET__", target).replace("__OUT__", out_json)
+    return DUMP_JSX_TEMPLATE.replace("__TARGET__", json.dumps(target, ensure_ascii=True)).replace(
+        "__OUT__", json.dumps(out_json, ensure_ascii=True)
+    )
 
 
 def _bake_hatch_jsx(hatch_geometry: dict) -> str:
@@ -1745,33 +1747,39 @@ def render_apply_jsx(
     hatch_baked = textwrap.indent(_bake_hatch_jsx(hatch_geometry or {}), "    ")
     full_baked = baked + "\n\n" + hatch_baked
     return (
-        APPLY_JSX_TEMPLATE.replace("__TARGET__", target)
-        .replace("__OUTPUT__", output)
-        .replace("__REPORT__", report_path)
+        APPLY_JSX_TEMPLATE.replace("__TARGET__", json.dumps(target, ensure_ascii=True))
+        .replace("__OUTPUT__", json.dumps(output, ensure_ascii=True))
+        .replace("__REPORT__", json.dumps(report_path, ensure_ascii=True))
         .replace("__POLYGONS_BAKED__", full_baked)
     )
 
 
 def _osascript_run_jsx(jsx_path: str, timeout: int = 1800) -> None:
-    applescript = f'''with timeout of {timeout} seconds
+    applescript = f"""on run argv
+    set jsx_file to POSIX file (item 1 of argv)
+    with timeout of {timeout} seconds
         tell application "Adobe Illustrator"
-            do javascript (read POSIX file "{jsx_path}" as «class utf8»)
+            do javascript (read jsx_file as «class utf8»)
         end tell
-    end timeout'''
-    subprocess.run(["osascript", "-e", applescript], check=True, timeout=timeout + 60)
+    end timeout
+end run"""
+    subprocess.run(["osascript", "-e", applescript, "--", jsx_path], check=True, timeout=timeout + 60)
 
 
 def _osascript_open(path: str, timeout: int = 1800) -> None:
-    applescript = f'''with timeout of {timeout} seconds
+    applescript = f"""on run argv
+    set target_file to POSIX file (item 1 of argv)
+    with timeout of {timeout} seconds
         tell application "Adobe Illustrator"
             activate
             try
                 close every document saving no
             end try
-            open POSIX file "{path}"
+            open target_file
         end tell
-    end timeout'''
-    subprocess.run(["osascript", "-e", applescript], check=True, timeout=timeout + 60)
+    end timeout
+end run"""
+    subprocess.run(["osascript", "-e", applescript, "--", path], check=True, timeout=timeout + 60)
 
 
 def _hatch_lines_for_layer(
