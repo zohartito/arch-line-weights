@@ -10,6 +10,8 @@ Phase 3 will add smarter classification (saturation, hue family, frequency).
 
 from __future__ import annotations
 
+import math
+
 from .depth import depth_ranks_for_colors
 from .inspect import InspectionReport, color_to_rgb255
 from .linetypes import LineType
@@ -17,12 +19,31 @@ from .preset_rules import rule_for_preset
 from .presets import Tier
 from .role_ladder import Role, modulate_by_depth, weight_for_role
 
+# Values above this are not supported line weights and can cause expensive or
+# invalid operands in downstream PDF/native-payload serializers.
+MAX_MAPPING_WEIGHT_PT = 100.0
+
 
 def from_user_mapping(
-    mapping_rgb_to_weight: dict[tuple[int, int, int], float],
+    mapping_rgb_to_weight: dict[tuple[int, int, int], object],
 ) -> dict[tuple[int, int, int], float]:
-    """Pass-through; just here for API symmetry."""
-    return dict(mapping_rgb_to_weight)
+    """Validate user-supplied line weights before serializer boundaries."""
+    validated: dict[tuple[int, int, int], float] = {}
+    for color, raw_weight in mapping_rgb_to_weight.items():
+        if isinstance(raw_weight, bool) or not isinstance(raw_weight, (int, float)):
+            raise ValueError(f"mapping weight for {color!r} must be a finite positive number")
+        try:
+            finite = math.isfinite(raw_weight)
+        except OverflowError as exc:
+            raise ValueError(f"mapping weight for {color!r} must be a finite positive number") from exc
+        if not finite or not 0 < raw_weight <= MAX_MAPPING_WEIGHT_PT:
+            raise ValueError(
+                f"mapping weight for {color!r} must be finite, greater than 0, and at most "
+                f"{MAX_MAPPING_WEIGHT_PT:g} pt"
+            )
+        weight = float(raw_weight)
+        validated[color] = weight
+    return validated
 
 
 def _luminance(rgb: tuple[int, int, int]) -> float:

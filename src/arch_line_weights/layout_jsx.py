@@ -20,7 +20,7 @@ from .apply_jsx import (
     resolve_timeout_minutes,
     run_jsx_in_illustrator,
 )
-from .safety import processing_disabled
+from .safety import private_temp_directory, processing_disabled, terminal_safe
 
 POINTS_PER_INCH = 72.0
 DEFAULT_OUTPUT_SUFFIX = " LAYOUT-jsx"
@@ -441,8 +441,40 @@ def layout_via_jsx(
     timeout_min: int | None = None,
     dry_run: bool = False,
 ) -> dict:
-    """Open ``src`` in Illustrator, frame artwork, save to ``dst``."""
+    """Run layout with managed defaults while preserving explicit artifact paths."""
     processing_disabled("Illustrator JSX document layout")
+    kwargs = {
+        "dst": dst,
+        "artboard": artboard,
+        "fit_mode": fit_mode,
+        "margin": margin,
+        "allow_enlarge": allow_enlarge,
+        "report_json": report_json,
+        "jsx_path": jsx_path,
+        "timeout_min": timeout_min,
+        "dry_run": dry_run,
+    }
+    if report_json is not None and jsx_path is not None:
+        return _layout_via_jsx(src, work_dir=None, **kwargs)
+    with private_temp_directory(prefix="arch-lw-layout-") as work_dir:
+        return _layout_via_jsx(src, work_dir=work_dir, **kwargs)
+
+
+def _layout_via_jsx(
+    src: str,
+    *,
+    dst: str | None = None,
+    artboard: str = "24x36in",
+    fit_mode: str = "center",
+    margin: str = "0.5in",
+    allow_enlarge: bool = False,
+    report_json: str | None = None,
+    jsx_path: str | None = None,
+    timeout_min: int | None = None,
+    dry_run: bool = False,
+    work_dir: Path | None = None,
+) -> dict:
+    """Open ``src`` in Illustrator, frame artwork, save to ``dst``."""
     from .run_report import build_layout_jsx_report
 
     src_abs = os.path.abspath(src)
@@ -455,11 +487,15 @@ def layout_via_jsx(
     if fit_mode not in {"center", "fit"}:
         raise ValueError("fit_mode must be 'center' or 'fit'")
 
+    if report_json is None or jsx_path is None:
+        assert work_dir is not None
     if report_json is None:
-        report_json = "/tmp/arch_lw_layout_report.json"
+        assert work_dir is not None
+        report_json = str(work_dir / "layout-report.json")
     report_abs = os.path.abspath(report_json)
     if jsx_path is None:
-        jsx_path = "/tmp/arch_lw_layout.jsx"
+        assert work_dir is not None
+        jsx_path = str(work_dir / "layout.jsx")
     jsx_abs = os.path.abspath(jsx_path)
 
     def write_rendered_jsx(*, use_open_doc: bool) -> None:
@@ -520,7 +556,7 @@ def layout_via_jsx(
             use_open_doc = True
         else:
             raise RuntimeError(
-                f"Illustrator has '{active_name}' open. Save or close that [Converted] "
+                f"Illustrator has '{terminal_safe(active_name)}' open. Save or close that [Converted] "
                 "document before running layout-jsx on another source."
             )
 
@@ -557,7 +593,7 @@ def layout_via_jsx(
                 )
                 Path(report_abs).write_text(json.dumps(failed_report, indent=2, sort_keys=True) + "\n")
                 raise RuntimeError(
-                    f"Illustrator opened '{active_name}' as a [Converted] document, "
+                    f"Illustrator opened '{terminal_safe(active_name)}' as a [Converted] document, "
                     "but it does not match the requested source."
                 )
     run_jsx_in_illustrator(jsx_abs, timeout=timeout_sec)

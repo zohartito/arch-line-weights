@@ -30,6 +30,10 @@ _LOCAL_PATH_RE = re.compile(
 )
 _PUBLIC_ACCEPTANCE_REVIEWERS = {"W5", "W7"}
 W5_W7_HANDOFF_JSON_NAME = "W5-W7-ACCEPTANCE-HANDOFF.json"
+MAX_SYNTHETIC_IMAGE_DIMENSION = 4096
+MAX_SYNTHETIC_IMAGE_PIXELS = 4_000_000
+SYNTHETIC_IMAGE_COUNT = 3
+MAX_SYNTHETIC_TOTAL_PIXELS = MAX_SYNTHETIC_IMAGE_PIXELS * SYNTHETIC_IMAGE_COUNT
 W5_W7_HANDOFF_MD_NAME = "W5-W7-ACCEPTANCE-HANDOFF.md"
 PROOF_PACKET_GUARDRAILS = (
     "Posting/public proof is NO-GO unless W5/W7 explicitly accepts it.",
@@ -666,7 +670,15 @@ def _write_synthetic_visual_artifacts(
 def _synthetic_image_size(review_regions: Sequence[ReviewRegion]) -> tuple[int, int]:
     max_x = max((region.rect[2] for region in review_regions), default=620)
     max_y = max((region.rect[3] for region in review_regions), default=460)
-    return max(800, max_x + 40), max(600, max_y + 40)
+    width, height = max(800, max_x + 40), max(600, max_y + 40)
+    if (
+        width > MAX_SYNTHETIC_IMAGE_DIMENSION
+        or height > MAX_SYNTHETIC_IMAGE_DIMENSION
+        or width * height > MAX_SYNTHETIC_IMAGE_PIXELS
+        or width * height * SYNTHETIC_IMAGE_COUNT > MAX_SYNTHETIC_TOTAL_PIXELS
+    ):
+        raise ManifestValidationError("synthetic proof image budget exceeded")
+    return width, height
 
 
 def _paint_synthetic_changes(image: Image.Image, review_regions: Sequence[ReviewRegion]) -> None:
@@ -1254,7 +1266,30 @@ def _parse_review_regions(raw: Any, fixture_id: str) -> list[ReviewRegion]:
                 min_dark_delta=_optional_ratio(item.get("min_dark_delta"), f"{label}.min_dark_delta"),
             )
         )
+    _validate_synthetic_review_region_budget(regions, fixture_id)
     return regions
+
+
+def _validate_synthetic_review_region_budget(regions: Sequence[ReviewRegion], fixture_id: str) -> None:
+    total_region_pixels = 0
+    for region in regions:
+        x0, y0, x1, y1 = region.rect
+        width, height = x1 - x0, y1 - y0
+        if width > MAX_SYNTHETIC_IMAGE_DIMENSION or height > MAX_SYNTHETIC_IMAGE_DIMENSION:
+            raise ManifestValidationError(
+                f"{fixture_id}.review_regions exceed the synthetic image dimension limit"
+            )
+        total_region_pixels += width * height
+        if total_region_pixels > MAX_SYNTHETIC_IMAGE_PIXELS:
+            raise ManifestValidationError(
+                f"{fixture_id}.review_regions exceed the synthetic image pixel budget"
+            )
+    try:
+        _synthetic_image_size(regions)
+    except ManifestValidationError as exc:
+        raise ManifestValidationError(
+            f"{fixture_id}.review_regions exceed the synthetic image pixel budget"
+        ) from exc
 
 
 def _required_list(raw: dict[str, Any], key: str, label: str) -> list[Any]:
@@ -1304,7 +1339,7 @@ def _validate_rect(value: Any, label: str) -> tuple[int, int, int, int]:
     ):
         raise ManifestValidationError(f"{label} must be four integer coordinates")
     x0, y0, x1, y1 = value
-    if x1 <= x0 or y1 <= y0:
+    if x0 < 0 or y0 < 0 or x1 <= x0 or y1 <= y0:
         raise ManifestValidationError(f"{label} must be ordered as [x0, y0, x1, y1]")
     return x0, y0, x1, y1
 
