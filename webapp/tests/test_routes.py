@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import pytest
 
+from backend.compute import JobStore
 from backend.config import Settings, local_vite_cors_origins
+from backend.schemas import JobOptions
 
 
 def test_health_returns_200(app_client) -> None:
@@ -18,6 +20,15 @@ def test_health_returns_200(app_client) -> None:
 def test_default_cors_allows_local_vite_fallback_ports(monkeypatch) -> None:
     monkeypatch.delenv("ARCHLW_CORS_ORIGINS", raising=False)
     assert local_vite_cors_origins() == Settings().cors_origins
+
+
+def test_job_store_deletes_rejected_preprocessing_records() -> None:
+    store = JobStore()
+    record = store.create(original_filename="rejected.ai", options=JobOptions())
+
+    store.delete(record.job_id)
+
+    assert store.get(record.job_id) is None
 
 
 @pytest.mark.parametrize(

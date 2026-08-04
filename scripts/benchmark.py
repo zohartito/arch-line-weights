@@ -31,6 +31,7 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import platform
 import shutil
@@ -269,7 +270,7 @@ def _fmt_seconds(t: StageTiming) -> str:
     if t.skipped:
         return f"skipped ({t.skip_reason})" if t.skip_reason else "skipped"
     if t.error:
-        return f"error: {t.error[:60]}"
+        return f"error: {_markdown_table_text(t.error[:60])}"
     if not t.times_seconds:
         return "—"
     return f"{t.median:.2f}s (best {t.best:.2f}s)"
@@ -277,6 +278,15 @@ def _fmt_seconds(t: StageTiming) -> str:
 
 def _fmt_bytes(n: int) -> str:
     return f"{n:,}" if n else "—"
+
+
+def _markdown_table_text(value: object) -> str:
+    """Escape untrusted text before it crosses into a Markdown table cell."""
+    escaped = html.escape(str(value), quote=True)
+    escaped = escaped.replace("\\", "\\\\").replace("\r", " ").replace("\n", "<br>")
+    for character in "|`[]()!*_#>":
+        escaped = escaped.replace(character, f"\\{character}")
+    return escaped
 
 
 def _markdown_section(benchmarks: list[FileBenchmark], started_at: datetime, runs: int) -> str:
@@ -296,9 +306,9 @@ def _markdown_section(benchmarks: list[FileBenchmark], started_at: datetime, run
         "----------|---------------:|---------:|--------:|"
     )
     for b in benchmarks:
-        name = Path(b.source).name
+        name = _markdown_table_text(Path(b.source).name)
         lines.append(
-            f"| `{name}` "
+            f"| {name} "
             f"| {_fmt_bytes(b.input_bytes)} "
             f"| {b.layer_count} "
             f"| {b.cut_layer_count} "

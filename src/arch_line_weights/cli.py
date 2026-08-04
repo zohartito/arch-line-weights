@@ -35,7 +35,7 @@ from .poche_pdf import apply_poche_pdf
 from .presets import PRESETS, select_preset
 from .progress import DEFAULT_PROGRESS_FILE, make_reporter
 from .role_signal import no_role_signal, no_role_signal_message
-from .safety import ProcessingDisabledError, processing_disabled
+from .safety import ProcessingDisabledError, processing_disabled, terminal_safe
 from .tonal_recede import MODES as TONAL_RECEDE_MODES
 from .tonal_recede import describe_ramp as tonal_recede_describe_ramp
 from .tonal_recede import tonal_recede_resolver
@@ -111,7 +111,7 @@ def _layer_plan_line(name: str, source: Source) -> str:
     ta = classify_layer(name, source=source)
     excluded = ta.tier == "excluded"
     weight = "EXCLUDED" if excluded else f"{ta.weight_pt} pt"
-    return f"{name} → {weight} · {_linetype_note(name, source)} [{ta.tier}, conf={ta.confidence:.2f}]"
+    return f"{terminal_safe(name)} → {weight} · {_linetype_note(name, source)} [{ta.tier}, conf={ta.confidence:.2f}]"
 
 
 def _require_supported_input(src: Path, command: str):
@@ -404,8 +404,11 @@ def apply(
             if rgb is None:
                 click.echo(f"warning: skipping unparseable color {ckey!r}", err=True)
                 continue
-            mapping[rgb] = float(w)
-        mapping = from_user_mapping(mapping)
+            mapping[rgb] = w
+        try:
+            mapping = from_user_mapping(mapping)
+        except ValueError as exc:
+            raise click.UsageError(str(exc)) from exc
     elif architectural:
         mapping = {}
     elif no_role_signal(rep, source_conf):
@@ -643,7 +646,7 @@ def apply_jsx_cmd(
         for_print=for_print,
         printer=lambda s: click.echo(s, err=True),
     )
-    click.echo(result["report"])
+    click.echo(terminal_safe(result["report"]))
 
 
 @cli.command(help="Open a Rhino/Illustrator export, set artboard size, fit/center, and save.")
@@ -756,7 +759,9 @@ def layout_jsx_cmd(
         click.echo(f"layout: wrote {result['output']}", err=True)
     click.echo(f"layout: report {result['report_json']}", err=True)
     if result.get("report"):
-        click.echo(result["report"])
+        # The normalized report can carry Illustrator's active document name.
+        # Render it as terminal data, not terminal control input.
+        click.echo(terminal_safe(result["report"]))
 
 
 @cli.command(help="Run the Rhino Make2D -> Illustrator layout bridge.")
@@ -1047,7 +1052,7 @@ def bridge_rhino_ai_cmd(
     "progress_file",
     type=click.Path(dir_okay=False, path_type=Path),
     default=None,
-    help=f"Override the progress-event log path (default: {DEFAULT_PROGRESS_FILE}). "
+    help="Override the progress-event log path (default: a private per-run temporary file). "
     "One tab-separated event per line. Ignored when --no-progress is set.",
 )
 @click.option(
@@ -1122,8 +1127,11 @@ def apply_saas_cmd(
             if rgb is None:
                 click.echo(f"warning: skipping unparseable color {ckey!r}", err=True)
                 continue
-            mapping[rgb] = float(w)
-        mapping = from_user_mapping(mapping)
+            mapping[rgb] = w
+        try:
+            mapping = from_user_mapping(mapping)
+        except ValueError as exc:
+            raise click.UsageError(str(exc)) from exc
     elif auto:
         tiers = select_preset(preset, scale=scale, for_print=for_print)
         mapping = auto_by_luminance(rep, tiers)
@@ -1333,9 +1341,9 @@ def apply_saas_cmd(
                 err=True,
             )
             for n in poche_result.layers_missing[:10]:
-                click.echo(f"    {n}", err=True)
+                click.echo(f"    {terminal_safe(n)}", err=True)
         for fr in sorted(poche_report.fills, key=lambda f: -f.confidence):
-            short = fr.layer.split("::")[-1]
+            short = terminal_safe(fr.layer.split("::")[-1])
             marker = "✓" if fr.confidence >= 0.85 else ("~" if fr.confidence > 0 else "✗")
             click.echo(
                 f"  {marker} {short:50}  {fr.strategy:18}  polys={fr.polygon_count:>3}  "
@@ -1599,7 +1607,7 @@ def poche_cmd(
     click.echo("", err=True)
     click.echo("per-layer:", err=True)
     for fr in sorted(report.fills, key=lambda f: -f.confidence):
-        short = fr.layer.split("::")[-1]
+        short = terminal_safe(fr.layer.split("::")[-1])
         marker = "✓" if fr.confidence >= 0.85 else ("~" if fr.confidence > 0 else "✗")
         # Surface bridge_strategy_name when set (only the auto_bridge rung
         # populates it, and only when bridge_strategy="best" was selected).
@@ -2234,13 +2242,13 @@ def explain_layer(layer_name: str, source: str):
             f"# detected source: {detected.value} (confidence={conf:.2f})",
             err=True,
         )
-        click.echo(explain_source_match(layer_name, detected))
-        click.echo(f"# linetype: {_linetype_note(layer_name, detected)}")
+        click.echo(terminal_safe(explain_source_match(layer_name, detected)))
+        click.echo(f"# linetype: {terminal_safe(_linetype_note(layer_name, detected))}")
     else:
         forced = Source(source)
         click.echo(f"# source: {forced.value} (forced via --source)", err=True)
-        click.echo(explain_source_match(layer_name, forced))
-        click.echo(f"# linetype: {_linetype_note(layer_name, forced)}")
+        click.echo(terminal_safe(explain_source_match(layer_name, forced)))
+        click.echo(f"# linetype: {terminal_safe(_linetype_note(layer_name, forced))}")
 
 
 # Re-export so the unused `classify_layer` import stays referenced and

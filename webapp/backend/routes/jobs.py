@@ -133,6 +133,7 @@ async def create_job(
         )
     except ValueError as exc:
         storage.cleanup_job(record.job_id)
+        store.delete(record.job_id)
         raise HTTPException(
             status_code=413,
             detail="upload exceeds configured byte limit",
@@ -141,6 +142,7 @@ async def create_job(
     input_diag = diagnostic_for_command(paths.input_path, "apply-saas")
     if not input_diag.command_support["apply-saas"]:
         storage.cleanup_job(record.job_id)
+        store.delete(record.job_id)
         raise HTTPException(
             status_code=415,
             detail={

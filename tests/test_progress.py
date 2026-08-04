@@ -338,10 +338,31 @@ def test_make_reporter_disabled_is_noop(tmp_path: Path):
 
 
 def test_make_reporter_uses_default_progress_file_when_unspecified():
-    """The DEFAULT_PROGRESS_FILE constant matches Issue #15's documented path."""
-    # We don't actually write to /tmp here (would clobber a real run); just
-    # check the constant is what the issue documents.
-    assert DEFAULT_PROGRESS_FILE == "/tmp/arch_lw_saas_progress.txt"
+    """The default progress log is allocated below a private per-run directory."""
+    assert DEFAULT_PROGRESS_FILE is None
+    reporter = make_reporter(enabled=True, stderr=io.StringIO())
+    assert reporter.file_path is not None
+    progress_path = Path(reporter.file_path)
+    assert progress_path.name == "progress.txt"
+    assert progress_path.parent.stat().st_mode & 0o777 == 0o700
+    assert progress_path.stat().st_mode & 0o777 == 0o600
+    reporter.close()
+    assert not progress_path.parent.exists()
+
+
+def test_progress_neutralizes_terminal_controls_in_untrusted_layer_names(tmp_path: Path):
+    rep, path, tty = _make_reporter(tmp_path)
+    hostile = "CUT\x1b]0;owned\x07\r\nnext"
+    with rep.stage("polygonize"), rep.layer(1, 1, hostile, 4):
+        pass
+    rep.close()
+
+    contents = path.read_text(encoding="utf-8") + tty.getvalue()
+    assert "\\x1b" in contents
+    assert "\\x07" in contents
+    assert "\\x0d" in contents
+    assert "\\x0a" in contents
+    assert "\x1b" not in contents
 
 
 def test_layer_callback_default_state():

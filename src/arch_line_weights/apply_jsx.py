@@ -33,7 +33,6 @@ non-section drawing run (see docs/POSTMORTEM.md Attempt 9):
 
 from __future__ import annotations
 
-import contextlib
 import json
 import os
 import re
@@ -45,7 +44,7 @@ from pathlib import Path
 from typing import Any
 
 from .layer_classify import as_jsx_function
-from .safety import processing_disabled
+from .safety import private_temp_directory, processing_disabled, terminal_safe
 
 ILLUSTRATOR_APP = "/Applications/Adobe Illustrator 2026/Adobe Illustrator.app"
 
@@ -487,7 +486,7 @@ class _HeartbeatPoller(threading.Thread):
                             continue
                         self.last_line = line
                         self.lines_seen += 1
-                        self._printer(f"  jsx: {line}")
+                        self._printer(f"  jsx: {terminal_safe(line)}")
                         if line == "DONE":
                             self.done = True
                             return
@@ -642,6 +641,34 @@ def apply_via_jsx(
     for_print: bool = False,
     printer=print,
 ) -> dict:
+    """Run the JSX bridge using a private, cleaned-up default work directory."""
+    processing_disabled("Illustrator JSX document rewrite")
+    with private_temp_directory(prefix="arch-lw-jsx-") as work_dir:
+        return _apply_via_jsx(
+            src,
+            dst,
+            jsx_path=jsx_path,
+            timeout_min=timeout_min,
+            preset=preset,
+            scale=scale,
+            for_print=for_print,
+            printer=printer,
+            work_dir=work_dir,
+        )
+
+
+def _apply_via_jsx(
+    src: str,
+    dst: str | None = None,
+    *,
+    jsx_path: str | None = None,
+    timeout_min: int | None = None,
+    preset: str | None = None,
+    scale: str = "1/4",
+    for_print: bool = False,
+    printer=print,
+    work_dir: Path,
+) -> dict:
     """Open `src` in Illustrator and apply layer-aware hierarchy. Save to `dst`.
 
     Args:
@@ -666,7 +693,6 @@ def apply_via_jsx(
 
     Returns a dict with the parsed report.
     """
-    processing_disabled("Illustrator JSX document rewrite")
     src = os.path.abspath(src)
     if dst is None:
         dst = default_output_path(src)
@@ -677,12 +703,9 @@ def apply_via_jsx(
     timeout_min = resolve_timeout_minutes(timeout_min)
     timeout_sec = timeout_min * 60
 
-    progress_path = "/tmp/arch_lw_progress.txt"
-    report_path = "/tmp/arch_lw_report.txt"
-    heartbeat_path = "/tmp/arch_lw_jsx_progress.txt"
-    for f in (progress_path, report_path, heartbeat_path):
-        with contextlib.suppress(FileNotFoundError):
-            os.unlink(f)
+    progress_path = str(work_dir / "progress.txt")
+    report_path = str(work_dir / "report.txt")
+    heartbeat_path = str(work_dir / "heartbeat.txt")
     # Prime the heartbeat file so the poller can attach immediately even
     # before the JSX writes its first line.
     Path(heartbeat_path).write_text("")
@@ -695,19 +718,19 @@ def apply_via_jsx(
     if active_name and "[Converted]" in active_name:
         if _is_converted_match(active_name, active_path, src):
             printer(
-                f"# detected [Converted] doc '{active_name}' for source — "
+                f"# detected [Converted] doc '{terminal_safe(active_name)}' for source — "
                 "operating on the open document directly (Issue #10)"
             )
             use_open_doc = True
         else:
             raise RuntimeError(
-                f"Illustrator has '{active_name}' open. Save it (Cmd+S) and "
+                f"Illustrator has '{terminal_safe(active_name)}' open. Save it (Cmd+S) and "
                 "close the original to allow apply-jsx to open the disk file "
                 "fresh, or close the [Converted] doc entirely."
             )
 
     if jsx_path is None:
-        jsx_path = "/tmp/arch_lw_apply.jsx"
+        jsx_path = str(work_dir / "apply.jsx")
     Path(jsx_path).write_text(
         render_jsx(
             src,

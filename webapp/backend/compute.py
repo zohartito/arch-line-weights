@@ -116,6 +116,11 @@ class JobStore:
         with self._lock:
             self._jobs[record.job_id] = record
 
+    def delete(self, job_id: str) -> None:
+        """Remove a rejected pre-processing record from the in-memory store."""
+        with self._lock:
+            self._jobs.pop(job_id, None)
+
 
 def run_job(
     record: JobRecord,
