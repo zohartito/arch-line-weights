@@ -232,7 +232,7 @@ from the mapping gets `--default-width` (0.25 pt unless overridden).
 
 ### Try the tiny repo sample
 
-From a source checkout:
+Historical examples (disabled; they now fail closed before reading the path):
 
 ```
 .venv/bin/arch-lw inspect examples/sample-linework.pdf
@@ -243,8 +243,17 @@ From a source checkout:
 
 ### Proof status
 
+**Compatibility/security change:** all untrusted-document processing
+(`inspect`, `apply`, `apply-saas`, `poche`, preview, material hatch, and
+proof-packet validation/materialization) is permanently disabled in this
+release. The previous runtime could not prove bounds before parser, renderer,
+or geometry-library allocation. These commands now fail before reading an
+input; keep existing artifacts local and do not rely on them as public proof.
+
 Public proof assets are not committed in this repository. Posting and public
-proof remain **NO-GO** unless W5/W7 explicitly accepts the packet. Synthetic
+proof remain **NO-GO**. The bundled manifest is not an authenticated reviewer
+system, so it cannot grant public clearance; record any W5/W7 review in the
+separate private process. Synthetic
 proof can exercise the harness, but it does not close #30, and the private USC
 regression stays private. Use the local designer console or proof packet export
 for review material that includes `W5-W7-ACCEPTANCE-HANDOFF.json`.

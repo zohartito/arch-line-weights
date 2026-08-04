@@ -33,7 +33,6 @@ from __future__ import annotations
 
 import functools
 import math
-import operator
 import random
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
@@ -42,7 +41,21 @@ import numpy as np
 from shapely.affinity import rotate
 from shapely.geometry import LineString, MultiLineString, MultiPolygon, Point, Polygon
 
+from .safety import processing_disabled
+
 PT_PER_MM = 2.83464567
+MAX_HATCH_PRIMITIVES = 250_000
+MIN_HATCH_SPACING = 0.05
+
+
+def _require_safe_spacing(spacing: float) -> None:
+    if not math.isfinite(spacing) or spacing < MIN_HATCH_SPACING:
+        raise ValueError("material hatch spacing is below the safe limit")
+
+
+def _require_primitive_budget(count: int) -> None:
+    if count > MAX_HATCH_PRIMITIVES:
+        raise ValueError("material hatch primitive budget exceeded")
 
 
 def mm_to_pt(mm: float, scale: float) -> float:
@@ -94,8 +107,10 @@ def parallel_hatch(
         3. Intersect each scanline with the polygon
         4. Rotate result back by +angle_deg
     """
+    processing_disabled("material hatch generation")
     if polygon.is_empty or polygon.area <= 0:
         return []
+    _require_safe_spacing(spacing)
     cx, cy = polygon.centroid.x, polygon.centroid.y
     rotated = rotate(polygon, -angle_deg, origin=(cx, cy))
     minx, miny, maxx, maxy = rotated.bounds
@@ -105,6 +120,7 @@ def parallel_hatch(
 
     lines = []
     n_lines = int(span_y / spacing) + 2
+    _require_primitive_budget(n_lines)
     for i in range(-n_lines // 2, n_lines // 2 + 1):
         y = midy + i * spacing
         if offset_fn:
@@ -127,6 +143,7 @@ def crosshatch(
     polygon: Polygon, spacing: float, angle_deg: float, second_angle: float | None = None
 ) -> list[LineString]:
     """Two passes of parallel_hatch at perpendicular (or specified) angles."""
+    processing_disabled("material hatch generation")
     if second_angle is None:
         second_angle = angle_deg + 90.0
     return parallel_hatch(polygon, spacing, angle_deg) + parallel_hatch(polygon, spacing, second_angle)
@@ -145,6 +162,7 @@ def poisson_disk(
     `max_samples` caps the number of samples; if the polygon×min_dist would
     exceed it, `min_dist` is enlarged proportionally so the cap holds.
     """
+    processing_disabled("material hatch generation")
     if polygon.is_empty or min_dist <= 0:
         return []
     minx, miny, maxx, maxy = polygon.bounds
@@ -258,8 +276,10 @@ def sine_zigzag(
     polygon: Polygon, wavelength: float, amplitude: float, row_spacing: float | None = None
 ) -> list[LineString]:
     """Stack of sine-wave lines (mineral-wool insulation symbol)."""
+    processing_disabled("material hatch generation")
     if polygon.is_empty:
         return []
+    _require_safe_spacing(wavelength)
     if row_spacing is None:
         row_spacing = wavelength
     angle = _principal_angle(polygon)
@@ -272,6 +292,7 @@ def sine_zigzag(
     xs = np.linspace(minx, maxx, n_samples)
     rows = []
     n_rows = int((maxy - miny) / row_spacing) + 2
+    _require_primitive_budget(n_rows * n_samples)
     for r in range(-1, n_rows):
         y_base = miny + r * row_spacing
         ys = y_base + amplitude * np.sin(2 * math.pi * xs / wavelength)
@@ -289,8 +310,11 @@ def sine_zigzag(
 
 def brick_pattern(polygon: Polygon, brick_w: float, brick_h: float) -> list[LineString]:
     """Stretcher bond brick pattern (alternating horizontal courses)."""
+    processing_disabled("material hatch generation")
     if polygon.is_empty:
         return []
+    _require_safe_spacing(brick_w)
+    _require_safe_spacing(brick_h)
     angle = _principal_angle(polygon)
     cx, cy = polygon.centroid.x, polygon.centroid.y
     rotated = rotate(polygon, -angle, origin=(cx, cy))
@@ -305,6 +329,7 @@ def brick_pattern(polygon: Polygon, brick_w: float, brick_h: float) -> list[Line
 
     # Vertical mortar lines, offset by half-brick on alternate courses
     n_cols = int((maxx - minx) / brick_w) + 2
+    _require_primitive_budget(n_rows * n_cols + n_rows)
     for r in range(-1, n_rows):
         y_top = miny + (r + 1) * brick_h
         y_bot = miny + r * brick_h
@@ -328,8 +353,10 @@ def brick_pattern(polygon: Polygon, brick_w: float, brick_h: float) -> list[Line
 
 def clt_layers(polygon: Polygon, lamella_thickness: float) -> list[LineString]:
     """CLT cross-laminated timber: alternating-direction grain lines per lamella."""
+    processing_disabled("material hatch generation")
     if polygon.is_empty:
         return []
+    _require_safe_spacing(lamella_thickness)
     angle = _principal_angle(polygon)
     cx, cy = polygon.centroid.x, polygon.centroid.y
     rotated = rotate(polygon, -angle, origin=(cx, cy))
@@ -337,6 +364,7 @@ def clt_layers(polygon: Polygon, lamella_thickness: float) -> list[LineString]:
 
     out = []
     n_lams = int((maxy - miny) / lamella_thickness) + 1
+    _require_primitive_budget(n_lams)
     for i in range(n_lams):
         y_top = miny + (i + 1) * lamella_thickness
         y_bot = miny + i * lamella_thickness
@@ -382,9 +410,17 @@ def multipoly_aware(fn):
 
     @functools.wraps(fn)
     def wrapper(polygon, scale, **kw):
+        if not math.isfinite(scale) or scale <= 0:
+            raise ValueError("material hatch scale must be finite and positive")
         if isinstance(polygon, MultiPolygon):
-            return functools.reduce(operator.iadd, (wrapper(p, scale, **kw) for p in polygon.geoms), [])
-        return fn(polygon, scale, **kw)
+            output: list[LineString] = []
+            for part in polygon.geoms:
+                output.extend(wrapper(part, scale, **kw))
+                _require_primitive_budget(len(output))
+            return output
+        output = fn(polygon, scale, **kw)
+        _require_primitive_budget(len(output))
+        return output
 
     return wrapper
 
@@ -576,6 +612,7 @@ for recipe in [
 
 def hatch_polygon(polygon: Polygon | MultiPolygon, material: str, scale: float, **kw) -> list[LineString]:
     """Dispatch to the named material's recipe."""
+    processing_disabled("material hatch generation")
     if material not in MATERIALS:
         raise KeyError(f"unknown material {material!r}; available: {sorted(MATERIALS)}")
     recipe = MATERIALS[material]

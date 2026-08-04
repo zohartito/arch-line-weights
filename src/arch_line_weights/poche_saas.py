@@ -78,6 +78,7 @@ from .poche import (
     should_inject_fill,
 )
 from .progress import ProgressReporter
+from .safety import processing_disabled
 
 _log = logging.getLogger(__name__)
 _ARCHITECTURAL_COMPLETION_ENV = "ARCH_LW_ARCHITECTURAL_COMPLETION"
@@ -388,6 +389,7 @@ def compute_polygons_for_layers(
     reporter: ProgressReporter | None = None,
     structural_helper_paths_by_layer: dict[str, list[list[list[float]]]] | None = None,
     structural_completion_paths_by_layer: dict[str, list[list[list[float]]]] | None = None,
+    llm_external_consent: bool = False,
 ) -> tuple[dict[str, list[Polygon]], PocheReport]:
     """Run :func:`poche.polygonize_layer` over every layer in ``paths_by_layer``.
 
@@ -450,6 +452,7 @@ def compute_polygons_for_layers(
                 use_alpha_shape=use_alpha_shape,
                 bridge_strategy=bridge_strategy,
                 structural_helper_lines=structural_helper_lines,
+                llm_external_consent=llm_external_consent,
             )
 
             completion_paths = structural_completion_paths_by_layer.get(layer_name)
@@ -539,6 +542,7 @@ def enumerate_layer_paths_from_payload(
     sequences per stroked sub-path. This is exactly the input shape that
     :func:`compute_polygons_for_layers` expects.
     """
+    processing_disabled("native poché geometry enumeration")
     out: dict[str, list[list[list[float]]]] = {}
     for begin_match in re.finditer(re.escape(_BEGIN_LAYER), payload):
         begin = begin_match.start()
@@ -682,6 +686,7 @@ def apply_saas_with_poche(
     scale: str = "1/4",
     for_print: bool = False,
     source: Source = Source.RHINO,
+    llm_external_consent: bool = False,
 ) -> tuple[object, PocheSaasResult, PocheReport]:
     """Apply both stroke-width rewrite (B6) AND poché injection in one pass.
 
@@ -699,6 +704,7 @@ def apply_saas_with_poche(
     per-stage / per-layer progress events. ``None`` (default) constructs a
     disabled no-op reporter — zero overhead.
     """
+    processing_disabled("native poché processing")
     from .apply_saas import ApplySaasResult
 
     if os.path.abspath(src) == os.path.abspath(dst):
@@ -778,6 +784,7 @@ def apply_saas_with_poche(
                 reporter=reporter,
                 structural_helper_paths_by_layer=structural_helper_paths_by_layer,
                 structural_completion_paths_by_layer=structural_completion_paths_by_layer,
+                llm_external_consent=llm_external_consent,
             )
 
         # Step 1: rewrite stroke widths (existing B6 functionality).

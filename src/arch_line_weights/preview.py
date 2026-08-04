@@ -24,6 +24,8 @@ import pikepdf
 import pymupdf
 from PIL import Image, ImageDraw, ImageFont
 
+from .safety import processing_disabled
+
 SUPERSAMPLE = 4
 LABEL_HEIGHT_PX = 48
 LEGEND_PAD_PX = 12
@@ -31,6 +33,25 @@ DIFF_THRESHOLD = 12
 ADDED_TINT = (220, 30, 30)
 REMOVED_TINT = (30, 80, 220)
 BG_COLOR = (255, 255, 255)
+MAX_PREVIEW_PAGES = 64
+MAX_PREVIEW_PIXELS = 80_000_000
+
+
+def _validate_render_budget(src: str | Path, dpi: int, *, multiplier: int = 1) -> int:
+    if not isinstance(dpi, int) or dpi <= 0 or dpi > 600:
+        raise ValueError("preview dpi must be between 1 and 600")
+    doc = pymupdf.open(str(src))
+    try:
+        if doc.page_count > MAX_PREVIEW_PAGES:
+            raise ValueError("preview page count exceeds safe limit")
+        pixels = 0
+        for page in doc:
+            pixels += int(page.rect.width * dpi / 72) * int(page.rect.height * dpi / 72) * multiplier
+            if pixels > MAX_PREVIEW_PIXELS:
+                raise ValueError("preview pixel budget exceeded")
+        return doc.page_count
+    finally:
+        doc.close()
 
 
 def _load_font(size: int) -> ImageFont.ImageFont:
@@ -54,6 +75,10 @@ class PyMuPDFRenderer:
     supersample: int = SUPERSAMPLE
 
     def render_page(self, src: str | Path, page_index: int, dpi: int) -> Image.Image:
+        processing_disabled("preview supersampled rendering")
+        count = _validate_render_budget(src, dpi, multiplier=self.supersample**2)
+        if not 0 <= page_index < count:
+            raise ValueError("preview page index is out of bounds")
         doc = pymupdf.open(str(src))
         try:
             page = doc.load_page(page_index)
@@ -71,11 +96,9 @@ class PyMuPDFRenderer:
         return img
 
     def render_all(self, src: str | Path, dpi: int) -> list[Image.Image]:
-        doc = pymupdf.open(str(src))
-        try:
-            return [self.render_page(src, i, dpi) for i in range(doc.page_count)]
-        finally:
-            doc.close()
+        processing_disabled("preview supersampled rendering")
+        count = _validate_render_budget(src, dpi, multiplier=self.supersample**2)
+        return [self.render_page(src, i, dpi) for i in range(count)]
 
 
 @dataclass
@@ -93,6 +116,10 @@ class GhostscriptRenderer:
             )
 
     def render_page(self, src: str | Path, page_index: int, dpi: int) -> Image.Image:
+        processing_disabled("preview supersampled rendering")
+        count = _validate_render_budget(src, dpi, multiplier=self.supersample**2)
+        if not 0 <= page_index < count:
+            raise ValueError("preview page index is out of bounds")
         page_no = page_index + 1
         effective_dpi = dpi * self.supersample
         with tempfile.TemporaryDirectory() as tmp:
@@ -123,11 +150,8 @@ class GhostscriptRenderer:
         return img
 
     def render_all(self, src: str | Path, dpi: int) -> list[Image.Image]:
-        doc = pymupdf.open(str(src))
-        try:
-            count = doc.page_count
-        finally:
-            doc.close()
+        processing_disabled("preview supersampled rendering")
+        count = _validate_render_budget(src, dpi, multiplier=self.supersample**2)
         return [self.render_page(src, i, dpi) for i in range(count)]
 
 
@@ -177,13 +201,19 @@ def side_by_side(
     page_index: int | None = None,
 ) -> Image.Image:
     """Render before+after at multiple plot scales as a single stacked PNG."""
+    processing_disabled("preview side-by-side rendering")
     renderer = renderer or PyMuPDFRenderer()
+    if not scales:
+        raise ValueError("preview needs at least one scale")
+    if page_index is not None and page_index < 0:
+        raise ValueError("preview page index is out of bounds")
+    max_dpi = max(dpi for _label, dpi in scales)
+    multiplier = len(scales) * 2 * renderer.supersample**2
+    page_count = _validate_render_budget(before, max_dpi, multiplier=multiplier)
+    after_count = _validate_render_budget(after, max_dpi, multiplier=multiplier)
+    if after_count != page_count:
+        raise ValueError("preview documents have different page counts")
     rows: list[Image.Image] = []
-    doc = pymupdf.open(str(before))
-    try:
-        page_count = doc.page_count
-    finally:
-        doc.close()
     pages = [page_index] if page_index is not None else list(range(page_count))
     for pg in pages:
         for label, dpi in scales:
@@ -281,6 +311,7 @@ def tier_overlay(
     renderer: PyMuPDFRenderer | GhostscriptRenderer | None = None,
 ) -> Image.Image:
     """Render `src` with each stroke recolored by its width-tier."""
+    processing_disabled("preview tier overlay rendering")
     renderer = renderer or PyMuPDFRenderer()
     recolored_bytes = _recolor_pdf_by_tier(src, tier_colors)
     with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tf:
@@ -335,6 +366,7 @@ def diff_image(
     renderer: PyMuPDFRenderer | GhostscriptRenderer | None = None,
 ) -> Image.Image:
     """Render both PDFs and produce a tinted pixel-diff PNG."""
+    processing_disabled("preview diff rendering")
     renderer = renderer or PyMuPDFRenderer()
     before_pages = renderer.render_all(before, dpi)
     after_pages = renderer.render_all(after, dpi)

@@ -55,6 +55,12 @@ class Settings(BaseSettings):
     # which capped real-world Rhino-export sizes around 30 MB.
     max_upload_bytes: int = 50 * 1024 * 1024
 
+    # Legacy jobs can mutate local files and expose their results.  Keep this
+    # deliberately unavailable until the launcher supplies a per-launch
+    # unguessable capability.  Browser callers must also present one of the
+    # exact configured origins (not merely a localhost-looking Origin).
+    local_api_capability: str | None = None
+
     # CORS — broad in dev, narrow in prod. Comma-separated origin list.
     cors_origins: Annotated[list[str], NoDecode] = Field(default_factory=local_vite_cors_origins)
 

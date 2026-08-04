@@ -375,7 +375,7 @@ def test_validate_proof_packet_passes_clean_report_but_is_not_public_safe_withou
         "accepted": False,
         "accepted_by": [],
     }
-    assert "Get explicit W5/W7 acceptance" in validation.public_summary["next_step"]
+    assert "public clearance is disabled" in validation.public_summary["next_step"]
 
 
 def test_validate_proof_packet_is_public_safe_only_with_w5_w7_acceptance(tmp_path: Path) -> None:
@@ -393,6 +393,11 @@ def test_validate_proof_packet_is_public_safe_only_with_w5_w7_acceptance(tmp_pat
                     "accepted_by": "W5",
                     "date": "2026-06-01",
                     "scope": "synthetic proof only",
+                    "proof_identity": {
+                        "input": "stair-section.ai",
+                        "output": "stair-section-poche.ai",
+                        "command": "arch-lw poche stair-section.ai",
+                    },
                 }
             }
         ),
@@ -401,14 +406,14 @@ def test_validate_proof_packet_is_public_safe_only_with_w5_w7_acceptance(tmp_pat
     validation = validate_proof_packet(plan)
 
     assert validation.status == "passed"
-    assert validation.public_summary["public_safe"] is True
+    assert validation.public_summary["public_safe"] is False
     assert validation.public_summary["public_acceptance"] == {
-        "accepted": True,
+        "accepted": False,
         "accepted_by": ["W5"],
         "date": "2026-06-01",
         "scope": "synthetic proof only",
     }
-    assert "Attach the public summary only" in validation.public_summary["next_step"]
+    assert "public clearance is disabled" in validation.public_summary["next_step"]
 
 
 def test_validate_proof_packet_needs_review_for_visual_acceptance_gate(tmp_path: Path) -> None:
@@ -508,12 +513,12 @@ def test_validate_proof_packet_accepts_w5_w7_visual_layer_gate(
 
     validation = validate_proof_packet(plan)
 
-    assert validation.status == "passed"
+    assert validation.status == "needs_review"
     assert validation.public_summary["public_safe"] is False
-    assert "W5/W7 public proof acceptance is not recorded" in validation.public_summary["why"]
+    assert "1 layer needs review" in validation.public_summary["why"]
     assert validation.public_summary["visual_acceptance"] == {
-        "accepted_layer_count": 1,
-        "accepted_by": ["W7"],
+        "accepted_layer_count": 0,
+        "accepted_by": [],
     }
 
 
@@ -592,6 +597,11 @@ def test_validate_proof_packet_visual_acceptance_requires_allowed_reviewer_and_e
     ]
     report["review_acceptance"] = {
         "visual_layer_gates": [
+            {
+                "layer": "TEC_CONCRETE_BASE",
+                "accepted": True,
+                "accepted_by": "W5",
+            },
             {
                 "layer": "TEC_FOUNDATION",
                 "accepted": True,

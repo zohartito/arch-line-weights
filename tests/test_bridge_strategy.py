@@ -171,11 +171,7 @@ def test_polygonize_layer_best_calls_strategy_selector():
 
 
 def test_polygonize_layer_best_respects_endpoint_cap(monkeypatch, caplog):
-    """Pathological high-endpoint layers should fall back to greedy per-layer.
-
-    This keeps ``best`` as the default while preventing a dense layer from
-    invoking the more expensive strategy selector.
-    """
+    """Pathological high-endpoint layers skip bridge inference per-layer."""
     paths = _greedy_trap_paths()
     monkeypatch.setenv("ARCH_LW_BRIDGE_BEST_MAX_ENDPOINTS", "2")
     with (
@@ -183,17 +179,15 @@ def test_polygonize_layer_best_respects_endpoint_cap(monkeypatch, caplog):
         patch("arch_line_weights.poche.infer_bridges_best", wraps=infer_bridges_best) as best_spy,
         patch("arch_line_weights.poche.infer_bridges", wraps=infer_bridges) as greedy_spy,
     ):
-        _polys, fr = polygonize_layer(
+        _polys, _fr = polygonize_layer(
             "pathological::layer",
             paths,
             bridge_strategy="best",
             use_alpha_shape=False,
         )
 
-    if fr.strategy == "auto_bridge":
-        assert fr.bridge_strategy_name == "greedy_endpoint_cap"
     assert best_spy.call_count == 0
-    assert greedy_spy.call_count >= 1
+    assert greedy_spy.call_count == 0
     assert "pathological::layer" in caplog.text
     assert "above ARCH_LW_BRIDGE_BEST_MAX_ENDPOINTS=2" in caplog.text
 

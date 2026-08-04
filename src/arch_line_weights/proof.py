@@ -13,6 +13,8 @@ from typing import Any
 import numpy as np
 from PIL import Image
 
+from .safety import processing_disabled
+
 try:
     import yaml
 except ModuleNotFoundError:  # pragma: no cover - exercised only in minimal installs
@@ -37,6 +39,7 @@ PROOF_PACKET_GUARDRAILS = (
 _PRIVATE_FIXTURE_TOKEN_RE = re.compile(
     r"(?i)(macro_for_archlw|synologydrive|usc_1|temporaryitems|downloads/|desktop/)"
 )
+MAX_PROOF_IMAGE_PIXELS = 80_000_000
 
 
 class ManifestValidationError(ValueError):
@@ -147,10 +150,13 @@ def build_proof_packet_plan(
 ) -> ProofPacketPlan:
     """Build deterministic output paths and command metadata for a fixture proof packet."""
 
-    if not isinstance(fixture_id, str) or not fixture_id:
-        raise ValueError("fixture_id must be a non-empty string")
+    if not isinstance(fixture_id, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", fixture_id):
+        raise ValueError("fixture_id must be one safe path component")
     command_list = _validate_string_list(commands, "commands")
-    fixture_output_dir = Path(output_dir) / fixture_id
+    root = Path(output_dir).resolve()
+    fixture_output_dir = (root / fixture_id).resolve()
+    if fixture_output_dir.parent != root:
+        raise ValueError("fixture_id escapes proof output root")
     return ProofPacketPlan(
         fixture_id=fixture_id,
         output_dir=fixture_output_dir,
@@ -181,6 +187,7 @@ def validate_proof_packet(
     never pass when required artifacts are absent, the report carries failed or
     no-go state, or local/private path references leak into the raw report.
     """
+    processing_disabled("proof packet validation")
     artifacts = _proof_packet_artifacts(plan)
     missing_artifacts = [
         label
@@ -340,6 +347,7 @@ def materialize_synthetic_proof_packet(plan: ProofPacketPlan, fixture: ProofFixt
     artifacts or touching private/manual-review evidence.
     """
 
+    processing_disabled("proof packet materialization")
     if (
         fixture.status not in {"pass", "expected_fail", "unsupported"}
         or "synthetic" not in fixture.id.lower()
@@ -817,9 +825,14 @@ def _artifact_reference_exists(plan: ProofPacketPlan, value: str) -> bool:
 
 def _artifact_reference_path(plan: ProofPacketPlan, value: str) -> Path:
     path = Path(value)
-    if not path.is_absolute():
-        path = plan.output_dir / path
-    return path
+    if path.is_absolute():
+        raise ManifestValidationError("proof artifact reference must be relative")
+    resolved = (plan.output_dir / path).resolve()
+    try:
+        resolved.relative_to(plan.output_dir.resolve())
+    except ValueError as exc:
+        raise ManifestValidationError("proof artifact reference escapes packet root") from exc
+    return resolved
 
 
 def _review_region_pixel_errors(
@@ -1001,7 +1014,11 @@ def _public_acceptance(report: dict[str, Any]) -> dict[str, Any]:
 
     public_proof = raw.get("public_proof") if isinstance(raw.get("public_proof"), dict) else raw
     accepted_by = _accepted_reviewers(public_proof.get("accepted_by"))
-    accepted = public_proof.get("accepted") is True and bool(set(accepted_by) & _PUBLIC_ACCEPTANCE_REVIEWERS)
+    # A self-authored manifest cannot authenticate a reviewer. Preserve the
+    # claimed W5/W7 labels for local handoff visibility, but never turn them
+    # into public clearance until a separately authenticated acceptance store
+    # is introduced. The identity check prevents accidental reuse meanwhile.
+    accepted = False
     acceptance: dict[str, Any] = {
         "accepted": accepted,
         "accepted_by": accepted_by,
@@ -1030,37 +1047,10 @@ def _public_visual_acceptance(report: dict[str, Any]) -> dict[str, Any]:
 
 
 def _visual_layer_acceptance_by_layer(report: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    raw = report.get("review_acceptance")
-    if not isinstance(raw, dict):
-        return {}
-
-    visual_layer_gates = raw.get("visual_layer_gates")
-    if not isinstance(visual_layer_gates, list):
-        return {}
-
-    eligible_layers = _visual_acceptance_eligible_layers(report)
-    if not eligible_layers:
-        return {}
-
-    accepted: dict[str, dict[str, Any]] = {}
-    for entry in visual_layer_gates:
-        if not isinstance(entry, dict):
-            continue
-        layer = entry.get("layer")
-        if not isinstance(layer, str) or not layer.strip() or _LOCAL_PATH_RE.search(layer):
-            continue
-        if layer not in eligible_layers:
-            continue
-        if entry.get("accepted") is not True:
-            continue
-        accepted_by = _accepted_reviewers(entry.get("accepted_by"))
-        if not accepted_by:
-            continue
-        existing = accepted.setdefault(layer, {"accepted_by": []})
-        for reviewer in accepted_by:
-            if reviewer not in existing["accepted_by"]:
-                existing["accepted_by"].append(reviewer)
-    return accepted
+    # Visual gates live in the same untrusted report they would clear. They
+    # can never satisfy a review requirement without an external trusted
+    # reviewer record, so retain all needs_review states fail-closed.
+    return {}
 
 
 def _visual_acceptance_eligible_layers(report: dict[str, Any]) -> set[str]:
@@ -1108,7 +1098,7 @@ def _next_step(status: str, reasons: tuple[str, ...], *, public_safe: bool = Fal
     if status == "needs_review":
         return "Review flagged layers or regions before accepting the packet."
     if status == "passed" and not public_safe:
-        return "Get explicit W5/W7 acceptance before treating this packet as public proof."
+        return "Keep this packet local; public clearance is disabled until authenticated reviewer binding exists."
     return "Attach the public summary only; keep raw local reports out of committed/public proof."
 
 

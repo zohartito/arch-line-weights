@@ -34,9 +34,12 @@ import pikepdf
 from .depth import summarize_depth_evidence
 from .drawing_type import classify_drawing_type
 from .input_format import raise_if_unsupported
+from .safety import processing_disabled
 
 # PyMuPDF is imported lazily inside ``_inspect_pdf`` so a missing/broken
 # install only fails when a `.pdf` file is actually inspected.
+MAX_PDF_CONTENT_STREAMS_PER_PAGE = 1024
+MAX_PDF_CONTENT_BYTES_PER_PAGE = 64 * 1024 * 1024
 
 
 def _color_key(c) -> str:
@@ -342,12 +345,19 @@ def _read_content_stream_bytes(page) -> bytes:
         return b""
     # pikepdf returns either a Stream or an Array; normalise to a list.
     streams = list(contents) if isinstance(contents, pikepdf.Array) else [contents]
+    if len(streams) > MAX_PDF_CONTENT_STREAMS_PER_PAGE:
+        raise ValueError("PDF page has too many content streams")
     parts: list[bytes] = []
+    total = 0
     for s in streams:
         try:
-            parts.append(s.read_bytes())
+            part = s.read_bytes()
         except Exception:  # pragma: no cover — defensive against malformed PDFs
             continue
+        total += len(part)
+        if total > MAX_PDF_CONTENT_BYTES_PER_PAGE:
+            raise ValueError("PDF page decoded content exceeds safe limit")
+        parts.append(part)
     return b"\n".join(parts)
 
 
@@ -425,21 +435,18 @@ def _walk_ai_private_payload(
         return stroke_widths, stroke_colors, width_by_color
 
     color_events = _stroke_color_events(payload)
-
-    def _color_at(offset: int) -> tuple[int, int, int] | None:
-        last: tuple[int, int, int] | None = None
-        for pos, rgb in color_events:
-            if pos < offset:
-                last = rgb
-            else:
-                break
-        return last
-
     width_events: list[tuple[int, str, tuple[int, int, int] | None]] = []
-    for m in _BARE_W_RE.finditer(payload):
-        width_events.append((m.start(), f"{round(float(m.group(1)), 4)}", _color_at(m.start())))
-    for m in _SETUP_W_RE.finditer(payload):
-        width_events.append((m.start(), f"{round(float(m.group(3)), 4)}", _color_at(m.start())))
+    raw_width_events = [
+        (m.start(), f"{round(float(m.group(1)), 4)}") for m in _BARE_W_RE.finditer(payload)
+    ] + [(m.start(), f"{round(float(m.group(3)), 4)}") for m in _SETUP_W_RE.finditer(payload)]
+    raw_width_events.sort(key=lambda event: event[0])
+    color_index = 0
+    current_color: tuple[int, int, int] | None = None
+    for offset, width in raw_width_events:
+        while color_index < len(color_events) and color_events[color_index][0] < offset:
+            current_color = color_events[color_index][1]
+            color_index += 1
+        width_events.append((offset, width, current_color))
     width_events.sort(key=lambda e: e[0])
 
     for _offset, wkey, rgb in width_events:
@@ -564,6 +571,7 @@ def inspect_file(path: str) -> InspectionReport:
     * Other ``.pdf`` → PyMuPDF
     * Both backends fail → raise ``RuntimeError`` pointing at the workaround
     """
+    processing_disabled("PDF/Illustrator inspection")
     input_diag = raise_if_unsupported(path, "inspect")
     ext = os.path.splitext(path)[1].lower()
     use_pikepdf_first = ext == ".ai" or _looks_like_illustrator(path)

@@ -2,9 +2,18 @@
 
 `arch-lw` is the entry point. All subcommands accept `--help`.
 
-## Supported input paths
+> **Processing disabled:** commands that inspect, rewrite, bridge, clean,
+> poché, render previews, or validate/materialize proof packets are permanently
+> fail-closed. They return an explicit disabled-processing error before reading
+> a supplied path. Only local report diagnosis, layer explanation, and visual
+> review helpers remain available.
 
-The command to use depends on the input kind, not only the file extension.
+The command detail retained below is historical reference only; disabled
+commands must not be used as a processing recipe.
+
+## Historical input paths (disabled)
+
+The former command selection depended on the input kind, not only the file extension.
 Native Illustrator `.ai` files with `/NumBlock` use the headless
 `apply-saas` path. PDF-only or converted `.ai` files use the Illustrator bridge
 with `apply-jsx`, followed by `poche` when section poché is needed. Plain PDFs

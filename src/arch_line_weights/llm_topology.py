@@ -178,6 +178,7 @@ def infer_closing_plan(
     *,
     model: str | None = None,
     client: Any | None = None,
+    external_consent: bool = False,
 ) -> dict | None:
     """Ask an LLM for a closure plan. Returns the plan dict or ``None``.
 
@@ -219,6 +220,10 @@ def infer_closing_plan(
     Side effects: in DEBUG mode (``ARCH_LW_DEBUG=1``) prints the model
     id, token counts, and computed cost to stderr. Otherwise silent.
     """
+    # Every call path, including an injected test/provider client, must carry
+    # immutable explicit consent. A provider object is not consent.
+    if not external_consent:
+        return None
     if not _gate_is_open():
         return None
     if not anchors:

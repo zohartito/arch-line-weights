@@ -23,8 +23,10 @@ from pikepdf import Operator
 
 from .input_format import raise_if_unsupported
 from .linetypes import DASH_PATTERNS_PT, LineType
+from .safety import processing_disabled
 
 STROKE_OPS = {"S", "s", "B", "B*", "b", "b*"}
+MAX_PDF_INSTRUCTIONS_PER_PAGE = 1_000_000
 
 
 @dataclass
@@ -67,6 +69,7 @@ def apply_to_file(
     `q`/clip state, so true exclusion is deferred to the marked-content path).
     With no ``rgb_to_linetype`` the output is byte-identical to a weight-only run.
     """
+    processing_disabled("PDF content-stream rewrite")
     if os.path.abspath(src) == os.path.abspath(dst):
         raise ValueError("dst must differ from src to keep the original safe")
     raise_if_unsupported(src, "apply")
@@ -76,6 +79,8 @@ def apply_to_file(
 
     for page in pdf.pages:
         instructions = list(pikepdf.parse_content_stream(page))
+        if len(instructions) > MAX_PDF_INSTRUCTIONS_PER_PAGE:
+            raise ValueError("PDF page instruction count exceeds safe limit")
         property_layers = _page_property_layers(page)
         new_inst = _rewrite(
             instructions,

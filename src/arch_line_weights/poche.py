@@ -48,6 +48,7 @@ from shapely.ops import linemerge, polygonize, snap, unary_union
 from .bridge import infer_bridges, infer_bridges_best
 from .hatch import hatch_polygon, material_for_layer
 from .input_format import raise_if_unsupported
+from .safety import processing_disabled
 
 _log = logging.getLogger(__name__)
 
@@ -75,6 +76,18 @@ _POCHE_ALLOW_LOW_CONFIDENCE_ENV = "ARCH_LW_POCHE_ALLOW_LOW_CONFIDENCE"
 _DEFAULT_BRIDGE_BEST_BUDGET_SEC = 60.0
 _DEFAULT_BRIDGE_BEST_MAX_ENDPOINTS = 1000
 _DEFAULT_POCHE_MIN_INJECT_CONFIDENCE = 0.85
+MAX_POCHE_PATHS_PER_LAYER = 20_000
+MAX_POCHE_COORDINATES_PER_LAYER = 200_000
+MAX_POCHE_SEGMENTS_PER_LAYER = 100_000
+MAX_POCHE_JSON_BYTES = 64 * 1024 * 1024
+
+
+def _load_json_file_under_limit(path: str | os.PathLike[str]) -> object:
+    """Reject oversized geometry/override JSON before decoding it."""
+    if os.stat(path).st_size > MAX_POCHE_JSON_BYTES:
+        raise ValueError("poche JSON input exceeds safe byte limit")
+    with open(path, encoding="utf-8") as file:
+        return json.load(file)
 
 
 def _resolve_bridge_strategy(explicit: str | None) -> BridgeStrategy:
@@ -207,8 +220,14 @@ def should_inject_fill(result: FillResult) -> bool:
 
 
 def _lines_from_anchors(paths: list[list[list[float]]]) -> list[LineString]:
+    if len(paths) > MAX_POCHE_PATHS_PER_LAYER:
+        raise ValueError("poche layer has too many paths")
     out = []
+    coordinates = 0
     for pts in paths:
+        coordinates += len(pts)
+        if coordinates > MAX_POCHE_COORDINATES_PER_LAYER:
+            raise ValueError("poche layer has too many coordinates")
         if len(pts) >= 2:
             with contextlib.suppress(Exception):
                 out.append(LineString([(p[0], p[1]) for p in pts]))
@@ -1028,6 +1047,7 @@ def polygonize_layer(
     use_alpha_shape: bool = True,
     bridge_strategy: str | None = None,
     structural_helper_lines: list[LineString] | None = None,
+    llm_external_consent: bool = False,
 ) -> tuple[list[Polygon], FillResult]:
     """Best-effort polygonization of one layer's segments.
 
@@ -1050,12 +1070,16 @@ def polygonize_layer(
         unset, the default ``"best"`` applies. Unknown values silently fall
         back to ``"best"``.
     """
+    processing_disabled("poche geometry processing")
     strategy = _resolve_bridge_strategy(bridge_strategy)
     lines = _lines_from_anchors(paths)
     if closing_lines:
         lines = lines + closing_lines
     helper_lines = structural_helper_lines or []
     n_segments = len(lines)
+
+    if n_segments > MAX_POCHE_SEGMENTS_PER_LAYER:
+        return [], FillResult(layer_name, "failed", 0.0, 0, n_segments)
 
     if not lines:
         return [], FillResult(layer_name, "failed", 0.0, 0, 0)
@@ -1142,15 +1166,14 @@ def polygonize_layer(
             )
             if endpoint_count > max_endpoints:
                 _log.warning(
-                    "poche layer %r has %d endpoints, above %s=%d; "
-                    "using greedy bridge strategy for this layer",
+                    "poche layer %r has %d endpoints, above %s=%d; skipping bridge inference for this layer",
                     layer_name,
                     endpoint_count,
                     _BRIDGE_BEST_MAX_ENDPOINTS_ENV,
                     max_endpoints,
                 )
-                aug_best, bridge_conf = infer_bridges(lines, max_gap=50.0, min_gap=0.01)
-                strategy_name = "greedy_endpoint_cap"
+                aug_best, bridge_conf = [], 0.0
+                strategy_name = "endpoint_cap"
             else:
                 aug_best, bridge_conf, strategy_name = infer_bridges_best(
                     lines,
@@ -1243,7 +1266,7 @@ def polygonize_layer(
                 anchors_flat.extend((float(x), float(y)) for x, y in ls.coords)
             except Exception:
                 continue
-        plan = infer_closing_plan(layer_name, anchors_flat, lines)
+        plan = infer_closing_plan(layer_name, anchors_flat, lines, external_consent=llm_external_consent)
         if plan is not None:
             llm_bridges = bridges_from_plan(plan, anchors_flat)
             if llm_bridges:
@@ -1275,13 +1298,15 @@ def polygonize_dump(
     bridge_strategy: str | None = None,
 ) -> PocheReport:
     """Load a JSON dump from `dump_cut_geometry.jsx`, polygonize each layer."""
+    processing_disabled("poche geometry JSON processing")
     from .make2d_completion import (
         complete_structural_cut_polygons,
         structural_completion_paths_for_layers,
     )
 
-    with open(geometry_json_path) as f:
-        data = json.load(f)
+    data = _load_json_file_under_limit(geometry_json_path)
+    if not isinstance(data, dict):
+        raise ValueError("poche geometry JSON must be an object")
 
     closing_lines: list[LineString] = []
     closing_layer_data = None
@@ -1732,6 +1757,7 @@ def apply_poche(
         neighbour bridger for backwards compatibility. ``None`` consults
         ``ARCH_LW_BRIDGE_STRATEGY`` env var, then defaults.
     """
+    processing_disabled("JSX poché processing")
     src = os.path.abspath(src)
     if dst is None:
         p = Path(src)
@@ -1743,8 +1769,10 @@ def apply_poche(
 
     overrides = {}
     if overrides_path:
-        with open(overrides_path) as f:
-            overrides = json.load(f)
+        loaded_overrides = _load_json_file_under_limit(overrides_path)
+        if not isinstance(loaded_overrides, dict):
+            raise ValueError("poche overrides JSON must be an object")
+        overrides = loaded_overrides
 
     geom_json = os.path.join(workdir, "arch_lw_cut_geometry.json")
     dump_jsx = os.path.join(workdir, "arch_lw_dump.jsx")
@@ -1775,8 +1803,9 @@ def apply_poche(
     if geometry_report_path:
         from .run_report import build_poche_geometry_report
 
-        with open(geom_json) as f:
-            paths_by_layer = json.load(f)
+        paths_by_layer = _load_json_file_under_limit(geom_json)
+        if not isinstance(paths_by_layer, dict):
+            raise ValueError("poche geometry JSON must be an object")
         geometry_report = build_poche_geometry_report(
             source={
                 "style": style,

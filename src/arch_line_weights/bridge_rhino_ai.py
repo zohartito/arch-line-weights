@@ -13,6 +13,7 @@ from .layout_jsx import default_output_path as layout_jsx_default_output_path
 from .layout_jsx import layout_via_jsx
 from .poche import PocheReport, apply_poche
 from .run_report import build_poche_report
+from .safety import processing_disabled
 
 
 def _default_report_dir(src: str | os.PathLike[str]) -> Path:
@@ -135,6 +136,7 @@ def bridge_rhino_ai(
     Hierarchy and poché are optional so the command can be used as a safe
     framing step before proof recapture.
     """
+    processing_disabled("Rhino-to-Illustrator document bridge")
     if run_poche and not run_apply_jsx:
         raise ValueError("--poche requires --apply-jsx so poché runs on hierarchy output")
 
