@@ -690,6 +690,44 @@ def test_polygonize_dump_does_not_fill_visible_only_timber_targets(tmp_path):
     assert visible_beam not in report.polygons
 
 
+def test_polygonize_dump_does_not_fill_visible_projected_roof(tmp_path):
+    visible_roof = "axon::Visible::Curves::TEC_ROOF_CLT"
+    geometry = {
+        visible_roof: [
+            [[0, 0], [400, 0]],
+            [[0, 60], [400, 60]],
+            [[0, 0], [0, 60]],
+            [[400, 0], [400, 60]],
+        ],
+    }
+    geometry_path = tmp_path / "geometry.json"
+    geometry_path.write_text(json.dumps(geometry))
+
+    report = polygonize_dump(str(geometry_path))
+
+    assert visible_roof not in {fill.layer for fill in report.fills}
+    assert visible_roof not in report.polygons
+
+
+def test_polygonize_dump_does_not_fill_visible_projected_concrete_wall(tmp_path):
+    visible_concrete = "axon::Visible::Curves::TEC_CONCRETE_BASE"
+    geometry = {
+        visible_concrete: [
+            [[0, 0], [30, 0]],
+            [[0, 300], [30, 300]],
+            [[0, 0], [0, 300]],
+            [[30, 0], [30, 300]],
+        ],
+    }
+    geometry_path = tmp_path / "geometry.json"
+    geometry_path.write_text(json.dumps(geometry))
+
+    report = polygonize_dump(str(geometry_path))
+
+    assert visible_concrete not in {fill.layer for fill in report.fills}
+    assert visible_concrete not in report.polygons
+
+
 def test_polygonize_dump_injects_marked_clt_slab_bands(tmp_path):
     slab_cut = "axon::Visible::ClippingPlaneIntersections::TEC_CLT_SLABS"
     geometry = {

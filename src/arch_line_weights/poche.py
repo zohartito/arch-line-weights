@@ -293,7 +293,10 @@ def _is_visible_structural_layer_name(layer_name: str) -> bool:
         return False
     if "GLASS" in upper or "IGU" in upper:
         return False
-    if not any(token in upper for token in ("FOUNDATION", "FOOTING", "CONCRETE", "ROOF")):
+    # Only foundation/footing visible geometry may auto-fill: Make2D misfiles
+    # real cut-plane footing mass onto Visible::Curves. Projected concrete or
+    # roof loops are legitimate non-cut geometry and must never become poché.
+    if not any(token in upper for token in ("FOUNDATION", "FOOTING")):
         return False
     try:
         from .architectural import classify_architectural_layer
