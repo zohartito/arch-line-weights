@@ -1,12 +1,15 @@
 """The public-safe hero demo (examples/generate_demo_section.py).
 
-Pins the two properties the before/after hero image depends on:
+Pins the properties the before/after hero image depends on:
 
   1. the generator emits a parseable, deterministic PDF whose strokes are all
-     uniform 1.0 pt (a raw Make2D export) across exactly five role colours;
+     uniform 1.0 pt (a raw Make2D export) across exactly five role colours,
+     plus the solid-black sheet-steel fills (coping + flashings);
   2. `apply --auto --preset section` turns that flat input into a real
      line-weight hierarchy — every stroke re-weighted, spread across several
-     distinct tiers, cut heavier than texture.
+     distinct tiers, cut heavier than texture;
+  3. `apply` rewrites stroke widths only, so the black fills pass through the
+     before/after untouched (they read identically on both sides of the hero).
 """
 
 from __future__ import annotations
@@ -19,8 +22,9 @@ from arch_line_weights.classify import auto_by_role
 from arch_line_weights.inspect import inspect_file
 
 _GEN_PATH = Path(__file__).resolve().parent.parent / "examples" / "generate_demo_section.py"
-EXPECTED_STROKES = 110
+EXPECTED_STROKES = 406
 EXPECTED_COLORS = 5
+EXPECTED_FILLS = {"RGB(0,0,0)": 3}
 
 
 def _load_generator():
@@ -42,6 +46,8 @@ def test_generator_pdf_is_parseable_and_flat(tmp_path):
     assert {float(w) for w in rep.stroke_widths} == {1.0}
     # Colour is the only role signal, and there are exactly five roles.
     assert len(rep.stroke_colors) == EXPECTED_COLORS
+    # The sheet-steel coping + flashings are solid-black fills, not strokes.
+    assert rep.fill_colors == EXPECTED_FILLS
 
 
 def test_generator_is_byte_deterministic():
@@ -79,3 +85,7 @@ def test_apply_builds_a_weight_hierarchy(tmp_path):
     # ...and the darkest colour (the section cut) is the heaviest line.
     darkest = min(weights, key=lambda rgb: sum(rgb))
     assert weights[darkest] == max(weights.values())
+    # ...while the solid-black sheet-steel fills pass through untouched:
+    # `apply` rewrites stroke widths only, so the coping + flashings read
+    # identically on both sides of the hero.
+    assert inspect_file(str(out)).fill_colors == EXPECTED_FILLS
