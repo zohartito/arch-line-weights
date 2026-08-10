@@ -247,7 +247,16 @@ def _support_for(
         reasons = {command: None for command in KNOWN_COMMANDS}
         native_reason = (
             "This .ai has no Illustrator native private payload (/NumBlock). "
-            "apply-saas needs a native Illustrator .ai."
+            "/NumBlock is the marker Illustrator writes into its native private "
+            "data (/PieceInfo /Illustrator /Private) recording how many blocks "
+            "its layer/appearance payload was split into; apply-saas rewrites "
+            "that native block layout headlessly and cannot run without it. It "
+            "is usually absent because the file was not saved by Illustrator "
+            "itself - for example a .ai exported from Rhino/Make2D or a PDF "
+            "renamed to .ai. apply-saas needs a native Illustrator .ai. Fix: "
+            "open the file in Illustrator and Save As Adobe Illustrator (.ai) "
+            "to embed the native payload, or skip the native path and rewrite "
+            "the PDF stream directly with arch-lw apply."
         )
         if input_kind != "native_ai":
             reasons["apply-saas"] = native_reason
