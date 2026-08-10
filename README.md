@@ -8,7 +8,7 @@
 <p align="center">
   <img src="assets/hero-before-after.png" width="92%" alt="Before/after: a synthetic wall section at three plot scales — every stroke a uniform 1.0 pt on the left, a five-tier graphic-standard line-weight hierarchy on the right">
 </p>
-<p align="center"><sub><b>Left:</b> raw export — 110 strokes, every one 1.0 pt. &nbsp;·&nbsp; <b>Right:</b> after <code>arch-lw apply --auto --preset section</code> — cut holds bold, texture recedes to hairlines (12.5× cut-to-dimension ratio). Fully reproducible synthetic demo: <code>python examples/generate_demo_section.py</code>, no private drawings involved.</sub></p>
+<p align="center"><sub><b>Left:</b> raw export — a 1:20 wall-section detail strip (roof edge, floor edge + window, sill + footing), 406 strokes, every one a uniform 1.0 pt. &nbsp;·&nbsp; <b>Right:</b> after <code>arch-lw apply --auto --preset section</code> — cut boundaries hold firm while material hatch recedes to hairlines and leaders nearly vanish (12.5× cut-to-leader ratio). Drawn in the DETAIL-magazine grammar: batt zigzags, cross-hatched blocking, concrete + earth hatching, solid-black sheet steel (fills pass through <code>apply</code> untouched). Fully reproducible: <code>python examples/generate_demo_section.py</code> — no private drawings involved.</sub></p>
 
 Apply architectural line-weight hierarchy, optional solid-black poché, and
 material hatching to Rhino-exported `.ai` or `.pdf` drawings.

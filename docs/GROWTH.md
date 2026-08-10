@@ -36,7 +36,8 @@ proof must be cleared before posting results.
       synthetic packet `public_foundation_window_section_synthetic` materializes and validates
       `passed` with sentinels verified. Harness-green; acceptance-of-record still open — #80.)*
 - [x] Record the canonical demo: "uniform 1.0 pt export → graphic-standard hierarchy".
-      *(2026-08-10: `examples/generate_demo_section.py` → `examples/demo-section.pdf` (110 strokes)
+      *(2026-08-10: `examples/generate_demo_section.py` → `examples/demo-section.pdf` (406-stroke
+      1:20 DETAIL-grammar wall-section strip)
       → real `arch-lw apply` → `assets/hero-before-after.png`, deterministic and committed. The
       3-stroke `examples/sample-linework.pdf` demo remains in `examples/DEMO.md`.)*
 - [ ] First public devlog post carrying the Day-N counter, once the proof asset is cleared.
