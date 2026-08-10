@@ -158,6 +158,24 @@ def _echo_depth_evidence(summary: dict) -> None:
     click.echo(f"# depth: {source} (confidence={confidence:.2f}) - {explanation}", err=True)
 
 
+def _echo_numblock_status(input_format: dict) -> None:
+    """Report whether the file carries Illustrator's native /NumBlock payload.
+
+    Surfaces the same signal the JSON exposes as ``has_native_numblock`` in a
+    human-readable line so users know up front whether the headless
+    ``apply-saas`` path is available for this file.
+    """
+    has_numblock = input_format.get("has_native_numblock")
+    if has_numblock is True:
+        click.echo("# numblock: present (native Illustrator payload; apply-saas supported)", err=True)
+    elif has_numblock is False:
+        click.echo(
+            "# numblock: absent (no native Illustrator /NumBlock; apply-saas unavailable "
+            "- use apply, or apply-jsx then poche)",
+            err=True,
+        )
+
+
 @click.group()
 @click.version_option(__version__, prog_name="arch-lw")
 def cli():
@@ -206,6 +224,7 @@ def inspect(src: Path, pretty: bool, source: str):
     else:
         click.echo(f"# layer-name source: {resolved.value} (forced via --source)", err=True)
 
+    _echo_numblock_status(getattr(rep, "input_format", None) or {})
     _echo_drawing_type_guess(getattr(rep, "drawing_type", None) or {})
     _echo_depth_evidence(getattr(rep, "depth_evidence", None) or {})
 

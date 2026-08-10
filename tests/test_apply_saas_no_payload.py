@@ -104,3 +104,49 @@ def test_apply_saas_poche_no_numblock_raises_clean_error(tmp_path):
 
     with pytest.raises(ValueError, match=r"native private payload \(/NumBlock\)"):
         apply_saas_with_poche(str(src), str(dst), {})
+
+
+def test_apply_saas_no_numblock_error_explains_cause_and_fix(tmp_path):
+    """The error must now say what /NumBlock is, why it's missing, and how to fix it.
+
+    Pins the expanded, actionable diagnostic so the previous terse message
+    (which named /NumBlock but explained neither cause nor remediation) cannot
+    silently return.
+    """
+    src = tmp_path / "converted.ai"
+    dst = tmp_path / "out.ai"
+    mapping = tmp_path / "mapping.json"
+    _make_converted_ai(str(src))
+    mapping.write_text("{}")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["apply-saas", str(src), "-o", str(dst), "--mapping", str(mapping)],
+        standalone_mode=False,
+    )
+    message = str(result.exception)
+
+    # What /NumBlock is (Illustrator-native block layout).
+    assert "native private data" in message
+    assert "how many blocks" in message
+    # Why it's missing (not saved by Illustrator; Rhino/PDF export).
+    assert "not saved by Illustrator" in message
+    assert "Rhino/Make2D" in message
+    # Concrete remediation: Save As .ai, or the PDF-stream apply path.
+    assert "Save As Adobe Illustrator (.ai)" in message
+    assert "arch-lw apply" in message
+
+
+def test_require_native_private_message_is_expanded(tmp_path):
+    """The defensive apply-saas payload guard carries the same expanded message."""
+    from arch_line_weights.apply_saas import _NO_NATIVE_PAYLOAD_MSG
+
+    # Still names the block-count marker for grep/back-compat...
+    assert "This .ai has no Illustrator native private payload (/NumBlock)." in _NO_NATIVE_PAYLOAD_MSG
+    assert "apply-saas needs a native Illustrator .ai." in _NO_NATIVE_PAYLOAD_MSG
+    # ...but now also explains cause and remediation.
+    assert "not saved by Illustrator" in _NO_NATIVE_PAYLOAD_MSG
+    assert "Save As Adobe Illustrator (.ai)" in _NO_NATIVE_PAYLOAD_MSG
+    assert "rewrite the PDF stream directly with arch-lw apply" in _NO_NATIVE_PAYLOAD_MSG
+    assert "arch-lw apply-jsx then arch-lw poche" in _NO_NATIVE_PAYLOAD_MSG
