@@ -30,10 +30,11 @@ commitments.
 The first gate is honesty: the repo's proof posture is currently **NO-GO** (`ROADMAP.md`), so public
 proof must be cleared before posting results.
 
-- [x] Clear **one** public-safe before/after proof (synthetic or sample drawing) — unblocks honest
+- [x] Clear **one** public-safe before/after (synthetic or sample drawing) — unblocks honest
       daily posting. Does not involve the private USC regression.
-      *(2026-08-10: synthetic packet `public_foundation_window_section_synthetic` materializes and
-      validates `passed`; sentinels verified. Harness-green; acceptance-of-record still open — #80.)*
+      *(2026-08-10: the committed hero is a synthetic **demo**, not a proof packet; separately, the
+      synthetic packet `public_foundation_window_section_synthetic` materializes and validates
+      `passed` with sentinels verified. Harness-green; acceptance-of-record still open — #80.)*
 - [x] Record the canonical demo: "uniform 1.0 pt export → graphic-standard hierarchy".
       *(2026-08-10: `examples/generate_demo_section.py` → `examples/demo-section.pdf` (110 strokes)
       → real `arch-lw apply` → `assets/hero-before-after.png`, deterministic and committed. The

@@ -49,6 +49,14 @@ def test_generator_is_byte_deterministic():
     assert gen.build_pdf_bytes() == gen.build_pdf_bytes()
 
 
+def test_committed_demo_pdf_matches_generator():
+    # README calls the demo "fully reproducible" — pin the committed file to
+    # the generator's output so silent drift between them is impossible.
+    gen = _load_generator()
+    committed = _GEN_PATH.parent / "demo-section.pdf"
+    assert committed.read_bytes() == gen.build_pdf_bytes()
+
+
 def test_stroke_count_matches_authored_geometry():
     gen = _load_generator()
     assert len(gen.build_strokes()) == EXPECTED_STROKES
