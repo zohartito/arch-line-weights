@@ -5,6 +5,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
 
+<p align="center">
+  <img src="assets/hero-before-after.png" width="92%" alt="Before/after: a synthetic wall section at three plot scales — every stroke a uniform 1.0 pt on the left, a five-tier graphic-standard line-weight hierarchy on the right">
+</p>
+<p align="center"><sub><b>Left:</b> raw export — 110 strokes, every one 1.0 pt. &nbsp;·&nbsp; <b>Right:</b> after <code>arch-lw apply --auto --preset section</code> — cut holds bold, texture recedes to hairlines (12.5× cut-to-dimension ratio). Fully reproducible synthetic demo: <code>python examples/generate_demo_section.py</code>, no private drawings involved.</sub></p>
+
 Apply architectural line-weight hierarchy, optional solid-black poché, and
 material hatching to Rhino-exported `.ai` or `.pdf` drawings.
 
@@ -244,10 +249,15 @@ From a source checkout:
 ### Proof status
 
 Public proof assets are not committed in this repository. Posting and public
-proof remain **NO-GO** unless W5/W7 explicitly accepts the packet. Synthetic
-proof can exercise the harness, but it does not close #30, and the private USC
-regression stays private. Use the local designer console or proof packet export
-for review material that includes `W5-W7-ACCEPTANCE-HANDOFF.json`.
+proof remain **NO-GO** unless W5/W7 explicitly accepts the packet — the
+NO-GO→GO path is tracked in issue #80. The synthetic public proof packet
+(`public_foundation_window_section_synthetic`) materializes and validates
+`passed` as of 2026-08-10, and its expected-fail/unsupported sentinels were
+verified catching bad packets — that makes the harness green, but it does not
+record acceptance, and the private USC regression stays private. The committed
+hero image is a reproducible synthetic *demo* (see `examples/`), not a proof
+packet. Use the local designer console or proof packet export for review
+material that includes `W5-W7-ACCEPTANCE-HANDOFF.json`.
 
 To inspect the proof manifest or validate a local proof packet, run:
 

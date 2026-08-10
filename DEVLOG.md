@@ -15,6 +15,24 @@ proof posture.
 
 ---
 
+## Day 2 — 2026-08-10
+
+**Shipped:** Rescued PR #74's poché fix as #81 (adversarial-reviewed, hardened, 870 tests) — the QA
+section now closes all 8 cut layers at conf ≥0.88 with 0 imperfect. Synthetic public proof packet
+validates `passed` (sentinels verified). Landed `/NumBlock` diagnostics, Make2D layer-naming fixture
+table, low-confidence poché report explanations, and a committed public-safe hero
+(`examples/generate_demo_section.py` → real engine → `assets/hero-before-after.png`) — the exact
+"richer synthetic fixture" Day 1 called for. Proof-gate tracker filed as #80.
+
+**Status (honest):** harness-green on public synthetic proof; posting posture still **NO-GO** until
+the #80 acceptance-of-record steps are done. PR #74 remains open as the security-series review
+bundle.
+
+**Next:** record visual acceptance per #80 step 3, then the first public post with the committed
+hero.
+
+---
+
 ## Day 1 — 2026-06-17
 
 **Shipped:**

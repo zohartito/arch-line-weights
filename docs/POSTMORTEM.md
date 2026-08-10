@@ -271,6 +271,35 @@ First non-section drawing the tool has been used on.
 
 **Filed as GitHub Issues:** #9 (PyMuPDF replacement), #10 (Converted state), #11 (JSX timeout config), #12 (output path collision), #13 (apply-jsx --preset).
 
+## Attempt 10 (2026-08-10) — structural completion + adversarial-gated visible recovery
+
+**What we tried:** Rescued the poché structural-detection fix stranded in PR #74
+(cherry-picked `e9b9f6c` onto main — zero conflicts once the CI-disabling
+security series was split off; the fix was 1 commit of 6). Adds structural
+open-loop completion for the QA section's previously-missed cut mass (top beam,
+column, footing, CLT slab bands), timber tabs constrained to cut-layer width,
+and intentional CLT gap preservation. Landed as PR #81.
+
+**What worked:** Real-drawing QA rerun on the day-1 section: 30→36 polygons,
+imperfect layers 2→0, failed 0. `TEC_CONCRETE_BASE` promoted from
+diagnostic-only conf 0.69 to inferred 0.88; `TEC_ROOF_CLT` 0.55→0.88; the new
+`structural_visible_completion` stage recovers Make2D-misfiled foundation mass
+from `Visible::Curves`. All 8 cut layers close at conf ≥0.88, and the report
+gates 3 inferred layers behind visual acceptance instead of silently trusting
+them.
+
+**What failed (caught before merge):** The first cut of the visible-recovery
+path filled ANY structure_primary visible loop — an adversarial review
+reproduced false black poché on plain projected roof and concrete rectangles.
+Classic tuned-on-one-drawing over-generalization. Fixed by restricting the
+visible path to FOUNDATION/FOOTING tokens (the only real Make2D misfiling
+case) and pinning projected roof/concrete walls as negative tests.
+
+**Keep doing:** adversarial review with reproduction before merging poché
+changes; splitting entangled PRs. **Stop doing:** letting visible (projected)
+geometry into fill paths without a cut-plane anchor or an explicit token
+allowlist.
+
 ## Cross-cutting lessons (the durable ones)
 
 1. **Layer fidelity is non-negotiable.** Any change that destroys it must
