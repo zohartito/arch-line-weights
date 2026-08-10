@@ -337,6 +337,19 @@ def _path_length(path: list[list[float]]) -> float:
         return 0.0
 
 
+# ---------------------------------------------------------------------------- #
+# Visible-structural completion gates
+#
+# DRAWING-UNIT ASSUMPTION: the magic thresholds below (min_area 800/1200,
+# min_path_length 100, and the width >= 1.5 * height plausibility ratio) are all
+# expressed in the QA section's native point units — the same coordinate space
+# the ``dump_cut_geometry.jsx`` anchors are emitted in (Illustrator points at the
+# QA plot scale). They are NOT millimetres or model units. Feeding geometry from
+# a different scale or unit system will mis-gate these candidates; re-derive the
+# constants for that unit space before reusing them.
+# ---------------------------------------------------------------------------- #
+
+
 def _visible_structural_min_path_length(layer_name: str) -> float:
     upper = layer_name.upper()
     if "FOUNDATION" in upper or "FOOTING" in upper or "CONCRETE" in upper:
@@ -353,37 +366,113 @@ def _visible_structural_min_area(layer_name: str) -> float:
     return 1200.0
 
 
-def _visible_structural_candidate_is_plausible(layer_name: str, poly: Polygon) -> bool:
+def _visible_structural_plausibility_reason(layer_name: str, poly: Polygon) -> str | None:
+    """Return a rejection reason when a candidate fails the plausibility gate.
+
+    ``None`` means the candidate is plausible. Kept as the single source of
+    truth for both the boolean gate and the reported candidate reason so the
+    two never drift.
+    """
     upper = layer_name.upper()
     minx, miny, maxx, maxy = poly.bounds
     width = maxx - minx
     height = maxy - miny
     if width <= 1.0 or height <= 1.0:
-        return False
-    if "FOUNDATION" in upper or "FOOTING" in upper:
-        return width >= height * 1.5
-    return True
+        return f"rejected: degenerate bounds (width {width:.1f} x height {height:.1f})"
+    if ("FOUNDATION" in upper or "FOOTING" in upper) and width < height * 1.5:
+        return (
+            f"rejected: width {width:.1f} < 1.5x height {height:.1f} "
+            "(not a plausible cut-plane footing strip)"
+        )
+    return None
+
+
+def _visible_structural_candidate_is_plausible(layer_name: str, poly: Polygon) -> bool:
+    return _visible_structural_plausibility_reason(layer_name, poly) is None
+
+
+def _visible_structural_source_role(layer_name: str) -> str:
+    return "visible_tangent" if "::VISIBLE::TANGENTS::" in layer_name.upper() else "visible_curve"
+
+
+def _visible_structural_completion_candidates(
+    layer_name: str,
+    paths: list[list[list[float]]],
+) -> tuple[list[Polygon], list[object]]:
+    """Infer visible-structural cut fills AND record every loop considered.
+
+    Mirrors ``complete_structural_cut_polygons`` in ``make2d_completion.py``:
+    each open-loop candidate is recorded as an accepted or rejected
+    ``CompletionCandidate`` (with the gate it missed and its bounds), so
+    ambiguous or gated loops surface in the report instead of being dropped
+    silently. Returns ``(accepted_polygons, candidates)``.
+    """
+    from .make2d_completion import CompletionCandidate
+
+    component = layer_name.rsplit("::", 1)[-1].upper()
+    source_role = _visible_structural_source_role(layer_name)
+    provenance = "visible-structural-open-loop"
+    candidates: list[object] = []
+
+    def _rejected(poly: Polygon, reason: str) -> CompletionCandidate:
+        return CompletionCandidate(
+            component_key=component,
+            target_layer=layer_name,
+            source_role=source_role,
+            polygon=poly,
+            confidence=0.0,
+            provenance=provenance,
+            accepted=False,
+            reason=reason,
+            cut_shared_length=0.0,
+        )
+
+    min_path_len = _visible_structural_min_path_length(layer_name)
+    filtered_paths = [path for path in paths if _path_length(path) >= min_path_len]
+    lines = _lines_from_anchors(filtered_paths)
+    if not lines:
+        return [], candidates
+
+    cut_like_layer = _cut_equivalent_layer_name(layer_name)
+    min_area = _visible_structural_min_area(layer_name)
+    accepted_polys: list[Polygon] = []
+    for poly in _try_structural_open_loop(cut_like_layer, lines, []):
+        if poly.area < min_area:
+            candidates.append(
+                _rejected(
+                    poly,
+                    f"rejected: area {poly.area:.1f} below visible min_area {min_area:.1f}",
+                )
+            )
+            continue
+        plausibility_reason = _visible_structural_plausibility_reason(layer_name, poly)
+        if plausibility_reason is not None:
+            candidates.append(_rejected(poly, plausibility_reason))
+            continue
+        accepted_polys.append(poly)
+        candidates.append(
+            CompletionCandidate(
+                component_key=component,
+                target_layer=layer_name,
+                source_role=source_role,
+                polygon=poly,
+                confidence=0.88,
+                provenance=provenance,
+                accepted=True,
+                reason="accepted: visible-structural cut strip passed area and plausibility gates",
+                cut_shared_length=0.0,
+            )
+        )
+
+    return _clean_structural_polygons(accepted_polys), candidates
 
 
 def _visible_structural_target_polygons(
     layer_name: str,
     paths: list[list[list[float]]],
 ) -> list[Polygon]:
-    min_path_len = _visible_structural_min_path_length(layer_name)
-    filtered_paths = [path for path in paths if _path_length(path) >= min_path_len]
-    if not filtered_paths:
-        return []
-    lines = _lines_from_anchors(filtered_paths)
-    if not lines:
-        return []
-    cut_like_layer = _cut_equivalent_layer_name(layer_name)
-    min_area = _visible_structural_min_area(layer_name)
-    polys = [
-        p
-        for p in _try_structural_open_loop(cut_like_layer, lines, [])
-        if p.area >= min_area and _visible_structural_candidate_is_plausible(layer_name, p)
-    ]
-    return _clean_structural_polygons(polys)
+    polys, _candidates = _visible_structural_completion_candidates(layer_name, paths)
+    return polys
 
 
 def _uses_completion_paths_for_polygonize(layer_name: str) -> bool:
@@ -1367,7 +1456,11 @@ def polygonize_dump(
                 [[round(x, 4), round(y, 4)] for x, y in p.exterior.coords] for p in polys
             ]
     for layer_name, paths in visible_structural_data.items():
-        polys = _visible_structural_target_polygons(layer_name, paths)
+        polys, candidates = _visible_structural_completion_candidates(layer_name, paths)
+        # Record which visible loops were considered and which gate each
+        # accepted/rejected candidate passed or missed. Rejected/ambiguous
+        # candidates are reported, not silently dropped.
+        report.completion_candidates.extend(candidates)
         if not polys:
             continue
         result = FillResult(
