@@ -14,6 +14,8 @@ site*/
 .idea/
 .vscode/
 *.ai
+# …except the tiny synthetic eval fixture the eval-gate workflow benchmarks.
+!tests/fixtures/eval/synthetic-cut.ai
 
 # Local reference libraries: keep copyrighted/source books off GitHub.
 references/source-books/

@@ -1,0 +1,56 @@
+name: eval-gate
+
+# EVENT loop: every push re-runs the deterministic benchmark eval on the
+# committed synthetic fixture and posts the score delta vs the committed
+# baseline (benchmarks/ci-baseline.json) — on the PR if one exists for the
+# branch, otherwise as a commit comment.
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write # commit comments
+  pull-requests: write # PR comments
+
+concurrency:
+  group: eval-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+      - name: Run eval gate
+        id: eval
+        run: |
+          set +e
+          python scripts/eval_gate.py --report eval-delta.md
+          echo "gate_exit=$?" >> "$GITHUB_OUTPUT"
+      - name: Publish step summary
+        if: always()
+        run: cat eval-delta.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+      - name: Comment score delta
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [ -f eval-delta.md ] || exit 0
+          pr=$(gh pr list --head "${GITHUB_REF_NAME}" --state open --json number --jq '.[0].number' || true)
+          if [ -n "$pr" ]; then
+            gh pr comment "$pr" --body-file eval-delta.md
+          else
+            gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/comments" \
+              -f body="$(cat eval-delta.md)" --silent
+          fi
+      - name: Gate
+        run: exit "${{ steps.eval.outputs.gate_exit }}"
