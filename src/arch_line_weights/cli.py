@@ -31,6 +31,7 @@ from .layer_classify import (
 from .layout_jsx import layout_via_jsx, parse_artboard_size, parse_length
 from .linetypes import aia_status_from_name, apply_status, linetype_for_layer
 from .poche import apply_poche
+from .poche_pdf import apply_poche_pdf
 from .presets import PRESETS, select_preset
 from .progress import DEFAULT_PROGRESS_FILE, make_reporter
 from .role_signal import no_role_signal, no_role_signal_message
@@ -1606,6 +1607,112 @@ def poche_cmd(
         report_path.parent.mkdir(parents=True, exist_ok=True)
         report_path.write_text(json.dumps(run_report, indent=2, sort_keys=True) + "\n")
         click.echo(f"report: wrote {report_path}", err=True)
+
+
+@cli.command("poche-pdf")
+@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option(
+    "-o",
+    "--output",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Output path. Defaults to '<src stem> POCHE-PDF.pdf'.",
+)
+@click.option(
+    "--style",
+    type=click.Choice(["solid", "material"]),
+    default="solid",
+    show_default=True,
+    help="solid = black fills only; material = fills + hatch pattern strokes.",
+)
+@click.option(
+    "--scale",
+    "hatch_scale",
+    type=float,
+    default=0.02,
+    show_default=True,
+    help="Plot scale (1/N as decimal). Used only when --style material.",
+)
+@click.option(
+    "--alpha-shape/--no-alpha-shape",
+    default=True,
+    show_default=True,
+    help="Enable the α-shape rescue rung (same ladder as arch-lw poche).",
+)
+@click.option(
+    "--bridge-strategy",
+    type=click.Choice(_BRIDGE_STRATEGY_CHOICES),
+    default=_BRIDGE_STRATEGY_DEFAULT,
+    show_default=True,
+    help="Bridge selector for the auto_bridge rung.",
+)
+@click.option(
+    "--overrides",
+    "overrides_path",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default=None,
+    help="JSON of per-layer strategy overrides (same schema as arch-lw poche --overrides).",
+)
+@click.option(
+    "--report",
+    "--report-json",
+    "report_path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=None,
+    help="Write a durable JSON poché report (same schema as arch-lw poche --report-json).",
+)
+def poche_pdf_cmd(
+    src: Path,
+    output: Path | None,
+    style: str,
+    hatch_scale: float,
+    alpha_shape: bool,
+    bridge_strategy: str,
+    overrides_path: Path | None,
+    report_path: Path | None,
+):
+    """Inject solid poché fills from PDF OCG cut layers (no Illustrator).
+
+    \b
+    Reads Visible::ClippingPlaneIntersections::* marked-content paths from the
+    PDF content stream, polygonizes with the shared shapely ladder, and appends
+    solid-black fill operators. Low-confidence layers are reported, not filled.
+    """
+    _require_supported_input(src, "poche-pdf")
+    overrides = None
+    if overrides_path is not None:
+        overrides = json.loads(overrides_path.read_text())
+    try:
+        result = apply_poche_pdf(
+            str(src),
+            str(output) if output else None,
+            style=style,
+            scale=hatch_scale,
+            overrides=overrides,
+            use_alpha_shape=alpha_shape,
+            bridge_strategy=bridge_strategy,
+            report_json_path=str(report_path) if report_path else None,
+        )
+    except Exception as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    out_path = output or Path(result.report_json["source"]["output"])
+    click.echo(
+        f"poche-pdf: cut_layers={result.cut_layers_seen} "
+        f"fills={result.fills_injected} hatch_segments={result.hatch_segments_injected}",
+        err=True,
+    )
+    for fr in sorted(result.report.fills, key=lambda f: -f.confidence):
+        short = fr.layer.split("::")[-1]
+        injected = fr.layer in result.report.polygons
+        marker = "✓" if injected else ("~" if fr.confidence > 0 else "✗")
+        click.echo(
+            f"  {marker} {short:50}  {fr.strategy:18}  polys={fr.polygon_count:>3}  "
+            f"conf={fr.confidence:.2f}",
+            err=True,
+        )
+    if report_path is not None:
+        click.echo(f"report: wrote {report_path}", err=True)
+    click.echo(f"wrote {out_path}  ({result.output_size:,} bytes)", err=True)
 
 
 def _path_payload(path: Path) -> str:
