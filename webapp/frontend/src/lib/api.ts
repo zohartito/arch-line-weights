@@ -146,10 +146,15 @@ export function apiUrl(path: string): string {
   return `${base}${suffix}`;
 }
 
+function processingDisabled(): never {
+  throw new Error('Web processing is permanently disabled. Use only documented safe metadata views.');
+}
+
 export async function createConsoleRun(
   file: File | null,
   workflow: ConsoleWorkflow
 ): Promise<ConsoleSummary> {
+  processingDisabled();
   const form = new FormData();
   form.append('workflow', workflow);
   if (file) form.append('file', file);
@@ -165,6 +170,7 @@ export async function createConsoleRun(
 }
 
 export async function getConsoleRun(runId: string): Promise<ConsoleSummary> {
+  processingDisabled();
   const resp = await fetch(apiUrl(`/api/console/runs/${encodeURIComponent(runId)}`));
   if (!resp.ok) {
     const body = await safeJson(resp);
@@ -177,6 +183,7 @@ export async function runConsoleStage(
   runId: string,
   stageKey: ConsoleStageKey
 ): Promise<ConsoleSummary> {
+  processingDisabled();
   const resp = await fetch(
     apiUrl(`/api/console/runs/${encodeURIComponent(runId)}/stages/${stageKey}`),
     { method: 'POST' }
@@ -189,6 +196,7 @@ export async function runConsoleStage(
 }
 
 export function consoleArtifactUrl(artifact: ConsoleArtifact): string {
+  processingDisabled();
   return apiUrl(artifact.download_url);
 }
 
@@ -200,6 +208,7 @@ export async function createJob(
   options: Partial<JobOptions> = {},
   onProgress?: (pct: number) => void
 ): Promise<JobCreated> {
+  processingDisabled();
   const form = new FormData();
   form.append('file', file);
   form.append('preset', options.preset ?? 'section');
@@ -236,6 +245,7 @@ export async function createJob(
 
 /** GET /api/jobs/{id} — used by the job-detail page's poll loop. */
 export async function getJob(jobId: string): Promise<JobDetail> {
+  processingDisabled();
   const resp = await fetch(apiUrl(`/api/jobs/${encodeURIComponent(jobId)}`));
   if (!resp.ok) {
     const body = await safeJson(resp);

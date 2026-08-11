@@ -16,7 +16,6 @@ handler (good enough for local + tests). Swapping to RQ/Celery means:
 from __future__ import annotations
 
 import logging
-import os
 import threading
 import uuid
 from dataclasses import asdict, dataclass, field
@@ -156,21 +155,15 @@ def run_job(
         if record.options.with_poche:
             from arch_line_weights.poche_saas import apply_saas_with_poche
 
-            # `--llm-fallback` is gated on ARCH_LW_LLM_FALLBACK at the
-            # ``llm_topology`` import site; we set it for the duration of the
-            # call and restore it afterwards so cross-job state never leaks.
-            # The CLI sets the same env var globally; for the webapp we keep
-            # the lifetime to one job to allow concurrent jobs with different
-            # flag values once the queue runner lands.
-            with _llm_fallback_env(record.options.llm_fallback):
-                apply_result, poche_result, poche_report = apply_saas_with_poche(
-                    str(input_path),
-                    str(output_path),
-                    mapping,
-                    default_width=record.options.default_width,
-                    use_alpha_shape=record.options.alpha_shape,
-                    bridge_strategy=record.options.bridge_strategy,
-                )
+            apply_result, poche_result, poche_report = apply_saas_with_poche(
+                str(input_path),
+                str(output_path),
+                mapping,
+                default_width=record.options.default_width,
+                use_alpha_shape=record.options.alpha_shape,
+                bridge_strategy=record.options.bridge_strategy,
+                llm_external_consent=record.options.llm_fallback,
+            )
             record.apply_summary = _apply_to_schema(apply_result)
             record.poche_summary = _poche_to_schema(poche_result)
             record.fills = _fills_from_report(poche_report)
@@ -192,8 +185,8 @@ def run_job(
             record.job_id,
             record.flags_applied,
         )
-    except Exception as exc:  # noqa: BLE001 — we want the message in the API
-        record.error = f"{type(exc).__name__}: {exc}"
+    except Exception:  # noqa: BLE001 — retain details only in server logs
+        record.error = "processing failed; inspect local server logs with the job id"
         record.status = JobStatus.FAILED
         logger.exception("job %s failed", record.job_id)
         # Do not re-raise — keep the API contract clean. The frontend reads
@@ -227,44 +220,6 @@ def _flags_snapshot(options: JobOptions) -> dict[str, Any]:
         "llm_fallback": options.llm_fallback,
         "source": options.source,
     }
-
-
-class _llm_fallback_env:  # noqa: N801 — context-manager naming convention
-    """Scoped toggle for ``ARCH_LW_LLM_FALLBACK``.
-
-    The CLI sets the env var globally for the run; the webapp scopes it to
-    a single job so concurrent jobs (once we move off the sync runner) can
-    use different ``llm_fallback`` settings without stepping on each other.
-
-    Restores any previous value on exit, even if the wrapped pipeline
-    raises — leaving the env var dirty across requests would silently
-    enable the LLM rung for jobs that didn't ask for it.
-    """
-
-    _ENV_VAR = "ARCH_LW_LLM_FALLBACK"
-
-    def __init__(self, enabled: bool) -> None:
-        self.enabled = enabled
-        self._prior: str | None = None
-        self._was_set = False
-
-    def __enter__(self) -> "_llm_fallback_env":
-        self._was_set = self._ENV_VAR in os.environ
-        self._prior = os.environ.get(self._ENV_VAR)
-        if self.enabled:
-            os.environ[self._ENV_VAR] = "1"
-        elif self._was_set:
-            # Caller asked for LLM off but the env had it on — clear it for
-            # this job so the rung doesn't fire.
-            os.environ.pop(self._ENV_VAR, None)
-        return self
-
-    def __exit__(self, *exc: object) -> None:
-        if self._was_set:
-            assert self._prior is not None  # guaranteed by _was_set
-            os.environ[self._ENV_VAR] = self._prior
-        else:
-            os.environ.pop(self._ENV_VAR, None)
 
 
 def _apply_to_schema(result) -> ApplySummary:

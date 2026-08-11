@@ -20,13 +20,8 @@ from typing import AsyncIterator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .compute import JobStore
 from .config import get_settings
-from .console import DesignerConsoleStore, default_console_root
-from .routes.console import router as console_router
 from .routes.health import router as health_router
-from .routes.jobs import router as jobs_router
-from .storage import LocalStorage
 
 logger = logging.getLogger("archlw.webapp")
 
@@ -39,16 +34,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app via ``create_app(...)`` with isolated state per run.
     """
     settings = get_settings()
-    settings.storage_root.mkdir(parents=True, exist_ok=True)
     app.state.settings = settings
-    app.state.storage = LocalStorage(settings.storage_root)
-    app.state.job_store = JobStore()
-    app.state.console_store = DesignerConsoleStore(default_console_root(settings.storage_root))
-    logger.info(
-        "archlw webapp ready: storage_root=%s job_runner=%s",
-        settings.storage_root,
-        settings.job_runner,
-    )
+    logger.info("archlw webapp ready: processing routes tombstoned")
     try:
         yield
     finally:
@@ -86,8 +73,18 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(health_router, prefix="/api")
-    app.include_router(jobs_router)
-    app.include_router(console_router)
+
+    # Upload and designer-console processing are intentionally not mounted.
+    # This check runs before FastAPI can parse multipart bodies or allocate
+    # per-run storage. Re-enable only with a reviewed authenticated service.
+    @app.api_route("/api/jobs/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+    @app.api_route("/api/jobs", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+    @app.api_route("/api/console/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+    @app.api_route("/api/console", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+    async def processing_tombstone(path: str = "") -> None:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=410, detail="web processing is permanently disabled")
 
     return app
 

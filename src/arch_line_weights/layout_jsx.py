@@ -20,6 +20,7 @@ from .apply_jsx import (
     resolve_timeout_minutes,
     run_jsx_in_illustrator,
 )
+from .safety import processing_disabled
 
 POINTS_PER_INCH = 72.0
 DEFAULT_OUTPUT_SUFFIX = " LAYOUT-jsx"
@@ -441,6 +442,7 @@ def layout_via_jsx(
     dry_run: bool = False,
 ) -> dict:
     """Open ``src`` in Illustrator, frame artwork, save to ``dst``."""
+    processing_disabled("Illustrator JSX document layout")
     from .run_report import build_layout_jsx_report
 
     src_abs = os.path.abspath(src)

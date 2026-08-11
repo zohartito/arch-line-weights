@@ -11,6 +11,7 @@ import pikepdf
 
 from .apply_saas import _read_payload, _write_payload
 from .geometry_roles import GeometryPath, infer_geometric_roles
+from .safety import processing_disabled
 
 _NUM = rb"[0-9.eE\-+]+"
 _LN_RE = re.compile(rb"\(([^)]+)\) Ln$")
@@ -215,6 +216,7 @@ def cleanup_file(
     zstd_level: int = 19,
 ) -> CleanupFileResult:
     """Apply cleanup to an Illustrator-native .ai payload and save a new file."""
+    processing_disabled("Illustrator native-payload cleanup")
     src_path = os.fspath(src)
     dst_path = os.fspath(dst)
     if os.path.abspath(src_path) == os.path.abspath(dst_path):

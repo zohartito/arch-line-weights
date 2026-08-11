@@ -13,6 +13,8 @@ from typing import Any
 import numpy as np
 from PIL import Image
 
+from .safety import processing_disabled
+
 try:
     import yaml
 except ModuleNotFoundError:  # pragma: no cover - exercised only in minimal installs
@@ -37,6 +39,7 @@ PROOF_PACKET_GUARDRAILS = (
 _PRIVATE_FIXTURE_TOKEN_RE = re.compile(
     r"(?i)(macro_for_archlw|synologydrive|usc_1|temporaryitems|downloads/|desktop/)"
 )
+MAX_PROOF_IMAGE_PIXELS = 80_000_000
 
 
 class ManifestValidationError(ValueError):
@@ -147,10 +150,13 @@ def build_proof_packet_plan(
 ) -> ProofPacketPlan:
     """Build deterministic output paths and command metadata for a fixture proof packet."""
 
-    if not isinstance(fixture_id, str) or not fixture_id:
-        raise ValueError("fixture_id must be a non-empty string")
+    if not isinstance(fixture_id, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", fixture_id):
+        raise ValueError("fixture_id must be one safe path component")
     command_list = _validate_string_list(commands, "commands")
-    fixture_output_dir = Path(output_dir) / fixture_id
+    root = Path(output_dir).resolve()
+    fixture_output_dir = (root / fixture_id).resolve()
+    if fixture_output_dir.parent != root:
+        raise ValueError("fixture_id escapes proof output root")
     return ProofPacketPlan(
         fixture_id=fixture_id,
         output_dir=fixture_output_dir,
@@ -181,6 +187,7 @@ def validate_proof_packet(
     never pass when required artifacts are absent, the report carries failed or
     no-go state, or local/private path references leak into the raw report.
     """
+    processing_disabled("proof packet validation")
     artifacts = _proof_packet_artifacts(plan)
     missing_artifacts = [
         label
@@ -340,6 +347,7 @@ def materialize_synthetic_proof_packet(plan: ProofPacketPlan, fixture: ProofFixt
     artifacts or touching private/manual-review evidence.
     """
 
+    processing_disabled("proof packet materialization")
     if (
         fixture.status not in {"pass", "expected_fail", "unsupported"}
         or "synthetic" not in fixture.id.lower()
@@ -817,9 +825,14 @@ def _artifact_reference_exists(plan: ProofPacketPlan, value: str) -> bool:
 
 def _artifact_reference_path(plan: ProofPacketPlan, value: str) -> Path:
     path = Path(value)
-    if not path.is_absolute():
-        path = plan.output_dir / path
-    return path
+    if path.is_absolute():
+        raise ManifestValidationError("proof artifact reference must be relative")
+    resolved = (plan.output_dir / path).resolve()
+    try:
+        resolved.relative_to(plan.output_dir.resolve())
+    except ValueError as exc:
+        raise ManifestValidationError("proof artifact reference escapes packet root") from exc
+    return resolved
 
 
 def _review_region_pixel_errors(

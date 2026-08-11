@@ -563,7 +563,7 @@ def test_polygonize_layer_uses_llm_rung_when_geometric_fail(monkeypatch):
         [[0.0, 0.0], [10.0, 0.0]],  # endpoints 0, 1
         [[0.0, 200.0], [10.0, 200.0]],  # endpoints 2, 3
     ]
-    polys, fr = polygonize_layer("23_WINDOW_FRAMES_REMAP", paths)
+    polys, fr = polygonize_layer("23_WINDOW_FRAMES_REMAP", paths, llm_external_consent=True)
 
     assert fr.strategy == "llm_topology"
     assert fr.polygon_count >= 1

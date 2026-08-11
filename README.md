@@ -248,6 +248,10 @@ From a source checkout:
 
 ### Proof status
 
+Optional freeze: set `ARCH_LW_FREEZE_LEGACY_APPLY=1` to fail-close
+legacy `apply`/`inspect`/`poche`/preview processors before they read input.
+Default is off so the byte-idempotent apply path keeps working.
+
 Public proof assets are not committed in this repository. Posting and public
 proof remain **NO-GO** unless W5/W7 explicitly accepts the packet — the
 NO-GO→GO path is tracked in issue #80. The synthetic public proof packet

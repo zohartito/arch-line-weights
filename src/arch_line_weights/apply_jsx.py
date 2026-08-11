@@ -45,6 +45,7 @@ from pathlib import Path
 from typing import Any
 
 from .layer_classify import as_jsx_function
+from .safety import processing_disabled
 
 ILLUSTRATOR_APP = "/Applications/Adobe Illustrator 2026/Adobe Illustrator.app"
 
@@ -665,6 +666,7 @@ def apply_via_jsx(
 
     Returns a dict with the parsed report.
     """
+    processing_disabled("Illustrator JSX document rewrite")
     src = os.path.abspath(src)
     if dst is None:
         dst = default_output_path(src)

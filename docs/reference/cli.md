@@ -2,6 +2,10 @@
 
 `arch-lw` is the entry point. All subcommands accept `--help`.
 
+> **Optional freeze:** set `ARCH_LW_FREEZE_LEGACY_APPLY=1` to fail-close
+> inspect/apply/poche/preview/proof processors before they read a path.
+> Default is off (processors run normally).
+
 ## Supported input paths
 
 The command to use depends on the input kind, not only the file extension.
