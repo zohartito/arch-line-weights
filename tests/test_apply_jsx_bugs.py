@@ -228,9 +228,9 @@ def test_apply_via_jsx_rejects_error_report(tmp_path):
     src.write_text("%AI\n")
     dst = tmp_path / "section HIERARCHY-jsx.ai"
 
-    def fake_run_jsx(_jsx_path, timeout):
+    def fake_run_jsx(jsx_path, timeout):
         dst.write_text("%AI output\n")
-        Path("/tmp/arch_lw_report.txt").write_text("ERROR: target doc not open")
+        Path(jsx_path).resolve().parent.joinpath("report.txt").write_text("ERROR: target doc not open")
 
     with (
         patch("arch_line_weights.apply_jsx.query_active_doc", return_value=(None, None)),
@@ -246,8 +246,10 @@ def test_apply_via_jsx_rejects_missing_output_after_report(tmp_path):
     src.write_text("%AI\n")
     dst = tmp_path / "section HIERARCHY-jsx.ai"
 
-    def fake_run_jsx(_jsx_path, timeout):
-        Path("/tmp/arch_lw_report.txt").write_text("DONE\nsaved as: synthetic\n")
+    def fake_run_jsx(jsx_path, timeout):
+        Path(jsx_path).resolve().parent.joinpath("report.txt").write_text(
+            "DONE\nsaved as: synthetic\n"
+        )
 
     with (
         patch("arch_line_weights.apply_jsx.query_active_doc", return_value=(None, None)),
