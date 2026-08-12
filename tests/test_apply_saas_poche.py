@@ -690,6 +690,27 @@ def test_polygonize_dump_does_not_fill_visible_only_timber_targets(tmp_path):
     assert visible_beam not in report.polygons
 
 
+def test_polygonize_dump_fills_mixed_case_visible_foundation(tmp_path):
+    # The gate matches case-insensitively; the cut-equivalent rewrite must too,
+    # or a mixed-case export passes the gate and then silently skips completion.
+    visible_foundation = "axon::visible::curves::TEC_FOUNDATION"
+    geometry = {
+        visible_foundation: [
+            [[0, 0], [240, 0]],
+            [[0, 60], [240, 60]],
+            [[0, 0], [0, 60]],
+            [[240, 0], [240, 60]],
+        ],
+    }
+    geometry_path = tmp_path / "geometry.json"
+    geometry_path.write_text(json.dumps(geometry))
+
+    report = polygonize_dump(str(geometry_path))
+
+    assert visible_foundation in report.polygons
+    assert len(report.polygons[visible_foundation]) == 1
+
+
 def test_polygonize_dump_does_not_fill_visible_projected_roof(tmp_path):
     visible_roof = "axon::Visible::Curves::TEC_ROOF_CLT"
     geometry = {

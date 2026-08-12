@@ -31,6 +31,7 @@ import json
 import logging
 import math
 import os
+import re
 import subprocess
 import textwrap
 import time
@@ -307,14 +308,14 @@ def _is_visible_structural_layer_name(layer_name: str) -> bool:
     return assignment.tier == "structure_primary" and not assignment.poche
 
 
+# The gate that feeds this (_is_visible_structural_layer_name) matches
+# case-insensitively, so the rewrite must too — a mixed-case Rhino export
+# would otherwise pass the gate and then silently skip completion.
+_VISIBLE_TREE_RE = re.compile(r"::Visible::(?:Curves|Tangents)::", re.IGNORECASE)
+
+
 def _cut_equivalent_layer_name(layer_name: str) -> str:
-    return layer_name.replace(
-        "::Visible::Curves::",
-        "::Visible::ClippingPlaneIntersections::",
-    ).replace(
-        "::Visible::Tangents::",
-        "::Visible::ClippingPlaneIntersections::",
-    )
+    return _VISIBLE_TREE_RE.sub("::Visible::ClippingPlaneIntersections::", layer_name)
 
 
 def _segment_lengths(lines: list[LineString]) -> list[float]:
