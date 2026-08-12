@@ -577,7 +577,7 @@ def build_poche_report(
                     "used_poche_close_layer": False,
                     "used_structural_helpers": bool(structural_helper_count),
                     "structural_helper_count": structural_helper_count,
-                    "used_visible_completion": False,
+                    "used_visible_completion": fill.strategy == "structural_visible_completion",
                 },
                 "review": {
                     "needs_review": bool(review_reasons),

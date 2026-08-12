@@ -308,6 +308,16 @@ def _is_visible_structural_layer_name(layer_name: str) -> bool:
     return assignment.tier == "structure_primary" and not assignment.poche
 
 
+def _match_override(overrides: dict, layer_name: str):
+    """Match a per-layer override by exact name or fnmatch-style suffix."""
+    ov = overrides.get(layer_name)
+    if ov is None:
+        for pattern, val in overrides.items():
+            if pattern.endswith("*") and layer_name.endswith(pattern[:-1].split("::")[-1]):
+                return val
+    return ov
+
+
 # The gate that feeds this (_is_visible_structural_layer_name) matches
 # case-insensitively, so the rewrite must too — a mixed-case Rhino export
 # would otherwise pass the gate and then silently skip completion.
@@ -1406,13 +1416,7 @@ def polygonize_dump(
         data,
     )
     for layer_name, paths in cut_data.items():
-        # Match override: exact layer name or fnmatch-style suffix
-        ov = overrides.get(layer_name)
-        if ov is None:
-            for pattern, val in overrides.items():
-                if pattern.endswith("*") and layer_name.endswith(pattern[:-1].split("::")[-1]):
-                    ov = val
-                    break
+        ov = _match_override(overrides, layer_name)
 
         helper_paths = early_helper_paths_by_layer.get(layer_name, [])
         completion_paths = structural_completion_paths_by_layer.get(layer_name, [])
@@ -1420,7 +1424,9 @@ def polygonize_dump(
             completion_paths if _uses_completion_paths_for_polygonize(layer_name) else []
         )
         if helper_paths or completion_paths:
-            report.structural_helper_counts[layer_name] = max(len(helper_paths), len(completion_paths))
+            # Additive, matching poche_saas: helper and completion paths are
+            # distinct evidence sources for the report count.
+            report.structural_helper_counts[layer_name] = len(helper_paths) + len(completion_paths)
 
         polys, result = polygonize_layer(
             layer_name,
@@ -1462,6 +1468,11 @@ def polygonize_dump(
         # accepted/rejected candidate passed or missed. Rejected/ambiguous
         # candidates are reported, not silently dropped.
         report.completion_candidates.extend(candidates)
+        ov = _match_override(overrides, layer_name)
+        if ov and str(ov.get("strategy", "")).lower() == "skip":
+            # A skip override suppresses visible auto-fill too — the report
+            # keeps the candidate trail, but nothing is injected.
+            continue
         if not polys:
             continue
         result = FillResult(
