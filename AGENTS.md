@@ -8,11 +8,12 @@
 - Live LLM evals (metered Anthropic calls, self-skip by default): `ARCH_LW_LLM_FALLBACK=1 ANTHROPIC_API_KEY=sk-... pytest tests/eval_llm_topology.py -m eval -s`.
 - Eval gate (deterministic quality diff vs `benchmarks/ci-baseline.json`): `python scripts/eval_gate.py` (`--update-baseline` to re-record).
 - Benchmark suite (writes `benchmarks.json`): `python scripts/benchmark.py`.
+- Visual judge (deterministic, no LLM/network): `python scripts/visual_judge.py --after <ai|pdf|png> [--report-json ...]` → JSON scores + `pass`/`review` on 4 axes (false_poche, band_continuity, hierarchy_spread, fixture_weight); thresholds cite `benchmarks/visual-rubric.md`. Self-correcting loop: `python scripts/judge_loop.py <src> --overrides ov.json --run-dir runs/ --baked-after <baked.ai>`. Score the Illustrator-BAKED file — raw `apply-saas` payload edits are not in the live PDF stream (pre-bake reads as weight-flat). Opt-in vision judge (metered): `ARCH_LW_LLM_FALLBACK=1 ANTHROPIC_API_KEY=sk-... pytest tests/eval_visual_judge_llm.py -m eval -s`.
 
 ## Structure
 - `src/arch_line_weights/` — package; `cli.py` is the Click entry, `apply.py` (pikepdf PDF-stream rewrite), `apply_jsx.py` / `apply_saas.py` (layer-preserving Illustrator paths), `poche.py` / `poche_saas.py`, `llm_topology.py` (opt-in rescue rung).
 - `tests/` — offline suite + `eval_llm_topology.py` (scored `pass@k` / `pass^k` / Cohen's kappa eval) + `fixtures/`.
-- `scripts/` — `benchmark.py`, `eval_gate.py`, `build_reference_index.py`, `demo_gallery.py`.
+- `scripts/` — `benchmark.py`, `eval_gate.py`, `build_reference_index.py`, `demo_gallery.py`, `visual_judge.py` (deterministic 4-axis scorer), `judge_loop.py` (self-correcting iteration loop), `visual_judge_llm.py` (opt-in vision rung). `benchmarks/visual-rubric.md` is the committed judgment standard both judges read.
 - `skills/apply-arch-hierarchy/` + `.claude-plugin/plugin.json` — Claude Code plugin packaging that bundles the skill driving `arch-lw`.
 - `examples/` — reproducible synthetic demo (`generate_demo_section.py`); `docs/` — mkdocs site incl. `POSTMORTEM.md`.
 
