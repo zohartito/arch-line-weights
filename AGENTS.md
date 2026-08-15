@@ -21,7 +21,7 @@
 - `apply` (pikepdf) strips `/PieceInfo` and can FLATTEN Illustrator layers — irreversible. Use `apply-jsx` / `apply-saas` when layers must survive.
 - `benchmarks.json` + `eval_gate.py` gate on exact-match metrics (`weights_applied`, `polygons_injected`, `layers_injected`, `layers_targeted`, `skipped`, `error`); output_bytes / seconds are info-only. A quality change must update the baseline in the same commit.
 - LLM topology inference (`llm_topology.py`, `[llm]` extra) is an opt-in rescue rung only — never the primary geometry path. `-m eval` tests make real, metered API calls; keep them opt-in.
-- Public proof is deliberately NO-GO: do not commit proof images or large real USC `.ai` samples. Only the tiny PDF smoke fixture + synthetic demo ship.
+- Public proof is deliberately NO-GO: do not commit proof images or large real `.ai` samples. Only the tiny PDF smoke fixture + synthetic demo ship.
 - Line-length 110; ruff select E/F/I/B/UP/RUF/SIM; double-quote format. Requires Python ≥3.11.
 
 ## Agent rules (all harnesses)

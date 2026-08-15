@@ -255,7 +255,7 @@ def inspect(src: Path, pretty: bool, source: str):
     type=click.Choice(sorted(PRESETS)),
     default="section",
     show_default=True,
-    help="Tier ladder used by --auto.",
+    help="Tier ladder used by --auto. (`usc` is a deprecated alias for `studio`.)",
 )
 @click.option(
     "--scale",
@@ -501,7 +501,10 @@ def apply(
     type=click.Choice(sorted(PRESETS)),
     default="section",
     show_default=True,
-    help="Tier ladder used by the embedded JSX classifier. Matches `apply-saas --preset`. Issue #13.",
+    help=(
+        "Tier ladder used by the embedded JSX classifier. Matches `apply-saas --preset`. "
+        "Issue #13. (`usc` is a deprecated alias for `studio`.)"
+    ),
 )
 @click.option(
     "--scale",
@@ -747,7 +750,7 @@ def layout_jsx_cmd(
     type=click.Choice(sorted(PRESETS)),
     default="section",
     show_default=True,
-    help="Preset passed to optional --apply-jsx.",
+    help="Preset passed to optional --apply-jsx. (`usc` is a deprecated alias for `studio`.)",
 )
 @click.option(
     "--source",
@@ -873,7 +876,7 @@ def bridge_rhino_ai_cmd(
     type=click.Choice(sorted(PRESETS)),
     default="section",
     show_default=True,
-    help="Tier ladder used by --auto.",
+    help="Tier ladder used by --auto. (`usc` is a deprecated alias for `studio`.)",
 )
 @click.option(
     "--scale",

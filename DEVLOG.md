@@ -42,9 +42,9 @@ hero.
 
 **Status (honest):** public MIT CLI that inspects a Rhino-exported `.ai`/`.pdf`, remaps stroke
 widths by color, adds conservative section-cut poché, and applies material hatching, with presets
-(`section`, `plan`, `elevation`, `detail`, `usc`) and layer-preserving commands (`apply-jsx`,
+(`section`, `plan`, `elevation`, `detail`, `studio`) and layer-preserving commands (`apply-jsx`,
 `apply-saas`). The public sample is a 3-stroke fixture — it demonstrates the mechanism but cannot
 carry a marketing before/after. Validated proof assets remain **NO-GO** (see `docs/ROADMAP.md`).
 
 **Next:** build a richer **synthetic, public-safe fixture** so a real before/after hero can be
-posted — the private USC drawing stays NO-GO.
+posted — the private reference drawing stays NO-GO.

@@ -9,7 +9,7 @@ Scope: legal and practical fixture sources for a public verification corpus for
 
 Use a synthetic-first public corpus, backed by a private/local real-project
 corpus and a very small number of public real-model fixtures only after license
-review. The repo already says large private USC `.ai` samples are intentionally
+review. The repo already says large private `.ai` samples are intentionally
 not committed, so public verification should not depend on those files.
 
 The verification core needs fixtures that cover input classes and failure modes
@@ -84,7 +84,7 @@ deterministic with authored synthetic inputs.
    License posture: safe only if kept local and ignored. Do not commit raw
    files, screenshots, rendered baselines, or project-identifying layer names.
 
-   Use for dogfood verification: USC section proof, axon stress file, and
+   Use for dogfood verification: reference section proof, axon stress file, and
    legacy Rhino PostScript exports. Store only aggregate metrics, hashes, and
    redacted manifests in the repo if needed.
 
@@ -184,7 +184,7 @@ deterministic with authored synthetic inputs.
 ### Private Local Fixtures
 
 1. `local-usc-section-converted-wall`
-   - Source: existing USC wall section converted `.ai`.
+   - Source: existing reference wall section converted `.ai`.
    - Covers: real section proof path: bridge hierarchy, then poché.
    - Public rule: never commit raw file, screenshots, exported output, or
      identifying layer names.
@@ -312,7 +312,7 @@ For this project:
 
 ## What Must Never Be Committed Publicly
 
-- USC, studio, client, professor, or course project source drawings.
+- Studio, client, or private course-project source drawings.
 - Derived `.ai`, `.pdf`, `.3dm`, screenshots, visual baselines, or layer dumps
   from private drawings.
 - Project-identifying layer names, material codes, file names, or title-block
@@ -451,7 +451,7 @@ commit only tiny project-authored outputs.
 | NYC 3D Building Model clipped extract or derived output | GO with attribution | Best public real-model source. Keep it tiny and document source/version/modifications. |
 | WikiHouse Wren derived output | DEFER | Usable under MPL 2.0, but not first corpus because of notice/source obligations. |
 | McNeel Bongo / Section Styles / Architecture course files | NO-GO for public repo | Local-only unless McNeel grants redistribution permission. |
-| USC/private real drawings and derivatives | NO-GO for public repo | Local-only. Publish only redacted aggregate metrics. |
+| Private real drawings and derivatives | NO-GO for public repo | Local-only. Publish only redacted aggregate metrics. |
 | Forum/Food4Rhino/tutorial attachments with unclear terms | NO-GO | Use only with explicit permission. |
 
 ## Recommended First Public Corpus

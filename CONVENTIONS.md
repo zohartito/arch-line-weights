@@ -108,7 +108,7 @@ Postprocess requirements:
 - Expect occasional Make2D layer mistakes where silhouettes nearly overlap other curves;
   the classifier should resolve by geometry/context, not layer name alone.
 
-## Default "USC Studio Board" Preset
+## Default "Studio Board" Preset
 
 Recommended for black/gray presentation boards and exported vector linework. Treat
 this as the default preset, not a code standard.

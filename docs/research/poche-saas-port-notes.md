@@ -210,7 +210,7 @@ the full pipeline.
 | 4 | Single-pass injection | We don't merge multiple polygon batches for the same layer — the caller must aggregate. | The current `compute_polygons_for_layers` already does this; just a note for direct callers of `inject_poche_polygons`. |
 | 5 | No fill-color customization | Always emits `0 0 0 1 1 0 0 0 Xa` (black). | Add a `fill_color` argument to `synthesize_polygon_block` if someone wants gray poché or a different convention. |
 | 6 | No multi-page support | Reads `pdf.pages[0]` only, like `apply_saas.py`. | Loop over pages. Rhino exports are always single-page. |
-| 7 | Validation against real Rhino-export `.ai` | Not run during this port (per the time-box constraint and the user's instruction not to touch their real ARCH 202B file). The synthetic fixture proves the byte mechanics work. | Smoke-test against a small representative Rhino export in a separate session. |
+| 7 | Validation against real Rhino-export `.ai` | Not run during this port (per the time-box constraint and the user's instruction not to touch their real reference file). The synthetic fixture proves the byte mechanics work. | Smoke-test against a small representative Rhino export in a separate session. |
 
 ## Verification
 
@@ -312,7 +312,7 @@ stroke widths and the matching syntax pattern):
 
 The recommended next step is a single smoke test on a small
 representative Rhino-export `.ai` (e.g. a 5-layer test export) before
-scaling to the full ARCH 202B drawing.
+scaling to the full reference drawing.
 
 ## Time spent
 

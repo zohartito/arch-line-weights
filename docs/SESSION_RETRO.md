@@ -20,7 +20,7 @@ Day-1 public source release.
 - Those private filenames and artifacts are intentionally omitted from this
   public technical archive.
 - Posting/public proof remains NO-GO unless W5/W7 explicitly accepts it.
-- Synthetic proof does not close #30, and the private USC regression stays
+- Synthetic proof does not close #30, and the private reference regression stays
   private.
 
 ## Lessons Kept

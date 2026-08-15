@@ -5,10 +5,10 @@ You have a Rhino `.ai` or `.pdf`. You want a proper hierarchy. Pick a recipe.
 ## Fastest — auto, screen review
 
 ```bash
-arch-lw apply drawing.ai --auto --preset usc
+arch-lw apply drawing.ai --auto --preset studio
 ```
 
-Writes `drawing HIERARCHY.ai`. Buckets every color into the `usc` studio tier ladder by luminance + frequency.
+Writes `drawing HIERARCHY.ai`. Buckets every color into the `studio` tier ladder by luminance + frequency.
 This is the fast stroke-weight output path; it is not the path to use
 when you need layer preservation or poché.
 
@@ -23,7 +23,7 @@ Selects the ISO-128 weight set (0.13, 0.18, 0.25, 0.35, 0.50, 0.70, 1.00 mm) for
 ## Layer-preserving hierarchy plus poché
 
 ```bash
-arch-lw apply-saas drawing.ai --architectural --poche --preset usc --source rhino
+arch-lw apply-saas drawing.ai --architectural --poche --preset studio --source rhino
 ```
 
 This is the Day-1 Rhino 8 → Illustrator `.ai` dogfood path. It preserves the
@@ -62,7 +62,7 @@ arch-lw apply drawing.ai --mapping mapping.json
 
 | Preset | When to use |
 |---|---|
-| `usc` | USC studio sections and the ARCH 202B reference workflow |
+| `studio` | Studio sections calibrated from the reference drawing (`usc` is a deprecated alias) |
 | `section` | Building section, wall section |
 | `plan` | Floor plan, roof plan, site plan |
 | `elevation` | Elevation, axon, perspective frame |
@@ -71,7 +71,7 @@ arch-lw apply drawing.ai --mapping mapping.json
 ## Dry-run to check the mapping first
 
 ```bash
-arch-lw apply drawing.ai --auto --preset usc --dry-run
+arch-lw apply drawing.ai --auto --preset studio --dry-run
 ```
 
 ## Related

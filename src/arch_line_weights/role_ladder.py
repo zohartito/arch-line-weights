@@ -71,8 +71,11 @@ class Role(Enum):
 # preset lacks the named tier, weight_for_role() falls back to the nearest
 # heavier non-special tier.
 ROLE_TO_PRESET_TIER: dict[Role, dict[str, str]] = {
+    # "usc" is a deprecated alias for "studio"; both keys map identically so
+    # weight_for_role() resolves either to the same studio tier ladder.
     Role.CUT_PROFILE: {
         "section": "cut",
+        "studio": "cut",
         "usc": "cut",
         "plan": "walls_cut",
         "detail": "cut_primary",
@@ -80,6 +83,7 @@ ROLE_TO_PRESET_TIER: dict[Role, dict[str, str]] = {
     },
     Role.SPATIAL_EDGE: {
         "section": "profile",
+        "studio": "profile",
         "usc": "profile",
         "plan": "casework",
         "detail": "cut_secondary",
@@ -87,6 +91,7 @@ ROLE_TO_PRESET_TIER: dict[Role, dict[str, str]] = {
     },
     Role.PLANAR_CORNER: {
         "section": "edges",
+        "studio": "edges",
         "usc": "edges",
         "plan": "furniture",
         "detail": "edges",
@@ -94,6 +99,7 @@ ROLE_TO_PRESET_TIER: dict[Role, dict[str, str]] = {
     },
     Role.SURFACE: {
         "section": "material",
+        "studio": "material",
         "usc": "material",
         "plan": "pattern",
         "detail": "material",
@@ -101,6 +107,7 @@ ROLE_TO_PRESET_TIER: dict[Role, dict[str, str]] = {
     },
     Role.LAYOUT: {
         "section": "texture",
+        "studio": "texture",
         "usc": "texture",
         "plan": "texture",
         "detail": "texture",

@@ -61,7 +61,7 @@ though the extension is `.ai`.
 For these files, use the Illustrator bridge:
 
 ```bash
-arch-lw apply-jsx drawing.ai --preset usc --source rhino
+arch-lw apply-jsx drawing.ai --preset studio --source rhino
 arch-lw poche "drawing HIERARCHY-jsx.ai" --source rhino --style solid
 ```
 

@@ -23,7 +23,7 @@ Repeat these at the start and end of every agent wave:
 - Posting/public proof is NO-GO unless W5/W7 explicitly accepts a public-safe
   packet.
 - Synthetic proof does not close #30.
-- Private USC / studio regression evidence stays private.
+- Private reference / studio regression evidence stays private.
 - Do not commit private drawings, screenshots, PDFs, raw reports, proof assets,
   local machine paths, or handoff files that contain local paths.
 - Do not claim App Store, Windows desktop, Rhino plugin, Illustrator panel,

@@ -24,7 +24,7 @@ commitment.
   #30. The NO-GO→GO acceptance path is tracked in issue #80; as of 2026-08-10
   the synthetic public packet validates `passed` (harness-green) and the
   sentinel fixtures were verified, but no acceptance-of-record exists yet.
-- The private USC regression stays private and is not represented by committed
+- The private reference regression stays private and is not represented by committed
   screenshots, PDFs, raw reports, or local file paths.
 - Prior private dogfood showed useful bridge and large-file signals, but those
   private filenames and artifacts are intentionally not public proof claims.

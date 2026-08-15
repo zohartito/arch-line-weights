@@ -7,7 +7,8 @@ from dataclasses import dataclass, field
 
 _PRESET_KIND = {
     "section": "section",
-    "usc": "section",
+    "studio": "section",
+    "usc": "section",  # Deprecated alias for "studio".
     "plan": "plan",
     "elevation": "elevation",
     "axon": "axon",

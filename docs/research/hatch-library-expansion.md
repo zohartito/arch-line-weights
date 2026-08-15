@@ -581,7 +581,7 @@ parallel_hatch(poly, mm_to_pt(500, scale), _principal_angle(poly) + 90)
 `COPPER_ROOF`, `ZN_SS_`
 
 **Notes:** Roofs (most common) + walls (contemporary rain-screen).
-**Critical for the user's own ARCH 202B project (copper rain screen).**
+**Critical for the user's own reference project (copper rain screen).**
 
 ---
 
@@ -1005,7 +1005,7 @@ brick_pattern(poly, mm_to_pt(300, scale), mm_to_pt(200, scale))
 ### Wave 1 — high-impact + quick (week 1, ~4 hours)
 
 These 5 recipes use **only existing helpers** (no new geometry), are the
-highest frequency in real drawings, and unblock the user's own ARCH 202B
+highest frequency in real drawings, and unblock the user's own reference
 project plus most commercial work:
 
 1. **`cmu`** — `brick_pattern(poly, 390, 190)`. Highest masonry omission.

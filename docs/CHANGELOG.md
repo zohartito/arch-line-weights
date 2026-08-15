@@ -34,6 +34,11 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- The `usc` preset is renamed to `studio`. `usc` continues to work as a
+  deprecated alias and will be removed in a future major version. Any code
+  importing `USC`, `USC_STUDIO_PRINT`, or `USC_STUDIO_SCREEN` from
+  `arch_line_weights.presets` should migrate to `STUDIO`, `STUDIO_PRINT`, and
+  `STUDIO_SCREEN`; the old names remain as aliases for now.
 - GitHub Actions now conserve private-account minutes during deadline-mode
   development: CI is PR/manual-only with a fast default Ubuntu/Python 3.12
   path, the full OS/Python compatibility matrix is manual-only, and docs deploy
@@ -414,8 +419,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- Auto-bridge inference is now in the default rescue ladder. On the USC
-  ARCH 202B reference: v0.5 was 14 / 6 / 1 (clean / imperfect / failed);
+- Auto-bridge inference is now in the default rescue ladder. On the
+  reference drawing: v0.5 was 14 / 6 / 1 (clean / imperfect / failed);
   v0.6 is 18 / 2 / 1.
 
 ## [0.5.1] — 2026-04-30

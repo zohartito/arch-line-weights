@@ -44,7 +44,7 @@ GitHub Actions should be used deliberately:
 The project is still in rapid drawing-debug mode. Most commits are small
 geometry-rule corrections, docs notes, and roadmap updates. Running macOS
 compatibility on every one of those commits spends minutes without improving
-the immediate goal: producing printable ARCH 202B drawings.
+the immediate goal: producing printable reference drawings.
 
 The professional pattern is:
 

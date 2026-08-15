@@ -496,8 +496,8 @@ def hatch_standing_seam_copper(polygon, scale, seam_pitch_mm: float = 430.0, **k
     """Standing-seam copper — vertical seams at 430 mm pitch + panel reveals.
 
     Default 430 mm = 17 inch midpoint of SMACNA Architectural Sheet Metal Manual
-    7th ed. §3.6 spacing range (16-20 inch). Critical for ARCH 202B copper
-    rain screen.
+    7th ed. §3.6 spacing range (16-20 inch). Critical for copper rain-screen
+    sections in the reference corpus.
     """
     seams = parallel_hatch(polygon, mm_to_pt(seam_pitch_mm, scale), 90.0)
     reveals = parallel_hatch(polygon, mm_to_pt(1500.0, scale), 0.0)
