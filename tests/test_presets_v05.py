@@ -17,6 +17,10 @@ from arch_line_weights.presets import (
     PRESETS,
     SECTION_ISO_PRINT,
     SECTION_ISO_SCREEN,
+    STUDIO,
+    STUDIO_PRINT,
+    STUDIO_SCREEN,
+    USC,
     USC_STUDIO_PRINT,
     USC_STUDIO_SCREEN,
     get_preset,
@@ -41,10 +45,10 @@ def test_all_four_screen_families_exist_and_nonempty():
         assert all(t.weight_pt > 0 for t in fam), "non-positive tier weight"
 
 
-def test_usc_preset_exists_for_reference_studio_workflow():
-    """USC preset keeps the reference ARCH 202B screen-review hierarchy explicit."""
-    assert "usc" in PRESETS
-    tiers = {t.name: t.weight_pt for t in get_preset("usc")}
+def test_studio_preset_exists_for_reference_studio_workflow():
+    """Studio preset keeps the reference screen-review hierarchy explicit."""
+    assert "studio" in PRESETS
+    tiers = {t.name: t.weight_pt for t in get_preset("studio")}
     assert tiers["cut"] == 1.0
     assert tiers["profile"] == 0.5
     assert tiers["edges"] == 0.3
@@ -53,9 +57,9 @@ def test_usc_preset_exists_for_reference_studio_workflow():
     assert tiers["special"] == 0.25
 
 
-def test_usc_print_table_documents_studio_convention():
-    """USC 1/4-inch print convention uses 0.13 mm for hatch/texture."""
-    tiers = {t.name: t.weight_pt for t in select_preset("usc", "1/4", for_print=True)}
+def test_studio_print_table_documents_studio_convention():
+    """Studio 1/4-inch print convention uses 0.13 mm for hatch/texture."""
+    tiers = {t.name: t.weight_pt for t in select_preset("studio", "1/4", for_print=True)}
     assert tiers["cut"] == mm(0.70)
     assert tiers["profile"] == mm(0.50)
     assert tiers["edges"] == mm(0.35)
@@ -64,9 +68,41 @@ def test_usc_print_table_documents_studio_convention():
     assert tiers["special"] == mm(0.25)
 
 
-def test_usc_screen_and_print_families_are_routed_directly():
-    assert select_preset("usc", "1/4", for_print=False) == USC_STUDIO_SCREEN
-    assert select_preset("usc", "1/4", for_print=True) == USC_STUDIO_PRINT
+def test_studio_screen_and_print_families_are_routed_directly():
+    assert select_preset("studio", "1/4", for_print=False) == STUDIO_SCREEN
+    assert select_preset("studio", "1/4", for_print=True) == STUDIO_PRINT
+
+
+def test_usc_is_a_deprecated_working_alias_for_studio():
+    """`usc` continues to resolve to the exact same tier data as `studio`."""
+    assert "usc" in PRESETS
+    # Same registered preset object as studio.
+    assert PRESETS["usc"] == PRESETS["studio"]
+    assert get_preset("usc") == get_preset("studio")
+    # select_preset() routes usc identically to studio, screen and print.
+    for scale in ("1/16", "1/8", "1/4", "1/2"):
+        for for_print in (False, True):
+            assert select_preset("usc", scale, for_print=for_print) == select_preset(
+                "studio", scale, for_print=for_print
+            )
+
+
+def test_deprecated_usc_studio_import_names_still_resolve():
+    """The pre-rename module-level names remain importable as aliases."""
+    assert USC is STUDIO
+    assert USC_STUDIO_PRINT is STUDIO_PRINT
+    assert USC_STUDIO_SCREEN is STUDIO_SCREEN
+
+
+def test_studio_and_usc_resolve_identical_role_weight_mappings():
+    """The role→weight ladder (the path --auto uses) is identical for both."""
+    from arch_line_weights.preset_rules import ladder_for_preset
+
+    for scale in ("1/16", "1/8", "1/4", "1/2"):
+        for for_print in (False, True):
+            assert ladder_for_preset("studio", scale=scale, for_print=for_print) == ladder_for_preset(
+                "usc", scale=scale, for_print=for_print
+            )
 
 
 # --------------------------------------------------------------------------- #

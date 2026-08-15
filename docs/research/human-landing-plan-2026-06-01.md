@@ -17,7 +17,7 @@ not posting clearance and not a merge instruction for agents.
 - **Posting/public proof: NO-GO** unless W5/W7 explicitly records acceptance on a
   public-safe packet.
 - **Synthetic proof does not close #30.**
-- **Private USC regression stays private** — no private drawings, screenshots, PDFs,
+- **Private reference regression stays private** — no private drawings, screenshots, PDFs,
   raw reports, proof assets, or machine paths in git.
 - **Do not claim** App Store, Windows desktop, Rhino plugin, or Illustrator panel readiness.
 
@@ -85,6 +85,6 @@ See `pr-overlap-audit-2026-06-01.md` for file-level detail.
 
 ## After landing (still not “launch”)
 
-- Follow `docs/how-to/private-studio-dogfood-runbook.md` for local USC review.
+- Follow `docs/how-to/private-studio-dogfood-runbook.md` for local reference review.
 - W5/W7 acceptance on **public-safe** packets only.
 - Public posting remains **NO-GO** until then.

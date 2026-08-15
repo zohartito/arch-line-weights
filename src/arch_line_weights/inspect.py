@@ -3,8 +3,8 @@
 Per-format dispatch (Issue #9):
 
 * ``.ai`` (or any PDF with ``/PieceInfo /Illustrator``) → **pikepdf**. PyMuPDF
-  refuses to open large Illustrator-saved files (e.g. the 237 MB ARCH 211 plan
-  drawing fails with ``FileDataError`` while pikepdf opens it cleanly). We walk
+  refuses to open large Illustrator-saved files (e.g. a 237 MB plan export
+  fails with ``FileDataError`` while pikepdf opens it cleanly). We walk
   the page content stream via a token-level regex, tracking the current RGB
   stroke / fill / line-width through ``q``/``Q`` graphics-state push/pop,
   bucketing every paint operator (``S``/``s``/``B``/``B*``/``b``/``b*``/

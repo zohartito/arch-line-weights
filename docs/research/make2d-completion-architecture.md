@@ -86,7 +86,7 @@ Line-weight implications:
 - Connector hardware, glazing, cladding, membranes, and secondary steel remain
   subordinate to structural cut mass; they can receive cut-line styling without
   becoming black poché.
-- Private Illustrator visual QA is still required before using the private USC
+- Private Illustrator visual QA is still required before using the private reference
   proof as launch evidence.
 
 ## Next Implementation Steps

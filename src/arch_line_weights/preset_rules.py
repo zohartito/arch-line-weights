@@ -15,8 +15,9 @@ from :mod:`arch_line_weights.role_ladder`; they are never redefined here.
 
 §1.3 distinctions encoded here:
 
-* ``plan`` / ``section`` / ``usc`` / ``detail`` are **cut-driven** — heaviest
-  role is :attr:`Role.CUT_PROFILE` and the integrity rule is enforced.
+* ``plan`` / ``section`` / ``studio`` / ``detail`` are **cut-driven** —
+  heaviest role is :attr:`Role.CUT_PROFILE` and the integrity rule is enforced
+  (``usc`` is a deprecated alias for ``studio``).
 * ``elevation`` is a **no-cut** figure-ground drawing — heaviest role is
   :attr:`Role.SPATIAL_EDGE` (the silhouette). It owns one true cut, the
   *groundline* through soil, so ``has_groundline`` is ``True``.
@@ -30,8 +31,8 @@ Depth-grading direction differs per drawing type, captured by
 
 * plan -> :attr:`DepthModel.DROP_BELOW_CUT` (farther below the cut plane is
   lighter);
-* section / usc / detail -> :attr:`DepthModel.BEHIND_CUT` (farther behind the
-  cut is lighter);
+* section / studio / detail -> :attr:`DepthModel.BEHIND_CUT` (farther behind
+  the cut is lighter);
 * elevation / axon -> :attr:`DepthModel.FIGURE_GROUND` (recede with distance).
 """
 
@@ -99,6 +100,16 @@ PRESET_RULES: dict[str, PresetRule] = {
         range_widen_steps=0,
         has_groundline=False,
     ),
+    "studio": PresetRule(
+        preset="studio",
+        cut_driven=True,
+        heaviest_role=Role.CUT_PROFILE,
+        depth_model=DepthModel.BEHIND_CUT,
+        integrity_enforced=True,
+        range_widen_steps=0,
+        has_groundline=False,
+    ),
+    # Deprecated alias for "studio"; retained so existing callers keep working.
     "usc": PresetRule(
         preset="usc",
         cut_driven=True,

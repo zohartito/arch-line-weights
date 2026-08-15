@@ -33,7 +33,7 @@ webapp 43 passed; launch-safety 4 passed; ruff + frontend check/build pass.
 **Superseded (close without merge):** #36, #40, #44, #45 — 0 unique commits vs rehearsal.
 
 **Boundaries unchanged:** no GitHub PR merges by agents; #29/#30 open; posting NO-GO;
-synthetic proof does not close #30; private USC stays private.
+synthetic proof does not close #30; private reference stays private.
 
 ## Update — 2026-06-01 (PR #36 bridge/report integration)
 
@@ -175,7 +175,7 @@ tracked-file private path / retired proof / premature claim scan  → no matches
 
 - **No PR merges.** PR **#37** and **#36** stay **draft**.
 - **#29** / **#30** remain **open**. Posting/public proof **NO-GO**.
-- Synthetic proof does **not** close #30. Private USC regression stays private.
+- Synthetic proof does **not** close #30. Private reference regression stays private.
 
 ### Remains before shipping stack to main
 
@@ -335,7 +335,7 @@ git diff --check  → pass
 
 - **#29** and **#30** stay open; this slice does not close them.
 - **Posting / public proof:** NO-GO unless W5/W7 record separate `public_proof` acceptance.
-- **Synthetic proof** does not close #30; **private USC regression** stays private.
+- **Synthetic proof** does not close #30; **private reference regression** stays private.
 - Full control ledger: PR #41 `docs/research/endgame-delivery-plan-2026-06-01.md`.
 - No PR merges performed from this slice.
 
@@ -346,7 +346,7 @@ git diff --check  → pass
 - Extended inspection reports with an `input_format` diagnostic block while preserving existing fields.
 - Added schema-v2 durable report support for apply-saas and poché proof surfaces.
 - Added proof manifest and visual proof helpers in `src/arch_line_weights/proof.py`.
-- Added `tests/fixtures/make2d/manifest.yml` for the USC wall-section Day-1 proof as a `needs_manual_review` gate.
+- Added `tests/fixtures/make2d/manifest.yml` for the reference wall-section Day-1 proof as a `needs_manual_review` gate.
 - Added supported-input documentation and README matrix covering native `/NumBlock` `.ai`, converted/PDF-only `.ai`, plain PDF, and legacy Rhino PostScript `.ai`.
 - Fixed the `presets.py` sorted `__all__` lint issue.
 
@@ -357,7 +357,7 @@ git diff --check  → pass
   - Proof QA / reports / visual regression: GitHub issues #29-#32, with #30 and #21 remaining evidence-driven geometry gates.
 - Existing code already had a useful `apply-saas --report` base, but the report surface needed input-kind metadata and a poché-path equivalent.
 - Existing preview tooling can generate images, but proof QA needs manifest-driven acceptance checks so screenshots cannot be treated as proof without report context.
-- The USC foundation/concrete concern should remain a manual-review/proof-harness gate until a private fixture run proves whether the bug is topology, source fixture, classifier, or capture-related.
+- The reference foundation/concrete concern should remain a manual-review/proof-harness gate until a private fixture run proves whether the bug is topology, source fixture, classifier, or capture-related.
 - Legacy Rhino PostScript `.ai` needs clean unsupported-input guidance rather than parser fallthrough.
 
 ## Verification Notes
@@ -416,7 +416,7 @@ git diff --check
 - GitHub issues **#29** and **#30** stay **open**; this handoff documents blockers only.
 - **Posting / public proof: NO-GO** until separate W5/W7 `review_acceptance.public_proof` with
   public-safe artifacts — synthetic proof does **not** close #30.
-- **Private USC regression stays private**; no private drawings, screenshots, PDFs, or raw reports
+- **Private reference regression stays private**; no private drawings, screenshots, PDFs, or raw reports
   with local paths in committed proof assets.
 - Full endgame control ledger: `docs/research/endgame-delivery-plan-2026-06-01.md` on branch
   `codex/endgame-delivery-ledger` (PR #41), not duplicated here.

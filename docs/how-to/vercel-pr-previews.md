@@ -43,7 +43,7 @@ vercel git connect   # wire GitHub → previews on PRs
 |------------------|----------|
 | Layout, copy, console screens, static navigation | `arch-lw` CLI on server |
 | Build/check CI parity with `npm run build` | Upload + apply + poché (needs local API) |
-| NO-GO / W5/W7 labels in the UI | Real proof packets or private USC files |
+| NO-GO / W5/W7 labels in the UI | Real proof packets or private reference files |
 
 ## Optional env (Vercel project settings)
 

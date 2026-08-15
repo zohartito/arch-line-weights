@@ -31,7 +31,7 @@ The first gate is honesty: the repo's proof posture is currently **NO-GO** (`ROA
 proof must be cleared before posting results.
 
 - [x] Clear **one** public-safe before/after (synthetic or sample drawing) — unblocks honest
-      daily posting. Does not involve the private USC regression.
+      daily posting. Does not involve the private reference regression.
       *(2026-08-10: the committed hero is a synthetic **demo**, not a proof packet; separately, the
       synthetic packet `public_foundation_window_section_synthetic` materializes and validates
       `passed` with sentinels verified. Harness-green; acceptance-of-record still open — #80.)*

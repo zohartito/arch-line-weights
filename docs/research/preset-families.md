@@ -268,7 +268,7 @@ Sampled from *Detail* 2023 issues 4–11 (timber, concrete, facade themes):
 
 ### Architecture school conventions
 
-- **USC School of Architecture** — teaches Ching *Architectural Graphics*
+- **An accredited M.Arch program** — teaches Ching *Architectural Graphics*
   6th ed. as the foundational graphic reference. Studio standard at 1/4"
   is treated here as 0.70 / 0.50 / 0.35 / 0.18 / 0.13 for public print
   output. Earlier local notes used 0.10 mm as a screen/light-texture

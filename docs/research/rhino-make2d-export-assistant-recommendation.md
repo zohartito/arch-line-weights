@@ -78,7 +78,7 @@ arch-lw bridge-rhino-ai \
 ```
 
 For hierarchy-only runs, use `layout-jsx` followed by `apply-jsx`. For
-foundation/concrete or USC launch proof, continue to `poche`, `diagnose`,
+foundation/concrete or reference launch proof, continue to `poche`, `diagnose`,
 `proof-check`, and `visual-check`.
 
 ## Do Not Build Yet

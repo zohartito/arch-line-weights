@@ -509,8 +509,10 @@ _RHINO_TIER_TO_PRESET_TIER: dict[str, dict[str, str]] = {
     },
 }
 
-# The USC studio preset uses the same tier names as the section preset, with
-# weights calibrated for the reference school workflow.
+# The studio preset uses the same tier names as the section preset, with
+# weights calibrated for the reference studio workflow. "usc" is a deprecated
+# alias for "studio"; both are mapped so existing callers keep working.
+_RHINO_TIER_TO_PRESET_TIER["studio"] = _RHINO_TIER_TO_PRESET_TIER["section"]
 _RHINO_TIER_TO_PRESET_TIER["usc"] = _RHINO_TIER_TO_PRESET_TIER["section"]
 
 

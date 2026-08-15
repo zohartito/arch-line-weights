@@ -12,7 +12,7 @@ contrast solid vs. void. Two flavors:
 - **Figure-ground poché** — fill the entire mass behind the cut as well
   (Nolli-plan style)
 
-Contemporary architectural-school practice (USC, GSD, MIT) leans toward
+Contemporary architectural-school practice at accredited M.Arch programs leans toward
 **structural poché in pure black at small scale** (1:200, 1:100). At detail
 scale (1:50, 1:20) **material-specific hatches** replace solid black so
 layered assemblies stay legible.

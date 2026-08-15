@@ -25,7 +25,7 @@ inside Illustrator only to have ExtendScript hang for hours — this is for you.
   `apply` command rewrites the PDF stream and can flatten Illustrator layers.
 - Adds conservative poché fills for high-confidence section-cut mass.
 - Ships explicit presets for `section`, `plan`, `elevation`, `detail`, and
-  `usc` studio workflows.
+  `studio` workflows.
 
 ```
 $ arch-lw apply examples/sample-linework.pdf --auto --preset section
@@ -125,7 +125,7 @@ arch-lw bridge-rhino-ai \
   --artboard 24x36in \
   --fit fit \
   --margin 0.5in \
-  --preset usc \
+  --preset studio \
   --source rhino \
   --for-print \
   --apply-jsx \
@@ -148,7 +148,7 @@ verification reports and visual QA acceptance.
 arch-lw apply-jsx drawing.ai
 
 # pikepdf-fast (loses layer structure):
-arch-lw apply drawing.ai --auto --preset usc
+arch-lw apply drawing.ai --auto --preset studio
 ```
 
 Day-1 layer-preserving dogfood path:
@@ -156,7 +156,7 @@ Day-1 layer-preserving dogfood path:
 ```
 .venv/bin/arch-lw inspect drawing.ai
 .venv/bin/arch-lw apply-saas drawing.ai \
-  --architectural --poche --preset usc --source rhino
+  --architectural --poche --preset studio --source rhino
 ```
 
 Use basic `apply` for fast stroke-weight output. Use `apply-saas
@@ -216,8 +216,8 @@ luminance. Good fallback for non-Rhino files where layer names don't
 encode semantics.
 
 ```
-arch-lw apply drawing.ai --auto --preset usc --dry-run    # preview
-arch-lw apply drawing.ai --auto --preset usc              # commit
+arch-lw apply drawing.ai --auto --preset studio --dry-run    # preview
+arch-lw apply drawing.ai --auto --preset studio              # commit
 ```
 
 Add `--dry-run` to either to print the planned mapping without writing.
@@ -254,7 +254,7 @@ NO-GO→GO path is tracked in issue #80. The synthetic public proof packet
 (`public_foundation_window_section_synthetic`) materializes and validates
 `passed` as of 2026-08-10, and its expected-fail/unsupported sentinels were
 verified catching bad packets — that makes the harness green, but it does not
-record acceptance, and the private USC regression stays private. The committed
+record acceptance, and the private reference regression stays private. The committed
 hero image is a reproducible synthetic *demo* (see `examples/`), not a proof
 packet. Use the local designer console or proof packet export for review
 material that includes `W5-W7-ACCEPTANCE-HANDOFF.json`.
@@ -306,7 +306,7 @@ work in pikepdf is a single linear pass.
 
 | Preset | Use it for |
 |---|---|
-| `usc` | USC studio sections and the original ARCH 202B reference workflow. |
+| `studio` | Studio sections calibrated from the reference drawing (`usc` is a deprecated alias). |
 | `section` | General building sections and wall sections. |
 | `plan` | Floor plans, roof plans, site plans. |
 | `elevation` | Elevations and projected views with no cut tier. |
@@ -316,7 +316,7 @@ Default screen-review weights:
 
 | Preset | Cut / Heaviest | Profile | Edges | Material | Texture | Special |
 |---|---:|---:|---:|---:|---:|---:|
-| `usc` | 1.0 | 0.5 | 0.3 | 0.18 | 0.08 | 0.25 |
+| `studio` | 1.0 | 0.5 | 0.3 | 0.18 | 0.08 | 0.25 |
 | `section` | 1.0 | 0.5 | 0.3 | 0.18 | 0.08 | 0.25 |
 | `plan` | 0.71 | 0.5 | 0.35 | 0.25 | 0.18 | 0.35 |
 | `elevation` | 1.0 | 0.71 | 0.5 | 0.25 | 0.18 | 0.35 |
@@ -325,7 +325,7 @@ Default screen-review weights:
 The "Special" tier is for glazing / water / sky — anything not architectural
 that you want held back at a mid weight regardless of darkness.
 
-USC 1/4-inch studio print table:
+Studio 1/4-inch print table:
 
 | Tier | mm | pt | Goes Here |
 |---|---:|---:|---|
@@ -336,9 +336,9 @@ USC 1/4-inch studio print table:
 | `texture` | 0.13 | 0.369 | Dense hatch, grain, surface texture. |
 | `special` | 0.25 | 0.709 | Glazing, water, sky, and middle-weight exceptions. |
 
-The public USC print convention uses 0.13 mm as the lightest standard
+The public studio print convention uses 0.13 mm as the lightest standard
 surface/hatch weight, matching the project convention in
-[`CONVENTIONS.md`](CONVENTIONS.md). The screen-review `usc` preset still keeps
+[`CONVENTIONS.md`](CONVENTIONS.md). The screen-review `studio` preset still keeps
 0.08 pt for dense on-screen texture because monitor review is not print proofing.
 
 ---
@@ -356,7 +356,7 @@ surface/hatch weight, matching the project convention in
   review rather than turned into a black blob.
 - Multi-page documents are supported by the PDF-stream path; the AI-private
   `apply-saas` path is focused on Illustrator-saved `.ai` drawings.
-- The repo includes only a tiny PDF smoke fixture. Large real USC `.ai` samples
+- The repo includes only a tiny PDF smoke fixture. Large real `.ai` samples
   are intentionally not committed.
 - PyPI publishing is not done yet; install from source or GitHub for now.
 - Bluebeam review is Windows-only and unverified for v1; use Illustrator and

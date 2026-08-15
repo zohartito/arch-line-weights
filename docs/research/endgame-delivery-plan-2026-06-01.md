@@ -8,7 +8,7 @@ product. It is an engineering control document, not a public launch claim.
 
 - Posting/public proof is **NO-GO** unless W5/W7 explicitly accepts it.
 - Synthetic proof does not close #30.
-- Private USC regression stays private.
+- Private reference regression stays private.
 - Do not merge PRs from this plan.
 - Do not close #29 or #30 from synthetic or local-only evidence.
 - Do not commit private drawings, screenshots, PDFs, raw reports, local paths,
@@ -81,10 +81,10 @@ Required capabilities:
 - General Make2D completion / geometry repair stage for incomplete loops (#21).
 - Structural open-loop closure for poché loops (#17).
 - Conservative architectural mode keeps ambiguous geometry reviewable (#16).
-- Foundation/concrete USC section regression becomes visibly acceptable (#30).
+- Foundation/concrete reference section regression becomes visibly acceptable (#30).
 
 This phase cannot be declared complete without private review/acceptance for
-the USC regression. Synthetic proof can support confidence, but it cannot close
+the reference regression. Synthetic proof can support confidence, but it cannot close
 #30.
 
 ### Phase 4 - Designer Console
@@ -102,7 +102,7 @@ Required MVP:
 - Explicit no-go notices:
   - Posting/public proof is NO-GO unless W5/W7 explicitly accepts it.
   - Synthetic proof does not close #30.
-  - Private USC regression stays private.
+  - Private reference regression stays private.
 - No terminal knowledge required for normal use.
 - Local launch command and docs.
 - Backend tests for status/report behavior.
@@ -129,7 +129,7 @@ Purpose: decide what can be safely shown or shipped.
 Prerequisites:
 
 - #29 proof truth resolved.
-- #30 private USC foundation/concrete regression accepted.
+- #30 private reference foundation/concrete regression accepted.
 - Public-safe synthetic proof explicitly caveated.
 - Install story chosen and tested.
 - No private path/artifact leakage.
@@ -141,7 +141,7 @@ Prerequisites:
 - Verification Spine Agent: audit #31/#32/#29 gaps and produce or implement the
   smallest next testable proof-contract improvement.
 - Geometry/Poche Agent: audit #21/#17/#16/#30 and identify the smallest synthetic
-  regression that approximates the USC failure without exposing private assets.
+  regression that approximates the reference failure without exposing private assets.
 - Designer Console Agent: inspect `webapp/` and the designer-console worktree,
   then make the local console render reliably with real status/report plumbing.
 - Safety Gate Agent: scan active PRs/branches/docs for private-path leakage and
@@ -160,7 +160,7 @@ Engineering can call the endgame complete only when:
 - Proof packet export is public-safe by default and raw reports are isolated.
 - Verification catches missing outputs, no-go reports, private paths, and false
   pass states.
-- Geometry/poche produces accepted results on the private USC regression.
+- Geometry/poche produces accepted results on the private reference regression.
 - #29 and #30 are resolved by real accepted evidence, not by synthetic demos.
 - Packaging/desktop/plugin claims are limited to actually tested surfaces.
 
