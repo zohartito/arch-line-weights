@@ -60,7 +60,13 @@ def test_json_schema_shape() -> None:
         "suggested_overrides",
     ):
         assert key in result, key
-    assert set(result["scores"]) == {"false_poche", "band_continuity", "hierarchy_spread", "fixture_weight"}
+    assert set(result["scores"]) == {
+        "false_poche",
+        "band_continuity",
+        "hierarchy_spread",
+        "fixture_weight",
+        "tonal_recede",
+    }
     assert result["verdict"] in {"pass", "review"}
     assert isinstance(result["why"], list) and result["why"]
 

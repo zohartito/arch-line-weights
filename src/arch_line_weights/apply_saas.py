@@ -107,6 +107,7 @@ class ApplySaasResult:
     layer_weight_overrides: int = 0
     layer_color_overrides: int = 0
     layer_dash_overrides: int = 0
+    tonal_recede_applied: int = 0
 
 
 _NO_NATIVE_PAYLOAD_MSG = (
@@ -296,6 +297,8 @@ def rewrite_payload(
     layer_weight_resolver: Callable[[str], float | None] | None = None,
     layer_color_resolver: Callable[[str], tuple[int, int, int] | None] | None = None,
     layer_solid_line_resolver: Callable[[str], bool] | None = None,
+    layer_tone_resolver: Callable[[tuple[int, int, int], float], tuple[int, int, int] | None]
+    | None = None,
 ) -> bytes:
     """Track recent XA color and rewrite every following `<w> w` op per-color.
 
@@ -376,6 +379,21 @@ def rewrite_payload(
         rgb = _color_at(offset)
         return _resolve_weight(rgb, rgb_to_weight, default_width, result)
 
+    def _tone_weight_at(offset: int, current_rgb: tuple[int, int, int]) -> float:
+        """Resolved weight for the stroke this color op paints — no side effects.
+
+        Mirrors :func:`_resolve_weight_at`'s precedence (layer role first, then
+        the color bucket) but takes the color from the color op itself and does
+        NOT touch the counters, which the width-rewrite pass already owns.
+        """
+        if layer_weight_resolver is not None:
+            layer_name = _layer_at(offset)
+            if layer_name is not None:
+                layer_weight = layer_weight_resolver(layer_name)
+                if layer_weight is not None:
+                    return layer_weight
+        return rgb_to_weight.get(current_rgb, default_width)
+
     # Rewrite both bare and setup-form width ops in one pass each.
     pieces: list[bytes] = []
     last_end = 0
@@ -404,15 +422,41 @@ def rewrite_payload(
         result.widths_rewritten += 1
         result.weights_applied[weight_used] = result.weights_applied.get(weight_used, 0) + 1
 
-    if layer_color_resolver is not None:
+    if layer_color_resolver is not None or layer_tone_resolver is not None:
+
+        def _emit_color_edit(match: re.Match, current_rgb: tuple[int, int, int]) -> None:
+            # A per-layer color override (cut recolor: black poché, blue glass)
+            # wins; tonal recede only touches strokes the override leaves alone,
+            # i.e. beyond-cut geometry (spec §1.3/§4.2).
+            override = _layer_color_at(match.start()) if layer_color_resolver is not None else None
+            if override is not None:
+                edits.append((match.start(), match.end(), _format_stroke_color(override)))
+                return
+            if layer_tone_resolver is not None:
+                weight_pt = _tone_weight_at(match.start(), current_rgb)
+                toned = layer_tone_resolver(current_rgb, weight_pt)
+                if toned is not None:
+                    edits.append((match.start(), match.end(), _format_stroke_color(toned)))
+                    result.tonal_recede_applied += 1
+
         for m in _XA_RE.finditer(payload):
-            color = _layer_color_at(m.start())
-            if color is not None:
-                edits.append((m.start(), m.end(), _format_stroke_color(color)))
+            try:
+                xa_rgb = (
+                    round(float(m.group(5)) * 255),
+                    round(float(m.group(6)) * 255),
+                    round(float(m.group(7)) * 255),
+                )
+            except ValueError:  # pragma: no cover — malformed AI payload
+                continue
+            _emit_color_edit(m, xa_rgb)
         for m in _K_RE.finditer(payload):
-            color = _layer_color_at(m.start())
-            if color is not None:
-                edits.append((m.start(), m.end(), _format_stroke_color(color)))
+            try:
+                k_rgb = _cmyk_to_rgb255(
+                    float(m.group(1)), float(m.group(2)), float(m.group(3)), float(m.group(4))
+                )
+            except ValueError:  # pragma: no cover — malformed AI payload
+                continue
+            _emit_color_edit(m, k_rgb)
 
     if layer_solid_line_resolver is not None:
         for m in _DASH_RE.finditer(payload):
@@ -471,6 +515,8 @@ def apply_to_file(
     layer_weight_resolver: Callable[[str], float | None] | None = None,
     layer_color_resolver: Callable[[str], tuple[int, int, int] | None] | None = None,
     layer_solid_line_resolver: Callable[[str], bool] | None = None,
+    layer_tone_resolver: Callable[[tuple[int, int, int], float], tuple[int, int, int] | None]
+    | None = None,
 ) -> ApplySaasResult:
     """Apply per-color stroke widths to the AI native payload of `src`.
 
@@ -508,6 +554,7 @@ def apply_to_file(
                 layer_weight_resolver=layer_weight_resolver,
                 layer_color_resolver=layer_color_resolver,
                 layer_solid_line_resolver=layer_solid_line_resolver,
+                layer_tone_resolver=layer_tone_resolver,
             )
         result.payload_size_out = len(new_payload)
 

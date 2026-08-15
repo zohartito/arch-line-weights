@@ -94,10 +94,12 @@ Each maps a rubric rule to a machine-checkable metric with a fixed threshold:
 | `band_continuity` | §1 continuous datum, "fragmented cut band" | worst along-axis gap fraction of a heavy band | `> 0.20` |
 | `hierarchy_spread` | §1 the weight ramp | cut : texture stroke-weight ratio | `< 3.0` |
 | `fixture_weight` | §2, "fixtures reaching cut value" | mean darkness of projected-fixture regions (needs report) | `> 0.55` |
+| `tonal_recede` | §1.3 "cut owns the darkest value", §4.2 tonal recede | cut : beyond mean-darkness ratio (vector, >=2 weight tiers) | `< 1.15` |
 
 Any axis over threshold → overall verdict `review`, with a rubric-cited reason. The
-vision judge adds the perceptual rules (§2 gestalt, §3 material-by-hatch, tonal recede of
-"beyond" geometry) that pixels alone cannot gate.
+`tonal_recede` axis now gates the value ramp deterministically (cut must render darker than
+beyond-cut geometry); the vision judge still adds the perceptual rules (§2 gestalt, §3
+material-by-hatch) that pixels alone cannot gate.
 
 ---
 

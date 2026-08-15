@@ -2,7 +2,7 @@
 """Deterministic visual judge for arch-line-weights output.
 
 A *no-LLM, no-network* metric pass that scores a poché/hierarchy result on the
-four failure axes the corpus spec (``docs/research/target-look-spec.md`` §1)
+five failure axes the corpus spec (``docs/research/target-look-spec.md`` §1)
 keeps flagging on real Rhino-export drawings:
 
   * ``false_poche``     — solid black fill floating in whitespace, i.e. "black
@@ -15,6 +15,10 @@ keeps flagging on real Rhino-export drawings:
                           catches "why are these squares so thick" (spec §1.3,
                           §3.2 D4). Only scored when a poché --report-json is
                           supplied (needs the layer polygon bounds).
+  * ``tonal_recede``    — cut vs beyond-cut mean-darkness ratio; the value ramp
+                          that pushes un-cut structure to thin grey (spec §1.3,
+                          §4.2). Only scored on vector inputs with >=2 weight
+                          tiers; ``null`` on raster / single-tier inputs.
 
 Determinism boundary (AGENTS.md): every threshold lives here in code with a
 spec citation; the same inputs always produce the same JSON. The model never
@@ -72,6 +76,15 @@ HIERARCHY_MIN_RATIO = 3.0
 # Their mean darkness (0=white, 1=black) should stay well below the cut. If the
 # fixture regions themselves render darker than this they read as cut mass.
 FIXTURE_DARKNESS_MAX = 0.55
+
+# §1.3 "the cut owns the darkest value ... everything not cut steps down hard"
+# and §4.2 "tonal recede for 'beyond' geometry ... push un-cut structure to thin
+# grey". The cut strokes should render measurably DARKER than the beyond-cut
+# linework. Ratio = mean-darkness(cut) / mean-darkness(beyond); a value-flat
+# sheet (beyond geometry left at cut value) sits at ~1.0 and reads flat, so we
+# want the cut at least ~15% darker than the beyond mean before the value ramp
+# is doing real work.
+TONAL_RECEDE_MIN_RATIO = 1.15
 
 # Ink / black thresholds on the 0-255 grey render.
 INK_LEVEL = 128  # anything darker than this is "ink"
@@ -460,6 +473,124 @@ def fixture_weight_score(gray: np.ndarray, envelope: ReportEnvelope | None) -> t
 
 
 # --------------------------------------------------------------------------- #
+# Axis 5 — tonal_recede
+# --------------------------------------------------------------------------- #
+
+
+def _stroke_darkness_from_ops(op: str, operands: list) -> float | None:
+    """Darkness (0=white, 1=black) of a stroke-color op, or None if not one.
+
+    Handles the uppercase stroke-color operators an Illustrator-baked / Rhino
+    PDF content stream uses: ``RG`` (RGB), ``G`` (gray), ``K`` (CMYK). Lowercase
+    fill operators are ignored — only the stroke color decides a stroke's value.
+    """
+    try:
+        if op == "RG" and len(operands) >= 3:
+            r, g, b = (float(operands[i]) for i in range(3))
+            return 1.0 - (0.2126 * r + 0.7152 * g + 0.0722 * b)
+        if op == "G" and operands:
+            return 1.0 - float(operands[0])
+        if op == "K" and len(operands) >= 4:
+            c, m, y, k = (float(operands[i]) for i in range(4))
+            r = (1.0 - c) * (1.0 - k)
+            g = (1.0 - m) * (1.0 - k)
+            b = (1.0 - y) * (1.0 - k)
+            return 1.0 - (0.2126 * r + 0.7152 * g + 0.0722 * b)
+    except (TypeError, ValueError):
+        return None
+    return None
+
+
+def _vector_stroke_tones(path: Path) -> list[tuple[float, float]] | None:
+    """Return ``(width_pt, darkness)`` for every stroke in a PDF/.ai stream.
+
+    ``darkness`` is 0 (white) … 1 (black) derived from the current stroke color
+    (defaulting to black, the PDF initial stroke color). Returns ``None`` for
+    non-vector inputs or when the stream cannot be parsed — the "no layer /
+    stroke information available" case, so :func:`tonal_recede_score` can return
+    ``null`` rather than guess (mirroring ``fixture_weight``).
+    """
+    if path.suffix.lower() not in {".ai", ".pdf"}:
+        return None
+    try:
+        import pikepdf
+    except Exception:
+        return None
+    try:
+        pdf = pikepdf.Pdf.open(str(path))
+    except Exception:
+        return None
+    tones: list[tuple[float, float]] = []
+    try:
+        for page in pdf.pages:
+            width: float | None = None
+            darkness = 1.0  # PDF initial stroke color is black
+            try:
+                stream = pikepdf.parse_content_stream(page)
+            except Exception:
+                continue
+            for operands, operator in stream:
+                op = bytes(operator).decode("ascii", "ignore")
+                if op == "w" and operands:
+                    with contextlib.suppress(TypeError, ValueError):
+                        width = round(float(operands[0]), 3)
+                    continue
+                d = _stroke_darkness_from_ops(op, operands)
+                if d is not None:
+                    darkness = max(0.0, min(1.0, d))
+                    continue
+                if op in {"S", "s", "B", "B*", "b", "b*"} and width is not None:
+                    tones.append((width, darkness))
+    finally:
+        pdf.close()
+    return tones or None
+
+
+def tonal_recede_score(after_path: Path) -> tuple[float | None, dict]:
+    """Cut vs beyond mean-darkness ratio — the §1.3/§4.2 value ramp.
+
+    Groups strokes into "cut" (the heaviest weight tier, per the same detector
+    :func:`hierarchy_spread_score` uses) and "beyond" (everything lighter), then
+    reports ``mean_darkness(cut) / mean_darkness(beyond)``. A value-flat sheet
+    (beyond geometry left at cut value) scores ~1.0.
+
+    Returns ``(None, meta)`` — never a guess — when the stroke/layer split is
+    unavailable: a raster input, an unparseable stream, a single weight tier
+    (no cut/beyond split), or a beyond group that carries no value.
+    """
+    tones = _vector_stroke_tones(after_path)
+    if not tones:
+        return None, {"note": "no vector stroke tones (raster or unparseable)", "source": "vector"}
+
+    counts: dict[float, int] = {}
+    for width, _dark in tones:
+        counts[width] = counts.get(width, 0) + 1
+    if len(counts) < 2:
+        return None, {"note": "single weight tier — no cut/beyond split", "widths": len(counts)}
+
+    _ratio, cut_pt, _texture_pt = _ratio_from_histogram(counts)
+    cut_dark = [d for w, d in tones if w >= cut_pt]
+    beyond_dark = [d for w, d in tones if w < cut_pt]
+    if not cut_dark or not beyond_dark:
+        return None, {"note": "cut or beyond group empty at cut width", "cut_pt": cut_pt}
+
+    mean_cut = float(np.mean(cut_dark))
+    mean_beyond = float(np.mean(beyond_dark))
+    if mean_beyond <= 0.0:
+        return None, {"note": "beyond group carries no value", "cut_pt": cut_pt}
+
+    ratio = mean_cut / mean_beyond
+    return round(ratio, 3), {
+        "source": "vector",
+        "cut_pt": cut_pt,
+        "cut_mean_darkness": round(mean_cut, 4),
+        "beyond_mean_darkness": round(mean_beyond, 4),
+        "cut_strokes": len(cut_dark),
+        "beyond_strokes": len(beyond_dark),
+    }
+
+
+# --------------------------------------------------------------------------- #
 # Orchestration
 # --------------------------------------------------------------------------- #
 
@@ -507,6 +638,7 @@ def judge(
     bc, bc_meta = band_continuity_score(gray, ppp, intentional)
     hs, hs_meta = hierarchy_spread_score(after, gray)
     fw, fw_meta = fixture_weight_score(gray, envelope)
+    tr, tr_meta = tonal_recede_score(after)
 
     why: list[str] = []
     if fp > FALSE_POCHE_MAX:
@@ -529,6 +661,12 @@ def judge(
             f"fixture_weight: projected fixtures render at darkness {fw:.2f} "
             f"(> {FIXTURE_DARKNESS_MAX:.2f}); fixtures reaching cut value [spec §1.3/§3.2 D4]."
         )
+    if tr is not None and tr < TONAL_RECEDE_MIN_RATIO:
+        why.append(
+            f"tonal_recede: cut is only {tr:.2f}x darker than beyond-cut geometry "
+            f"(< {TONAL_RECEDE_MIN_RATIO:.2f}x); un-cut structure holds cut value instead of "
+            f"receding to grey [spec §1.3/§4.2]."
+        )
 
     verdict = "review" if why else "pass"
     if not why:
@@ -547,18 +685,21 @@ def judge(
             "band_continuity": bc,
             "hierarchy_spread": hs,
             "fixture_weight": fw,
+            "tonal_recede": tr,
         },
         "thresholds": {
             "false_poche_max": FALSE_POCHE_MAX,
             "band_gap_max": BAND_GAP_MAX,
             "hierarchy_min_ratio": HIERARCHY_MIN_RATIO,
             "fixture_darkness_max": FIXTURE_DARKNESS_MAX,
+            "tonal_recede_min_ratio": TONAL_RECEDE_MIN_RATIO,
         },
         "details": {
             "false_poche": fp_meta,
             "band_continuity": bc_meta,
             "hierarchy_spread": hs_meta,
             "fixture_weight": fw_meta,
+            "tonal_recede": tr_meta,
         },
         "verdict": verdict,
         "why": why,

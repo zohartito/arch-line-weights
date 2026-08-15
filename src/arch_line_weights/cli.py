@@ -34,6 +34,9 @@ from .poche import apply_poche
 from .presets import PRESETS, select_preset
 from .progress import DEFAULT_PROGRESS_FILE, make_reporter
 from .role_signal import no_role_signal, no_role_signal_message
+from .tonal_recede import MODES as TONAL_RECEDE_MODES
+from .tonal_recede import describe_ramp as tonal_recede_describe_ramp
+from .tonal_recede import tonal_recede_resolver
 from .visual_check import (
     VALID_VISUAL_CHECK_STATUSES,
     build_visual_check_summary,
@@ -280,6 +283,18 @@ def inspect(src: Path, pretty: bool, source: str):
     help="Use marked-content OCG layer roles to override live PDF stream stroke weights/colors when binding is reliable.",
 )
 @click.option(
+    "--tonal-recede",
+    "tonal_recede",
+    type=click.Choice(sorted(TONAL_RECEDE_MODES)),
+    is_flag=False,
+    flag_value="value",
+    default=None,
+    help="Value-demote beyond-cut geometry (spec §1.3/§4.2): keep the cut at "
+    "full darkness and lighten each lighter weight tier toward white. Off by "
+    "default. Bare --tonal-recede = hue-preserving 'value' mode; "
+    "--tonal-recede grey neutralizes to a grey ramp first.",
+)
+@click.option(
     "--legacy-weights",
     is_flag=True,
     help="Use the pre-v1 luminance + frequency bucketing for --auto instead of the role ladder.",
@@ -325,6 +340,7 @@ def apply(
     for_print: bool,
     auto: bool,
     architectural: bool,
+    tonal_recede: str | None,
     legacy_weights: bool,
     strict: bool,
     default_width: float,
@@ -429,6 +445,12 @@ def apply(
         )
         click.echo("# architectural: marked-content layer overrides enabled", err=True)
 
+    layer_tone_resolver = None
+    if tonal_recede:
+        layer_tone_resolver = tonal_recede_resolver(tonal_recede)
+        for line in tonal_recede_describe_ramp(tonal_recede):
+            click.echo(line, err=True)
+
     if dry_run:
         click.echo("--dry-run: no file written.", err=True)
         return
@@ -446,6 +468,7 @@ def apply(
         layer_weight_resolver=layer_weight_resolver,
         layer_color_resolver=layer_color_resolver,
         layer_solid_line_resolver=layer_solid_line_resolver,
+        layer_tone_resolver=layer_tone_resolver,
     )
 
     click.echo("", err=True)
@@ -479,6 +502,11 @@ def apply(
     if result.layer_dash_overrides:
         click.echo(
             f"architectural dash overrides: {result.layer_dash_overrides:,} strokes",
+            err=True,
+        )
+    if result.tonal_recede_applied:
+        click.echo(
+            f"tonal recede: {result.tonal_recede_applied:,} beyond-cut strokes value-demoted",
             err=True,
         )
     for warning in result.warnings:
@@ -902,6 +930,19 @@ def bridge_rhino_ai_cmd(
     "membranes, and entourage stay subordinate.",
 )
 @click.option(
+    "--tonal-recede",
+    "tonal_recede",
+    type=click.Choice(sorted(TONAL_RECEDE_MODES)),
+    is_flag=False,
+    flag_value="value",
+    default=None,
+    help="Value-demote beyond-cut geometry (spec §1.3/§4.2): keep the cut at "
+    "full darkness and lighten each lighter weight tier toward white. Off by "
+    "default. Bare --tonal-recede = hue-preserving 'value' mode; "
+    "--tonal-recede grey neutralizes to a grey ramp first. Recolors only the "
+    "native stroke payload; source layers stay intact.",
+)
+@click.option(
     "--default-width",
     type=float,
     default=0.25,
@@ -1007,6 +1048,7 @@ def apply_saas_cmd(
     for_print: bool,
     auto: bool,
     architectural: bool,
+    tonal_recede: str | None,
     default_width: float,
     poche: bool,
     poche_overrides_path: Path | None,
@@ -1107,6 +1149,12 @@ def apply_saas_cmd(
             source=resolved_source,
         )
 
+    layer_tone_resolver = None
+    if tonal_recede:
+        layer_tone_resolver = tonal_recede_resolver(tonal_recede)
+        for line in tonal_recede_describe_ramp(tonal_recede):
+            click.echo(line, err=True)
+
     if dry_run:
         click.echo("--dry-run: no file written.", err=True)
         return
@@ -1157,6 +1205,7 @@ def apply_saas_cmd(
                 layer_weight_resolver=layer_weight_resolver,
                 layer_color_resolver=layer_color_resolver,
                 layer_solid_line_resolver=layer_solid_line_resolver,
+                layer_tone_resolver=layer_tone_resolver,
                 poche_overlay=resolved_poche_overlay,
                 architectural=architectural,
                 preset=preset,
@@ -1202,6 +1251,7 @@ def apply_saas_cmd(
                 layer_weight_resolver=layer_weight_resolver,
                 layer_color_resolver=layer_color_resolver,
                 layer_solid_line_resolver=layer_solid_line_resolver,
+                layer_tone_resolver=layer_tone_resolver,
             )
         finally:
             reporter.close()
@@ -1233,6 +1283,11 @@ def apply_saas_cmd(
     if result.layer_dash_overrides:
         click.echo(
             f"  architectural dash overrides → {result.layer_dash_overrides:>7,} ops",
+            err=True,
+        )
+    if result.tonal_recede_applied:
+        click.echo(
+            f"  tonal recede (value-demoted) → {result.tonal_recede_applied:>7,} ops",
             err=True,
         )
     if result.unmatched_colors:
