@@ -33,8 +33,10 @@ def test_demo_after_passes() -> None:
     result = vj.judge(DEMO_AFTER, before=DEMO_RAW, dpi=DPI)
     assert result["verdict"] == "pass", result["why"]
     scores = result["scores"]
-    # Sane, in-range scores for a clean synthetic section.
-    assert scores["false_poche"] == 0.0
+    # Sane, in-range scores for a clean synthetic section. false_poche is
+    # either clean (0.0) or unscored (None — too little solid fill to judge);
+    # both mean "no false poché flagged".
+    assert scores["false_poche"] is None or scores["false_poche"] <= vj.FALSE_POCHE_MAX
     assert 0.0 <= scores["band_continuity"] <= vj.BAND_GAP_MAX
     assert scores["hierarchy_spread"] >= vj.HIERARCHY_MIN_RATIO
     # No report → fixture axis is not scored (never guessed).
@@ -105,7 +107,28 @@ def test_clean_render_has_no_false_poche(tmp_path: Path) -> None:
     png = tmp_path / "clean.png"
     Image.fromarray(gray).save(png)
     result = vj.judge(png, dpi=DPI)
-    assert result["scores"]["false_poche"] == 0.0
+    fp = result["scores"]["false_poche"]
+    assert fp is None or fp <= vj.FALSE_POCHE_MAX
+    assert not any("false_poche" in reason for reason in result["why"])
+
+
+def test_no_poche_drawing_is_not_flagged_as_all_false(tmp_path: Path) -> None:
+    """A drawing with no poché at all must not read as 100% false poché.
+
+    Regression: a real section with only a few tiny rebar-dot fills scored
+    false_poche=1.0 (every dot floated in whitespace), so the judge cried
+    wolf on every drawing that never had poché applied.
+    """
+    gray = np.full((900, 900), 255, dtype=np.uint8)
+    gray[300:700, 120:122] = 0  # hairline linework, not fill
+    gray[300:700, 400:402] = 0
+    for cx in range(200, 320, 24):  # rebar-dot scatter in open whitespace
+        gray[820:825, cx : cx + 5] = 0
+    png = tmp_path / "no-poche.png"
+    Image.fromarray(gray).save(png)
+    result = vj.judge(png, dpi=DPI)
+    assert result["scores"]["false_poche"] is None
+    assert not any("false_poche" in reason for reason in result["why"])
 
 
 def test_blank_image_is_safe(tmp_path: Path) -> None:

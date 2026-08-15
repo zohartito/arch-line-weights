@@ -61,6 +61,13 @@ from scipy import ndimage
 # we call it a defect — a small tolerance for legitimate detached cut members.
 FALSE_POCHE_MAX = 0.05
 
+# Minimum total solid-fill mass, expressed as the side of a square in points,
+# before false_poche is meaningful. A real cut-mass poché is far larger than
+# this; below it the only "fills" are rebar dots or hatch blobs, and the
+# fraction-of-poché-that-is-false question has no answer. Guards against the
+# degenerate 100%-false reading on drawings that never had poché applied.
+POCHE_MASS_MIN_PT = 25.0
+
 # §1.2 "the continuous ground datum" — the cut profile + poché is one continuous
 # band. §3.2 defect D3: a slender CLT wall fragmented into ~17 chains reading as
 # white dashes. A heavy band losing more than 20% of its run to gaps reads as
@@ -235,7 +242,7 @@ def build_report_envelope(report: dict, gray: np.ndarray) -> ReportEnvelope:
 # --------------------------------------------------------------------------- #
 
 
-def false_poche_score(gray: np.ndarray, ppp: float) -> tuple[float, dict]:
+def false_poche_score(gray: np.ndarray, ppp: float) -> tuple[float | None, dict]:
     """Fraction of solid-fill mass that is *false* poché — render-intrinsic.
 
     A false-poché blob is a compact solid fill *floating in whitespace*: its
@@ -251,6 +258,11 @@ def false_poche_score(gray: np.ndarray, ppp: float) -> tuple[float, dict]:
     lab, n = ndimage.label(fills)
     if n == 0:
         return 0.0, {"solid_fill_px": 0, "flagged_blobs": [], "mode": "floating-in-whitespace"}
+    # Below this much total solid fill, the drawing carries no poché worth
+    # judging (rebar dots, hatch blobs). The question "what fraction of the
+    # poché is false?" is then undefined, not 100% — so the axis returns None
+    # rather than guessing, matching fixture_weight / tonal_recede.
+    min_poche_mass = (POCHE_MASS_MIN_PT * ppp) ** 2
     sizes = ndimage.sum(np.ones_like(lab), lab, range(1, n + 1))
     objs = ndimage.find_objects(lab)
     ink = gray < INK_LEVEL
@@ -290,13 +302,19 @@ def false_poche_score(gray: np.ndarray, ppp: float) -> tuple[float, dict]:
                     "ring_density": round(ring_density, 3),
                 }
             )
-    frac = false_mass / solid_mass if solid_mass else 0.0
     flagged.sort(key=lambda d: d["area_px"], reverse=True)
-    return round(frac, 4), {
+    meta = {
         "solid_fill_px": int(solid_mass),
         "flagged_blobs": flagged[:12],
         "mode": "floating-in-whitespace",
     }
+    if solid_mass < min_poche_mass:
+        meta["skipped"] = (
+            f"solid fill mass {int(solid_mass)}px < {int(min_poche_mass)}px "
+            f"({POCHE_MASS_MIN_PT}pt square): no poché to judge"
+        )
+        return None, meta
+    return round(false_mass / solid_mass, 4), meta
 
 
 # --------------------------------------------------------------------------- #
@@ -641,7 +659,7 @@ def judge(
     tr, tr_meta = tonal_recede_score(after)
 
     why: list[str] = []
-    if fp > FALSE_POCHE_MAX:
+    if fp is not None and fp > FALSE_POCHE_MAX:
         why.append(
             f"false_poche {fp:.2%} of solid-fill mass sits outside the cut envelope "
             f"(> {FALSE_POCHE_MAX:.0%}); black boxes that aren't poché [spec §1.3/§3.2 D1]."
