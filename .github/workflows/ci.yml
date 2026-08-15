@@ -83,3 +83,4 @@ jobs:
       continue-on-error: true    # don't fail CI on formatting alone for now
 permissions:
   contents: read
+  pull-requests: read
