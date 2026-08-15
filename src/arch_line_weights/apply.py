@@ -44,6 +44,7 @@ class ApplyResult:
     marked_content_ops_seen: int = 0
     marked_content_layers_seen: int = 0
     marked_content_malformed: int = 0
+    tonal_recede_applied: int = 0
     warnings: list[str] = field(default_factory=list)
 
 
@@ -58,6 +59,8 @@ def apply_to_file(
     layer_weight_resolver: Callable[[str], float | None] | None = None,
     layer_color_resolver: Callable[[str], tuple[int, int, int] | None] | None = None,
     layer_solid_line_resolver: Callable[[str], bool] | None = None,
+    layer_tone_resolver: Callable[[tuple[int, int, int], float], tuple[int, int, int] | None]
+    | None = None,
 ) -> ApplyResult:
     """Apply per-color stroke widths to `src`, save to `dst`.
 
@@ -87,6 +90,7 @@ def apply_to_file(
             layer_weight_resolver=layer_weight_resolver,
             layer_color_resolver=layer_color_resolver,
             layer_solid_line_resolver=layer_solid_line_resolver,
+            layer_tone_resolver=layer_tone_resolver,
         )
         new_bytes = pikepdf.unparse_content_stream(new_inst)
         page.Contents = pdf.make_stream(new_bytes)
@@ -228,6 +232,8 @@ def _rewrite(
     layer_weight_resolver: Callable[[str], float | None] | None = None,
     layer_color_resolver: Callable[[str], tuple[int, int, int] | None] | None = None,
     layer_solid_line_resolver: Callable[[str], bool] | None = None,
+    layer_tone_resolver: Callable[[tuple[int, int, int], float], tuple[int, int, int] | None]
+    | None = None,
 ) -> list:
     out: list = []
     current_rgb: tuple[int, int, int] | None = None
@@ -311,6 +317,15 @@ def _rewrite(
             semantic_color = layer_color(active_layer)
             if semantic_color is not None:
                 out.append((_rgb_operands(semantic_color), Operator("RG")))
+            elif layer_tone_resolver is not None and current_rgb is not None:
+                # Tonal recede: value-demote beyond-cut strokes (spec §1.3/§4.2).
+                # Keyed off the resolved weight `w` — the cut tier is left
+                # untouched (resolver returns None), so no color op is emitted
+                # and the stroke keeps its source color / byte position.
+                toned = layer_tone_resolver(current_rgb, w)
+                if toned is not None:
+                    out.append((_rgb_operands(toned), Operator("RG")))
+                    result.tonal_recede_applied += 1
 
             linetype = (
                 rgb_to_linetype.get(current_rgb)
