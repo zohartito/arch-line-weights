@@ -430,7 +430,7 @@ the residual ~3% of layers."
 
 The three problem layers were not loaded into a Python REPL during this
 research session — the geometry dump only exists alongside an Illustrator
-session and the ARCH 202B `.ai` reference file. The pathology descriptions
+session and the reference `.ai` file. The pathology descriptions
 above are reconstructed from `POSTMORTEM.md` Attempts 4-5, the layer-name
 semantics (`WINDOW_FRAMES_REMAP`, `CLT_GAP_ROOF_CAP`,
 `CU_CORR_SOLID_OPAQUE`), and the failure-mode signatures of the existing

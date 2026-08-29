@@ -35,7 +35,7 @@ arch-lw bridge-rhino-ai \
   --artboard 24x36in \
   --fit fit \
   --margin 0.5in \
-  --preset usc \
+  --preset studio \
   --source rhino \
   --for-print \
   --apply-jsx \

@@ -8,4 +8,4 @@ must be path-free and must preserve these launch gates:
 
 - Posting/public proof is NO-GO unless W5/W7 explicitly accepts it.
 - Synthetic proof does not close #30.
-- Private USC regression stays private.
+- Private reference regression stays private.

@@ -194,6 +194,73 @@ def _review_reasons(
     return sorted(set(reasons))
 
 
+def _inject_confidence_threshold() -> float:
+    """The confidence a fill must clear to be injected (env-overridable)."""
+    from .poche import (
+        _DEFAULT_POCHE_MIN_INJECT_CONFIDENCE,
+        _POCHE_MIN_INJECT_CONFIDENCE_ENV,
+        _env_float,
+    )
+
+    return _env_float(_POCHE_MIN_INJECT_CONFIDENCE_ENV, _DEFAULT_POCHE_MIN_INJECT_CONFIDENCE)
+
+
+def _overrides_hint(layer: str) -> str:
+    return (
+        f'add a per-layer --overrides entry for "{layer}" '
+        '(strategy "concave_hull" with a "ratio", or "bbox"), repair the Make2D '
+        'cut so the chain closes, or set strategy "skip" to exclude the layer'
+    )
+
+
+def _layer_why_next_action(
+    fill: FillResult,
+    *,
+    status: str,
+    visual_acceptance_required: bool,
+) -> tuple[str | None, str | None]:
+    """Explain WHY a low-confidence/gated layer landed here and WHAT TO DO.
+
+    Names the rung (strategy) that produced the result and the threshold it
+    missed, then points at the existing per-layer ``--overrides`` remediation.
+    Clean ``filled``/``inferred`` layers return ``(None, None)`` so the report
+    stays quiet on the happy path.
+    """
+    if status == "low_confidence":
+        threshold = _inject_confidence_threshold()
+        why = (
+            f"Rung '{fill.strategy}' produced confidence {fill.confidence:.2f}, below the "
+            f"injection threshold {threshold:.2f}; geometry was kept diagnostic-only rather "
+            "than painted as poché."
+        )
+        return why, f"Raise confidence, or {_overrides_hint(fill.layer)}."
+    if status == "failed":
+        why = f"Rung '{fill.strategy}' produced no usable polygons; the cut chain did not close."
+        return why, f"Repair the Make2D cut geometry, or {_overrides_hint(fill.layer)}."
+    if status == "skipped":
+        return (
+            "Layer was skipped by a user --overrides 'skip' entry.",
+            f'Remove the "skip" override for "{fill.layer}" to re-enable this layer.',
+        )
+    if status == "missing_payload":
+        return (
+            "The payload layer for injection could not be located in the document.",
+            "Confirm the layer name matches the payload document, then rerun.",
+        )
+    if visual_acceptance_required and status == "inferred":
+        why = (
+            f"Rung '{fill.strategy}' inferred this foundation/concrete fill at confidence "
+            f"{fill.confidence:.2f}; foundation/concrete poché requires W5/W7 visual acceptance "
+            "before launch."
+        )
+        next_action = (
+            f'Confirm the fill in a W5/W7 visual proof; if wrong, override "{fill.layer}" '
+            'with strategy "skip".'
+        )
+        return why, next_action
+    return None, None
+
+
 def build_apply_saas_report(
     *,
     input_path: str | Path,
@@ -251,6 +318,12 @@ def build_apply_saas_report(
             missing_payload=missing_payload,
             extra_review_reasons=extra_reasons,
         )
+        visual_acceptance_required = _requires_visual_acceptance(fill)
+        layer_why, layer_next_action = _layer_why_next_action(
+            fill,
+            status=status,
+            visual_acceptance_required=visual_acceptance_required,
+        )
 
         layers.append(
             {
@@ -275,8 +348,10 @@ def build_apply_saas_report(
                 },
                 "review": {
                     "needs_review": bool(review_reasons),
-                    "visual_acceptance_required": _requires_visual_acceptance(fill),
+                    "visual_acceptance_required": visual_acceptance_required,
                     "reasons": review_reasons,
+                    "why": layer_why,
+                    "next_action": layer_next_action,
                 },
             }
         )
@@ -476,6 +551,12 @@ def build_poche_report(
             status=status,
             extra_review_reasons=extra_reasons,
         )
+        visual_acceptance_required = _requires_visual_acceptance(fill)
+        layer_why, layer_next_action = _layer_why_next_action(
+            fill,
+            status=status,
+            visual_acceptance_required=visual_acceptance_required,
+        )
 
         layers.append(
             {
@@ -496,12 +577,14 @@ def build_poche_report(
                     "used_poche_close_layer": False,
                     "used_structural_helpers": bool(structural_helper_count),
                     "structural_helper_count": structural_helper_count,
-                    "used_visible_completion": False,
+                    "used_visible_completion": fill.strategy == "structural_visible_completion",
                 },
                 "review": {
                     "needs_review": bool(review_reasons),
-                    "visual_acceptance_required": _requires_visual_acceptance(fill),
+                    "visual_acceptance_required": visual_acceptance_required,
                     "reasons": review_reasons,
+                    "why": layer_why,
+                    "next_action": layer_next_action,
                 },
             }
         )

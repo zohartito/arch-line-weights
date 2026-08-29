@@ -93,7 +93,7 @@ Three bounded subagent audits checked the remaining open issue groups after
 GitHub triage was applied. They found no additional low-risk code cleanup or
 tracker action that would close a remaining issue.
 
-- #29 and #30 are not closeable without accepted W5/W7/private USC proof.
+- #29 and #30 are not closeable without accepted W5/W7/private reference proof.
 - #31 and #32 are close-candidates only after the W5/W7 review-packet and
   report contract are accepted.
 - #7 and #19 still need Illustrator-backed/private visual acceptance.

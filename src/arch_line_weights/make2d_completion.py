@@ -189,6 +189,8 @@ def has_cut_anchor(poly: Polygon, cut_lines: list[LineString]) -> bool:
 
 def _completion_area_limit(layer_name: str) -> float:
     upper = layer_name.upper()
+    if "TEC_TIMBER_BEAMS" in upper or "TIMBER_BEAM" in upper or "BEAM_CAP" in upper:
+        return 30000.0
     if "TEC_CLT_SLABS" in upper or "FLOOR_PLATE" in upper or "SLAB_PLATE" in upper:
         return 7000.0
     if "TEC_ROOF_CLT" in upper or "ROOF_CUT_MASS" in upper or "ROOF_CAP" in upper:
@@ -280,20 +282,30 @@ def _timber_beam_candidate_is_plausible(
     shared: float,
     required: float,
 ) -> bool:
-    """Allow only small, repeated beam-end rectangles from helper completion."""
+    """Allow repeated beam-end cells and long slender beam/column strips."""
     dims = _oriented_dimensions(poly)
     if dims is None:
         return False
     short, long = dims
     aspect = long / max(short, 1e-6)
-    return (
+    rectangularity = _rectangularity(poly, short, long)
+    small_cell = (
         80.0 <= poly.area <= 450.0
         and 4.0 <= short <= 18.0
         and long <= 45.0
         and 1.2 <= aspect <= 6.0
-        and _rectangularity(poly, short, long) >= 0.65
+        and rectangularity >= 0.65
         and shared >= max(required, 20.0)
     )
+    slender_strip = (
+        900.0 <= poly.area <= 30000.0
+        and 10.0 <= short <= 90.0
+        and long <= 750.0
+        and aspect >= 3.0
+        and rectangularity >= 0.72
+        and shared >= max(50.0, required * 1.5)
+    )
+    return small_cell or slender_strip
 
 
 def _duplicates_existing(poly: Polygon, existing: list[Polygon]) -> bool:

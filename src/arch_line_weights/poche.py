@@ -31,6 +31,7 @@ import json
 import logging
 import math
 import os
+import re
 import subprocess
 import textwrap
 import time
@@ -287,6 +288,46 @@ def _is_structural_poche_layer(layer_name: str) -> bool:
         return False
 
 
+def _is_visible_structural_layer_name(layer_name: str) -> bool:
+    upper = layer_name.upper()
+    if "::VISIBLE::CURVES::" not in upper and "::VISIBLE::TANGENTS::" not in upper:
+        return False
+    if "GLASS" in upper or "IGU" in upper:
+        return False
+    # Only foundation/footing visible geometry may auto-fill: Make2D misfiles
+    # real cut-plane footing mass onto Visible::Curves. Projected concrete or
+    # roof loops are legitimate non-cut geometry and must never become poché.
+    if not any(token in upper for token in ("FOUNDATION", "FOOTING")):
+        return False
+    try:
+        from .architectural import classify_architectural_layer
+
+        assignment = classify_architectural_layer(layer_name)
+    except Exception:
+        return False
+    return assignment.tier == "structure_primary" and not assignment.poche
+
+
+def _match_override(overrides: dict, layer_name: str):
+    """Match a per-layer override by exact name or fnmatch-style suffix."""
+    ov = overrides.get(layer_name)
+    if ov is None:
+        for pattern, val in overrides.items():
+            if pattern.endswith("*") and layer_name.endswith(pattern[:-1].split("::")[-1]):
+                return val
+    return ov
+
+
+# The gate that feeds this (_is_visible_structural_layer_name) matches
+# case-insensitively, so the rewrite must too — a mixed-case Rhino export
+# would otherwise pass the gate and then silently skip completion.
+_VISIBLE_TREE_RE = re.compile(r"::Visible::(?:Curves|Tangents)::", re.IGNORECASE)
+
+
+def _cut_equivalent_layer_name(layer_name: str) -> str:
+    return _VISIBLE_TREE_RE.sub("::Visible::ClippingPlaneIntersections::", layer_name)
+
+
 def _segment_lengths(lines: list[LineString]) -> list[float]:
     lengths: list[float] = []
     for line in lines:
@@ -296,6 +337,158 @@ def _segment_lengths(lines: list[LineString]) -> list[float]:
             if seg.length > 0:
                 lengths.append(float(seg.length))
     return lengths
+
+
+def _path_length(path: list[list[float]]) -> float:
+    if len(path) < 2:
+        return 0.0
+    try:
+        return float(LineString([(p[0], p[1]) for p in path]).length)
+    except Exception:
+        return 0.0
+
+
+# ---------------------------------------------------------------------------- #
+# Visible-structural completion gates
+#
+# DRAWING-UNIT ASSUMPTION: the magic thresholds below (min_area 800/1200,
+# min_path_length 100, and the width >= 1.5 * height plausibility ratio) are all
+# expressed in the QA section's native point units — the same coordinate space
+# the ``dump_cut_geometry.jsx`` anchors are emitted in (Illustrator points at the
+# QA plot scale). They are NOT millimetres or model units. Feeding geometry from
+# a different scale or unit system will mis-gate these candidates; re-derive the
+# constants for that unit space before reusing them.
+# ---------------------------------------------------------------------------- #
+
+
+def _visible_structural_min_path_length(layer_name: str) -> float:
+    upper = layer_name.upper()
+    if "FOUNDATION" in upper or "FOOTING" in upper or "CONCRETE" in upper:
+        return 100.0
+    return 0.0
+
+
+def _visible_structural_min_area(layer_name: str) -> float:
+    upper = layer_name.upper()
+    if "FOUNDATION" in upper or "FOOTING" in upper or "CONCRETE" in upper:
+        return 800.0
+    if "TIMBER" in upper or "CLT" in upper or "BEAM" in upper or "COLUMN" in upper:
+        return 800.0
+    return 1200.0
+
+
+def _visible_structural_plausibility_reason(layer_name: str, poly: Polygon) -> str | None:
+    """Return a rejection reason when a candidate fails the plausibility gate.
+
+    ``None`` means the candidate is plausible. Kept as the single source of
+    truth for both the boolean gate and the reported candidate reason so the
+    two never drift.
+    """
+    upper = layer_name.upper()
+    minx, miny, maxx, maxy = poly.bounds
+    width = maxx - minx
+    height = maxy - miny
+    if width <= 1.0 or height <= 1.0:
+        return f"rejected: degenerate bounds (width {width:.1f} x height {height:.1f})"
+    if ("FOUNDATION" in upper or "FOOTING" in upper) and width < height * 1.5:
+        return (
+            f"rejected: width {width:.1f} < 1.5x height {height:.1f} "
+            "(not a plausible cut-plane footing strip)"
+        )
+    return None
+
+
+def _visible_structural_candidate_is_plausible(layer_name: str, poly: Polygon) -> bool:
+    return _visible_structural_plausibility_reason(layer_name, poly) is None
+
+
+def _visible_structural_source_role(layer_name: str) -> str:
+    return "visible_tangent" if "::VISIBLE::TANGENTS::" in layer_name.upper() else "visible_curve"
+
+
+def _visible_structural_completion_candidates(
+    layer_name: str,
+    paths: list[list[list[float]]],
+) -> tuple[list[Polygon], list[object]]:
+    """Infer visible-structural cut fills AND record every loop considered.
+
+    Mirrors ``complete_structural_cut_polygons`` in ``make2d_completion.py``:
+    each open-loop candidate is recorded as an accepted or rejected
+    ``CompletionCandidate`` (with the gate it missed and its bounds), so
+    ambiguous or gated loops surface in the report instead of being dropped
+    silently. Returns ``(accepted_polygons, candidates)``.
+    """
+    from .make2d_completion import CompletionCandidate
+
+    component = layer_name.rsplit("::", 1)[-1].upper()
+    source_role = _visible_structural_source_role(layer_name)
+    provenance = "visible-structural-open-loop"
+    candidates: list[object] = []
+
+    def _rejected(poly: Polygon, reason: str) -> CompletionCandidate:
+        return CompletionCandidate(
+            component_key=component,
+            target_layer=layer_name,
+            source_role=source_role,
+            polygon=poly,
+            confidence=0.0,
+            provenance=provenance,
+            accepted=False,
+            reason=reason,
+            cut_shared_length=0.0,
+        )
+
+    min_path_len = _visible_structural_min_path_length(layer_name)
+    filtered_paths = [path for path in paths if _path_length(path) >= min_path_len]
+    lines = _lines_from_anchors(filtered_paths)
+    if not lines:
+        return [], candidates
+
+    cut_like_layer = _cut_equivalent_layer_name(layer_name)
+    min_area = _visible_structural_min_area(layer_name)
+    accepted_polys: list[Polygon] = []
+    for poly in _try_structural_open_loop(cut_like_layer, lines, []):
+        if poly.area < min_area:
+            candidates.append(
+                _rejected(
+                    poly,
+                    f"rejected: area {poly.area:.1f} below visible min_area {min_area:.1f}",
+                )
+            )
+            continue
+        plausibility_reason = _visible_structural_plausibility_reason(layer_name, poly)
+        if plausibility_reason is not None:
+            candidates.append(_rejected(poly, plausibility_reason))
+            continue
+        accepted_polys.append(poly)
+        candidates.append(
+            CompletionCandidate(
+                component_key=component,
+                target_layer=layer_name,
+                source_role=source_role,
+                polygon=poly,
+                confidence=0.88,
+                provenance=provenance,
+                accepted=True,
+                reason="accepted: visible-structural cut strip passed area and plausibility gates",
+                cut_shared_length=0.0,
+            )
+        )
+
+    return _clean_structural_polygons(accepted_polys), candidates
+
+
+def _visible_structural_target_polygons(
+    layer_name: str,
+    paths: list[list[list[float]]],
+) -> list[Polygon]:
+    polys, _candidates = _visible_structural_completion_candidates(layer_name, paths)
+    return polys
+
+
+def _uses_completion_paths_for_polygonize(layer_name: str) -> bool:
+    upper = layer_name.upper()
+    return "TEC_TIMBER_BEAMS" not in upper and "TIMBER_BEAM" not in upper
 
 
 def _clean_structural_polygons(polys: list[Polygon]) -> list[Polygon]:
@@ -548,6 +741,45 @@ def _structural_fragment_gap_bridges(
     return bridges
 
 
+def _try_stepped_concrete_caps(layer_name: str, lines: list[LineString]) -> list[Polygon]:
+    upper = layer_name.upper()
+    if "TEC_CONCRETE_BASE" not in upper:
+        return []
+
+    verticals: list[tuple[float, float, float]] = []
+    horizontals: list[tuple[float, float, float]] = []
+    for segment in _segments_from_lines(lines):
+        coords = list(segment.coords)
+        if len(coords) < 2:
+            continue
+        x0, y0 = coords[0]
+        x1, y1 = coords[-1]
+        if abs(x0 - x1) <= 1.0 and segment.length >= 20.0:
+            verticals.append((float(x0), min(float(y0), float(y1)), max(float(y0), float(y1))))
+        elif abs(y0 - y1) <= 1.0 and segment.length >= 20.0:
+            horizontals.append((float(y0), min(float(x0), float(x1)), max(float(x0), float(x1))))
+
+    caps: list[Polygon] = []
+    for top_y, h_minx, h_maxx in horizontals:
+        for low_x, _low_bottom, low_top in verticals:
+            gap = top_y - low_top
+            if gap < 8.0 or gap > 80.0:
+                continue
+            if abs(low_x - h_minx) > 6.0:
+                continue
+            for high_x, _high_bottom, high_top in verticals:
+                if high_x <= low_x + 20.0:
+                    continue
+                if abs(high_top - top_y) > 6.0:
+                    continue
+                if h_maxx > high_x + 6.0 or high_x - h_maxx > 50.0:
+                    continue
+                cap = box(low_x, low_top, high_x, top_y)
+                if cap.area >= 200.0:
+                    caps.append(cap)
+    return caps
+
+
 def _merge_line_strings(lines: list[LineString]) -> list[LineString]:
     if not lines:
         return []
@@ -616,6 +848,9 @@ def _try_structural_parallel_edges(
     lengths = sorted(seg.length for seg in cut_segments if seg.length > 2.0)
     median_seg = lengths[len(lengths) // 2] if lengths else 20.0
     max_thickness = max(12.0, min(185.0, median_seg * 0.75))
+    upper = layer_name.upper()
+    if "BACKUP_WALL" in upper or "CLT_BACKUP" in upper:
+        max_thickness = max(max_thickness, 36.0)
     min_overlap = max(5.0, min(30.0, median_seg * 0.08))
     max_angle_delta = math.cos(math.radians(8.0))
     tagged = [(seg, "cut") for seg in cut_segments] + [(seg, "helper") for seg in helper_segments]
@@ -669,7 +904,24 @@ def _try_structural_parallel_edges(
             if max(a.length, b.length) / max(1.0, min_len) > 5.0 and overlap < 0.75 * min_len:
                 continue
 
-            def _point_at_projection(line: LineString, projection: float) -> tuple[float, float]:
+            roof_helper_extension = False
+            if "TEC_ROOF_CLT" in upper and {a_kind, b_kind} == {"cut", "helper"}:
+                cut_interval = a_interval if a_kind == "cut" else b_interval
+                helper_interval = b_interval if a_kind == "cut" else a_interval
+                extra_start = max(0.0, helper_interval[0][0] - cut_interval[0][0])
+                extra_end = max(0.0, cut_interval[1][0] - helper_interval[1][0])
+                max_extra = max(extra_start, extra_end)
+                if max_extra <= max(90.0, 0.25 * (cut_interval[1][0] - cut_interval[0][0])):
+                    overlap_start = cut_interval[0][0]
+                    overlap_end = cut_interval[1][0]
+                    roof_helper_extension = True
+
+            def _point_at_projection(
+                line: LineString,
+                projection: float,
+                *,
+                clamp: bool = True,
+            ) -> tuple[float, float]:
                 coords = list(line.coords)
                 start = coords[0]
                 end = coords[-1]
@@ -678,7 +930,9 @@ def _try_structural_parallel_edges(
                 denom = end_proj - start_proj
                 if abs(denom) <= 1e-9:
                     return start
-                t = max(0.0, min(1.0, (projection - start_proj) / denom))
+                t = (projection - start_proj) / denom
+                if clamp:
+                    t = max(0.0, min(1.0, t))
                 return (
                     start[0] + (end[0] - start[0]) * t,
                     start[1] + (end[1] - start[1]) * t,
@@ -686,10 +940,26 @@ def _try_structural_parallel_edges(
 
             candidate = Polygon(
                 [
-                    _point_at_projection(a, overlap_start),
-                    _point_at_projection(a, overlap_end),
-                    _point_at_projection(b, overlap_end),
-                    _point_at_projection(b, overlap_start),
+                    _point_at_projection(
+                        a,
+                        overlap_start,
+                        clamp=not (roof_helper_extension and a_kind == "helper"),
+                    ),
+                    _point_at_projection(
+                        a,
+                        overlap_end,
+                        clamp=not (roof_helper_extension and a_kind == "helper"),
+                    ),
+                    _point_at_projection(
+                        b,
+                        overlap_end,
+                        clamp=not (roof_helper_extension and b_kind == "helper"),
+                    ),
+                    _point_at_projection(
+                        b,
+                        overlap_start,
+                        clamp=not (roof_helper_extension and b_kind == "helper"),
+                    ),
                 ]
             )
             if candidate.is_empty or not candidate.is_valid or candidate.area <= 10.0:
@@ -765,6 +1035,7 @@ def _try_structural_open_loop(
     cut_only = _clean_structural_polygons(
         _structural_open_loop_candidates(cut_lines, max_gap=max_gap)
         + _try_structural_parallel_edges(layer_name, cut_lines, [])
+        + _try_stepped_concrete_caps(layer_name, cut_lines)
     )
     candidates = list(cut_only)
 
@@ -805,8 +1076,17 @@ def _structural_open_loop_improves(
     structural = _try_structural_open_loop(layer_name, lines, helper_lines)
     if not structural:
         return []
-    structural = _clean_structural_polygons(current + structural)
     current_area = sum(p.area for p in current)
+    structural_only_area = sum(p.area for p in structural)
+    upper = layer_name.upper()
+    if (
+        "TEC_CLT_SLABS" in upper
+        and current
+        and len(structural) > len(current)
+        and structural_only_area >= current_area * 0.80
+    ):
+        return structural
+    structural = _clean_structural_polygons(current + structural)
     structural_area = sum(p.area for p in structural)
     if current and len(structural) <= len(current) and structural_area > current_area * 1.85:
         return []
@@ -1098,7 +1378,10 @@ def polygonize_dump(
     bridge_strategy: str | None = None,
 ) -> PocheReport:
     """Load a JSON dump from `dump_cut_geometry.jsx`, polygonize each layer."""
-    from .make2d_completion import structural_completion_paths_for_layers
+    from .make2d_completion import (
+        complete_structural_cut_polygons,
+        structural_completion_paths_for_layers,
+    )
 
     with open(geometry_json_path) as f:
         data = json.load(f)
@@ -1115,25 +1398,35 @@ def polygonize_dump(
     overrides = overrides or {}
     report = PocheReport()
     cut_data = {name: paths for name, paths in data.items() if _is_poche_cut_layer_name(name)}
-    helper_target_data = {
+    visible_structural_data = {
+        name: paths for name, paths in data.items() if _is_visible_structural_layer_name(name)
+    }
+    early_helper_target_data = {
         name: paths for name, paths in cut_data.items() if _uses_jsx_structural_helpers(name)
     }
+    early_helper_paths_by_layer = structural_completion_paths_for_layers(
+        early_helper_target_data,
+        data,
+    )
+    completion_target_data = {
+        name: paths for name, paths in cut_data.items() if _is_structural_poche_layer(name)
+    }
     structural_completion_paths_by_layer = structural_completion_paths_for_layers(
-        helper_target_data,
+        completion_target_data,
         data,
     )
     for layer_name, paths in cut_data.items():
-        # Match override: exact layer name or fnmatch-style suffix
-        ov = overrides.get(layer_name)
-        if ov is None:
-            for pattern, val in overrides.items():
-                if pattern.endswith("*") and layer_name.endswith(pattern[:-1].split("::")[-1]):
-                    ov = val
-                    break
+        ov = _match_override(overrides, layer_name)
 
-        helper_paths = structural_completion_paths_by_layer.get(layer_name, [])
-        if helper_paths:
-            report.structural_helper_counts[layer_name] = len(helper_paths)
+        helper_paths = early_helper_paths_by_layer.get(layer_name, [])
+        completion_paths = structural_completion_paths_by_layer.get(layer_name, [])
+        polygonize_helper_paths = helper_paths or (
+            completion_paths if _uses_completion_paths_for_polygonize(layer_name) else []
+        )
+        if helper_paths or completion_paths:
+            # Additive, matching poche_saas: helper and completion paths are
+            # distinct evidence sources for the report count.
+            report.structural_helper_counts[layer_name] = len(helper_paths) + len(completion_paths)
 
         polys, result = polygonize_layer(
             layer_name,
@@ -1142,13 +1435,57 @@ def polygonize_dump(
             ov,
             use_alpha_shape=use_alpha_shape,
             bridge_strategy=bridge_strategy,
-            structural_helper_lines=_lines_from_anchors(helper_paths),
+            structural_helper_lines=_lines_from_anchors(polygonize_helper_paths),
         )
+        if completion_paths:
+            base_polys = polys if should_inject_fill(result) else []
+            completion_polys, candidates = complete_structural_cut_polygons(
+                layer_name,
+                paths,
+                completion_paths,
+                base_polys,
+            )
+            report.completion_candidates.extend(candidates)
+            if completion_polys:
+                polys = [*base_polys, *completion_polys]
+                result = FillResult(
+                    layer_name,
+                    "structural_visible_completion",
+                    0.88,
+                    len(polys),
+                    result.segment_count,
+                    result.tolerance,
+                    result.bridge_strategy_name,
+                )
         report.fills.append(result)
         if polys and should_inject_fill(result):
             report.polygons[layer_name] = [
                 [[round(x, 4), round(y, 4)] for x, y in p.exterior.coords] for p in polys
             ]
+    for layer_name, paths in visible_structural_data.items():
+        polys, candidates = _visible_structural_completion_candidates(layer_name, paths)
+        # Record which visible loops were considered and which gate each
+        # accepted/rejected candidate passed or missed. Rejected/ambiguous
+        # candidates are reported, not silently dropped.
+        report.completion_candidates.extend(candidates)
+        ov = _match_override(overrides, layer_name)
+        if ov and str(ov.get("strategy", "")).lower() == "skip":
+            # A skip override suppresses visible auto-fill too — the report
+            # keeps the candidate trail, but nothing is injected.
+            continue
+        if not polys:
+            continue
+        result = FillResult(
+            layer_name,
+            "structural_visible_completion",
+            0.88,
+            len(polys),
+            len(_lines_from_anchors(paths)),
+        )
+        report.fills.append(result)
+        report.polygons[layer_name] = [
+            [[round(x, 4), round(y, 4)] for x, y in p.exterior.coords] for p in polys
+        ]
     return report
 
 
@@ -1184,7 +1521,18 @@ DUMP_JSX_TEMPLATE = r"""#target illustrator
             return true;
         }
         if (n.indexOf("::VISIBLE::CURVES::") === -1 && n.indexOf("::VISIBLE::TANGENTS::") === -1) return false;
-        return n.indexOf("FOUNDATION") !== -1 || n.indexOf("CONCRETE") !== -1;
+        return (
+            n.indexOf("FOUNDATION") !== -1 ||
+            n.indexOf("FOOTING") !== -1 ||
+            n.indexOf("CONCRETE") !== -1 ||
+            n.indexOf("TIMBER") !== -1 ||
+            n.indexOf("CLT") !== -1 ||
+            n.indexOf("BEAM") !== -1 ||
+            n.indexOf("SLAB") !== -1 ||
+            n.indexOf("FLOOR_PLATE") !== -1 ||
+            n.indexOf("ROOF") !== -1 ||
+            n.indexOf("BACKUP_WALL") !== -1
+        );
     }
 
     var doc = null;
@@ -1263,6 +1611,28 @@ __POLYGONS_BAKED__
     }
     for (var L = 0; L < doc.layers.length; L++) visit(doc.layers[L], "");
 
+    var POCHE_FILL_LAYER_NAME = "ARCH_LW_POCHE_FILL";
+    function ensurePocheFillLayer() {
+        var fillLayer = null;
+        for (var li = 0; li < doc.layers.length; li++) {
+            try {
+                if (doc.layers[li].name === POCHE_FILL_LAYER_NAME) {
+                    fillLayer = doc.layers[li];
+                    break;
+                }
+            } catch (e) {}
+        }
+        if (!fillLayer) {
+            fillLayer = doc.layers.add();
+            fillLayer.name = POCHE_FILL_LAYER_NAME;
+        }
+        try { fillLayer.locked = false; } catch (e) {}
+        try { fillLayer.visible = true; } catch (e) {}
+        try { fillLayer.zOrder(ZOrderMethod.SENDTOBACK); } catch (e) {}
+        return fillLayer;
+    }
+
+    var fillLayer = ensurePocheFillLayer();
     var totalCreated = 0;
     var totalHatch = 0;
     var perLayer = [];
@@ -1279,12 +1649,13 @@ __POLYGONS_BAKED__
                 if (pts.length > 2 && pts[0][0] === pts[pts.length-1][0] && pts[0][1] === pts[pts.length-1][1]) {
                     pts = pts.slice(0, pts.length - 1);
                 }
-                var newPath = lyr.pathItems.add();
+                var newPath = fillLayer.pathItems.add();
                 newPath.setEntirePath(pts);
                 newPath.closed = true;
                 newPath.filled = true;
                 newPath.fillColor = BLACK;
                 newPath.stroked = false;
+                try { newPath.zOrder(ZOrderMethod.SENDTOBACK); } catch (e) {}
                 created++;
             } catch (e) {}
         }
@@ -1297,7 +1668,7 @@ __POLYGONS_BAKED__
                 try {
                     var hpts = hlines[hi];
                     if (hpts.length < 2) continue;
-                    var hpath = lyr.pathItems.add();
+                    var hpath = fillLayer.pathItems.add();
                     hpath.setEntirePath(hpts);
                     hpath.closed = false;
                     hpath.filled = false;

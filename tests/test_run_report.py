@@ -346,6 +346,54 @@ def test_poche_report_marks_inferred_foundation_concrete_as_needing_visual_accep
     )
 
 
+def test_poche_report_low_confidence_layer_explains_why_and_remediation():
+    low_confidence = "axon::Visible::ClippingPlaneIntersections::09_SHS_50x50x5_HORIZ"
+    filled = "axon::Visible::ClippingPlaneIntersections::10_SHS_50x50x5_VERT"
+    data = build_poche_report(
+        input_path="section.ai",
+        output_path="section-POCHE.ai",
+        source={"style": "solid", "bridge_strategy": "best"},
+        poche_report=PocheReport(
+            fills=[
+                FillResult(low_confidence, "auto_bridge", 0.69, 1, 18),
+                FillResult(filled, "linemerge_bare", 1.0, 1, 22),
+            ],
+            polygons={filled: [[[0, 0], [10, 0], [10, 10], [0, 10]]]},
+        ),
+    )
+
+    low = data["layers"][0]["review"]
+    assert data["layers"][0]["status"] == "low_confidence"
+    assert "auto_bridge" in low["why"]
+    assert "0.69" in low["why"]
+    assert "0.85" in low["why"]
+    assert "--overrides" in low["next_action"]
+
+    # Clean filled layers stay quiet on the happy path.
+    assert data["layers"][1]["status"] == "filled"
+    assert data["layers"][1]["review"]["why"] is None
+    assert data["layers"][1]["review"]["next_action"] is None
+
+
+def test_poche_report_gated_foundation_layer_explains_visual_acceptance():
+    layer = "axon::Visible::ClippingPlaneIntersections::TEC_FOUNDATION"
+    data = build_poche_report(
+        input_path="section.ai",
+        output_path="section-POCHE.ai",
+        source={"style": "solid", "bridge_strategy": "best"},
+        poche_report=PocheReport(
+            fills=[FillResult(layer, "structural_open_loop", 0.88, 1, 18)],
+            polygons={layer: [[[0, 0], [10, 0], [10, 10], [0, 10]]]},
+        ),
+    )
+
+    review = data["layers"][0]["review"]
+    assert data["layers"][0]["status"] == "inferred"
+    assert review["visual_acceptance_required"] is True
+    assert "W5/W7 visual acceptance" in review["why"]
+    assert "skip" in review["next_action"]
+
+
 def test_apply_saas_report_counts_visual_acceptance_gated_layers():
     layer = "axon::Visible::ClippingPlaneIntersections::TEC_FOUNDATION"
     data = build_apply_saas_report(

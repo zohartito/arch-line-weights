@@ -13,6 +13,21 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Tonal recede (`--tonal-recede`)** — opt-in value demotion for beyond-cut
+  geometry (`target-look-spec.md` §1.3/§4.2). Alongside the weight ramp, `apply`
+  and `apply-saas` now lighten non-cut strokes toward white by a documented
+  factor keyed off each stroke's resolved weight tier (cut 1.00 → profile 0.72 →
+  edges 0.55 → material 0.42 → texture 0.32, floored at 0.28 so hairlines stay
+  visible). The cut owns the darkest value and is never demoted. Two modes:
+  `value` (default, hue-preserving — Fork-E system colors survive) and `grey`
+  (neutralize to a grey ramp). Off by default; the weight-only output is
+  byte-unchanged without the flag. New `arch_line_weights.tonal_recede` module;
+  `apply-saas` rewrites only the native stroke payload, so source layers and the
+  `ARCH_LW_POCHE_FILL` overlay stay intact.
+- **Visual judge fifth axis `tonal_recede`** — deterministic cut : beyond
+  mean-darkness ratio (spec §1.3/§4.2). `review` below 1.15×; returns `null`
+  (never a guess) on raster inputs or a single weight tier, matching
+  `fixture_weight`. Threshold documented in `benchmarks/visual-rubric.md`.
 - Reusable `make2d_completion` module for architectural component evidence:
   parsed layers now have semantic assignments, roles, component keys, and
   accepted/rejected completion candidates. This is the first step toward a
@@ -34,6 +49,11 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- The `usc` preset is renamed to `studio`. `usc` continues to work as a
+  deprecated alias and will be removed in a future major version. Any code
+  importing `USC`, `USC_STUDIO_PRINT`, or `USC_STUDIO_SCREEN` from
+  `arch_line_weights.presets` should migrate to `STUDIO`, `STUDIO_PRINT`, and
+  `STUDIO_SCREEN`; the old names remain as aliases for now.
 - GitHub Actions now conserve private-account minutes during deadline-mode
   development: CI is PR/manual-only with a fast default Ubuntu/Python 3.12
   path, the full OS/Python compatibility matrix is manual-only, and docs deploy
@@ -414,8 +434,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- Auto-bridge inference is now in the default rescue ladder. On the USC
-  ARCH 202B reference: v0.5 was 14 / 6 / 1 (clean / imperfect / failed);
+- Auto-bridge inference is now in the default rescue ladder. On the
+  reference drawing: v0.5 was 14 / 6 / 1 (clean / imperfect / failed);
   v0.6 is 18 / 2 / 1.
 
 ## [0.5.1] — 2026-04-30

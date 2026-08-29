@@ -7,7 +7,7 @@
 ## Why
 
 POSTMORTEM Attempt 9 §1: **`fitz.open()` raised `FileDataError`** on the
-237 MB ARCH 211 `macro.ai` plan drawing. The user's workaround was to do
+237 MB `macro.ai` plan export. The user's workaround was to do
 "Save As" in Illustrator, which produced a 98 MB version that PyMuPDF then
 opened fine. But:
 
@@ -186,7 +186,7 @@ Run: `pytest tests/test_basic.py -k inspect_` → 4 passed in ~0.4 s.
   rendering of before/after PNGs. Out of scope for Issue #9.
 * Plain `.pdf` inspection path, when the file is not Illustrator-saved.
 
-## Smoke tests on the real ARCH 211 drawing
+## Smoke tests on the real large plan export
 
 ```
 $ time arch-lw inspect '/.../private-axon-stress-fixture.ai'   # 98 MB AI

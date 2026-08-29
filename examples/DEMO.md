@@ -36,6 +36,6 @@ low-confidence calls are visible instead of silent.
 
 This sample is a 3-stroke fixture — enough to show the mechanism, not enough for a postable
 before/after. A compelling public hero needs a **richer synthetic, public-safe fixture**; a real
-architectural drawing would be the private USC regression, which is **NO-GO** for public proof.
+architectural drawing would be the private reference regression, which is **NO-GO** for public proof.
 Building that synthetic fixture is the next step toward a postable before/after — see
 `docs/GROWTH.md`.

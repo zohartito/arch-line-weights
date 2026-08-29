@@ -15,6 +15,24 @@ proof posture.
 
 ---
 
+## Day 2 — 2026-08-10
+
+**Shipped:** Rescued PR #74's poché fix as #81 (adversarial-reviewed, hardened, 870 tests) — the QA
+section now closes all 8 cut layers at conf ≥0.88 with 0 imperfect. Synthetic public proof packet
+validates `passed` (sentinels verified). Landed `/NumBlock` diagnostics, Make2D layer-naming fixture
+table, low-confidence poché report explanations, and a committed public-safe hero
+(`examples/generate_demo_section.py` → real engine → `assets/hero-before-after.png`) — the exact
+"richer synthetic fixture" Day 1 called for. Proof-gate tracker filed as #80.
+
+**Status (honest):** harness-green on public synthetic proof; posting posture still **NO-GO** until
+the #80 acceptance-of-record steps are done. PR #74 remains open as the security-series review
+bundle.
+
+**Next:** record visual acceptance per #80 step 3, then the first public post with the committed
+hero.
+
+---
+
 ## Day 1 — 2026-06-17
 
 **Shipped:**
@@ -24,9 +42,9 @@ proof posture.
 
 **Status (honest):** public MIT CLI that inspects a Rhino-exported `.ai`/`.pdf`, remaps stroke
 widths by color, adds conservative section-cut poché, and applies material hatching, with presets
-(`section`, `plan`, `elevation`, `detail`, `usc`) and layer-preserving commands (`apply-jsx`,
+(`section`, `plan`, `elevation`, `detail`, `studio`) and layer-preserving commands (`apply-jsx`,
 `apply-saas`). The public sample is a 3-stroke fixture — it demonstrates the mechanism but cannot
 carry a marketing before/after. Validated proof assets remain **NO-GO** (see `docs/ROADMAP.md`).
 
 **Next:** build a richer **synthetic, public-safe fixture** so a real before/after hero can be
-posted — the private USC drawing stays NO-GO.
+posted — the private reference drawing stays NO-GO.

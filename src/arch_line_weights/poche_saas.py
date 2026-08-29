@@ -676,6 +676,8 @@ def apply_saas_with_poche(
     layer_weight_resolver: Callable[[str], float | None] | None = None,
     layer_color_resolver: Callable[[str], tuple[int, int, int] | None] | None = None,
     layer_solid_line_resolver: Callable[[str], bool] | None = None,
+    layer_tone_resolver: Callable[[tuple[int, int, int], float], tuple[int, int, int] | None]
+    | None = None,
     poche_overlay: bool | None = None,
     architectural: bool = False,
     preset: str = "section",
@@ -790,6 +792,7 @@ def apply_saas_with_poche(
                 layer_weight_resolver=layer_weight_resolver,
                 layer_color_resolver=layer_color_resolver,
                 layer_solid_line_resolver=layer_solid_line_resolver,
+                layer_tone_resolver=layer_tone_resolver,
             )
 
         # Step 2: inject poché polygons. find_layer_envelope re-runs against

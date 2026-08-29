@@ -49,7 +49,7 @@ Applied on 2026-06-02 after `gh auth status` reported a valid token.
 After the GitHub comments and closures were applied, three bounded subagent
 audits checked the remaining open issue groups:
 
-- #29, #30, #31, and #32: keep open until accepted W5/W7/private USC proof or
+- #29, #30, #31, and #32: keep open until accepted W5/W7/private reference proof or
   review-packet/report-contract acceptance exists.
 - #7, #19, #21, and #33: keep open; they still require real Illustrator/private
   visual acceptance, broad geometry-repair evidence, or an explicit unpause of
@@ -172,7 +172,7 @@ Focused verification: tests/test_apply_saas_poche.py and
 tests/test_architectural_mode.py -> 86 passed.
 
 Important boundary: this synthetic evidence does not close issue #30. #30 stays
-open until the private USC foundation/concrete proof packet is reviewed and
+open until the private reference foundation/concrete proof packet is reviewed and
 accepted.
 ```
 
@@ -302,9 +302,9 @@ Keeping this open.
 #37 now includes public-safe synthetic regressions for concrete/foundation
 helper-backed poché, including the fragmented concrete edge tail port at
 9b2efd0, present on current head 86d302b. That improves the algorithm and report
-coverage, but it does not prove the private USC wall-section result.
+coverage, but it does not prove the private reference wall-section result.
 
-Closure still requires private USC proof evidence showing the
+Closure still requires private reference proof evidence showing the
 foundation/concrete region before/after/diff and whether expected cut-mass layers
 were filled, skipped, failed, or intentionally ignored. Synthetic proof does not
 close #30.
@@ -324,7 +324,7 @@ paths, review-region pixel gates, public synthetic pass/expected-fail/unsupporte
 sentinels, and tests. Current integration head: 86d302b.
 
 The remaining closure gate is accepted W5/W7 review-packet evidence, especially
-for the private USC fixture. Without that accepted packet, the suite is present
+for the private reference fixture. Without that accepted packet, the suite is present
 but the launch proof is not final.
 ```
 
@@ -416,7 +416,7 @@ Comment for #1:
 Keeping this open as user-side validation.
 
 The agent can improve tooling and proof guardrails, but this issue requires use
-on a fresh real ARCH 202B drawing and a personal-use-log entry. That remains a
+on a fresh real reference drawing and a personal-use-log entry. That remains a
 human validation step.
 ```
 

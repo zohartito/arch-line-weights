@@ -101,7 +101,7 @@ export PYTHONPATH=src
 
 ## Manual human review (cannot be automated)
 
-- Private USC Make2D drawing: run `docs/how-to/private-studio-dogfood-runbook.md` locally (no assets in git).
+- Private reference Make2D drawing: run `docs/how-to/private-studio-dogfood-runbook.md` locally (no assets in git).
 - W5/W7 visual acceptance on foundation/concrete inferred fills — only human can accept a **public-safe** packet.
 - Illustrator smoke-check on real studio export (PDF preview not authoritative).
 
@@ -112,7 +112,7 @@ export PYTHONPATH=src
 - **Do not post** public proof or claim App Store / Windows desktop / Rhino plugin / Illustrator panel readiness.
 - Posting/public proof: **NO-GO** until W5/W7 explicitly accepts a public-safe packet.
 - Synthetic proof does **not** close #30.
-- Private USC regression stays **private**.
+- Private reference regression stays **private**.
 
 ## Related docs
 

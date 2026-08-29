@@ -48,7 +48,7 @@ headless AI-native path:
 
 ```bash
 .venv/bin/arch-lw apply-saas "South Section.ai" \
-  --architectural --poche --preset usc --source rhino
+  --architectural --poche --preset studio --source rhino
 ```
 
 ## 4. Add solid black poché on the cut

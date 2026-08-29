@@ -25,8 +25,8 @@ package, not a hosted service, and not validated on every possible Rhino export.
   (see caveats). `--poche` adds solid-black cut fill on this path.
 - **`poche`** — generate solid-black poché on cut layers via shapely
   topology recovery (linemerge → snap sweep → auto-bridge → fallbacks).
-- Ships presets for `section`, `plan`, `elevation`, `detail`, and the `usc`
-  studio-board workflow. The `usc` weight ladder follows `CONVENTIONS.md`.
+- Ships presets for `section`, `plan`, `elevation`, `detail`, and the `studio`
+  studio-board workflow. The `studio` weight ladder follows `CONVENTIONS.md`.
 
 ### Install
 
@@ -89,7 +89,7 @@ Converted-section example (synthetic public-safe filenames):
 - Engineering checks passed for the source/GitHub handoff. Public posting proof
   remains **NO-GO** unless W5/W7 explicitly accepts a public-safe proof packet.
 - Synthetic proof can exercise the harness, but it does not close #30. The
-  private USC regression stays private.
+  private reference regression stays private.
 
 ### What to file issues for
 

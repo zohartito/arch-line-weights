@@ -21,6 +21,7 @@ from arch_line_weights.layer_classify import (
     detect_source,
     explain_source_match,
 )
+from arch_line_weights.poche import _is_poche_cut_layer_name
 
 # --------------------------------------------------------------------------- #
 # Rhino regression — existing behavior must NOT change
@@ -420,3 +421,150 @@ def test_aia_semantic_keys_do_not_affect_rhino_source():
     """The new keys live only in AUTOCAD_RULES — Rhino dispatch is unchanged."""
     a = classify_layer("A-WALL-MCUT", source=Source.RHINO)
     assert a.tier == "default"
+
+
+# =========================================================================== #
+# Make2D layer-naming variants (Track B3)
+#
+# Real Rhino Make2D exports vary the layer string around the fixed
+# `ClippingPlaneIntersections` token: a view / sheet name is prefixed before
+# the first `::`, geometry can live under the `Hidden::` sub-tree instead of
+# `Visible::`, Rhino's casing differs across versions, and view names carry
+# spaces or stray surrounding whitespace. The recognizer keys on the
+# uppercased substring `CLIPPINGPLANEINTERSECTIONS`, so every one of these
+# should still read as `cut` (1.0) and be picked up as a poché cut layer.
+# These cases lock that behavior in.
+# =========================================================================== #
+
+
+@pytest.mark.parametrize(
+    "layer",
+    [
+        # Plain view-prefixed cut layer (the canonical shape).
+        "axon::Visible::ClippingPlaneIntersections::TEC_TIMBER_BEAMS",
+        # Sheet-number style prefix with digits and a hyphen.
+        "A-201::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
+        # View name containing spaces (Rhino allows spaces in view names).
+        "ground floor plan::Visible::ClippingPlaneIntersections::WALL",
+        # Hidden:: sub-tree instead of Visible:: — still a section cut, so the
+        # substring recognizer (correctly, per current behavior) treats it as cut.
+        "axon::Hidden::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
+        # Fully lower-cased export (case variation) — .upper() normalizes it.
+        "view::visible::clippingplaneintersections::wall",
+        # Mixed-case token.
+        "View::Visible::ClippingPlaneINTERSECTIONS::Wall",
+        # Stray leading/trailing whitespace around the whole name.
+        "  axon::Visible::ClippingPlaneIntersections::TEC_TIMBER  ",
+        # No view prefix at all — bare Make2D tree.
+        "Visible::ClippingPlaneIntersections::WALL",
+    ],
+)
+def test_make2d_cut_layer_variants_are_cut(layer):
+    """View-prefix / Hidden / case / whitespace variants all classify as cut."""
+    a = classify_layer(layer)
+    assert a.weight_pt == 1.0, f"{layer!r}: got {a.weight_pt} ({a.tier})"
+    assert a.tier == "cut"
+    # The poché fill recognizer agrees these are solid cut layers.
+    assert _is_poche_cut_layer_name(layer) is True
+
+
+def test_make2d_spaced_clipping_token_is_not_recognized_as_cut():
+    """A SPACE-separated `Clipping Plane Intersections` token is NOT recognized.
+
+    Rhino Make2D never emits the token with internal spaces — it is always the
+    single word `ClippingPlaneIntersections`. This documents the one Make2D-ish
+    shape the substring recognizer intentionally does not match: here the layer
+    falls through to its material leaf (`TEC_TIMBER` -> structure_primary),
+    which is the current (and expected) behavior, not a bug.
+    """
+    layer = "axon::Visible::Clipping Plane Intersections::TEC_TIMBER"
+    a = classify_layer(layer)
+    assert a.tier != "cut"
+    assert a.tier == "structure_primary"
+    assert _is_poche_cut_layer_name(layer) is False
+
+
+def test_make2d_glass_in_cut_gets_heavy_line_but_no_poche():
+    """Glass under a clipping plane: heavy cut line, but excluded from poché fill.
+
+    `classify_layer` matches the `CLIPPINGPLANEINTERSECTIONS` rule first, so the
+    glass edge still gets the full cut weight (1.0). `_is_poche_cut_layer_name`
+    excludes GLASS / IGU so the transparent panel is not flooded with solid
+    poché. Lock in this deliberate divergence between the two recognizers.
+    """
+    layer = "axon::Visible::ClippingPlaneIntersections::WINDOW_IGU_GLASS"
+    a = classify_layer(layer)
+    assert a.tier == "cut"
+    assert a.weight_pt == 1.0
+    assert _is_poche_cut_layer_name(layer) is False
+
+
+@pytest.mark.parametrize(
+    "layer,expected_weight,expected_tier",
+    [
+        # Fixed / TEC stair layers are structure_primary in elevation, NOT cut.
+        ("axon::Visible::Curves::FIXED_STAIR_COHESIVE", 0.5, "structure_primary"),
+        ("axon::Visible::Curves::TEC_STAIR", 0.5, "structure_primary"),
+        # Risers match the broader TEC_STAIR rule first (documented quirk).
+        ("axon::Visible::Curves::TEC_STAIR_RISERS", 0.5, "structure_primary"),
+        # Stair layer under the Hidden sub-tree with a view prefix — still not cut.
+        ("plan::Hidden::Curves::FIXED_STAIR", 0.5, "structure_primary"),
+    ],
+)
+def test_make2d_stair_fix_layers_are_not_cut(layer, expected_weight, expected_tier):
+    """Fixed-stair layers are recognized as structure, and never as poché cut."""
+    a = classify_layer(layer)
+    assert a.weight_pt == expected_weight, f"{layer!r}: got {a.weight_pt} ({a.tier})"
+    assert a.tier == expected_tier
+    assert _is_poche_cut_layer_name(layer) is False
+
+
+@pytest.mark.parametrize(
+    "layer,expected_tier",
+    [
+        # Realistic AIA NCS names as they appear in a DWG-to-PDF export.
+        ("S-COLS-PIER", "cut"),  # structural columns cut in plan
+        ("A-FLOR-STRS", "edges_secondary"),  # stair run outline
+        ("A-ANNO-DIMS", "annotation"),  # dimension strings
+    ],
+)
+def test_realistic_aia_ncs_names_classify(layer, expected_tier):
+    """A few realistic AIA NCS layer names land in the documented tier (§5.1)."""
+    a = classify_layer(layer, source=Source.AUTOCAD)
+    assert a.tier == expected_tier, f"{layer!r}: got {a.tier}"
+    assert a.source == Source.AUTOCAD
+
+
+# --------------------------------------------------------------------------- #
+# Recognizer-divergence flag: SECTION_CUT marker
+#
+# `architectural._CUT_MARKERS` treats `SECTION_CUT` as a cut context, but the
+# weight classifier in `layer_classify` (and `poche._is_poche_cut_layer_name`)
+# key ONLY on `CLIPPINGPLANEINTERSECTIONS`. A layer named `...::SECTION_CUT::...`
+# therefore gets a default / structure weight instead of cut(1.0). Aligning the
+# two recognizers is a recognition-logic change, out of scope for this fixture
+# expansion, so the gap is pinned as a strict xfail (it flips to XPASS the day
+# someone teaches `layer_classify` about SECTION_CUT).
+# --------------------------------------------------------------------------- #
+
+
+def test_section_cut_is_a_cut_context_in_architectural_module():
+    """architectural.py DOES treat SECTION_CUT as a cut context (proves the gap is real)."""
+    from arch_line_weights.architectural import classify_architectural_layer
+
+    a = classify_architectural_layer("model::Visible::SECTION_CUT::TEC_CONCRETE_BASE")
+    assert a.poche is True
+
+
+@pytest.mark.xfail(
+    reason="layer_classify keys only on CLIPPINGPLANEINTERSECTIONS; the SECTION_CUT "
+    "marker that architectural._CUT_MARKERS recognizes as a cut context is not "
+    "known to the weight classifier. Recognizer redesign is out of scope for the "
+    "Make2D fixture expansion — documented here so the divergence stays visible.",
+    strict=True,
+)
+def test_section_cut_marker_recognized_as_cut_xfail():
+    """WISH: layer_classify would recognize SECTION_CUT as a cut layer too."""
+    a = classify_layer("model::Visible::SECTION_CUT::WALL")
+    assert a.tier == "cut"
+    assert a.weight_pt == 1.0

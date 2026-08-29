@@ -1,0 +1,59 @@
+{
+  "started_at": "2026-08-11T08:46:23.454401+00:00",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "python": "3.14.6",
+  "runs": 1,
+  "benchmarks": [
+    {
+      "source": "/Users/zohartito/projects/arch-line-weights/tests/fixtures/eval/synthetic-cut.ai",
+      "input_bytes": 1061,
+      "layer_count": 0,
+      "cut_layer_count": 0,
+      "runs": 1,
+      "apply_saas": {
+        "stage": "apply-saas",
+        "times_seconds": [
+          0.000616834033280611
+        ],
+        "output_bytes": 1045,
+        "weights_applied": {
+          "0.08": 1
+        },
+        "polygons_injected": 0,
+        "layers_injected": 0,
+        "layers_targeted": 0,
+        "skipped": false,
+        "skip_reason": null,
+        "error": null
+      },
+      "apply_saas_poche": {
+        "stage": "apply-saas --poche",
+        "times_seconds": [
+          0.0010948339477181435
+        ],
+        "output_bytes": 1060,
+        "weights_applied": {
+          "0.08": 1
+        },
+        "polygons_injected": 1,
+        "layers_injected": 1,
+        "layers_targeted": 1,
+        "skipped": false,
+        "skip_reason": null,
+        "error": null
+      },
+      "apply_jsx": {
+        "stage": "apply-jsx",
+        "times_seconds": [],
+        "output_bytes": 0,
+        "weights_applied": {},
+        "polygons_injected": 0,
+        "layers_injected": 0,
+        "layers_targeted": 0,
+        "skipped": true,
+        "skip_reason": "skipped via --no-jsx",
+        "error": null
+      }
+    }
+  ]
+}

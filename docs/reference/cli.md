@@ -42,7 +42,7 @@ arch-lw apply SRC [OPTIONS]
 |---|---|---|
 | `-o, --output PATH` | `<src> HIERARCHY.<ext>` | Output path |
 | `--mapping FILE` | — | JSON: `{"RGB(r,g,b)": weight_pt}` |
-| `--preset {axon,detail,elevation,paraline,plan,section,usc}` | `section` | Tier ladder for `--auto` |
+| `--preset {axon,detail,elevation,paraline,plan,section,studio,usc}` | `section` | Tier ladder for `--auto` |
 | `--scale {1/16,1/8,1/4,1/2}` | `1/4` | Plot scale for ISO 128 weights |
 | `--for-print` | off | Use ISO 128 print weights |
 | `--auto` | off | Auto-bucket colors |
@@ -54,6 +54,9 @@ arch-lw apply SRC [OPTIONS]
 `apply --dry-run` prints the inferred drawing type and the selected preset. If
 the user supplied `--preset`, that preset is reported as an explicit override;
 otherwise the default `section` preset remains visible.
+
+`usc` is a deprecated alias for `studio`; it still resolves to the same tier
+ladder and will be removed in a future major version. Prefer `--preset studio`.
 
 When trusted per-color depth evidence exists, `apply --auto` uses it to recede
 non-protected roles. Cut profiles and protected spatial edges are not weakened;
@@ -108,7 +111,7 @@ arch-lw bridge-rhino-ai --input SRC [OPTIONS]
 | `--fit {center,fit}` | `center` | Center at current scale, or fit within margin |
 | `--margin LENGTH` | `0.5in` | Margin for `--fit` |
 | `--allow-enlarge` | off | Let `--fit` scale small artwork up |
-| `--preset {axon,detail,elevation,paraline,plan,section,usc}` | `section` | Preset for optional `--apply-jsx` |
+| `--preset {axon,detail,elevation,paraline,plan,section,studio,usc}` | `section` | Preset for optional `--apply-jsx` |
 | `--source {auto,rhino,autocad}` | `rhino` | Layer-name convention for reports and optional poché |
 | `--scale TEXT` | `1/4` | Plot scale for optional `--apply-jsx --for-print` |
 | `--for-print` | off | Use print weights in optional `--apply-jsx` |
@@ -133,7 +136,7 @@ arch-lw apply-saas SRC [OPTIONS]
 |---|---|---|
 | `-o, --output PATH` | `<src> HIERARCHY-saas.<ext>` | Output path |
 | `--mapping FILE` | — | JSON: `{"RGB(r,g,b)": weight_pt}` |
-| `--preset {axon,detail,elevation,paraline,plan,section,usc}` | `section` | Tier ladder for `--auto` |
+| `--preset {axon,detail,elevation,paraline,plan,section,studio,usc}` | `section` | Tier ladder for `--auto` |
 | `--scale TEXT` | `1/4` | Plot scale for `--for-print` |
 | `--for-print` | off | Use ISO 128 print weights |
 | `--auto` | off | Auto-bucket native RGB/CMYK stroke colors |

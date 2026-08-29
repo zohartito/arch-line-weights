@@ -34,6 +34,9 @@ from .poche import apply_poche
 from .presets import PRESETS, select_preset
 from .progress import DEFAULT_PROGRESS_FILE, make_reporter
 from .role_signal import no_role_signal, no_role_signal_message
+from .tonal_recede import MODES as TONAL_RECEDE_MODES
+from .tonal_recede import describe_ramp as tonal_recede_describe_ramp
+from .tonal_recede import tonal_recede_resolver
 from .visual_check import (
     VALID_VISUAL_CHECK_STATUSES,
     build_visual_check_summary,
@@ -158,6 +161,24 @@ def _echo_depth_evidence(summary: dict) -> None:
     click.echo(f"# depth: {source} (confidence={confidence:.2f}) - {explanation}", err=True)
 
 
+def _echo_numblock_status(input_format: dict) -> None:
+    """Report whether the file carries Illustrator's native /NumBlock payload.
+
+    Surfaces the same signal the JSON exposes as ``has_native_numblock`` in a
+    human-readable line so users know up front whether the headless
+    ``apply-saas`` path is available for this file.
+    """
+    has_numblock = input_format.get("has_native_numblock")
+    if has_numblock is True:
+        click.echo("# numblock: present (native Illustrator payload; apply-saas supported)", err=True)
+    elif has_numblock is False:
+        click.echo(
+            "# numblock: absent (no native Illustrator /NumBlock; apply-saas unavailable "
+            "- use apply, or apply-jsx then poche)",
+            err=True,
+        )
+
+
 @click.group()
 @click.version_option(__version__, prog_name="arch-lw")
 def cli():
@@ -206,6 +227,7 @@ def inspect(src: Path, pretty: bool, source: str):
     else:
         click.echo(f"# layer-name source: {resolved.value} (forced via --source)", err=True)
 
+    _echo_numblock_status(getattr(rep, "input_format", None) or {})
     _echo_drawing_type_guess(getattr(rep, "drawing_type", None) or {})
     _echo_depth_evidence(getattr(rep, "depth_evidence", None) or {})
 
@@ -236,7 +258,7 @@ def inspect(src: Path, pretty: bool, source: str):
     type=click.Choice(sorted(PRESETS)),
     default="section",
     show_default=True,
-    help="Tier ladder used by --auto.",
+    help="Tier ladder used by --auto. (`usc` is a deprecated alias for `studio`.)",
 )
 @click.option(
     "--scale",
@@ -259,6 +281,18 @@ def inspect(src: Path, pretty: bool, source: str):
     "--architectural",
     is_flag=True,
     help="Use marked-content OCG layer roles to override live PDF stream stroke weights/colors when binding is reliable.",
+)
+@click.option(
+    "--tonal-recede",
+    "tonal_recede",
+    type=click.Choice(sorted(TONAL_RECEDE_MODES)),
+    is_flag=False,
+    flag_value="value",
+    default=None,
+    help="Value-demote beyond-cut geometry (spec §1.3/§4.2): keep the cut at "
+    "full darkness and lighten each lighter weight tier toward white. Off by "
+    "default. Bare --tonal-recede = hue-preserving 'value' mode; "
+    "--tonal-recede grey neutralizes to a grey ramp first.",
 )
 @click.option(
     "--legacy-weights",
@@ -306,6 +340,7 @@ def apply(
     for_print: bool,
     auto: bool,
     architectural: bool,
+    tonal_recede: str | None,
     legacy_weights: bool,
     strict: bool,
     default_width: float,
@@ -410,6 +445,12 @@ def apply(
         )
         click.echo("# architectural: marked-content layer overrides enabled", err=True)
 
+    layer_tone_resolver = None
+    if tonal_recede:
+        layer_tone_resolver = tonal_recede_resolver(tonal_recede)
+        for line in tonal_recede_describe_ramp(tonal_recede):
+            click.echo(line, err=True)
+
     if dry_run:
         click.echo("--dry-run: no file written.", err=True)
         return
@@ -427,6 +468,7 @@ def apply(
         layer_weight_resolver=layer_weight_resolver,
         layer_color_resolver=layer_color_resolver,
         layer_solid_line_resolver=layer_solid_line_resolver,
+        layer_tone_resolver=layer_tone_resolver,
     )
 
     click.echo("", err=True)
@@ -462,6 +504,11 @@ def apply(
             f"architectural dash overrides: {result.layer_dash_overrides:,} strokes",
             err=True,
         )
+    if result.tonal_recede_applied:
+        click.echo(
+            f"tonal recede: {result.tonal_recede_applied:,} beyond-cut strokes value-demoted",
+            err=True,
+        )
     for warning in result.warnings:
         click.echo(f"warning: {warning}", err=True)
     click.echo("", err=True)
@@ -482,7 +529,10 @@ def apply(
     type=click.Choice(sorted(PRESETS)),
     default="section",
     show_default=True,
-    help="Tier ladder used by the embedded JSX classifier. Matches `apply-saas --preset`. Issue #13.",
+    help=(
+        "Tier ladder used by the embedded JSX classifier. Matches `apply-saas --preset`. "
+        "Issue #13. (`usc` is a deprecated alias for `studio`.)"
+    ),
 )
 @click.option(
     "--scale",
@@ -728,7 +778,7 @@ def layout_jsx_cmd(
     type=click.Choice(sorted(PRESETS)),
     default="section",
     show_default=True,
-    help="Preset passed to optional --apply-jsx.",
+    help="Preset passed to optional --apply-jsx. (`usc` is a deprecated alias for `studio`.)",
 )
 @click.option(
     "--source",
@@ -854,7 +904,7 @@ def bridge_rhino_ai_cmd(
     type=click.Choice(sorted(PRESETS)),
     default="section",
     show_default=True,
-    help="Tier ladder used by --auto.",
+    help="Tier ladder used by --auto. (`usc` is a deprecated alias for `studio`.)",
 )
 @click.option(
     "--scale",
@@ -878,6 +928,19 @@ def bridge_rhino_ai_cmd(
     help="Use semantic architectural layer rules before color luminance. "
     "Keeps structural cut mass heavy while connectors, glass, cladding, "
     "membranes, and entourage stay subordinate.",
+)
+@click.option(
+    "--tonal-recede",
+    "tonal_recede",
+    type=click.Choice(sorted(TONAL_RECEDE_MODES)),
+    is_flag=False,
+    flag_value="value",
+    default=None,
+    help="Value-demote beyond-cut geometry (spec §1.3/§4.2): keep the cut at "
+    "full darkness and lighten each lighter weight tier toward white. Off by "
+    "default. Bare --tonal-recede = hue-preserving 'value' mode; "
+    "--tonal-recede grey neutralizes to a grey ramp first. Recolors only the "
+    "native stroke payload; source layers stay intact.",
 )
 @click.option(
     "--default-width",
@@ -985,6 +1048,7 @@ def apply_saas_cmd(
     for_print: bool,
     auto: bool,
     architectural: bool,
+    tonal_recede: str | None,
     default_width: float,
     poche: bool,
     poche_overrides_path: Path | None,
@@ -1085,6 +1149,12 @@ def apply_saas_cmd(
             source=resolved_source,
         )
 
+    layer_tone_resolver = None
+    if tonal_recede:
+        layer_tone_resolver = tonal_recede_resolver(tonal_recede)
+        for line in tonal_recede_describe_ramp(tonal_recede):
+            click.echo(line, err=True)
+
     if dry_run:
         click.echo("--dry-run: no file written.", err=True)
         return
@@ -1135,6 +1205,7 @@ def apply_saas_cmd(
                 layer_weight_resolver=layer_weight_resolver,
                 layer_color_resolver=layer_color_resolver,
                 layer_solid_line_resolver=layer_solid_line_resolver,
+                layer_tone_resolver=layer_tone_resolver,
                 poche_overlay=resolved_poche_overlay,
                 architectural=architectural,
                 preset=preset,
@@ -1180,6 +1251,7 @@ def apply_saas_cmd(
                 layer_weight_resolver=layer_weight_resolver,
                 layer_color_resolver=layer_color_resolver,
                 layer_solid_line_resolver=layer_solid_line_resolver,
+                layer_tone_resolver=layer_tone_resolver,
             )
         finally:
             reporter.close()
@@ -1211,6 +1283,11 @@ def apply_saas_cmd(
     if result.layer_dash_overrides:
         click.echo(
             f"  architectural dash overrides → {result.layer_dash_overrides:>7,} ops",
+            err=True,
+        )
+    if result.tonal_recede_applied:
+        click.echo(
+            f"  tonal recede (value-demoted) → {result.tonal_recede_applied:>7,} ops",
             err=True,
         )
     if result.unmatched_colors:

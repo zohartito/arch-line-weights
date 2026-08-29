@@ -30,14 +30,20 @@ commitments.
 The first gate is honesty: the repo's proof posture is currently **NO-GO** (`ROADMAP.md`), so public
 proof must be cleared before posting results.
 
-- [ ] Clear **one** public-safe before/after proof (synthetic or sample drawing) — unblocks honest
-      daily posting. Does not involve the private USC regression.
-- [ ] Record the canonical demo: "uniform 1.0 pt export → graphic-standard hierarchy" on
-      `examples/sample-linework.pdf`.
+- [x] Clear **one** public-safe before/after (synthetic or sample drawing) — unblocks honest
+      daily posting. Does not involve the private reference regression.
+      *(2026-08-10: the committed hero is a synthetic **demo**, not a proof packet; separately, the
+      synthetic packet `public_foundation_window_section_synthetic` materializes and validates
+      `passed` with sentinels verified. Harness-green; acceptance-of-record still open — #80.)*
+- [x] Record the canonical demo: "uniform 1.0 pt export → graphic-standard hierarchy".
+      *(2026-08-10: `examples/generate_demo_section.py` → `examples/demo-section.pdf` (406-stroke
+      1:20 DETAIL-grammar wall-section strip)
+      → real `arch-lw apply` → `assets/hero-before-after.png`, deterministic and committed. The
+      3-stroke `examples/sample-linework.pdf` demo remains in `examples/DEMO.md`.)*
 - [ ] First public devlog post carrying the Day-N counter, once the proof asset is cleared.
-- [ ] Near-term engineering that doubles as daily artifacts (from `ROADMAP.md`): clearer
+- [x] Near-term engineering that doubles as daily artifacts (from `ROADMAP.md`): clearer
       `/NumBlock`-missing diagnostics, better low-confidence poché reports, more Make2D
-      layer-naming fixtures.
+      layer-naming fixtures. *(2026-08-10: all three landed in the stack-integration PR.)*
 - [ ] Keep the install story honest (source/`pipx` now; PyPI deliberately deferred).
 
 ## Audience surfaces

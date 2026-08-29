@@ -127,7 +127,7 @@ Yes, we need to test what we have made so far, but the sequence matters:
 5. Log the result to GitHub and the debug log.
 
 The immediate acceptance target is not perfection on every possible drawing; it
-is a print-credible result on Zohar's current ARCH 202B drawings with honest
+is a print-credible result on Zohar's current reference drawings with honest
 review notes for any unresolved candidate.
 
 ## Phase 0 — Deadline-Safe Local Mode
@@ -178,7 +178,7 @@ Goal: encode the architectural graphics standard explicitly.
   connectors, and cladding/rainscreen layers cannot become black poché because
   they also contain structural-looking tokens.
 - [ ] Make color classifier fallback-only for known source types.
-- [ ] Add fixture tests using real layer names from ARCH 202B and ARCH 211.
+- [ ] Add fixture tests using real layer names from the reference drawings.
 
 Core rules:
 

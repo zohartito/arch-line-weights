@@ -54,7 +54,7 @@ the target topics, and writes only derived notes.
 |---|---|---|
 | Graphics standards | `Architectural Graphics`, `Design Drawing`, `standards.md` | `docs/research/architectural-graphics-rulebook.md` |
 | Poché/materials | `Building Construction Illustrated`, `A Visual Dictionary of Architecture`, `poche-conventions.md` | `docs/research/poche-rulebook.md` |
-| Structure hierarchy | `Building Structures Illustrated`, real ARCH 202B layer names | `docs/research/lineweight-rulebook.md` |
+| Structure hierarchy | `Building Structures Illustrated`, real reference-drawing layer names | `docs/research/lineweight-rulebook.md` |
 | Spatial/readability | `Architecture: Form, Space, and Order`, screenshot QA notes | roadmap additions for hierarchy and depth |
 | Codes/annotation | `Building Codes Illustrated`, CLI/reporting docs | annotation/reporting rules, not geometry rules |
 | Synthesis | all rule notes + current issues | updated roadmap and issue priorities |
