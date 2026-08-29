@@ -9,7 +9,7 @@ from typing import Any
 
 import pikepdf
 
-KNOWN_COMMANDS = ("inspect", "apply", "apply-saas", "poche", "apply-jsx", "preview")
+KNOWN_COMMANDS = ("inspect", "apply", "apply-saas", "poche", "poche-pdf", "apply-jsx", "preview")
 PDF_INPUT_KINDS = {
     "plain_pdf",
     "pdf",
@@ -301,6 +301,8 @@ def _suggested_next_step(diag: InputFormatDiagnostic, command: str) -> str:
         return "For PDF-only/converted exports, use: arch-lw apply-jsx then arch-lw poche."
     if command == "poche":
         return "Run poché on layer-aware Illustrator output, usually after apply-jsx."
+    if command == "poche-pdf":
+        return "Use a PDF with Visible::ClippingPlaneIntersections::* OCG marked content."
     return "Choose a supported PDF-compatible .ai or .pdf file."
 
 
