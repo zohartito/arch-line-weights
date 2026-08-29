@@ -3,15 +3,12 @@
 from __future__ import annotations
 
 import os
-<<<<<<< HEAD
-=======
 import shutil
 import tempfile
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import IO
->>>>>>> 7d955ef (fix(security): harden artifact processing)
 
 
 class ProcessingDisabledError(RuntimeError):
