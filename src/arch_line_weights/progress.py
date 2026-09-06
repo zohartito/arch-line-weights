@@ -49,13 +49,18 @@ import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import IO
+
+from .safety import cleanup_private_temp_dir, open_private_temp_file, private_temp_dir, terminal_safe
 
 # --------------------------------------------------------------------------- #
 # Defaults & constants
 # --------------------------------------------------------------------------- #
 
-DEFAULT_PROGRESS_FILE = "/tmp/arch_lw_saas_progress.txt"
+# A caller may still select a durable --progress-file.  The default is
+# allocated per run in a private directory instead of a predictable /tmp name.
+DEFAULT_PROGRESS_FILE: str | None = None
 
 # Stage percentage weights — calibrated from benchmarks. The polygonize stage
 # scales by completed_layers / total_layers so the bar advances smoothly even
@@ -151,7 +156,7 @@ def _format_meta(meta: dict[str, object]) -> str:
     for k, v in meta.items():
         if v is None:
             continue
-        s = str(v).replace("\t", " ").replace("\n", " ")
+        s = terminal_safe(v)
         parts.append(f"{k}={s}")
     return " ".join(parts)
 
@@ -189,6 +194,7 @@ class ProgressReporter:
         *,
         enabled: bool = True,
         total_polygonize_layers: int = 0,
+        owned_temp_dir: Path | None = None,
     ) -> None:
         self.enabled = enabled
         self.file_path = file_path if enabled else None
@@ -202,13 +208,20 @@ class ProgressReporter:
         self._stage_start: float = 0.0
         self._fh: IO[str] | None = None
         self._closed = False
+        self._owned_temp_dir = owned_temp_dir
 
         if self.enabled and self.file_path:
             try:
-                # Truncate on open — each apply-saas run starts a fresh log
-                # so external tailers see a clean stream.
-                self._fh = open(self.file_path, "w", encoding="utf-8", buffering=1)  # noqa: SIM115
+                if self._owned_temp_dir is not None:
+                    self._fh = open_private_temp_file(self._owned_temp_dir, Path(self.file_path).name)
+                else:
+                    # Explicit caller paths retain the historic overwrite semantics.
+                    self._fh = open(self.file_path, "w", encoding="utf-8", buffering=1)  # noqa: SIM115
             except OSError:
+                if self._owned_temp_dir is not None:
+                    cleanup_private_temp_dir(self._owned_temp_dir)
+                    self._owned_temp_dir = None
+                    raise
                 # Don't fail the apply-saas run if /tmp is unwritable; just
                 # downgrade to stderr-only.
                 self._fh = None
@@ -230,6 +243,9 @@ class ProgressReporter:
                     os.fsync(self._fh.fileno())
                 self._fh.close()
             self._fh = None
+        if self._owned_temp_dir is not None:
+            cleanup_private_temp_dir(self._owned_temp_dir)
+            self._owned_temp_dir = None
 
     def __enter__(self) -> ProgressReporter:
         return self
@@ -524,11 +540,21 @@ def make_reporter(
     """
     if not enabled:
         return ProgressReporter(file_path=None, tty=None, enabled=False)
-    return ProgressReporter(
-        file_path=file_path,
-        tty=stderr if stderr is not None else sys.stderr,
-        enabled=True,
-    )
+    if file_path is not None:
+        return ProgressReporter(
+            file_path=file_path, tty=stderr if stderr is not None else sys.stderr, enabled=True
+        )
+    temp_dir = private_temp_dir(prefix="arch-lw-progress-")
+    try:
+        return ProgressReporter(
+            file_path=str(temp_dir / "progress.txt"),
+            tty=stderr if stderr is not None else sys.stderr,
+            enabled=True,
+            owned_temp_dir=temp_dir,
+        )
+    except Exception:
+        cleanup_private_temp_dir(temp_dir)
+        raise
 
 
 __all__ = [

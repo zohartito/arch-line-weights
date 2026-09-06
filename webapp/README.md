@@ -5,6 +5,10 @@
 > especially `arch-lw apply-saas --architectural --poche` for submit-quality
 > board output.
 
+> **Processing disabled.** `/api/jobs` and `/api/console` are tombstoned
+> (HTTP 410) before request parsing or filesystem work. Do not deploy this as
+> a processing service until it has a reviewed authenticated architecture.
+
 A working FastAPI backend + SvelteKit frontend that wraps the existing arch-line-weights pipeline behind a REST API.
 
 The current first screen is the **local designer console prototype**. It is a

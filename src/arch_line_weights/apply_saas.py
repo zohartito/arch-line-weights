@@ -36,12 +36,17 @@ import zstandard as zstd
 
 from .input_format import raise_if_unsupported
 from .progress import ProgressReporter
+from .safety import processing_disabled
 
 # AI24 native-payload framing constants. Every Rhino-export .ai we've inspected
 # uses these exact values; if they change in a future Illustrator release we'd
 # raise loudly rather than silently corrupting.
 PREFIX = b"%AI24_ZStandard_Data"
 CHUNK = 65536  # AIPrivateData<i> stream size, except the last which is shorter
+MAX_NATIVE_STREAMS = 4096
+MAX_NATIVE_COMPRESSED_BYTES = 256 * 1024 * 1024
+MAX_NATIVE_DECODED_BYTES = 512 * 1024 * 1024
+MAX_NATIVE_EVENTS = 1_000_000
 
 # Suffix appended to the source stem when the user does not pass `-o`. Kept
 # distinct from `apply-jsx` so concurrent runs of both pipelines on the same
@@ -158,13 +163,23 @@ def _read_payload(pdf: pikepdf.Pdf) -> bytes:
     we transparently handle both Illustrator-saved files (no filter) and
     pikepdf-resaved files (which may pick up a FlateDecode filter).
     """
+    processing_disabled("native Illustrator payload decoding")
     priv = _require_native_private(pdf)
     n = int(priv["/NumBlock"])
-    chunks = [priv[f"/AIPrivateData{i}"].read_bytes() for i in range(1, n + 1)]
-    blob = b"".join(chunks)
+    if not 0 < n <= MAX_NATIVE_STREAMS:
+        raise ValueError("native payload stream count exceeds safe limit")
+    blob_parts: list[bytes] = []
+    compressed_bytes = 0
+    for i in range(1, n + 1):
+        chunk = priv[f"/AIPrivateData{i}"].read_bytes()
+        compressed_bytes += len(chunk)
+        if compressed_bytes > MAX_NATIVE_COMPRESSED_BYTES:
+            raise ValueError("native payload compressed size exceeds safe limit")
+        blob_parts.append(chunk)
+    blob = b"".join(blob_parts)
     if not blob.startswith(PREFIX):
         raise ValueError(f"payload does not start with {PREFIX!r}; got {blob[:32]!r}")
-    return zstd.ZstdDecompressor().decompress(blob[len(PREFIX) :], max_output_size=1 << 30)
+    return zstd.ZstdDecompressor().decompress(blob[len(PREFIX) :], max_output_size=MAX_NATIVE_DECODED_BYTES)
 
 
 def _write_payload(pdf: pikepdf.Pdf, payload: bytes, *, level: int = 19) -> tuple[int, int]:
@@ -255,6 +270,8 @@ def _stroke_color_events(payload: bytes) -> list[tuple[int, tuple[int, int, int]
         except ValueError:  # pragma: no cover — malformed AI payload
             continue
         events.append((m.start(), (round(r * 255), round(g * 255), round(b * 255))))
+        if len(events) > MAX_NATIVE_EVENTS:
+            raise ValueError("native payload has too many color events")
     for m in _K_RE.finditer(payload):
         try:
             c = float(m.group(1))
@@ -264,6 +281,8 @@ def _stroke_color_events(payload: bytes) -> list[tuple[int, tuple[int, int, int]
         except ValueError:  # pragma: no cover — malformed AI payload
             continue
         events.append((m.start(), _cmyk_to_rgb255(c, m_val, y, k)))
+        if len(events) > MAX_NATIVE_EVENTS:
+            raise ValueError("native payload has too many color events")
     events.sort(key=lambda e: e[0])
     return events
 
@@ -527,6 +546,7 @@ def apply_to_file(
     per-stage progress events. Default ``None`` means a fresh disabled
     no-op reporter is constructed internally — zero runtime cost.
     """
+    processing_disabled("native Illustrator payload rewrite")
     if os.path.abspath(src) == os.path.abspath(dst):
         raise ValueError("dst must differ from src to keep the original safe")
     raise_if_unsupported(src, "apply-saas")

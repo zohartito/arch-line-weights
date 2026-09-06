@@ -22,7 +22,9 @@ def get_console_store(request: Request) -> DesignerConsoleStore:
     if store is not None:
         return store
     settings = get_settings()
-    store = DesignerConsoleStore(default_console_root(settings.storage_root))
+    store = DesignerConsoleStore(
+        default_console_root(settings.storage_root), max_upload_bytes=settings.max_upload_bytes
+    )
     request.app.state.console_store = store
     return store
 

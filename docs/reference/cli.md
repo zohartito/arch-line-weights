@@ -2,6 +2,10 @@
 
 `arch-lw` is the entry point. All subcommands accept `--help`.
 
+> **Optional freeze:** set `ARCH_LW_FREEZE_LEGACY_APPLY=1` to fail-close
+> inspect/apply/poche/preview/proof processors before they read a path.
+> Default is off (processors run normally).
+
 ## Supported input paths
 
 The command to use depends on the input kind, not only the file extension.
@@ -50,6 +54,10 @@ arch-lw apply SRC [OPTIONS]
 | `--default-width FLOAT` | `0.25` | Width for unmatched colors |
 | `--keep-pieceinfo` | off | Don't strip AI cache |
 | `--dry-run` | off | Preview mapping only |
+
+Explicit mapping weights must be finite, greater than zero, and no more than
+100 pt. Invalid numeric values are rejected before any renderer or native
+payload formatter sees them.
 
 `apply --dry-run` prints the inferred drawing type and the selected preset. If
 the user supplied `--preset`, that preset is reported as an explicit override;
@@ -147,7 +155,12 @@ arch-lw apply-saas SRC [OPTIONS]
 | `--poche-overlay / --inline-poche` | architectural: overlay | Write generated fills to a top `ARCH_LW_POCHE` layer, or inline into source cut layers |
 | `--bridge-strategy {greedy,best}` | `best` | Bridge selector for the poché auto-bridge rung |
 | `--progress / --no-progress` | auto | Stage/layer progress feedback |
+| `--progress-file PATH` | private per-run temporary file | Optional durable tab-separated event log |
 | `--report PATH` | — | Durable JSON report with input kind, command path, and filled/skipped/failed/why layer status |
+
+When `--progress-file` is omitted, progress artifacts use a new mode-0700
+temporary directory for each run. Pass an explicit path only when a durable
+or externally tailed log is required.
 
 Architectural mode separates black poché from cut-line styling. A layer can be
 `poche=False` and still receive a strong cut stroke, for example glazing,
@@ -256,6 +269,9 @@ evidence: do not commit raw proof-check reports that contain machine-local paths
 `--materialize-synthetic` is only a public synthetic rehearsal helper. It can
 materialize public pass, expected-fail, and unsupported sentinels, but it does
 not create private/manual-review proof, record acceptance, or close #30.
+Synthetic review regions are limited to a 4096-pixel dimension and a bounded
+aggregate pixel budget; an over-budget manifest is rejected before Pillow
+allocates any proof image.
 
 ## `arch-lw visual-check`
 

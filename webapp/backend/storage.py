@@ -57,7 +57,7 @@ class LocalStorage:
             meta_path=root / "meta.json",
         )
 
-    def write_upload(self, job_id: str, source: BinaryIO, *, filename: str) -> JobPaths:
+    def write_upload(self, job_id: str, source: BinaryIO, *, filename: str, max_bytes: int) -> JobPaths:
         """Stream ``source`` to ``<job_id>/input.ai``.
 
         ``filename`` is preserved (we copy it into ``input<ext>`` plus an
@@ -65,6 +65,8 @@ class LocalStorage:
         nicely on download. We don't trust ``filename`` for path construction
         — just for display.
         """
+        if isinstance(max_bytes, bool) or not isinstance(max_bytes, int) or max_bytes <= 0:
+            raise ValueError("max_bytes must be a finite positive integer")
         paths = self.paths_for(job_id)
         # Honour the original extension so pikepdf opens the file.
         suffix = Path(filename).suffix.lower() or ".ai"
@@ -76,8 +78,15 @@ class LocalStorage:
             output_path=paths.root / f"output{suffix}",
             meta_path=paths.meta_path,
         )
+        written = 0
         with paths.input_path.open("wb") as f:
-            shutil.copyfileobj(source, f, length=1024 * 1024)
+            while chunk := source.read(min(1024 * 1024, max_bytes - written + 1)):
+                written += len(chunk)
+                if written > max_bytes:
+                    f.close()
+                    paths.input_path.unlink(missing_ok=True)
+                    raise ValueError("upload exceeded configured byte limit")
+                f.write(chunk)
         (paths.root / "original_name.txt").write_text(filename, encoding="utf-8")
         return paths
 

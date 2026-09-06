@@ -13,6 +13,8 @@ from typing import Any
 import numpy as np
 from PIL import Image
 
+from .safety import processing_disabled
+
 try:
     import yaml
 except ModuleNotFoundError:  # pragma: no cover - exercised only in minimal installs
@@ -28,6 +30,10 @@ _LOCAL_PATH_RE = re.compile(
 )
 _PUBLIC_ACCEPTANCE_REVIEWERS = {"W5", "W7"}
 W5_W7_HANDOFF_JSON_NAME = "W5-W7-ACCEPTANCE-HANDOFF.json"
+MAX_SYNTHETIC_IMAGE_DIMENSION = 4096
+MAX_SYNTHETIC_IMAGE_PIXELS = 4_000_000
+SYNTHETIC_IMAGE_COUNT = 3
+MAX_SYNTHETIC_TOTAL_PIXELS = MAX_SYNTHETIC_IMAGE_PIXELS * SYNTHETIC_IMAGE_COUNT
 W5_W7_HANDOFF_MD_NAME = "W5-W7-ACCEPTANCE-HANDOFF.md"
 PROOF_PACKET_GUARDRAILS = (
     "Posting/public proof is NO-GO unless W5/W7 explicitly accepts it.",
@@ -37,6 +43,7 @@ PROOF_PACKET_GUARDRAILS = (
 _PRIVATE_FIXTURE_TOKEN_RE = re.compile(
     r"(?i)(macro_for_archlw|synologydrive|usc_1|temporaryitems|downloads/|desktop/)"
 )
+MAX_PROOF_IMAGE_PIXELS = 80_000_000
 
 
 class ManifestValidationError(ValueError):
@@ -147,10 +154,13 @@ def build_proof_packet_plan(
 ) -> ProofPacketPlan:
     """Build deterministic output paths and command metadata for a fixture proof packet."""
 
-    if not isinstance(fixture_id, str) or not fixture_id:
-        raise ValueError("fixture_id must be a non-empty string")
+    if not isinstance(fixture_id, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", fixture_id):
+        raise ValueError("fixture_id must be one safe path component")
     command_list = _validate_string_list(commands, "commands")
-    fixture_output_dir = Path(output_dir) / fixture_id
+    root = Path(output_dir).resolve()
+    fixture_output_dir = (root / fixture_id).resolve()
+    if fixture_output_dir.parent != root:
+        raise ValueError("fixture_id escapes proof output root")
     return ProofPacketPlan(
         fixture_id=fixture_id,
         output_dir=fixture_output_dir,
@@ -181,6 +191,7 @@ def validate_proof_packet(
     never pass when required artifacts are absent, the report carries failed or
     no-go state, or local/private path references leak into the raw report.
     """
+    processing_disabled("proof packet validation")
     artifacts = _proof_packet_artifacts(plan)
     missing_artifacts = [
         label
@@ -340,6 +351,7 @@ def materialize_synthetic_proof_packet(plan: ProofPacketPlan, fixture: ProofFixt
     artifacts or touching private/manual-review evidence.
     """
 
+    processing_disabled("proof packet materialization")
     if (
         fixture.status not in {"pass", "expected_fail", "unsupported"}
         or "synthetic" not in fixture.id.lower()
@@ -658,7 +670,15 @@ def _write_synthetic_visual_artifacts(
 def _synthetic_image_size(review_regions: Sequence[ReviewRegion]) -> tuple[int, int]:
     max_x = max((region.rect[2] for region in review_regions), default=620)
     max_y = max((region.rect[3] for region in review_regions), default=460)
-    return max(800, max_x + 40), max(600, max_y + 40)
+    width, height = max(800, max_x + 40), max(600, max_y + 40)
+    if (
+        width > MAX_SYNTHETIC_IMAGE_DIMENSION
+        or height > MAX_SYNTHETIC_IMAGE_DIMENSION
+        or width * height > MAX_SYNTHETIC_IMAGE_PIXELS
+        or width * height * SYNTHETIC_IMAGE_COUNT > MAX_SYNTHETIC_TOTAL_PIXELS
+    ):
+        raise ManifestValidationError("synthetic proof image budget exceeded")
+    return width, height
 
 
 def _paint_synthetic_changes(image: Image.Image, review_regions: Sequence[ReviewRegion]) -> None:
@@ -817,9 +837,14 @@ def _artifact_reference_exists(plan: ProofPacketPlan, value: str) -> bool:
 
 def _artifact_reference_path(plan: ProofPacketPlan, value: str) -> Path:
     path = Path(value)
-    if not path.is_absolute():
-        path = plan.output_dir / path
-    return path
+    if path.is_absolute():
+        raise ManifestValidationError("proof artifact reference must be relative")
+    resolved = (plan.output_dir / path).resolve()
+    try:
+        resolved.relative_to(plan.output_dir.resolve())
+    except ValueError as exc:
+        raise ManifestValidationError("proof artifact reference escapes packet root") from exc
+    return resolved
 
 
 def _review_region_pixel_errors(
@@ -1264,7 +1289,30 @@ def _parse_review_regions(raw: Any, fixture_id: str) -> list[ReviewRegion]:
                 min_dark_delta=_optional_ratio(item.get("min_dark_delta"), f"{label}.min_dark_delta"),
             )
         )
+    _validate_synthetic_review_region_budget(regions, fixture_id)
     return regions
+
+
+def _validate_synthetic_review_region_budget(regions: Sequence[ReviewRegion], fixture_id: str) -> None:
+    total_region_pixels = 0
+    for region in regions:
+        x0, y0, x1, y1 = region.rect
+        width, height = x1 - x0, y1 - y0
+        if width > MAX_SYNTHETIC_IMAGE_DIMENSION or height > MAX_SYNTHETIC_IMAGE_DIMENSION:
+            raise ManifestValidationError(
+                f"{fixture_id}.review_regions exceed the synthetic image dimension limit"
+            )
+        total_region_pixels += width * height
+        if total_region_pixels > MAX_SYNTHETIC_IMAGE_PIXELS:
+            raise ManifestValidationError(
+                f"{fixture_id}.review_regions exceed the synthetic image pixel budget"
+            )
+    try:
+        _synthetic_image_size(regions)
+    except ManifestValidationError as exc:
+        raise ManifestValidationError(
+            f"{fixture_id}.review_regions exceed the synthetic image pixel budget"
+        ) from exc
 
 
 def _required_list(raw: dict[str, Any], key: str, label: str) -> list[Any]:
@@ -1314,7 +1362,7 @@ def _validate_rect(value: Any, label: str) -> tuple[int, int, int, int]:
     ):
         raise ManifestValidationError(f"{label} must be four integer coordinates")
     x0, y0, x1, y1 = value
-    if x1 <= x0 or y1 <= y0:
+    if x0 < 0 or y0 < 0 or x1 <= x0 or y1 <= y0:
         raise ManifestValidationError(f"{label} must be ordered as [x0, y0, x1, y1]")
     return x0, y0, x1, y1
 

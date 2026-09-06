@@ -357,6 +357,7 @@ def test_infer_with_injected_client_returns_plan(monkeypatch):
         _square_anchors(),
         _square_lines(),
         client=fake_client,
+        external_consent=True,
     )
     assert plan is not None
     assert plan["closures"] == [[0, 2], [1, 3]]
@@ -371,7 +372,7 @@ def test_infer_uses_default_model_when_not_overridden(monkeypatch):
     fake_client = MagicMock()
     fake_client.messages.create.return_value = _stub_response([[0, 1]])
 
-    infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client)
+    infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client, external_consent=True)
     call = fake_client.messages.create.call_args
     assert call.kwargs["model"] == DEFAULT_MODEL
 
@@ -384,7 +385,7 @@ def test_infer_respects_model_env_var(monkeypatch):
     fake_client = MagicMock()
     fake_client.messages.create.return_value = _stub_response([[0, 1]])
 
-    infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client)
+    infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client, external_consent=True)
     call = fake_client.messages.create.call_args
     assert call.kwargs["model"] == "claude-haiku-4-5"
 
@@ -397,7 +398,7 @@ def test_infer_uses_prompt_caching_on_system_prompt(monkeypatch):
     fake_client = MagicMock()
     fake_client.messages.create.return_value = _stub_response([[0, 1]])
 
-    infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client)
+    infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client, external_consent=True)
     call = fake_client.messages.create.call_args
     system_blocks = call.kwargs["system"]
     assert isinstance(system_blocks, list)
@@ -411,7 +412,7 @@ def test_infer_uses_tool_use_for_strict_json(monkeypatch):
     fake_client = MagicMock()
     fake_client.messages.create.return_value = _stub_response([[0, 1]])
 
-    infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client)
+    infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client, external_consent=True)
     call = fake_client.messages.create.call_args
     assert call.kwargs["tools"] == [CLOSURE_PLAN_TOOL]
     assert call.kwargs["tool_choice"] == {
@@ -427,7 +428,7 @@ def test_infer_network_error_returns_none(monkeypatch):
     fake_client = MagicMock()
     fake_client.messages.create.side_effect = ConnectionError("boom")
 
-    plan = infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client)
+    plan = infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client, external_consent=True)
     assert plan is None
 
 
@@ -439,7 +440,7 @@ def test_infer_invalid_response_returns_none(monkeypatch):
     # confidence > 1.0 — fails validation
     fake_client.messages.create.return_value = _stub_response([[0, 1]], confidence=1.5)
 
-    plan = infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client)
+    plan = infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client, external_consent=True)
     assert plan is None
 
 
@@ -452,7 +453,9 @@ def test_infer_truncates_large_anchor_lists(monkeypatch):
     fake_client.messages.create.return_value = _stub_response([[0, 1]])
 
     huge = [(float(i), 0.0) for i in range(500)]
-    infer_closing_plan("layer", huge, [], client=fake_client)
+    infer_closing_plan("layer", huge, [], client=fake_client,
+        external_consent=True,
+    )
 
     call = fake_client.messages.create.call_args
     user_msg = call.kwargs["messages"][0]["content"]
@@ -563,7 +566,7 @@ def test_polygonize_layer_uses_llm_rung_when_geometric_fail(monkeypatch):
         [[0.0, 0.0], [10.0, 0.0]],  # endpoints 0, 1
         [[0.0, 200.0], [10.0, 200.0]],  # endpoints 2, 3
     ]
-    polys, fr = polygonize_layer("23_WINDOW_FRAMES_REMAP", paths)
+    polys, fr = polygonize_layer("23_WINDOW_FRAMES_REMAP", paths, llm_external_consent=True)
 
     assert fr.strategy == "llm_topology"
     assert fr.polygon_count >= 1
@@ -694,6 +697,7 @@ def test_real_anthropic_sdk_with_stub_backend(monkeypatch):
         _square_anchors(),
         _square_lines(),
         client=real_client,
+        external_consent=True,
     )
     assert plan is not None
     assert plan["closures"] == [[0, 2], [1, 3]]
@@ -714,7 +718,7 @@ def test_cost_reporting_debug_on(monkeypatch, capsys):
     fake_client = MagicMock()
     fake_client.messages.create.return_value = _stub_response([[0, 1]], input_tokens=1000, output_tokens=200)
 
-    infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client)
+    infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client, external_consent=True)
     captured = capsys.readouterr()
     assert "[arch-lw llm]" in captured.err
     assert "in=1000" in captured.err
@@ -729,7 +733,7 @@ def test_cost_reporting_debug_off(monkeypatch, capsys):
 
     fake_client = MagicMock()
     fake_client.messages.create.return_value = _stub_response([[0, 1]])
-    infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client)
+    infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client, external_consent=True)
     captured = capsys.readouterr()
     assert "[arch-lw llm]" not in captured.err
 

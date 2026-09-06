@@ -12,7 +12,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+import hmac
+import ipaddress
+
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
@@ -25,6 +28,30 @@ from ..schemas import JobCreated, JobDetail, JobOptions, JobStatus
 from ..storage import LocalStorage
 
 router = APIRouter(prefix="/api", tags=["jobs"])
+
+
+def require_local_capability(
+    request: Request,
+    settings: Settings = Depends(get_settings),
+    origin: str | None = Header(None),
+    capability: str | None = Header(None, alias="X-Archlw-Capability"),
+) -> None:
+    """Require an exact launcher origin and a per-launch local capability.
+
+    The legacy job API is intentionally fail-closed when a launcher has not
+    provisioned a capability; loopback binding alone is not an authorization
+    boundary for browser-controlled requests.
+    """
+    expected = settings.local_api_capability
+    client_host = request.client.host if request.client else ""
+    try:
+        is_loopback = ipaddress.ip_address(client_host).is_loopback
+    except ValueError:
+        is_loopback = False
+    if not expected or not is_loopback or origin not in settings.cors_origins:
+        raise HTTPException(status_code=403, detail="local job capability required")
+    if not capability or not hmac.compare_digest(capability, expected):
+        raise HTTPException(status_code=403, detail="local job capability required")
 
 
 def get_job_store(request: Request) -> JobStore:
@@ -60,6 +87,7 @@ async def create_job(
     settings: Settings = Depends(get_settings),
     store: JobStore = Depends(get_job_store),
     storage: LocalStorage = Depends(get_storage),
+    _capability: None = Depends(require_local_capability),
 ) -> JobCreated:
     """Accept a multipart upload, store it, run the pipeline, return the job id.
 
@@ -99,17 +127,22 @@ async def create_job(
 
     # Stream the upload to disk. We bound size at the configured cap so a
     # rogue client can't flood the volume; FastAPI streams body in chunks.
-    paths = storage.write_upload(record.job_id, file.file, filename=file.filename)
-    if paths.input_path.stat().st_size > settings.max_upload_bytes:
+    try:
+        paths = storage.write_upload(
+            record.job_id, file.file, filename=file.filename, max_bytes=settings.max_upload_bytes
+        )
+    except ValueError as exc:
         storage.cleanup_job(record.job_id)
+        store.delete(record.job_id)
         raise HTTPException(
             status_code=413,
-            detail=f"upload exceeded {settings.max_upload_bytes:,} bytes",
-        )
+            detail="upload exceeds configured byte limit",
+        ) from exc
 
     input_diag = diagnostic_for_command(paths.input_path, "apply-saas")
     if not input_diag.command_support["apply-saas"]:
         storage.cleanup_job(record.job_id)
+        store.delete(record.job_id)
         raise HTTPException(
             status_code=415,
             detail={
@@ -149,6 +182,7 @@ def get_job(
     request: Request,
     store: JobStore = Depends(get_job_store),
     storage: LocalStorage = Depends(get_storage),
+    _capability: None = Depends(require_local_capability),
 ) -> JobDetail:
     """Status + (when DONE) a download URL.
 
@@ -180,6 +214,7 @@ def download_job(
     job_id: str,
     store: JobStore = Depends(get_job_store),
     storage: LocalStorage = Depends(get_storage),
+    _capability: None = Depends(require_local_capability),
 ) -> FileResponse:
     """Stream the processed file. 404 if unknown, 409 if not yet DONE."""
     record = store.get(job_id)

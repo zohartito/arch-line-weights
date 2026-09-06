@@ -1,26 +1,17 @@
-"""Tests for the compute module — verify the schema-mapping helpers and
-end-to-end ``run_job`` against the synthetic fixture.
-
-These tests deliberately avoid the FastAPI layer so a regression in the
-compute glue surfaces here, not buried under HTTP plumbing failures.
-"""
+"""Tests for safe schema helpers retained after web processing retirement."""
 
 from __future__ import annotations
-
-from pathlib import Path
 
 from arch_line_weights.apply_saas import ApplySaasResult
 from arch_line_weights.poche import FillResult, PocheReport
 from arch_line_weights.poche_saas import PocheSaasResult
 
 from backend.compute import (
-    JobRecord,
     JobStore,
     _apply_to_schema,
     _fills_from_report,
     _poche_to_schema,
     _suggested_output_name,
-    run_job,
 )
 from backend.schemas import JobOptions, JobStatus
 
@@ -78,43 +69,6 @@ def test_suggested_output_name() -> None:
     assert _suggested_output_name("foo HIERARCHY.ai") == "foo HIERARCHY.ai"
     # Unknown extension defaults to .ai
     assert _suggested_output_name("foo") == "foo HIERARCHY.ai"
-
-
-def test_run_job_end_to_end(synthetic_ai: Path, tmp_path: Path) -> None:
-    """Run the full pipeline against the synthetic .ai and inspect the record."""
-    output_path = tmp_path / "output.ai"
-    record = JobRecord(
-        job_id="test-job-1",
-        original_filename=synthetic_ai.name,
-        options=JobOptions(with_poche=True),
-    )
-    run_job(record, input_path=synthetic_ai, output_path=output_path)
-
-    assert record.status == JobStatus.DONE, record.error
-    assert output_path.exists()
-    assert record.apply_summary is not None
-    assert record.poche_summary is not None
-    # The synthetic fixture has one cut layer, so we should see at least
-    # one fill row and a sane polygon count (>=1 from the unit square).
-    assert record.poche_summary.layers_targeted >= 1
-    # `fills` is sorted by confidence desc so we can trust [0] is the best.
-    assert len(record.fills) >= 1
-
-
-def test_run_job_handles_missing_input(tmp_path: Path) -> None:
-    """A bad input path should put the job in FAILED, not raise."""
-    record = JobRecord(
-        job_id="test-job-2",
-        original_filename="missing.ai",
-        options=JobOptions(with_poche=False),
-    )
-    run_job(
-        record,
-        input_path=tmp_path / "nope.ai",
-        output_path=tmp_path / "out.ai",
-    )
-    assert record.status == JobStatus.FAILED
-    assert record.error is not None
 
 
 def test_job_store_create_and_get() -> None:

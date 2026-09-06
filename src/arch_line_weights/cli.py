@@ -35,6 +35,7 @@ from .poche_pdf import apply_poche_pdf
 from .presets import PRESETS, select_preset
 from .progress import DEFAULT_PROGRESS_FILE, make_reporter
 from .role_signal import no_role_signal, no_role_signal_message
+from .safety import ProcessingDisabledError, processing_disabled, terminal_safe
 from .tonal_recede import MODES as TONAL_RECEDE_MODES
 from .tonal_recede import describe_ramp as tonal_recede_describe_ramp
 from .tonal_recede import tonal_recede_resolver
@@ -55,6 +56,14 @@ _SOURCE_CHOICES = [Source.AUTO.value, Source.RHINO.value, Source.AUTOCAD.value]
 # nearest-neighbour bridger) for backwards compatibility.
 _BRIDGE_STRATEGY_CHOICES = ["greedy", "best"]
 _BRIDGE_STRATEGY_DEFAULT = "best"
+
+
+def _disabled_processing_command(surface: str) -> None:
+    """Refuse retired processors before Click validates or opens user input."""
+    try:
+        processing_disabled(surface)
+    except ProcessingDisabledError as exc:
+        raise click.ClickException(str(exc)) from exc
 
 
 def _resolve_source(
@@ -102,7 +111,7 @@ def _layer_plan_line(name: str, source: Source) -> str:
     ta = classify_layer(name, source=source)
     excluded = ta.tier == "excluded"
     weight = "EXCLUDED" if excluded else f"{ta.weight_pt} pt"
-    return f"{name} → {weight} · {_linetype_note(name, source)} [{ta.tier}, conf={ta.confidence:.2f}]"
+    return f"{terminal_safe(name)} → {weight} · {_linetype_note(name, source)} [{ta.tier}, conf={ta.confidence:.2f}]"
 
 
 def _require_supported_input(src: Path, command: str):
@@ -185,6 +194,9 @@ def _echo_numblock_status(input_format: dict) -> None:
 def cli():
     """Apply architectural line-weight hierarchy to color-coded vector drawings.
 
+    Set ARCH_LW_FREEZE_LEGACY_APPLY=1 to fail-close legacy processors before
+    they read input (default: off).
+
     Typical workflow:
 
     \b
@@ -195,8 +207,8 @@ def cli():
     """
 
 
-@cli.command()
-@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@cli.command(help="Report color / stroke-width distribution of a .ai or .pdf file.")
+@click.argument("src", type=click.Path(dir_okay=False, path_type=Path))
 @click.option("--pretty/--no-pretty", default=True, help="Pretty-print JSON output.")
 @click.option(
     "--source",
@@ -207,6 +219,7 @@ def cli():
 )
 def inspect(src: Path, pretty: bool, source: str):
     """Report the color / stroke-width distribution of a .ai or .pdf file."""
+    _disabled_processing_command("PDF inspection")
     indent = 2 if pretty else None
     try:
         rep = inspect_file(str(src))
@@ -240,8 +253,8 @@ def inspect(src: Path, pretty: bool, source: str):
             click.echo(f"#   {_layer_plan_line(layer, resolved)}", err=True)
 
 
-@cli.command()
-@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@cli.command(help="Rewrite the file with per-color stroke widths.")
+@click.argument("src", type=click.Path(dir_okay=False, path_type=Path))
 @click.option(
     "-o",
     "--output",
@@ -251,7 +264,7 @@ def inspect(src: Path, pretty: bool, source: str):
 @click.option(
     "--mapping",
     "mapping_file",
-    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    type=click.Path(dir_okay=False, path_type=Path),
     help='JSON file: {"RGB(r,g,b)": weight_pt, ...}',
 )
 @click.option(
@@ -350,6 +363,7 @@ def apply(
     source: str,
 ):
     """Rewrite the file with per-color stroke widths."""
+    _disabled_processing_command("PDF content-stream rewrite")
     _require_supported_input(src, "apply")
     if not (auto or mapping_file or architectural):
         raise click.UsageError("provide --mapping FILE, --auto (with optional --preset), or --architectural")
@@ -390,8 +404,11 @@ def apply(
             if rgb is None:
                 click.echo(f"warning: skipping unparseable color {ckey!r}", err=True)
                 continue
-            mapping[rgb] = float(w)
-        mapping = from_user_mapping(mapping)
+            mapping[rgb] = w
+        try:
+            mapping = from_user_mapping(mapping)
+        except ValueError as exc:
+            raise click.UsageError(str(exc)) from exc
     elif architectural:
         mapping = {}
     elif no_role_signal(rep, source_conf):
@@ -516,8 +533,8 @@ def apply(
     click.echo(f"wrote {output}  ({result.output_size:,} bytes)", err=True)
 
 
-@cli.command("apply-jsx")
-@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@cli.command(help="Layer-preserving apply via Illustrator JSX.")
+@click.argument("src", type=click.Path(dir_okay=False, path_type=Path))
 @click.option(
     "-o",
     "--output",
@@ -596,6 +613,7 @@ def apply_jsx_cmd(
     structure into 1 Illustrator layer. 'apply-jsx' is the right default for
     Rhino-exported drawings with meaningful OCG layer names.
     """
+    _disabled_processing_command("Illustrator native-document rewrite")
     _require_supported_input(src, "apply-jsx")
     out = str(output) if output else None
     if source != Source.AUTO.value:
@@ -628,11 +646,11 @@ def apply_jsx_cmd(
         for_print=for_print,
         printer=lambda s: click.echo(s, err=True),
     )
-    click.echo(result["report"])
+    click.echo(terminal_safe(result["report"]))
 
 
-@cli.command("layout-jsx")
-@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@cli.command(help="Open a Rhino/Illustrator export, set artboard size, fit/center, and save.")
+@click.argument("src", type=click.Path(dir_okay=False, path_type=Path))
 @click.option(
     "-o",
     "--output",
@@ -707,6 +725,7 @@ def layout_jsx_cmd(
     content; it makes the Illustrator document inspectable and centered on a
     known sheet size.
     """
+    _disabled_processing_command("Illustrator native-document layout")
     try:
         parse_artboard_size(artboard)
     except ValueError as exc:
@@ -740,15 +759,17 @@ def layout_jsx_cmd(
         click.echo(f"layout: wrote {result['output']}", err=True)
     click.echo(f"layout: report {result['report_json']}", err=True)
     if result.get("report"):
-        click.echo(result["report"])
+        # The normalized report can carry Illustrator's active document name.
+        # Render it as terminal data, not terminal control input.
+        click.echo(terminal_safe(result["report"]))
 
 
-@cli.command("bridge-rhino-ai")
+@cli.command(help="Run the Rhino Make2D -> Illustrator layout bridge.")
 @click.option(
     "--input",
     "input_path",
-    required=True,
-    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=False,
+    type=str,
     help="Rhino Export Selected `.ai` or `.pdf` file.",
 )
 @click.option(
@@ -845,6 +866,7 @@ def bridge_rhino_ai_cmd(
     `apply-jsx` and `poche`, but launch-proof decisions still depend on the
     verification reports and visual QA gates.
     """
+    _disabled_processing_command("Rhino-to-Illustrator native-document bridge")
     if run_poche and not run_apply_jsx:
         raise click.UsageError("--poche requires --apply-jsx")
     try:
@@ -885,8 +907,8 @@ def bridge_rhino_ai_cmd(
     click.echo(json.dumps(result, indent=2, sort_keys=True))
 
 
-@cli.command("apply-saas")
-@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@cli.command(help="Headless apply: modify the AI native payload directly (preserves layers).")
+@click.argument("src", type=click.Path(dir_okay=False, path_type=Path))
 @click.option(
     "-o",
     "--output",
@@ -897,7 +919,7 @@ def bridge_rhino_ai_cmd(
 @click.option(
     "--mapping",
     "mapping_file",
-    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    type=click.Path(dir_okay=False, path_type=Path),
     help='JSON file: {"RGB(r,g,b)": weight_pt, ...}',
 )
 @click.option(
@@ -959,7 +981,7 @@ def bridge_rhino_ai_cmd(
 @click.option(
     "--poche-overrides",
     "poche_overrides_path",
-    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    type=click.Path(dir_okay=False, path_type=Path),
     help="JSON of per-layer poché strategy overrides; same schema as `arch-lw poche --overrides`.",
 )
 @click.option(
@@ -1030,7 +1052,7 @@ def bridge_rhino_ai_cmd(
     "progress_file",
     type=click.Path(dir_okay=False, path_type=Path),
     default=None,
-    help=f"Override the progress-event log path (default: {DEFAULT_PROGRESS_FILE}). "
+    help="Override the progress-event log path (default: a private per-run temporary file). "
     "One tab-separated event per line. Ignored when --no-progress is set.",
 )
 @click.option(
@@ -1076,6 +1098,7 @@ def apply_saas_cmd(
     Best for SaaS / batch workflows on Rhino-exported `.ai` files. For
     plain `.pdf` files (no PieceInfo), use `apply` instead.
     """
+    _disabled_processing_command("Illustrator native-payload rewrite")
     input_diag = _require_supported_input(src, "apply-saas")
     if not (auto or mapping_file or architectural):
         raise click.UsageError("provide --mapping FILE, --auto (with optional --preset), or --architectural")
@@ -1104,8 +1127,11 @@ def apply_saas_cmd(
             if rgb is None:
                 click.echo(f"warning: skipping unparseable color {ckey!r}", err=True)
                 continue
-            mapping[rgb] = float(w)
-        mapping = from_user_mapping(mapping)
+            mapping[rgb] = w
+        try:
+            mapping = from_user_mapping(mapping)
+        except ValueError as exc:
+            raise click.UsageError(str(exc)) from exc
     elif auto:
         tiers = select_preset(preset, scale=scale, for_print=for_print)
         mapping = auto_by_luminance(rep, tiers)
@@ -1213,6 +1239,9 @@ def apply_saas_cmd(
                 scale=scale,
                 for_print=for_print,
                 source=resolved_source,
+                # The command-line flag is the operator's explicit consent
+                # for this one invocation; web jobs pass request-local state.
+                llm_external_consent=llm_fallback,
             )
         finally:
             reporter.close()
@@ -1312,9 +1341,9 @@ def apply_saas_cmd(
                 err=True,
             )
             for n in poche_result.layers_missing[:10]:
-                click.echo(f"    {n}", err=True)
+                click.echo(f"    {terminal_safe(n)}", err=True)
         for fr in sorted(poche_report.fills, key=lambda f: -f.confidence):
-            short = fr.layer.split("::")[-1]
+            short = terminal_safe(fr.layer.split("::")[-1])
             marker = "✓" if fr.confidence >= 0.85 else ("~" if fr.confidence > 0 else "✗")
             click.echo(
                 f"  {marker} {short:50}  {fr.strategy:18}  polys={fr.polygon_count:>3}  "
@@ -1350,8 +1379,8 @@ def apply_saas_cmd(
     click.echo(f"wrote {output}  ({result.output_size:,} bytes)", err=True)
 
 
-@cli.command("cleanup")
-@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@cli.command(help="Clean up Illustrator native payload cruft.")
+@click.argument("src", type=click.Path(dir_okay=False, path_type=Path))
 @click.option(
     "-o",
     "--output",
@@ -1365,7 +1394,8 @@ def apply_saas_cmd(
     help="Write a JSON cleanup report with deleted/lightened/medium/heavy counts.",
 )
 def cleanup_cmd(src: Path, output: Path | None, report_path: Path | None):
-    """Conservatively clean up a low-semantic one-layer AI drawing."""
+    """Clean up Illustrator native payload cruft."""
+    _disabled_processing_command("Illustrator native-payload cleanup")
     if output is None:
         output = Path(default_output_path_cleanup(src))
 
@@ -1399,8 +1429,8 @@ def cleanup_cmd(src: Path, output: Path | None, report_path: Path | None):
     click.echo(f"wrote {output}  ({result.output_size:,} bytes)", err=True)
 
 
-@cli.command("poche")
-@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@cli.command(help="Inject solid poché fills for closed cut loops.")
+@click.argument("src", type=click.Path(dir_okay=False, path_type=Path))
 @click.option(
     "-o",
     "--output",
@@ -1410,7 +1440,7 @@ def cleanup_cmd(src: Path, output: Path | None, report_path: Path | None):
 @click.option(
     "--overrides",
     "overrides_path",
-    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    type=click.Path(dir_okay=False, path_type=Path),
     help='JSON of per-layer strategy overrides: {"TEC_FOUNDATION": {"strategy": "bbox"}, ...}',
 )
 @click.option(
@@ -1497,7 +1527,7 @@ def poche_cmd(
     report_path: Path | None,
     geometry_json: Path | None,
 ):
-    """Generate solid-black poché on cut layers via shapely linemerge + polygonize.
+    """Inject solid poché fills for closed cut loops.
 
     \b
     The two-stage pipeline opens the file in Adobe Illustrator, dumps every
@@ -1521,6 +1551,7 @@ def poche_cmd(
         }
       }
     """
+    _disabled_processing_command("poche geometry processing")
     input_diag = _require_supported_input(src, "poche")
     resolved_output = output if output else _default_poche_output_path(src)
     out = str(resolved_output)
@@ -1576,7 +1607,7 @@ def poche_cmd(
     click.echo("", err=True)
     click.echo("per-layer:", err=True)
     for fr in sorted(report.fills, key=lambda f: -f.confidence):
-        short = fr.layer.split("::")[-1]
+        short = terminal_safe(fr.layer.split("::")[-1])
         marker = "✓" if fr.confidence >= 0.85 else ("~" if fr.confidence > 0 else "✗")
         # Surface bridge_strategy_name when set (only the auto_bridge rung
         # populates it, and only when bridge_strategy="best" was selected).
@@ -1857,8 +1888,8 @@ def _expected_count_errors(report_path: Path, expected_counts: dict[str, int]) -
     return errors
 
 
-@cli.command("proof-check")
-@click.argument("manifest", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@cli.command(help="Validate or materialize a proof packet.")
+@click.argument("manifest", type=click.Path(dir_okay=False, path_type=Path))
 @click.option(
     "--output-dir",
     type=click.Path(file_okay=False, path_type=Path),
@@ -1901,7 +1932,8 @@ def proof_check_cmd(
     materialize_synthetic: bool,
     pretty: bool,
 ):
-    """Read a Make2D proof manifest and validate/plan proof packet artifacts."""
+    """Validate or materialize a proof packet."""
+    _disabled_processing_command("proof packet validation")
     from .proof import (
         PROOF_PACKET_GUARDRAILS,
         build_proof_packet_plan,
@@ -2033,14 +2065,14 @@ def proof_check_cmd(
         raise click.ClickException(f"proof-check status is {validation_status}")
 
 
-@cli.command("preview")
-@click.argument("before", type=click.Path(exists=True, dir_okay=False, path_type=Path))
-@click.argument("after", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@cli.command(help="Render before/after preview imagery.")
+@click.argument("before", type=click.Path(dir_okay=False, path_type=Path))
+@click.argument("after", type=click.Path(dir_okay=False, path_type=Path))
 @click.option(
     "-o",
     "--output",
     type=click.Path(dir_okay=False, path_type=Path),
-    required=True,
+    required=False,
     help="Output PNG path.",
 )
 @click.option(
@@ -2062,7 +2094,7 @@ def proof_check_cmd(
     help="Use Ghostscript fallback (-dNOMINLINEWIDTH) for sub-0.25pt hairline accuracy.",
 )
 def preview_cmd(before: Path, after: Path, output: Path, mode: str, dpi: int, ghostscript: bool):
-    """Generate a visual before/after preview PNG.
+    """Render before/after preview imagery.
 
     \b
     Modes:
@@ -2070,6 +2102,7 @@ def preview_cmd(before: Path, after: Path, output: Path, mode: str, dpi: int, gh
       tier-overlay  — `after` rendered with each tier in a unique color
       diff          — pixel diff (red = added strokes, blue = removed)
     """
+    _disabled_processing_command("preview supersampled rendering")
     from .preview import GhostscriptRenderer, diff_image, side_by_side, tier_overlay
 
     renderer = GhostscriptRenderer() if ghostscript else None
@@ -2209,13 +2242,13 @@ def explain_layer(layer_name: str, source: str):
             f"# detected source: {detected.value} (confidence={conf:.2f})",
             err=True,
         )
-        click.echo(explain_source_match(layer_name, detected))
-        click.echo(f"# linetype: {_linetype_note(layer_name, detected)}")
+        click.echo(terminal_safe(explain_source_match(layer_name, detected)))
+        click.echo(f"# linetype: {terminal_safe(_linetype_note(layer_name, detected))}")
     else:
         forced = Source(source)
         click.echo(f"# source: {forced.value} (forced via --source)", err=True)
-        click.echo(explain_source_match(layer_name, forced))
-        click.echo(f"# linetype: {_linetype_note(layer_name, forced)}")
+        click.echo(terminal_safe(explain_source_match(layer_name, forced)))
+        click.echo(f"# linetype: {terminal_safe(_linetype_note(layer_name, forced))}")
 
 
 # Re-export so the unused `classify_layer` import stays referenced and

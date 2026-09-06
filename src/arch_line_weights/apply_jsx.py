@@ -33,7 +33,6 @@ non-section drawing run (see docs/POSTMORTEM.md Attempt 9):
 
 from __future__ import annotations
 
-import contextlib
 import json
 import os
 import re
@@ -45,6 +44,7 @@ from pathlib import Path
 from typing import Any
 
 from .layer_classify import as_jsx_function
+from .safety import private_temp_directory, processing_disabled, terminal_safe
 
 ILLUSTRATOR_APP = "/Applications/Adobe Illustrator 2026/Adobe Illustrator.app"
 
@@ -67,11 +67,11 @@ HEARTBEAT_POLL_SEC = 2
 JSX_TEMPLATE = r"""#target illustrator
 
 (function () {
-    var TARGET   = "__TARGET__";
-    var OUTPUT   = "__OUTPUT__";
-    var PROGRESS = "__PROGRESS__";
-    var REPORT   = "__REPORT__";
-    var HEART    = "__HEARTBEAT__";
+    var TARGET   = __TARGET__;
+    var OUTPUT   = __OUTPUT__;
+    var PROGRESS = __PROGRESS__;
+    var REPORT   = __REPORT__;
+    var HEART    = __HEARTBEAT__;
     var USE_OPEN_DOC = __USE_OPEN_DOC__;
 
     try { app.userInteractionLevel = UserInteractionLevel.DONTDISPLAYALERTS; } catch (e) {}
@@ -228,11 +228,11 @@ def render_jsx(
     """
     classifier = as_jsx_function(preset=preset, scale=scale, for_print=for_print)
     return (
-        JSX_TEMPLATE.replace("__TARGET__", target)
-        .replace("__OUTPUT__", output)
-        .replace("__PROGRESS__", progress_path)
-        .replace("__REPORT__", report_path)
-        .replace("__HEARTBEAT__", heartbeat_path)
+        JSX_TEMPLATE.replace("__TARGET__", json.dumps(target, ensure_ascii=True))
+        .replace("__OUTPUT__", json.dumps(output, ensure_ascii=True))
+        .replace("__PROGRESS__", json.dumps(progress_path, ensure_ascii=True))
+        .replace("__REPORT__", json.dumps(report_path, ensure_ascii=True))
+        .replace("__HEARTBEAT__", json.dumps(heartbeat_path, ensure_ascii=True))
         .replace("__USE_OPEN_DOC__", "true" if use_open_doc else "false")
         .replace("__CLASSIFIER__", textwrap.indent(classifier, "    "))
     )
@@ -240,23 +240,29 @@ def render_jsx(
 
 def open_in_illustrator(path: str, *, timeout_sec: int = 1800) -> None:
     """Ask Illustrator to open `path` (uses AppleScript native `open` command)."""
-    script = f'''with timeout of {timeout_sec} seconds
+    script = f"""on run argv
+    set target_file to POSIX file (item 1 of argv)
+    with timeout of {timeout_sec} seconds
         tell application "Adobe Illustrator"
             activate
-            open POSIX file "{path}"
+            open target_file
         end tell
-    end timeout'''
-    subprocess.run(["osascript", "-e", script], check=True, timeout=timeout_sec)
+    end timeout
+end run"""
+    subprocess.run(["osascript", "-e", script, "--", path], check=True, timeout=timeout_sec)
 
 
 def run_jsx_in_illustrator(jsx_path: str, timeout: int = 3600) -> None:
     """Hand a JSX file to Illustrator via osascript do javascript."""
-    applescript = f'''with timeout of {timeout} seconds
+    applescript = f"""on run argv
+    set jsx_file to POSIX file (item 1 of argv)
+    with timeout of {timeout} seconds
         tell application "Adobe Illustrator"
-            do javascript (read POSIX file "{jsx_path}" as «class utf8»)
+            do javascript (read jsx_file as «class utf8»)
         end tell
-    end timeout'''
-    subprocess.run(["osascript", "-e", applescript], check=True, timeout=timeout + 60)
+    end timeout
+end run"""
+    subprocess.run(["osascript", "-e", applescript, "--", jsx_path], check=True, timeout=timeout + 60)
 
 
 # --------------------------------------------------------------------------- #
@@ -375,8 +381,9 @@ def _is_converted_match(active_name: str | None, active_path: str | None, src: s
       * The ``[Converted]`` token, the whitespace surrounding it, and any
         Illustrator-appended extension are peeled from the active doc name
         before stem comparison.
-      * Comparison is case-sensitive on the stem itself but case-insensitive
-        when falling back to a basename-substring check (legacy looser path).
+      * Comparison is exact and case-sensitive after normalization. Prefix,
+        suffix, and substring matches are rejected because a pathless document
+        provides no second identity signal.
 
     These normalizations let a disk file like
     ``/path/wall section iso cut .ai`` (trailing space before ``.ai``)
@@ -399,48 +406,14 @@ def _is_converted_match(active_name: str | None, active_path: str | None, src: s
     src_stem_norm = _normalize_stem(src_stem)
     src_basename_norm = _normalize_stem(src_basename)
 
-    # Primary path: peel the [Converted] decoration and compare normalized
-    # stems for equality. We require the [Converted] token to be present,
-    # otherwise a regular saved doc whose path matches `src` would falsely
-    # match here (the wrapper relies on this False return to fall through
-    # to the standard `open POSIX file` path).
-    if "[Converted]" in name:
-        active_stem_norm = _strip_converted_decoration(name)
-        if active_stem_norm and active_stem_norm == src_stem_norm:
-            # Stems match after whitespace normalization; fall through to
-            # the path-consistency check below.
-            pass
-        else:
-            # Fall through to legacy candidate-suffix sweep.
-            active_stem_norm = None
-    else:
-        active_stem_norm = None
-    if active_stem_norm is None:
-        # Legacy candidate-suffix sweep — kept so any pre-existing exact
-        # name shape we already supported still matches. Compare against
-        # both the raw and the normalized basename / stem.
-        converted_suffixes = (
-            f"{src_basename} [Converted]",
-            f"{src_basename} [Converted].ai",
-            f"{src_stem} [Converted]",
-            f"{src_stem} [Converted].ai",
-            f"{src_basename_norm} [Converted]",
-            f"{src_basename_norm} [Converted].ai",
-            f"{src_stem_norm} [Converted]",
-            f"{src_stem_norm} [Converted].ai",
-        )
-        if not any(name == s or name.endswith(s) for s in converted_suffixes):
-            # Looser fallback: name must contain "[Converted]" AND share a
-            # basename substring with the source.
-            if "[Converted]" not in name:
-                return False
-            if (
-                src_stem.lower() not in name.lower()
-                and src_basename.lower() not in name.lower()
-                and src_stem_norm.lower() not in name.lower()
-                and src_basename_norm.lower() not in name.lower()
-            ):
-                return False
+    # Require the [Converted] token so an ordinary saved document falls
+    # through to the standard open-file path. The remaining name must equal
+    # the requested stem or basename after the documented normalization.
+    if "[Converted]" not in name:
+        return False
+    active_stem_norm = _strip_converted_decoration(name)
+    if not active_stem_norm or active_stem_norm not in {src_stem_norm, src_basename_norm}:
+        return False
 
     # Path check: a [Converted] virtual doc usually has no saved path. If
     # AppleScript returned a path, accept it only if it actually points at
@@ -513,7 +486,7 @@ class _HeartbeatPoller(threading.Thread):
                             continue
                         self.last_line = line
                         self.lines_seen += 1
-                        self._printer(f"  jsx: {line}")
+                        self._printer(f"  jsx: {terminal_safe(line)}")
                         if line == "DONE":
                             self.done = True
                             return
@@ -668,6 +641,34 @@ def apply_via_jsx(
     for_print: bool = False,
     printer=print,
 ) -> dict:
+    """Run the JSX bridge using a private, cleaned-up default work directory."""
+    processing_disabled("Illustrator JSX document rewrite")
+    with private_temp_directory(prefix="arch-lw-jsx-") as work_dir:
+        return _apply_via_jsx(
+            src,
+            dst,
+            jsx_path=jsx_path,
+            timeout_min=timeout_min,
+            preset=preset,
+            scale=scale,
+            for_print=for_print,
+            printer=printer,
+            work_dir=work_dir,
+        )
+
+
+def _apply_via_jsx(
+    src: str,
+    dst: str | None = None,
+    *,
+    jsx_path: str | None = None,
+    timeout_min: int | None = None,
+    preset: str | None = None,
+    scale: str = "1/4",
+    for_print: bool = False,
+    printer=print,
+    work_dir: Path,
+) -> dict:
     """Open `src` in Illustrator and apply layer-aware hierarchy. Save to `dst`.
 
     Args:
@@ -702,12 +703,9 @@ def apply_via_jsx(
     timeout_min = resolve_timeout_minutes(timeout_min)
     timeout_sec = timeout_min * 60
 
-    progress_path = "/tmp/arch_lw_progress.txt"
-    report_path = "/tmp/arch_lw_report.txt"
-    heartbeat_path = "/tmp/arch_lw_jsx_progress.txt"
-    for f in (progress_path, report_path, heartbeat_path):
-        with contextlib.suppress(FileNotFoundError):
-            os.unlink(f)
+    progress_path = str(work_dir / "progress.txt")
+    report_path = str(work_dir / "report.txt")
+    heartbeat_path = str(work_dir / "heartbeat.txt")
     # Prime the heartbeat file so the poller can attach immediately even
     # before the JSX writes its first line.
     Path(heartbeat_path).write_text("")
@@ -720,19 +718,19 @@ def apply_via_jsx(
     if active_name and "[Converted]" in active_name:
         if _is_converted_match(active_name, active_path, src):
             printer(
-                f"# detected [Converted] doc '{active_name}' for source — "
+                f"# detected [Converted] doc '{terminal_safe(active_name)}' for source — "
                 "operating on the open document directly (Issue #10)"
             )
             use_open_doc = True
         else:
             raise RuntimeError(
-                f"Illustrator has '{active_name}' open. Save it (Cmd+S) and "
+                f"Illustrator has '{terminal_safe(active_name)}' open. Save it (Cmd+S) and "
                 "close the original to allow apply-jsx to open the disk file "
                 "fresh, or close the [Converted] doc entirely."
             )
 
     if jsx_path is None:
-        jsx_path = "/tmp/arch_lw_apply.jsx"
+        jsx_path = str(work_dir / "apply.jsx")
     Path(jsx_path).write_text(
         render_jsx(
             src,

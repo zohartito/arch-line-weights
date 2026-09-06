@@ -213,9 +213,10 @@ class ConsoleRun:
 class DesignerConsoleStore:
     """Small file-backed store for local designer-console runs."""
 
-    def __init__(self, root: str | os.PathLike[str]) -> None:
+    def __init__(self, root: str | os.PathLike[str], *, max_upload_bytes: int = 50 * 1024 * 1024) -> None:
         self.root = Path(root).expanduser()
         self.root.mkdir(parents=True, exist_ok=True)
+        self.max_upload_bytes = max_upload_bytes
 
     def create_run(
         self,
@@ -261,8 +262,17 @@ class DesignerConsoleStore:
         incoming = self.root / "_incoming"
         incoming.mkdir(parents=True, exist_ok=True)
         temp_path = incoming / f"{uuid.uuid4().hex}{Path(filename).suffix.lower()}"
-        with temp_path.open("wb") as f:
-            shutil.copyfileobj(stream, f, length=1024 * 1024)
+        written = 0
+        try:
+            with temp_path.open("wb") as f:
+                while chunk := stream.read(min(1024 * 1024, self.max_upload_bytes - written + 1)):
+                    written += len(chunk)
+                    if written > self.max_upload_bytes:
+                        raise ValueError("upload exceeds configured byte limit")
+                    f.write(chunk)
+        except Exception:
+            temp_path.unlink(missing_ok=True)
+            raise
         try:
             return self.create_run(temp_path, workflow=workflow, original_filename=filename)
         finally:
@@ -801,7 +811,9 @@ def _filename(path: str | None) -> str | None:
 
 
 def _redact_text(text: str) -> str:
-    return _LOCAL_PATH_RE.sub("[local path]", text)
+    # A prefix-only replacement leaks the rest of an absolute path. Public
+    # summaries need no exception detail, so drop the entire affected field.
+    return "[local path redacted]" if _LOCAL_PATH_RE.search(text) else text
 
 
 def _redact_list(values: list[str]) -> list[str]:
