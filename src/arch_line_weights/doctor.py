@@ -40,9 +40,11 @@ off.
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field
 from typing import Literal
 
+from .inspect import color_to_rgb255
 from .layer_classify import (
     AUTOCAD_RULES,
     DEFAULTS,
@@ -64,6 +66,11 @@ from .poche import (
 from .presets import _SCALE_SHIFTS
 
 Severity = Literal["will", "may", "clear"]
+
+# The native stroke-width ops `apply_saas` rewrites: the bare `\r<w> w\r` form and
+# the inline `<w> w` inside a J/j setup line. Counting them predicts a silent
+# no-op rewrite. `tests/test_doctor.py` pins this to `apply_saas`'s own patterns.
+_W_TOKEN_RE = re.compile(rb"\r[0-9.]+ w\r|\r[0-9.]+ J [0-9.]+ j [0-9.]+ w")
 
 # Role-ladder sizes, mirroring `classify._CUT_DRIVEN_ROLE_ORDER` /
 # `_NO_CUT_ROLE_ORDER`. Kept as counts because that is all F6 needs.
@@ -173,6 +180,9 @@ class Finding:
     headline: str
     detail: list[str] = field(default_factory=list)
     remedy: str = ""
+    # Layer ids this finding is about, so `--export-geometry flagged` can read a
+    # field rather than parse ids back out of the rendered prose.
+    layer_ids: tuple[str, ...] = ()
 
     def to_dict(self) -> dict:
         return {
@@ -181,6 +191,7 @@ class Finding:
             "headline": self.headline,
             "detail": list(self.detail),
             "remedy": self.remedy,
+            "layer_ids": list(self.layer_ids),
         }
 
 
@@ -230,6 +241,15 @@ class DoctorReport:
     findings: list[Finding]
     layers: list[LayerRow]
     input_summary: dict
+
+    def flagged_layer_ids(self) -> list[str]:
+        """Layer ids named by a will-hit finding — what `--export-geometry flagged` takes."""
+        seen: dict[str, None] = {}
+        for finding in self.findings:
+            if finding.severity == "will":
+                for lid in finding.layer_ids:
+                    seen.setdefault(lid, None)
+        return sorted(seen)
 
     @property
     def exit_code(self) -> int:
@@ -293,6 +313,7 @@ def _finding_f1(rows: list[LayerRow], source: Source) -> Finding | None:
             "Rename the layers to the studio vocabulary, or accept the middle "
             "weight. Nothing in the run output flags these."
         ),
+        layer_ids=tuple(r.lid for r in unmatched),
     )
 
 
@@ -356,6 +377,7 @@ def _finding_f4(rows: list[LayerRow]) -> Finding:
                 f"{'passes' if len(gated) == 1 else 'pass'} the poché name gate"
             ),
             detail=[" ".join(r.lid for r in gated)],
+            layer_ids=tuple(r.lid for r in gated),
         )
     return Finding(
         code="F4",
@@ -384,13 +406,87 @@ def _finding_f5(drawing_type: dict) -> Finding | None:
     )
 
 
+def usable_color_count(stroke_colors: dict) -> int:
+    """How many stroke colors `classify.auto_by_role` can actually map.
+
+    It skips every key :func:`inspect.color_to_rgb255` rejects, which is every
+    non-RGB colorspace. Counting raw keys instead would report a healthy ladder
+    for a print-intent CMYK export whose mapping comes out empty.
+    """
+    return sum(1 for key in stroke_colors if color_to_rgb255(key) is not None)
+
+
+def _finding_f10(stroke_colors: dict) -> Finding | None:
+    """Non-RGB stroke colors are dropped from the --auto mapping, silently."""
+    dropped = {key for key in stroke_colors if color_to_rgb255(key) is None}
+    if not dropped:
+        return None
+    spaces = sorted({key.split("(", 1)[0] for key in dropped})
+    usable = usable_color_count(stroke_colors)
+    return Finding(
+        code="F10",
+        severity="will" if usable == 0 else "may",
+        headline=(
+            f"{_plural(len(dropped), 'stroke color')} in {', '.join(spaces)} "
+            f"{'is' if len(dropped) == 1 else 'are'} dropped from the --auto mapping"
+        ),
+        detail=(
+            [
+                "`color_to_rgb255` returns None for anything that is not RGB(...),",
+                "and `auto_by_role` skips those keys entirely.",
+            ]
+            + (
+                ["No usable color is left, so --auto builds an empty mapping and writes nothing."]
+                if usable == 0
+                else [f"{usable} RGB color(s) remain, so the ladder is built from those alone."]
+            )
+        ),
+        remedy="Re-export in RGB, or use --architectural, which ignores color.",
+    )
+
+
+def _finding_f20(payload: bytes | None) -> Finding | None:
+    """apply-saas rewrites only `\r<w> w\r`-shaped ops, and never checks it hit any.
+
+    A payload with no such token means apply-saas writes the file, reports zero
+    rewrites, and exits 0 — the silent no-op this command exists to catch.
+    """
+    if payload is None:
+        return None
+    if _W_TOKEN_RE.search(payload):
+        return Finding(
+            code="F20",
+            severity="clear",
+            headline=f"{_plural(len(_W_TOKEN_RE.findall(payload)), 'rewritable stroke-width op')} "
+            "in the native payload",
+        )
+    return Finding(
+        code="F20",
+        severity="will",
+        headline="no rewritable stroke-width op in the native payload",
+        detail=[
+            "apply-saas matches `\\r<w> w\\r` and the J/j setup form, both anchored",
+            "on classic Mac CR. With neither present it rewrites 0 widths, writes",
+            "the file and exits 0; there is no zero-check on that path.",
+        ],
+        remedy="Use apply-jsx instead, or check the payload's line endings.",
+    )
+
+
 def _finding_f6(n_colors: int, drawing_type: dict) -> Finding | None:
     if n_colors < 2:
+        # `n_colors` is the *usable* count, so phrase it that way: a CMYK export
+        # can carry five stroke colors and still land here with none the mapping
+        # can use. F10 says where the rest went.
         return Finding(
             code="F7",
             severity="may",
-            headline=f"only {n_colors} distinct stroke color(s); --auto has no ladder to build",
-            detail=["Color-rank weighting needs at least two distinct colors."],
+            headline=(
+                f"{_plural(n_colors, 'usable RGB stroke color')}; --auto has no ladder to build"
+                if n_colors
+                else "no usable RGB stroke color; --auto has no ladder to build"
+            ),
+            detail=["Color-rank weighting needs at least two distinct RGB colors."],
             remedy="Use --architectural, which resolves weight from layer names first.",
         )
     kind = str(drawing_type.get("kind") or "section").lower()
@@ -501,18 +597,23 @@ def _finding_f18(rows: list[LayerRow]) -> Finding | None:
             "Bridge inference is skipped entirely for these. Expect outline-only.",
         ],
         remedy=f"Raise {_BRIDGE_BEST_MAX_ENDPOINTS_ENV}, or simplify the layer in Rhino.",
+        layer_ids=tuple(r.lid for r in over),
     )
 
 
 def _finding_f19(rows: list[LayerRow]) -> Finding | None:
     breaches: list[str] = []
+    breached: list[str] = []
     for r in rows:
+        before = len(breaches)
         if r.paths is not None and r.paths > MAX_POCHE_PATHS_PER_LAYER:
             breaches.append(f"{r.lid} {r.paths:,} paths over {MAX_POCHE_PATHS_PER_LAYER:,}")
         if r.segments is not None and r.segments > MAX_POCHE_SEGMENTS_PER_LAYER:
             breaches.append(f"{r.lid} {r.segments:,} segments over {MAX_POCHE_SEGMENTS_PER_LAYER:,}")
         if r.coordinates is not None and r.coordinates > MAX_POCHE_COORDINATES_PER_LAYER:
             breaches.append(f"{r.lid} {r.coordinates:,} coordinates over {MAX_POCHE_COORDINATES_PER_LAYER:,}")
+        if len(breaches) > before:
+            breached.append(r.lid)
     if not breaches:
         return None
     return Finding(
@@ -521,6 +622,7 @@ def _finding_f19(rows: list[LayerRow]) -> Finding | None:
         headline=f"{_plural(len(breaches), 'per-layer size cap')} breached",
         detail=breaches,
         remedy="These layers fail poché rather than degrading. Simplify them in Rhino.",
+        layer_ids=tuple(breached),
     )
 
 
@@ -536,6 +638,7 @@ def build_report(
     drawing_type: dict | None = None,
     stroke_colors: dict | None = None,
     input_format: dict | None = None,
+    payload: bytes | None = None,
     pages: int = 1,
     width_pt: float = 0.0,
     height_pt: float = 0.0,
@@ -582,12 +685,15 @@ def build_report(
         _finding_f1(rows, effective_source),
         _finding_f2(rows, effective_source),
         _finding_f5(drawing_type),
-        _finding_f6(len(stroke_colors), drawing_type),
+        _finding_f6(usable_color_count(stroke_colors), drawing_type),
+        _finding_f10(stroke_colors),
         _finding_f22(scale),
     ]
     if paths_by_layer:
         candidates.append(_finding_f18(rows))
         candidates.append(_finding_f19(rows))
+    if payload is not None:
+        candidates.append(_finding_f20(payload))
 
     order: dict[str, int] = {"will": 0, "may": 1, "clear": 2}
     findings = sorted(
@@ -608,6 +714,7 @@ def build_report(
             "aspect": round(width_pt / height_pt, 2) if height_pt else None,
             "stroked_paths": total_stroked,
             "distinct_stroke_colors": len(stroke_colors),
+            "usable_rgb_stroke_colors": usable_color_count(stroke_colors),
             "named_layers": len(rows),
             "drawing_type": drawing_type.get("kind"),
             "drawing_type_confidence": drawing_type.get("confidence"),
@@ -747,3 +854,67 @@ def known_vocabulary() -> set[str]:
     vocab.update(_SCALE_SHIFTS)
     vocab.update(str(s) for s in Source)
     return {v.upper() for v in vocab}
+
+
+# --------------------------------------------------------------------------- #
+# Redacted geometry export
+# --------------------------------------------------------------------------- #
+
+GEOMETRY_EXPORT_DISCLOSURE = (
+    "This file holds the anchor coordinates of the named layer(s) and nothing "
+    "else. Each layer is translated so its own bounding box starts at (0, 0); "
+    "that is the only change. Nothing is scaled, rotated or rounded, because a "
+    "snap tolerance is compared against these very distances and altering them "
+    "would destroy the thing being debugged. Layer names, the file name, page "
+    "size, metadata and every other layer are excluded. Be clear-eyed about "
+    "what does remain: one cut layer's outline can be reconstructed from this, "
+    "which is exactly what makes it useful. Read it before you send it."
+)
+
+
+def export_layer_geometry(
+    paths_by_layer: dict[str, list],
+    rows: list[LayerRow],
+    *,
+    layer_ids: list[str],
+) -> dict:
+    """Redacted per-layer anchor geometry for the given layer ids.
+
+    The point is to let a layer nobody else can reproduce be checkpointed into a
+    fixture without the drawing leaving the machine: enough to debug a closure
+    failure, and no more. Topology is preserved exactly — vertex order, winding
+    and every gap — because those are what a closure bug lives in. Absolute
+    position is not, since board placement says where a drawing sits and is
+    never needed to close a loop.
+
+    I/O-free, like :func:`build_report`: the caller supplies the already-read
+    `paths_by_layer` mapping.
+    """
+    wanted = {r.lid: r for r in rows if r.lid in set(layer_ids)}
+    missing = sorted(set(layer_ids) - set(wanted))
+    if missing:
+        raise ValueError(f"unknown layer id(s): {', '.join(missing)}")
+
+    layers: dict[str, dict] = {}
+    for lid, row in sorted(wanted.items()):
+        paths = paths_by_layer.get(row.name) or []
+        if not paths:
+            layers[lid] = {"paths": [], "note": "no geometry for this layer in the native payload"}
+            continue
+        min_x = min(p[0] for path in paths for p in path)
+        min_y = min(p[1] for path in paths for p in path)
+        layers[lid] = {
+            "token": row.token or "(no match)",
+            "tier": row.tier,
+            "poche_name_gate": row.is_cut_name,
+            "path_count": len(paths),
+            "endpoint_count": row.endpoints,
+            "notes": list(row.notes),
+            "paths": [[[p[0] - min_x, p[1] - min_y] for p in path] for path in paths],
+        }
+    return {
+        "schema": "arch-lw-doctor-geometry/1",
+        "transform": "translate-to-layer-bbox-origin",
+        "disclosure": GEOMETRY_EXPORT_DISCLOSURE,
+        "layers": layers,
+    }
