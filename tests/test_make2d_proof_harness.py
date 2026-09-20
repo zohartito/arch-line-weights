@@ -4,14 +4,21 @@ import hashlib
 import json
 import os
 import re
+from itertools import pairwise
 from pathlib import Path
 from typing import Any
 
 import pytest
 from PIL import Image, ImageChops
+from shapely.geometry import Polygon
 
 from arch_line_weights.inspect import inspect_file
-from arch_line_weights.poche import FillResult, PocheReport
+from arch_line_weights.poche import (
+    FillResult,
+    PocheReport,
+    polygonize_layer,
+    should_inject_fill,
+)
 from arch_line_weights.poche_saas import PocheSaasResult
 from arch_line_weights.run_report import (
     build_apply_saas_report,
@@ -327,15 +334,49 @@ def test_day1_harness_can_generate_cut_geometry_summary_json(tmp_path):
     assert reloaded["layers"][0]["source_cut_contours_count"] == 1
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "Known Day-1 proof miss: screenshot 05 shows the left foundation/concrete "
-        "mass under the wood column as outline-only."
-    ),
-)
 def test_day1_known_foundation_concrete_under_wood_column_is_filled():
-    case = _load_case()
-    miss = case["known_misses"][0]
+    """The shape behind the Day-1 miss now closes at injectable confidence.
 
-    assert miss["current_black_ratio_observed"] >= miss["expected_min_black_ratio"]
+    Screenshot 05 caught the left foundation/concrete mass under the wood
+    column as outline only. The cause was in ``bridge._confidence``, which
+    penalised a closure by bridge COUNT: a stepped footing is fragmented at
+    every corner, so the penalty collapsed and the layer was held back as
+    diagnostic-only. Scoring the inferred LENGTH instead lets the same
+    geometry inject. Full cover in
+    ``tests/test_poche_foundation_under_column.py``.
+
+    The manifest still records the Day-1 screenshot's own black ratio; that
+    observation only changes when the real drawing is re-run and recaptured
+    with ``ARCH_LW_PRIVATE_FIXTURE_ROOT`` set.
+    """
+    miss = _load_case()["known_misses"][0]
+    assert miss["scope"] == "foundation_concrete"
+
+    footing = [
+        (0, 0),
+        (240, 0),
+        (240, 60),
+        (150, 60),
+        (150, 200),
+        (90, 200),
+        (90, 60),
+        (0, 60),
+        (0, 0),
+    ]
+    paths = [
+        [
+            [x0 + (x1 - x0) * 0.10, y0 + (y1 - y0) * 0.10],
+            [x1 - (x1 - x0) * 0.10, y1 - (y1 - y0) * 0.10],
+        ]
+        for (x0, y0), (x1, y1) in pairwise(footing)
+    ]
+
+    polys, fill = polygonize_layer(
+        "axon::Visible::ClippingPlaneIntersections::TEC_FOUNDATION",
+        paths,
+    )
+
+    assert should_inject_fill(fill), (
+        f"footing held back at confidence {fill.confidence:.2f}; it would print hollow"
+    )
+    assert sum(p.area for p in polys) >= Polygon(footing).area * 0.95

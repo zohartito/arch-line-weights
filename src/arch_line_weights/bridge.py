@@ -49,6 +49,7 @@ import itertools
 import logging
 import math
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -213,24 +214,58 @@ def _expected_polygon_count(n_segments: int) -> int:
     return max(1, math.ceil(n_segments / 10))
 
 
+def _bridged_fraction(
+    segments: Sequence[LineString],
+    bridges: Sequence[LineString],
+) -> float | None:
+    """Fraction of the closed boundary that was inferred rather than drawn.
+
+    ``None`` when the lengths are unusable, so the caller can fall back to the
+    segment-count ratio.
+    """
+    try:
+        drawn = float(sum(line.length for line in segments))
+        inferred = float(sum(line.length for line in bridges))
+    except Exception:
+        return None
+    total = drawn + inferred
+    if not math.isfinite(total) or total <= 0.0:
+        return None
+    return min(1.0, inferred / total)
+
+
 def _confidence(
     n_segments: int,
     n_bridges: int,
     n_polys: int,
     expected: int,
+    *,
+    bridged_fraction: float | None = None,
 ) -> float:
     """Confidence in [0, 1]:
     * 1.0 if no bridges were needed and we got >= expected polys.
-    * Penalise heavy bridging (n_bridges relative to n_segments).
+    * Penalise heavy bridging (how much of the closure we had to invent).
     * Penalise polygon shortfall.
     * 0.0 if we got no polygons at all.
+
+    The bridging penalty is measured by LENGTH (``bridged_fraction``) whenever
+    the caller can supply it, and only falls back to the bridge/segment COUNT
+    ratio when it cannot. Counting is the wrong unit here: Make2D fragments a
+    cut at its corners, so a many-cornered shape -- a stepped footing under a
+    column -- needs one short bridge per corner and scores the same as a
+    wholly invented closure, even when the resulting boundary is ~99% real cut
+    line. Measuring the inferred length instead scores such a closure on how
+    much of it was actually guessed. See
+    ``docs/research/disconnected-loops.md``.
     """
     if n_polys == 0:
         return 0.0
     if n_bridges == 0 and n_polys >= expected:
         return 1.0
     poly_score = min(1.0, n_polys / max(1, expected))
-    bridge_penalty = 1.0 - min(1.0, n_bridges / max(1, n_segments))
+    if bridged_fraction is None:
+        bridged_fraction = min(1.0, n_bridges / max(1, n_segments))
+    bridge_penalty = 1.0 - max(0.0, min(1.0, bridged_fraction))
     return max(0.0, min(1.0, 0.5 * poly_score + 0.5 * bridge_penalty))
 
 
@@ -290,7 +325,13 @@ def infer_bridges(
             bridges = bridges + more
             n_polys = _polygon_count(augmented)
 
-    conf = _confidence(len(segments), len(bridges), n_polys, expected)
+    conf = _confidence(
+        len(segments),
+        len(bridges),
+        n_polys,
+        expected,
+        bridged_fraction=_bridged_fraction(segments, bridges),
+    )
     return augmented, conf
 
 
@@ -468,7 +509,13 @@ def infer_bridges_backtrack(
     )
     augmented = segments + bridges
     n_polys = _polygon_count(augmented)
-    conf = _confidence(len(segments), len(bridges), n_polys, expected)
+    conf = _confidence(
+        len(segments),
+        len(bridges),
+        n_polys,
+        expected,
+        bridged_fraction=_bridged_fraction(segments, bridges),
+    )
     return augmented, conf
 
 
