@@ -64,13 +64,37 @@ SOURCE_BASELINE_CONFIDENCE: dict[Source, float] = {
 
 
 # --------------------------------------------------------------------------- #
-# Rhino Make2D + ClippingPlane rules (existing behavior — unchanged)
+# Section-cut markers (shared recognizer)
+# --------------------------------------------------------------------------- #
+
+# Layer-name markers that mean "this geometry is cut by the section plane".
+# Rhino's Make2D + ClippingPlane export writes `ClippingPlaneIntersections`,
+# but hand-authored and remapped Rhino files use `SECTION_CUT` for the same
+# thing. Both spellings must reach the cut tier AND the poché step, so this
+# tuple is the single source of truth: `architectural`, `poche`, `poche_saas`
+# and `make2d_completion` all key off it rather than hard-coding a spelling.
+# Uppercase — callers match against an upper-cased layer name.
+CUT_MARKERS: tuple[str, ...] = ("CLIPPINGPLANEINTERSECTIONS", "SECTION_CUT")
+
+# The same markers as they appear delimited by Rhino's `::` layer separator,
+# for callers that need a full path segment rather than a loose substring.
+CUT_PATH_MARKERS: tuple[str, ...] = tuple(f"::{marker}::" for marker in CUT_MARKERS)
+
+
+def is_cut_marker_name(layer_name: str) -> bool:
+    """True if `layer_name` carries any recognized section-cut marker."""
+    upper = layer_name.upper()
+    return any(marker in upper for marker in CUT_MARKERS)
+
+
+# --------------------------------------------------------------------------- #
+# Rhino Make2D + ClippingPlane rules
 # --------------------------------------------------------------------------- #
 
 # Order matters — first match wins (most specific patterns first).
 RHINO_RULES: list[tuple[str | tuple[str, ...], TierAssignment]] = [
     # 1. Cut — section plane intersection (heaviest, regardless of material)
-    ("CLIPPINGPLANEINTERSECTIONS", TierAssignment(1.0, "cut", "section plane intersection")),
+    (CUT_MARKERS, TierAssignment(1.0, "cut", "section plane intersection")),
     # 2. Glazing — special, lighter than profile
     (("WINDOW_IGU_GLASS", "WINDOW_GLASS"), TierAssignment(0.25, "glazing", "transparent material")),
     # 3. Reference / datum lines

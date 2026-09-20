@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .layer_classify import Source
+from .layer_classify import CUT_MARKERS, Source
 from .presets import mm, select_preset
 
 
@@ -32,7 +32,9 @@ class ArchitecturalStrokeStyle:
     reason: str
 
 
-_CUT_MARKERS = ("CLIPPINGPLANEINTERSECTIONS", "SECTION_CUT")
+# Canonical section-cut markers live in `layer_classify` so the weight
+# classifier and the poché recognizers can't drift apart again.
+_CUT_MARKERS = CUT_MARKERS
 
 _ENTOURAGE = (
     "ENTOURAGE",

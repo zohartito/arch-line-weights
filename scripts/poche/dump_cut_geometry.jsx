@@ -7,9 +7,17 @@
 
     function writeFile(p, s) { var f = new File(p); f.encoding = "UTF-8"; f.open("w"); f.write(s); f.close(); }
 
+    // Keep in sync with layer_classify.CUT_MARKERS — Make2D writes
+    // ClippingPlaneIntersections, remapped/hand-authored files use SECTION_CUT.
+    var CUT_MARKERS = ["CLIPPINGPLANEINTERSECTIONS", "SECTION_CUT"];
+
     function shouldDump(name) {
         var n = String(name).toUpperCase();
-        if (n.indexOf("CLIPPINGPLANEINTERSECTIONS") === -1) return false;
+        var isCut = false;
+        for (var ci = 0; ci < CUT_MARKERS.length; ci++) {
+            if (n.indexOf(CUT_MARKERS[ci]) !== -1) { isCut = true; break; }
+        }
+        if (!isCut) return false;
         if (n.indexOf("GLASS") !== -1 || n.indexOf("IGU") !== -1) return false;
         return true;
     }

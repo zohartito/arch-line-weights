@@ -49,6 +49,7 @@ from shapely.ops import linemerge, polygonize, snap, unary_union
 from .bridge import infer_bridges, infer_bridges_best
 from .hatch import hatch_polygon, material_for_layer
 from .input_format import raise_if_unsupported
+from .layer_classify import CUT_MARKERS, is_cut_marker_name
 from .safety import processing_disabled
 
 _log = logging.getLogger(__name__)
@@ -288,7 +289,7 @@ def _bbox(lines: list[LineString]) -> Polygon | None:
 
 def _is_poche_cut_layer_name(layer_name: str) -> bool:
     upper = layer_name.upper()
-    if "CLIPPINGPLANEINTERSECTIONS" not in upper:
+    if not is_cut_marker_name(upper):
         return False
     return "GLASS" not in upper and "IGU" not in upper
 
@@ -1538,10 +1539,21 @@ DUMP_JSX_TEMPLATE = r"""#target illustrator
         return out + '"';
     }
 
+    // Injected from layer_classify.CUT_MARKERS so the JSX filter and the
+    // Python recognizers can never disagree about what counts as a cut layer.
+    var CUT_MARKERS = __CUT_MARKERS__;
+
+    function hasCutMarker(n) {
+        for (var ci = 0; ci < CUT_MARKERS.length; ci++) {
+            if (n.indexOf(CUT_MARKERS[ci]) !== -1) return true;
+        }
+        return false;
+    }
+
     function shouldDump(name) {
         var n = String(name).toUpperCase();
         if (n.indexOf("__POCHE_CLOSE__") !== -1) return true;
-        if (n.indexOf("CLIPPINGPLANEINTERSECTIONS") !== -1) {
+        if (hasCutMarker(n)) {
             if (n.indexOf("GLASS") !== -1 || n.indexOf("IGU") !== -1) return false;
             return true;
         }
@@ -1741,8 +1753,10 @@ def _bake_polygons_jsx(polygons: dict) -> str:
 
 
 def render_dump_jsx(target: str, out_json: str) -> str:
-    return DUMP_JSX_TEMPLATE.replace("__TARGET__", json.dumps(target, ensure_ascii=True)).replace(
-        "__OUT__", json.dumps(out_json, ensure_ascii=True)
+    return (
+        DUMP_JSX_TEMPLATE.replace("__TARGET__", json.dumps(target, ensure_ascii=True))
+        .replace("__OUT__", json.dumps(out_json, ensure_ascii=True))
+        .replace("__CUT_MARKERS__", json.dumps(list(CUT_MARKERS), ensure_ascii=True))
     )
 
 
