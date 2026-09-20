@@ -727,24 +727,44 @@ def collapse_endpoint_clusters(
 _BACKTRACK_BUDGET_SHARE = 0.5
 
 
-def _strategy_score(n_polys: int, confidence: float, expected: int) -> tuple[int, int, float]:
+# Width of a confidence band in :func:`_strategy_score`. Candidates whose
+# confidences fall in the same band are treated as comparably trustworthy, and
+# the uncapped polygon count decides between them; a candidate a whole band
+# below another loses outright, however many polygons it produced.
+_CONFIDENCE_BAND = 0.25
+
+
+def _confidence_band(confidence: float) -> int:
+    """Quantize a confidence into coarse bands for strategy comparison."""
+    clamped = max(0.0, min(1.0, confidence))
+    return int(clamped // _CONFIDENCE_BAND)
+
+
+def _strategy_score(n_polys: int, confidence: float, expected: int) -> tuple[int, int, int, float]:
     """Compare key for picking among strategies. Higher = better.
 
     Primary: polygon count up to ``expected`` (overshooting doesn't help and
     can indicate spurious topology, so cap it).
 
-    Secondary: the *uncapped* polygon count. ``expected`` is a crude
+    Secondary: the confidence BAND. Raw polygon count is only a trustworthy
+    signal when the closure that produced it is itself trustworthy -- an
+    over-bridged result can split a single mass into slivers and report more
+    polygons than the correct closure. Banding keeps a confidence collapse
+    decisive (0.95 versus 0.30 is not a tie to be broken on count) while
+    leaving comparable candidates to be separated by coverage below.
+
+    Tertiary: the *uncapped* polygon count. ``expected`` is a crude
     segment-count heuristic (one polygon per ~10 segments) with no notion of
     how many disconnected sub-shapes the layer actually has, so it reads 1
     for a layer like ``26_CLT_GAP_ROOF_CAP`` -- two roof slabs with a real
     gap between them. Capping alone made a strategy that closed *one* slab
     tie with one that closed *both*, and the tie then went to whichever had
     the higher confidence. An unclosed sub-shape is an unfilled one, so
-    among strategies the cap has tied, prefer the one that closes more.
+    among comparably confident strategies, prefer the one that closes more.
 
-    Tertiary: raw confidence, as before.
+    Quaternary: raw confidence, as before.
     """
-    return (min(n_polys, expected), n_polys, confidence)
+    return (min(n_polys, expected), _confidence_band(confidence), n_polys, confidence)
 
 
 def infer_bridges_best(
@@ -806,7 +826,7 @@ def infer_bridges_best(
         return f" layer={layer_name!r}" if layer_name else ""
 
     expected = _expected_polygon_count(len(segments))
-    results: list[tuple[tuple[int, int, float], list[LineString], float, str]] = []
+    results: list[tuple[tuple[int, int, int, float], list[LineString], float, str]] = []
 
     # 1. Greedy.
     try:
@@ -903,6 +923,8 @@ def infer_bridges_best(
     else:
         try:
             if collapsed and collapsed != list(segments):
+                # Deliberately the full `deadline`, not `backtrack_deadline`:
+                # this is the last rung, so there is nothing after it to starve.
                 aug_db, conf_db = infer_bridges_backtrack(
                     collapsed,
                     max_gap=max_gap,

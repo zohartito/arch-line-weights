@@ -462,6 +462,41 @@ def test_strategy_score_breaks_capped_ties_on_raw_polygon_count():
     assert closes_both > closes_one
 
 
+def test_strategy_score_does_not_reward_an_over_bridged_split():
+    """More polygons must NOT win when the extra ones came from a confidence collapse.
+
+    The mirror image of the test above, and the reason the polygon count sits
+    *behind* a confidence band rather than ahead of it. An over-bridging
+    strategy can shatter one real mass into slivers and report more polygons
+    than the correct closure; `_confidence`'s bridge penalty is what says so.
+    Were raw count to decide this outright, a layer that filled at
+    ``0.75 * 0.95 + 0.25 = 0.9625`` would be replaced by one at
+    ``0.75 * 0.30 + 0.25 = 0.4750`` -- under the 0.85 injection floor, i.e.
+    hollow. Found by review on PR #91.
+    """
+    from arch_line_weights.bridge import _strategy_score
+
+    correct = _strategy_score(n_polys=2, confidence=0.95, expected=1)
+    over_bridged = _strategy_score(n_polys=3, confidence=0.30, expected=1)
+    assert correct > over_bridged
+
+
+def test_strategy_score_bands_are_coarse_enough_for_the_two_slab_case():
+    """Banding must not undo the fix it guards.
+
+    The two-slab case that motivated the raw-count tie-break has the fuller
+    closure at slightly LOWER confidence than the partial one, because closing
+    the second slab costs bridges. Those two have to land in the same band or
+    the partial fill wins again.
+    """
+    from arch_line_weights.bridge import _confidence_band, _strategy_score
+
+    assert _confidence_band(0.79) == _confidence_band(0.95)
+    closes_both = _strategy_score(n_polys=2, confidence=0.79, expected=1)
+    closes_one = _strategy_score(n_polys=1, confidence=0.95, expected=1)
+    assert closes_both > closes_one
+
+
 # --------------------------------------------------------------------------- #
 # Budget sharing (11_CU_CORR_SOLID_OPAQUE)
 # --------------------------------------------------------------------------- #
