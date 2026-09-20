@@ -21,12 +21,14 @@ from shapely.geometry import LineString, MultiLineString, Polygon, box
 from shapely.ops import linemerge, polygonize, unary_union
 
 from .architectural import ArchitecturalAssignment, classify_architectural_layer
-from .layer_classify import Source
+from .layer_classify import CUT_PATH_MARKERS, Source
 
 Path2D = list[list[float]]
 LayerRole = Literal["cut", "visible_curve", "visible_tangent", "other"]
 
-_CUT_MARKER = "::CLIPPINGPLANEINTERSECTIONS::"
+# `::`-delimited section-cut segments, from layer_classify.CUT_MARKERS.
+# Both `ClippingPlaneIntersections` and `SECTION_CUT` name cut geometry.
+_CUT_MARKERS = CUT_PATH_MARKERS
 _VISIBLE_CURVES_MARKER = "::VISIBLE::CURVES::"
 _VISIBLE_TANGENTS_MARKER = "::VISIBLE::TANGENTS::"
 
@@ -70,7 +72,7 @@ def component_key(layer_name: str) -> str:
 
 def layer_role(layer_name: str) -> LayerRole:
     upper = layer_name.upper()
-    if _CUT_MARKER in upper:
+    if any(marker in upper for marker in _CUT_MARKERS):
         return "cut"
     if _VISIBLE_CURVES_MARKER in upper:
         return "visible_curve"

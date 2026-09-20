@@ -536,35 +536,86 @@ def test_realistic_aia_ncs_names_classify(layer, expected_tier):
 
 
 # --------------------------------------------------------------------------- #
-# Recognizer-divergence flag: SECTION_CUT marker
+# SECTION_CUT marker: recognized everywhere a cut marker matters
 #
-# `architectural._CUT_MARKERS` treats `SECTION_CUT` as a cut context, but the
-# weight classifier in `layer_classify` (and `poche._is_poche_cut_layer_name`)
-# key ONLY on `CLIPPINGPLANEINTERSECTIONS`. A layer named `...::SECTION_CUT::...`
-# therefore gets a default / structure weight instead of cut(1.0). Aligning the
-# two recognizers is a recognition-logic change, out of scope for this fixture
-# expansion, so the gap is pinned as a strict xfail (it flips to XPASS the day
-# someone teaches `layer_classify` about SECTION_CUT).
+# Rhino's Make2D + ClippingPlane export writes `ClippingPlaneIntersections`,
+# but hand-authored and remapped Rhino files spell the same thing
+# `SECTION_CUT`. Both spellings now live in `layer_classify.CUT_MARKERS`,
+# which `architectural`, `poche`, `poche_saas` and `make2d_completion` all
+# key off, so a `...::SECTION_CUT::...` layer gets cut(1.0) AND poche.
+# These tests pin every recognizer to that single source of truth.
 # --------------------------------------------------------------------------- #
 
 
 def test_section_cut_is_a_cut_context_in_architectural_module():
-    """architectural.py DOES treat SECTION_CUT as a cut context (proves the gap is real)."""
+    """architectural.py treats SECTION_CUT as a cut context."""
     from arch_line_weights.architectural import classify_architectural_layer
 
     a = classify_architectural_layer("model::Visible::SECTION_CUT::TEC_CONCRETE_BASE")
     assert a.poche is True
 
 
-@pytest.mark.xfail(
-    reason="layer_classify keys only on CLIPPINGPLANEINTERSECTIONS; the SECTION_CUT "
-    "marker that architectural._CUT_MARKERS recognizes as a cut context is not "
-    "known to the weight classifier. Recognizer redesign is out of scope for the "
-    "Make2D fixture expansion — documented here so the divergence stays visible.",
-    strict=True,
-)
-def test_section_cut_marker_recognized_as_cut_xfail():
-    """WISH: layer_classify would recognize SECTION_CUT as a cut layer too."""
+def test_section_cut_marker_recognized_as_cut():
+    """layer_classify recognizes SECTION_CUT as a cut layer, not a default."""
     a = classify_layer("model::Visible::SECTION_CUT::WALL")
     assert a.tier == "cut"
     assert a.weight_pt == 1.0
+
+
+def test_section_cut_beats_material_rule_for_concrete_base():
+    """The reported Make2D failure: a concrete base under SECTION_CUT used to
+    fall through to structure_primary(0.5) because rule 4 matched the material
+    token. The cut rule is first, so it wins for both spellings."""
+    for marker in ("ClippingPlaneIntersections", "SECTION_CUT"):
+        a = classify_layer(f"model::Visible::{marker}::TEC_CONCRETE_BASE")
+        assert a.tier == "cut", marker
+        assert a.weight_pt == 1.0, marker
+
+
+def test_section_cut_layer_is_a_poche_cut_layer():
+    """The poché recognizers accept SECTION_CUT, so the layer actually fills."""
+    from arch_line_weights.make2d_completion import layer_role
+    from arch_line_weights.poche_saas import _CUT_LAYER_FILTER, _is_cut_layer
+
+    layer = "model::Visible::SECTION_CUT::TEC_CONCRETE_BASE"
+    assert _is_poche_cut_layer_name(layer) is True
+    assert _is_cut_layer(layer) is True
+    # The cheap byte pre-filter must not drop the layer before _is_cut_layer runs.
+    assert _CUT_LAYER_FILTER.search(layer.encode("utf-8")) is not None
+    assert layer_role(layer) == "cut"
+
+
+def test_section_cut_glass_is_still_excluded_from_poche():
+    """Glass/IGU stays out of poché under either cut spelling."""
+    from arch_line_weights.poche_saas import _is_cut_layer
+
+    layer = "model::Visible::SECTION_CUT::WINDOW_IGU_GLASS"
+    assert classify_layer(layer).tier == "cut"
+    assert _is_poche_cut_layer_name(layer) is False
+    assert _is_cut_layer(layer) is False
+
+
+def test_visible_curves_concrete_is_not_swept_into_cut():
+    """Widening the cut recognizer must not pull ordinary visible geometry in."""
+    from arch_line_weights.make2d_completion import layer_role
+    from arch_line_weights.poche_saas import _is_cut_layer
+
+    layer = "model::Visible::Curves::TEC_CONCRETE_BASE"
+    a = classify_layer(layer)
+    assert a.tier == "structure_primary"
+    assert a.weight_pt == 0.5
+    assert _is_poche_cut_layer_name(layer) is False
+    assert _is_cut_layer(layer) is False
+    assert layer_role(layer) == "visible_curve"
+
+
+def test_dump_jsx_filter_carries_both_cut_markers():
+    """The Illustrator dump filter is generated from CUT_MARKERS, so the JSX
+    and the Python recognizers cannot drift apart again."""
+    from arch_line_weights.layer_classify import CUT_MARKERS
+    from arch_line_weights.poche import render_dump_jsx
+
+    jsx = render_dump_jsx("/tmp/drawing.ai", "/tmp/cut_geometry.json")
+    assert "__CUT_MARKERS__" not in jsx
+    for marker in CUT_MARKERS:
+        assert marker in jsx, marker

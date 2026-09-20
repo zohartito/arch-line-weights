@@ -64,7 +64,7 @@ from .apply_saas import (
     _write_payload,
     rewrite_payload,
 )
-from .layer_classify import Source
+from .layer_classify import CUT_MARKERS, Source, is_cut_marker_name
 from .make2d_completion import (
     complete_structural_cut_polygons,
     structural_completion_paths_for_layers,
@@ -602,12 +602,13 @@ def enumerate_layer_paths_from_payload(
 # --------------------------------------------------------------------------- #
 
 
-_CUT_LAYER_FILTER = re.compile(rb"(?i)clippingplaneintersections")
+_CUT_LAYER_FILTER = re.compile(rb"(?i)" + b"|".join(re.escape(m.encode("ascii")) for m in CUT_MARKERS))
 
 
 def _is_cut_layer(name: str, *, architectural: bool = False) -> bool:
-    """Heuristic: a layer participates in poché iff its name contains
-    ``ClippingPlaneIntersections`` and *isn't* a glass / IGU sub-layer.
+    """Heuristic: a layer participates in poché iff its name carries a
+    section-cut marker (``ClippingPlaneIntersections`` or ``SECTION_CUT``,
+    per `layer_classify.CUT_MARKERS`) and *isn't* a glass / IGU sub-layer.
 
     Matches the ``shouldDump`` filter in ``poche.py``'s JSX template.
     The ``_CUT_LAYER_FILTER`` regex above is the cheap pre-filter that
@@ -615,7 +616,7 @@ def _is_cut_layer(name: str, *, architectural: bool = False) -> bool:
     entirely; this Python predicate refines further by excluding glass/IGU.
     """
     n = name.upper()
-    if "CLIPPINGPLANEINTERSECTIONS" not in n:
+    if not is_cut_marker_name(n):
         return False
     if not architectural:
         return not ("GLASS" in n or "IGU" in n)
@@ -634,7 +635,7 @@ def _is_structural_helper_layer(name: str) -> bool:
     upper = name.upper()
     if "::VISIBLE::CURVES::" not in upper and "::VISIBLE::TANGENTS::" not in upper:
         return False
-    if "CLIPPINGPLANEINTERSECTIONS" in upper:
+    if is_cut_marker_name(upper):
         return False
 
     from .architectural import classify_architectural_layer
