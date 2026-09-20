@@ -19,6 +19,8 @@ from .bridge_rhino_ai import bridge_rhino_ai
 from .classify import auto_by_luminance, auto_by_role, explain_mapping, from_user_mapping
 from .cleanup import cleanup_file
 from .cleanup import default_output_path as default_output_path_cleanup
+from .doctor import build_report as build_doctor_report
+from .doctor import render_text as render_doctor_text
 from .drawing_type import classify_drawing_type
 from .input_format import UnsupportedInputError, raise_if_unsupported
 from .inspect import color_to_rgb255, inspect_file
@@ -107,11 +109,27 @@ def _linetype_note(name: str, source: Source) -> str:
 
 
 def _layer_plan_line(name: str, source: Source) -> str:
-    """One-line 'layer → weight · linetype' plan for the per-layer surfacing (item 4)."""
+    """One-line 'layer → weight · linetype' plan for the per-layer surfacing (item 4).
+
+    A layer that matched no rule is called out explicitly. Its weight is the
+    middle of the ladder, so the result looks deliberate rather than
+    unclassified, and a mistyped layer name is indistinguishable from a
+    considered choice unless the plan says so.
+    """
     ta = classify_layer(name, source=source)
     excluded = ta.tier == "excluded"
     weight = "EXCLUDED" if excluded else f"{ta.weight_pt} pt"
-    return f"{terminal_safe(name)} → {weight} · {_linetype_note(name, source)} [{ta.tier}, conf={ta.confidence:.2f}]"
+    note = f"[{ta.tier}, conf={ta.confidence:.2f}]"
+    if _matched_no_rule(name, source):
+        note += "  ← no rule matched; took the default"
+    return f"{terminal_safe(name)} → {weight} · {_linetype_note(name, source)} {note}"
+
+
+def _matched_no_rule(name: str, source: Source) -> bool:
+    """True when `name` fell through every rule to the source default."""
+    from .doctor import matched_token
+
+    return matched_token(name, source) is None
 
 
 def _require_supported_input(src: Path, command: str):
@@ -251,6 +269,135 @@ def inspect(src: Path, pretty: bool, source: str):
         click.echo("# per-layer plan (layer → weight · linetype):", err=True)
         for layer in layer_names:
             click.echo(f"#   {_layer_plan_line(layer, resolved)}", err=True)
+        unmatched = [n for n in layer_names if _matched_no_rule(n, resolved)]
+        if unmatched:
+            default = classify_layer("", source=resolved)
+            click.echo(
+                f"# WARNING: {len(unmatched)} of {len(layer_names)} layers matched no rule "
+                f"and took the {default.weight_pt} pt default. A mistyped layer name looks "
+                f"the same as a deliberate weight here. Run `arch-lw doctor` for the full "
+                f"pre-flight, or --architectural, which leaves unclassified layers alone.",
+                err=True,
+            )
+
+
+def _doctor_geometry_counts(src: Path) -> dict[str, list] | None:
+    """Per-layer sub-path geometry for `doctor`'s pass 2, or None.
+
+    Reads the Illustrator native payload the same way `poche_saas` does, with
+    no layer filter so unmatched layers are counted too. Returns None when the
+    file has no readable native payload -- pass 2 simply does not run then,
+    rather than the command failing.
+    """
+    try:
+        import pikepdf
+
+        from .apply_saas import _read_payload
+        from .poche_saas import enumerate_layer_paths_from_payload
+
+        with pikepdf.open(str(src)) as pdf:
+            payload = _read_payload(pdf)
+        if not payload:
+            return None
+        return enumerate_layer_paths_from_payload(payload)
+    except ProcessingDisabledError:
+        raise
+    except Exception:
+        return None
+
+
+@cli.command(help="Pre-flight: predict which failure modes this drawing will hit.")
+@click.argument("src", type=click.Path(dir_okay=False, path_type=Path))
+@click.option(
+    "--source",
+    type=click.Choice(_SOURCE_CHOICES),
+    default=Source.AUTO.value,
+    show_default=True,
+    help="Force a layer-name convention. 'auto' detects from PDF metadata + layer-name shape.",
+)
+@click.option(
+    "--scale",
+    default=None,
+    help="Scale you intend to run at. Omitted means doctor reports it as unreadable.",
+)
+@click.option(
+    "--share/--full",
+    "share",
+    default=True,
+    show_default=True,
+    help="--share redacts layer names to ordinal ids so the report can be pasted. "
+    "--full prints real names, for local reading only.",
+)
+@click.option(
+    "--shape-mask/--no-shape-mask",
+    default=True,
+    show_default=True,
+    help="In --share mode, print a letter-case/digit mask for layers that matched "
+    "no rule. Diagnoses a naming-convention mismatch without leaking letters.",
+)
+@click.option("--json", "as_json", is_flag=True, help="Emit the report as JSON.")
+@click.option(
+    "--geometry/--no-geometry",
+    default=True,
+    show_default=True,
+    help="Pass 2: per-layer path and endpoint counts read from the native payload. "
+    "No polygonising, so it stays fast.",
+)
+def doctor(
+    src: Path,
+    source: str,
+    scale: str | None,
+    share: bool,
+    shape_mask: bool,
+    as_json: bool,
+    geometry: bool,
+):
+    """Predict which failure modes a drawing will hit, before spending a run.
+
+    Writes nothing and modifies nothing. Exit code is 0 clear, 1 may-hit only,
+    2 will-hit, so it can gate a script.
+    """
+    _disabled_processing_command("PDF inspection")
+    try:
+        rep = inspect_file(str(src))
+    except UnsupportedInputError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    layer_names = list(getattr(rep, "layer_names", None) or [])
+    pdf_metadata = getattr(rep, "pdf_metadata", None) or {}
+
+    source_override = None if source == Source.AUTO.value else Source(source)
+
+    paths_by_layer = None
+    if geometry:
+        paths_by_layer = _doctor_geometry_counts(src)
+
+    report = build_doctor_report(
+        layer_names=layer_names,
+        pdf_metadata=pdf_metadata,
+        drawing_type=getattr(rep, "drawing_type", None) or {},
+        stroke_colors=getattr(rep, "stroke_colors", None) or {},
+        input_format=getattr(rep, "input_format", None) or {},
+        pages=rep.pages,
+        width_pt=rep.width_pt,
+        height_pt=rep.height_pt,
+        total_stroked=rep.total_stroked,
+        scale=scale,
+        source_override=source_override,
+        paths_by_layer=paths_by_layer,
+    )
+
+    if as_json:
+        click.echo(
+            json.dumps(
+                report.to_dict(share=share, shape_mask_enabled=shape_mask),
+                indent=2,
+            )
+        )
+    else:
+        click.echo(render_doctor_text(report, share=share, shape_mask_enabled=shape_mask))
+
+    raise SystemExit(report.exit_code)
 
 
 @cli.command(help="Rewrite the file with per-color stroke widths.")
@@ -1737,8 +1884,7 @@ def poche_pdf_cmd(
         injected = fr.layer in result.report.polygons
         marker = "✓" if injected else ("~" if fr.confidence > 0 else "✗")
         click.echo(
-            f"  {marker} {short:50}  {fr.strategy:18}  polys={fr.polygon_count:>3}  "
-            f"conf={fr.confidence:.2f}",
+            f"  {marker} {short:50}  {fr.strategy:18}  polys={fr.polygon_count:>3}  conf={fr.confidence:.2f}",
             err=True,
         )
     if report_path is not None:
