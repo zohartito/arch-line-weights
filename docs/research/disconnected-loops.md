@@ -29,6 +29,27 @@ Empirical Make2D tolerance per McNeel forum thread: gaps from clipping-plane
 intersections can reach **2–5 pt** when curves are near-parallel. Match
 `Join` tolerance to `AbsoluteTolerance × 10`.
 
+## Scoring a closure
+
+A rescued closure is only as trustworthy as the fraction of it we did not
+invent, so `bridge._confidence` measures the **length** the bridger had to
+add, not the **number** of bridges it added.
+
+Counting is the wrong unit for Make2D output. Make2D fragments a cut at its
+corners, so the bridge count tracks the corner count: a stepped footing --
+a spread pad with a pier the wood column bears on -- has eight corners,
+needs eight ~10pt stubs, and drives `n_bridges / n_segments` to 1.0. The
+count-based penalty then scored that closure, whose boundary is ~99% real
+cut line, exactly as it scored a wholly invented one. The layer fell to
+confidence 0.62, below the 0.85 injection threshold, and printed as outline
+only -- the Day-1 `foundation_concrete_under_wood_column_left_footing` miss.
+
+Measuring `inferred_length / (drawn_length + inferred_length)` scores the
+same closure at 0.20 invented, and a closure that really is mostly guessed
+(sparse fragments, one long span across a void) still scores below the
+threshold and stays diagnostic-only. Ladder order is unchanged: this only
+scores what the rungs already produce.
+
 ## Library notes
 
 - **Shapely 2.x** native — covers strategies 1, 2, 3, 4, 6, 8
