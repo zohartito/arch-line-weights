@@ -97,6 +97,24 @@ versioning follows [Semantic Versioning](https://semver.org/).
   connector hardware quieter (`0.25 pt` and `0.18 pt`) so they do not compete
   with true cut/profile structure.
 
+### Fixed
+
+- **Cut masses fragmented at every corner no longer print hollow.** The
+  bridger scored a closure by how MANY bridges it added relative to the
+  segment count, so a shape whose every corner is a Make2D gap drove
+  `n_bridges / n_segments` to 1.0, collapsed the bridge penalty to zero, and
+  landed at confidence 0.62 — below the 0.85 injection threshold — even when
+  the recovered boundary was ~99% real cut line. The layer kept its cut
+  stroke and got no fill. `bridge._confidence` now measures the inferred
+  LENGTH instead (`_bridged_fraction`), so a closure is scored on how much of
+  it was actually guessed. This is what left the Day-1 section's left
+  foundation/concrete mass under the wood column as outline only
+  (`foundation_concrete_under_wood_column_left_footing`); its proof-harness
+  xfail is unpinned and covered by
+  `tests/test_poche_foundation_under_column.py`. Closures that really are
+  mostly invented (sparse fragments, a lone long span) still score below the
+  threshold and stay diagnostic-only.
+
 ### Validation
 
 - Private local regression runs showed the lower-left concrete-base helper
