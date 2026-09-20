@@ -353,3 +353,236 @@ def test_layer_plan_stays_quiet_for_a_matched_layer():
 
     line = _layer_plan_line("model::Visible::Curves::TEC_TIMBER_STUD", Source.RHINO)
     assert "no rule matched" not in line
+
+
+# --------------------------------------------------------------------------- #
+# Colorspace: which colors the mapping can actually use
+# --------------------------------------------------------------------------- #
+
+CUT_LAYER = "model::Visible::ClippingPlaneIntersections::TEC_TIMBER"
+
+
+def _codes(report, severity=None):
+    return {f.code for f in report.findings if severity is None or f.severity == severity}
+
+
+def test_color_ladder_counts_only_colors_the_mapping_can_use():
+    """A CMYK export has stroke colors that `auto_by_role` will discard.
+
+    `inspect._color_key` keys by colorspace, so a print-intent drawing has five
+    entries in `stroke_colors` and an empty role mapping — `auto_by_role` skips
+    every key `color_to_rgb255` rejects. Counting raw keys reported a healthy
+    five-color ladder for a file that cannot be weighted at all.
+    """
+    from arch_line_weights.classify import auto_by_role
+    from arch_line_weights.inspect import InspectionReport
+
+    cmyk = {f"CMYK(0,0,0,{v})": 100 for v in (100, 80, 60, 40, 20)}
+
+    # What the engine will actually build from exactly these colors:
+    engine = InspectionReport(
+        file="x",
+        pages=1,
+        width_pt=100,
+        height_pt=100,
+        total_drawings=500,
+        total_stroked=500,
+        stroke_colors=cmyk,
+    )
+    mapping, _ = auto_by_role(engine, "section", "1/4", False)
+    assert mapping == {}, "precondition: auto_by_role cannot map CMYK keys"
+
+    report = _report([CUT_LAYER], stroke_colors=cmyk, total_stroked=500)
+    assert report.exit_code == 2, "a drawing that cannot be weighted must not read as fine"
+    assert "F10" in _codes(report, "will")
+    # F7 is what pins the count itself: with raw keys this is 5 >= 5 rungs and
+    # F6/F7 stay silent, so the ladder reads as healthy.
+    assert "F7" in _codes(report)
+    assert report.input_summary["usable_rgb_stroke_colors"] == 0
+
+
+def test_mixed_colorspace_reports_the_dropped_ones_but_keeps_the_ladder():
+    colors = {"RGB(0,0,0)": 1, "RGB(120,120,120)": 1, "Gray(50)": 1}
+    report = _report([CUT_LAYER], stroke_colors=colors)
+    assert "F10" in _codes(report, "may")
+    assert report.input_summary["usable_rgb_stroke_colors"] == 2
+
+
+def test_all_rgb_drawing_reports_no_colorspace_finding():
+    report = _report([CUT_LAYER])
+    assert "F10" not in _codes(report)
+
+
+# --------------------------------------------------------------------------- #
+# apply-saas silent no-op
+# --------------------------------------------------------------------------- #
+
+
+def test_payload_without_a_width_op_is_flagged_as_a_silent_no_op():
+    # apply-saas rewrites only CR-anchored `<w> w` ops and never checks it hit
+    # any: with none present it writes the file and exits 0.
+    report = _report([CUT_LAYER], payload=b"%AI5_BeginLayer\r0 0 m\r100 0 L\rS\r")
+    assert "F20" in _codes(report, "will")
+
+
+def test_payload_with_width_ops_is_clear():
+    report = _report([CUT_LAYER], payload=b"\r0.5 w\r0 0 m\r100 0 L\rS\r")
+    assert "F20" in _codes(report, "clear")
+
+
+def test_no_payload_means_no_verdict_either_way():
+    report = _report([CUT_LAYER])
+    assert "F20" not in _codes(report)
+
+
+def test_width_op_pattern_tracks_apply_saas():
+    """doctor predicts the no-op by counting the ops apply-saas rewrites.
+
+    If apply_saas changes its patterns, F20 goes quietly wrong — so pin them.
+    """
+    from arch_line_weights.apply_saas import _BARE_W_RE, _SETUP_W_RE
+    from arch_line_weights.doctor import _W_TOKEN_RE
+
+    sample = b"\r0.5 w\r\r1 J 1 j 0.25 w 4 M []0 d\r"
+    assert len(_W_TOKEN_RE.findall(sample)) == 2
+    assert len(_BARE_W_RE.findall(sample)) + len(_SETUP_W_RE.findall(sample)) == 2
+
+
+# --------------------------------------------------------------------------- #
+# Redacted geometry export
+# --------------------------------------------------------------------------- #
+
+SQUARE = [[[10.0, 20.0], [110.0, 20.0]], [[110.0, 20.0], [110.0, 120.0]]]
+# Two segments that stop 3 units short of meeting — the gap a snap tolerance is
+# compared against, and the reason nothing may be scaled.
+GAPPED = [[[0.0, 0.0], [50.0, 0.0]], [[53.0, 0.0], [100.0, 0.0]]]
+
+
+def test_export_preserves_every_gap_exactly():
+    """Translation only. A tolerance sweep is compared against these distances."""
+    from arch_line_weights.doctor import export_layer_geometry
+
+    report = _report([IDENTIFYING], paths_by_layer={IDENTIFYING: GAPPED})
+    data = export_layer_geometry({IDENTIFYING: GAPPED}, report.layers, layer_ids=["L01"])
+    paths = data["layers"]["L01"]["paths"]
+    gap = paths[1][0][0] - paths[0][1][0]
+    assert gap == 3.0
+
+
+def test_export_drops_absolute_position():
+    from arch_line_weights.doctor import export_layer_geometry
+
+    report = _report([IDENTIFYING], paths_by_layer={IDENTIFYING: SQUARE})
+    data = export_layer_geometry({IDENTIFYING: SQUARE}, report.layers, layer_ids=["L01"])
+    pts = [p for path in data["layers"]["L01"]["paths"] for p in path]
+    assert min(p[0] for p in pts) == 0.0
+    assert min(p[1] for p in pts) == 0.0
+    # Shape survives: the square was 100 wide and 100 tall wherever it sat.
+    assert max(p[0] for p in pts) == 100.0
+    assert max(p[1] for p in pts) == 100.0
+
+
+def test_export_carries_no_layer_name():
+    import json
+
+    from arch_line_weights.doctor import export_layer_geometry
+
+    report = _report([IDENTIFYING], paths_by_layer={IDENTIFYING: SQUARE})
+    blob = json.dumps(export_layer_geometry({IDENTIFYING: SQUARE}, report.layers, layer_ids=["L01"]))
+    for secret in ("Riverside", "Mill", "Harcourt", "Trust", "JPM", "Brackley", "Road"):
+        assert secret not in blob
+
+
+def test_export_includes_only_the_requested_layers():
+    from arch_line_weights.doctor import export_layer_geometry
+
+    names = [IDENTIFYING, CUT_LAYER]
+    paths = {IDENTIFYING: SQUARE, CUT_LAYER: GAPPED}
+    report = _report(names, paths_by_layer=paths)
+    data = export_layer_geometry(paths, report.layers, layer_ids=["L02"])
+    assert set(data["layers"]) == {"L02"}
+
+
+def test_export_rejects_an_unknown_id():
+    import pytest
+
+    from arch_line_weights.doctor import export_layer_geometry
+
+    report = _report([IDENTIFYING], paths_by_layer={IDENTIFYING: SQUARE})
+    with pytest.raises(ValueError, match="unknown layer id"):
+        export_layer_geometry({IDENTIFYING: SQUARE}, report.layers, layer_ids=["L99"])
+
+
+def test_export_states_what_it_still_contains():
+    from arch_line_weights.doctor import export_layer_geometry
+
+    report = _report([IDENTIFYING], paths_by_layer={IDENTIFYING: SQUARE})
+    data = export_layer_geometry({IDENTIFYING: SQUARE}, report.layers, layer_ids=["L01"])
+    # The honest part: an outline is reconstructable, and the file says so.
+    assert "reconstructed" in data["disclosure"]
+
+
+def test_flagged_ids_come_from_findings_not_from_rendered_prose():
+    """`--export-geometry flagged` reads a field, so rewording a finding is safe."""
+    report = _report([IDENTIFYING], paths_by_layer={IDENTIFYING: SQUARE})
+    flagged = report.flagged_layer_ids()
+    assert "L01" in flagged  # unmatched -> F1 -> will
+    for finding in report.findings:
+        if finding.severity == "will":
+            assert set(finding.layer_ids) <= set(flagged)
+
+
+def test_cli_writes_the_geometry_export(tmp_path):
+    """End to end: a real native `.ai` in, a redacted JSON out, no names in it."""
+    import json
+    import sys
+
+    sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent))
+    from doctor_fixtures import fragmented, write_ai
+
+    src = write_ai(
+        tmp_path / "section.ai",
+        [
+            (f"{IDENTIFYING}", [[[0.0, 0.0], [100.0, 0.0]]]),
+            ("model::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE", fragmented(600)),
+        ],
+    )
+    out = tmp_path / "geo.json"
+    result = CliRunner().invoke(
+        cli, ["doctor", str(src), "--export-geometry", "flagged", "--export-out", str(out)]
+    )
+    assert result.exit_code == 2, result.output
+
+    data = json.loads(out.read_text())
+    assert data["schema"] == "arch-lw-doctor-geometry/1"
+    # The dense layer is flagged by F18 and is the one worth checkpointing.
+    assert "L02" in data["layers"]
+    assert data["layers"]["L02"]["path_count"] == 600
+    raw = out.read_text()
+    for secret in ("Riverside", "Harcourt", "Brackley"):
+        assert secret not in raw
+
+
+def test_cli_export_needs_a_native_payload(tmp_path):
+    import pikepdf
+
+    plain = tmp_path / "plain.pdf"
+    pdf = pikepdf.new()
+    pdf.add_blank_page(page_size=(842, 595))
+    pdf.save(str(plain))
+
+    result = CliRunner().invoke(cli, ["doctor", str(plain), "--export-geometry", "L01"])
+    assert result.exit_code != 0
+    assert "native payload" in result.output
+
+
+def test_cli_doctor_writes_nothing_without_the_export_flag(tmp_path):
+    import sys
+
+    sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent))
+    from doctor_fixtures import SQUARE, write_ai
+
+    src = write_ai(tmp_path / "section.ai", [(IDENTIFYING, SQUARE)])
+    before = {p.name for p in tmp_path.iterdir()}
+    CliRunner().invoke(cli, ["doctor", str(src)])
+    assert {p.name for p in tmp_path.iterdir()} == before

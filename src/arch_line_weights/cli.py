@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import textwrap
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +20,7 @@ from .bridge_rhino_ai import bridge_rhino_ai
 from .classify import auto_by_luminance, auto_by_role, explain_mapping, from_user_mapping
 from .cleanup import cleanup_file
 from .cleanup import default_output_path as default_output_path_cleanup
+from .doctor import GEOMETRY_EXPORT_DISCLOSURE, export_layer_geometry
 from .doctor import build_report as build_doctor_report
 from .doctor import render_text as render_doctor_text
 from .drawing_type import classify_drawing_type
@@ -281,13 +283,18 @@ def inspect(src: Path, pretty: bool, source: str):
             )
 
 
-def _doctor_geometry_counts(src: Path) -> dict[str, list] | None:
-    """Per-layer sub-path geometry for `doctor`'s pass 2, or None.
+def _plural_layers(n: int) -> str:
+    return f"{n} layer" if n == 1 else f"{n} layers"
+
+
+def _doctor_geometry_counts(src: Path) -> tuple[dict[str, list] | None, bytes | None]:
+    """Per-layer sub-path geometry and the raw payload for `doctor`'s pass 2.
 
     Reads the Illustrator native payload the same way `poche_saas` does, with
-    no layer filter so unmatched layers are counted too. Returns None when the
-    file has no readable native payload -- pass 2 simply does not run then,
-    rather than the command failing.
+    no layer filter so unmatched layers are counted too. Returns `(None, None)`
+    when the file has no readable native payload -- pass 2 simply does not run
+    then, rather than the command failing. The payload comes back alongside the
+    geometry so F20 can count stroke-width ops without decoding it twice.
     """
     try:
         import pikepdf
@@ -298,12 +305,12 @@ def _doctor_geometry_counts(src: Path) -> dict[str, list] | None:
         with pikepdf.open(str(src)) as pdf:
             payload = _read_payload(pdf)
         if not payload:
-            return None
-        return enumerate_layer_paths_from_payload(payload)
+            return None, None
+        return enumerate_layer_paths_from_payload(payload), payload
     except ProcessingDisabledError:
         raise
     except Exception:
-        return None
+        return None, None
 
 
 @cli.command(help="Pre-flight: predict which failure modes this drawing will hit.")
@@ -343,6 +350,21 @@ def _doctor_geometry_counts(src: Path) -> dict[str, list] | None:
     help="Pass 2: per-layer path and endpoint counts read from the native payload. "
     "No polygonising, so it stays fast.",
 )
+@click.option(
+    "--export-geometry",
+    default=None,
+    metavar="IDS",
+    help="Write redacted anchor geometry for these layer ids (e.g. L04,L11), or "
+    "'flagged' for every layer a will-hit finding named. Each layer is translated "
+    "to its own origin and nothing is scaled, so gaps survive exactly. Lets a "
+    "stubborn layer be checkpointed into a fixture without sending the drawing.",
+)
+@click.option(
+    "--export-out",
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=None,
+    help="Where --export-geometry writes. Default ./doctor-geometry.json.",
+)
 def doctor(
     src: Path,
     source: str,
@@ -351,6 +373,8 @@ def doctor(
     shape_mask: bool,
     as_json: bool,
     geometry: bool,
+    export_geometry: str | None,
+    export_out: Path | None,
 ):
     """Predict which failure modes a drawing will hit, before spending a run.
 
@@ -369,8 +393,9 @@ def doctor(
     source_override = None if source == Source.AUTO.value else Source(source)
 
     paths_by_layer = None
+    payload = None
     if geometry:
-        paths_by_layer = _doctor_geometry_counts(src)
+        paths_by_layer, payload = _doctor_geometry_counts(src)
 
     report = build_doctor_report(
         layer_names=layer_names,
@@ -378,6 +403,7 @@ def doctor(
         drawing_type=getattr(rep, "drawing_type", None) or {},
         stroke_colors=getattr(rep, "stroke_colors", None) or {},
         input_format=getattr(rep, "input_format", None) or {},
+        payload=payload,
         pages=rep.pages,
         width_pt=rep.width_pt,
         height_pt=rep.height_pt,
@@ -396,6 +422,30 @@ def doctor(
         )
     else:
         click.echo(render_doctor_text(report, share=share, shape_mask_enabled=shape_mask))
+
+    if export_geometry:
+        if paths_by_layer is None:
+            raise click.ClickException(
+                "--export-geometry needs the Illustrator native payload, which this file has none of."
+            )
+        if export_geometry.strip().lower() == "flagged":
+            ids = report.flagged_layer_ids()
+            if not ids:
+                click.echo("# nothing flagged, so nothing to export", err=True)
+                raise SystemExit(report.exit_code)
+        else:
+            ids = [part.strip() for part in export_geometry.split(",") if part.strip()]
+        try:
+            data = export_layer_geometry(paths_by_layer, report.layers, layer_ids=ids)
+        except ValueError as exc:
+            raise click.UsageError(str(exc)) from exc
+
+        out_path = export_out or Path("doctor-geometry.json")
+        out_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        click.echo("", err=True)
+        click.echo(f"# wrote {out_path} -- {_plural_layers(len(ids))}: {', '.join(ids)}", err=True)
+        for line in textwrap.wrap(GEOMETRY_EXPORT_DISCLOSURE, width=74):
+            click.echo(f"# {line}", err=True)
 
     raise SystemExit(report.exit_code)
 
