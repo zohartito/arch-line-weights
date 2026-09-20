@@ -231,20 +231,96 @@ def test_f6_fires_when_colors_cannot_fill_the_ladder():
 
 
 def test_f18_fires_when_a_cut_layer_is_over_the_endpoint_cap():
+    """The cap is `2 * len(lines)`, so it takes many sub-paths to breach."""
     from arch_line_weights.poche import _DEFAULT_BRIDGE_BEST_MAX_ENDPOINTS
 
     name = "m::ClippingPlaneIntersections::DENSE"
-    # One path of n vertices -> n-1 segments -> 2*(n-1) endpoints.
-    n_vertices = _DEFAULT_BRIDGE_BEST_MAX_ENDPOINTS + 10
-    report = _report([name], paths_by_layer={name: [[[0.0, 0.0]] * n_vertices]})
+    n_paths = _DEFAULT_BRIDGE_BEST_MAX_ENDPOINTS // 2 + 10
+    report = _report([name], paths_by_layer={name: [[[0.0, 0.0], [1.0, 1.0]]] * n_paths})
     assert "F18" in _codes(report, "will")
     assert "geometry" in report.passes
 
 
 def test_f18_silent_for_a_small_cut_layer():
     name = "m::ClippingPlaneIntersections::SMALL"
-    report = _report([name], paths_by_layer={name: [[[0.0, 0.0]] * 5]})
+    report = _report([name], paths_by_layer={name: [[[0.0, 0.0], [1.0, 1.0]]] * 5})
     assert "F18" not in _codes(report)
+
+
+def test_one_dense_polyline_is_two_endpoints_not_two_per_vertex():
+    """The counting bug caught in review on #92.
+
+    `_lines_from_anchors` makes ONE LineString per sub-path however many
+    vertices it has (poche.py:224-236), `n_segments = len(lines)`
+    (poche.py:1183), and `_collect_endpoints` takes exactly the first and last
+    coordinate of each (bridge.py:80-88). So a single 1,010-point polyline is
+    2 endpoints to the real cap check, not 2,018 -- and predicting "bridging
+    skipped, expect outline-only" for it would be confidently wrong, which is
+    the failure this command exists to prevent.
+    """
+    from arch_line_weights.poche import _DEFAULT_BRIDGE_BEST_MAX_ENDPOINTS
+
+    name = "m::ClippingPlaneIntersections::ONE_DENSE_PATH"
+    n_vertices = _DEFAULT_BRIDGE_BEST_MAX_ENDPOINTS + 10
+    paths = {name: [[[float(i), float(i)] for i in range(n_vertices)]]}
+
+    report = _report([name], paths_by_layer=paths)
+    row = report.layers[0]
+    assert row.paths == 1
+    assert row.segments == 1
+    assert row.endpoints == 2
+    assert row.coordinates == n_vertices
+    assert "F18" not in _codes(report)
+
+    # And the counts are what the pipeline itself would compute.
+    from arch_line_weights.poche import _lines_from_anchors
+
+    lines = _lines_from_anchors(paths[name])
+    assert row.segments == len(lines)
+    assert row.endpoints == 2 * len(lines)
+
+
+def test_sub_paths_under_two_points_are_not_counted_as_lines():
+    """`_lines_from_anchors` skips them, so they cannot reach the endpoint cap."""
+    from arch_line_weights.poche import _lines_from_anchors
+
+    name = "m::ClippingPlaneIntersections::STUBS"
+    paths = [[[0.0, 0.0]], [[0.0, 0.0], [1.0, 1.0]], []]
+    report = _report([name], paths_by_layer={name: paths})
+    row = report.layers[0]
+    assert row.paths == 3  # the paths cap counts every sub-path
+    assert row.segments == 1  # only one becomes a LineString
+    assert row.endpoints == 2
+    assert row.segments == len(_lines_from_anchors(paths))
+
+
+def test_f19_fires_on_a_path_count_breach():
+    from arch_line_weights.poche import MAX_POCHE_PATHS_PER_LAYER
+
+    name = "m::ClippingPlaneIntersections::MANY"
+    n = MAX_POCHE_PATHS_PER_LAYER + 1
+    report = _report([name], paths_by_layer={name: [[[0.0, 0.0], [1.0, 1.0]]] * n})
+    assert "F19" in _codes(report, "will")
+
+
+def test_f19_fires_on_a_coordinate_breach():
+    """Coordinates are total vertices, matching poche's cumulative guard."""
+    from arch_line_weights.poche import MAX_POCHE_COORDINATES_PER_LAYER
+
+    name = "m::ClippingPlaneIntersections::FAT"
+    # Few paths, enormous vertex count: only the coordinate cap should trip.
+    per_path = MAX_POCHE_COORDINATES_PER_LAYER // 2 + 10
+    paths = [[[0.0, 0.0]] * per_path, [[0.0, 0.0]] * per_path]
+    report = _report([name], paths_by_layer={name: paths})
+    f19 = next(f for f in report.findings if f.code == "F19")
+    assert any("coordinates" in line for line in f19.detail)
+    assert not any("paths over" in line for line in f19.detail)
+
+
+def test_f19_silent_for_an_ordinary_layer():
+    name = "m::ClippingPlaneIntersections::NORMAL"
+    report = _report([name], paths_by_layer={name: [[[0.0, 0.0], [1.0, 1.0]]] * 50})
+    assert "F19" not in _codes(report)
 
 
 # --------------------------------------------------------------------------- #
