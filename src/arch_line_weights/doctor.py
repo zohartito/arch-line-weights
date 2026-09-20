@@ -12,9 +12,12 @@ Two passes are implemented here:
 
 * **static** -- one :func:`inspect_file` call plus the pure classifiers.
   These are counts and name matches, so the verdicts are certain.
-* **geometry** -- per-layer path/segment/endpoint counts read from the native
-  payload *without* polygonising. This turns the endpoint- and size-cap
-  questions into an integer comparison against a constant.
+* **geometry** -- per-layer path, coordinate, line and endpoint counts read
+  from the native payload *without* polygonising. This turns the endpoint- and
+  size-cap questions into an integer comparison against a constant. Each count
+  mirrors the unit the corresponding cap is actually compared against; see
+  :func:`attach_geometry_counts`, because getting the unit wrong yields a
+  confident prediction that is simply false.
 
 A third ``--deep`` pass that actually runs ``polygonize_layer`` to answer
 "will this layer poché" is deliberately not implemented; every finding here
@@ -201,6 +204,7 @@ class LayerRow:
     weight_pt: float
     is_cut_name: bool
     paths: int | None = None
+    coordinates: int | None = None
     segments: int | None = None
     endpoints: int | None = None
     notes: list[str] = field(default_factory=list)
@@ -217,6 +221,7 @@ class LayerRow:
             "weight_pt": self.weight_pt,
             "poche_name_gate": self.is_cut_name,
             "paths": self.paths,
+            "coordinates": self.coordinates,
             "segments": self.segments,
             "endpoints": self.endpoints,
             "notes": list(self.notes),
@@ -544,20 +549,35 @@ def _endpoint_cap() -> int:
 
 
 def attach_geometry_counts(rows: list[LayerRow], paths_by_layer: dict[str, list]) -> None:
-    """Fill in per-layer path / segment / endpoint counts.
+    """Fill in the four per-layer counts the caps are actually compared against.
 
-    A polyline of *n* vertices contributes *n - 1* segments and 2 endpoints per
-    segment, matching how ``poche`` builds its endpoint list.
+    Each count mirrors one specific check in the real pipeline, because a
+    prediction built on a different unit is worse than no prediction at all:
+
+    * ``paths`` -- every sub-path, matching ``_lines_from_anchors``'s
+      ``len(paths) > MAX_POCHE_PATHS_PER_LAYER`` (poche.py:224).
+    * ``coordinates`` -- total vertices over every sub-path, matching the
+      cumulative ``coordinates += len(pts)`` guard (poche.py:227-231).
+    * ``segments`` -- sub-paths with at least 2 points, i.e. the number of
+      ``LineString``s built. This is what ``poche``'s own ``n_segments =
+      len(lines)`` means (poche.py:1183), NOT vertex-to-vertex edges: a
+      sub-path becomes ONE ``LineString`` however many vertices it has.
+    * ``endpoints`` -- ``2 * segments``, matching both
+      ``bridge._collect_endpoints`` (two per ``LineString``) and the cap check
+      ``endpoint_count = 2 * len(lines)`` (poche.py:1261).
+
+    Counting vertex edges instead would report a single dense 1,010-point
+    polyline as 2,018 endpoints when the pipeline sees 2, and F18 would then
+    confidently predict skipped bridging for a layer that bridges fine.
     """
     for row in rows:
         paths = paths_by_layer.get(row.name)
         if paths is None:
             continue
-        n_paths = len(paths)
-        n_segments = sum(max(0, len(p) - 1) for p in paths)
-        row.paths = n_paths
-        row.segments = n_segments
-        row.endpoints = n_segments * 2
+        row.paths = len(paths)
+        row.coordinates = sum(len(p) for p in paths)
+        row.segments = sum(1 for p in paths if len(p) >= 2)
+        row.endpoints = 2 * row.segments
 
 
 def _finding_f18(rows: list[LayerRow]) -> Finding | None:
@@ -573,7 +593,7 @@ def _finding_f18(rows: list[LayerRow]) -> Finding | None:
         headline=f"{_plural(len(over), 'cut layer')} over the bridge endpoint cap",
         detail=[
             " · ".join(f"{r.lid} {r.endpoints:,} endpoints" for r in over),
-            f"cap {cap:,} endpoints = {cap // 2:,} segments",
+            f"cap {cap:,} endpoints = {cap // 2:,} sub-paths",
             "Bridge inference is skipped entirely for these. Expect outline-only.",
         ],
         remedy=f"Raise {_BRIDGE_BEST_MAX_ENDPOINTS_ENV}, or simplify the layer in Rhino.",
@@ -590,9 +610,8 @@ def _finding_f19(rows: list[LayerRow]) -> Finding | None:
             breaches.append(f"{r.lid} {r.paths:,} paths over {MAX_POCHE_PATHS_PER_LAYER:,}")
         if r.segments is not None and r.segments > MAX_POCHE_SEGMENTS_PER_LAYER:
             breaches.append(f"{r.lid} {r.segments:,} segments over {MAX_POCHE_SEGMENTS_PER_LAYER:,}")
-        coords = None if r.segments is None else r.segments + (r.paths or 0)
-        if coords is not None and coords > MAX_POCHE_COORDINATES_PER_LAYER:
-            breaches.append(f"{r.lid} {coords:,} coordinates over {MAX_POCHE_COORDINATES_PER_LAYER:,}")
+        if r.coordinates is not None and r.coordinates > MAX_POCHE_COORDINATES_PER_LAYER:
+            breaches.append(f"{r.lid} {r.coordinates:,} coordinates over {MAX_POCHE_COORDINATES_PER_LAYER:,}")
         if len(breaches) > before:
             breached.append(r.lid)
     if not breaches:
