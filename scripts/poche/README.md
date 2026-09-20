@@ -68,7 +68,7 @@ See `docs/POSTMORTEM.md` for the full story. Short version of fixes to try:
 
 ## Files
 
-- `dump_cut_geometry.jsx` — JSX that walks `ClippingPlaneIntersections::*` layers and writes `/tmp/cut_geometry.json`
+- `dump_cut_geometry.jsx` — JSX that walks cut layers (`ClippingPlaneIntersections::*` and `SECTION_CUT::*`) and writes `/tmp/cut_geometry.json`
 - `polygonize.py` — shapely linemerge + polygonize with layered fallback
 - `build_apply_jsx.py` — bakes the polygons into an Illustrator JSX (no I/O at runtime)
 - `extract_geometry_from_pdf.py` — alternate extractor that walks the PDF content stream directly (kept for reference; the JSX extractor is more reliable)
