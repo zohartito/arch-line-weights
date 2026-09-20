@@ -415,3 +415,86 @@ def test_strategy_selector_robust_across_gap_sizes(gap_size: float):
     assert _polygon_count(aug) >= 1
     assert conf > 0
     assert name != "none"
+
+
+# --------------------------------------------------------------------------- #
+# Multi-component selection (26_CLT_GAP_ROOF_CAP)
+# --------------------------------------------------------------------------- #
+
+
+def _two_caps_with_a_real_gap() -> list[LineString]:
+    """Two separate slabs, each a rectangle left open by ~8pt on one side.
+
+    Models ``26_CLT_GAP_ROOF_CAP``: the gap between the two caps is real
+    architecture, not a Make2D defect, so the right answer is *two* polygons.
+    """
+    segs: list[LineString] = []
+    for ox in (0.0, 520.0):
+        w, h = 300.0, 45.0
+        segs.append(LineString([(ox, 0.0), (ox + w, 0.0)]))
+        segs.append(LineString([(ox + w, 0.0), (ox + w, h)]))
+        segs.append(LineString([(ox + w, h), (ox, h)]))
+        segs.append(LineString([(ox, h), (ox, 8.0)]))
+    return segs
+
+
+def test_selector_prefers_the_strategy_that_closes_both_components():
+    """A strategy that closes both slabs must beat one that closes only one.
+
+    ``_expected_polygon_count`` is a segment-count heuristic; on this
+    8-segment layer it reads 1, so capping the score at ``expected`` used to
+    make a 1-polygon result tie with a 2-polygon one, and the tie went to
+    whichever had the higher confidence -- filling one slab and silently
+    leaving the other hollow.
+    """
+    segs = _two_caps_with_a_real_gap()
+    aug, conf, name = infer_bridges_best(segs, max_gap=50.0, min_gap=0.01)
+    assert _polygon_count(aug) == 2, f"strategy {name!r} closed only part of the layer"
+    assert conf > 0
+
+
+def test_strategy_score_breaks_capped_ties_on_raw_polygon_count():
+    """Two candidates tied at the cap: more polygons wins over more confidence."""
+    from arch_line_weights.bridge import _strategy_score
+
+    closes_both = _strategy_score(n_polys=2, confidence=0.875, expected=1)
+    closes_one = _strategy_score(n_polys=1, confidence=0.953, expected=1)
+    assert closes_both > closes_one
+
+
+# --------------------------------------------------------------------------- #
+# Budget sharing (11_CU_CORR_SOLID_OPAQUE)
+# --------------------------------------------------------------------------- #
+
+
+def test_backtracking_cannot_consume_the_whole_strategy_budget(monkeypatch):
+    """The DBSCAN rungs must still get a turn after a backtracking timeout.
+
+    Backtracking is the only exponential rung. On a dense layer it will spend
+    everything it is given and still time out, and the rungs after it were
+    then skipped as "budget exhausted" even though they run in milliseconds.
+    """
+    import arch_line_weights.bridge as bridge_mod
+
+    calls: list[str] = []
+
+    real_collapse = bridge_mod.collapse_endpoint_clusters
+
+    def _record(segments, eps="adaptive"):
+        calls.append("dbscan_collapse")
+        return real_collapse(segments, eps=eps)
+
+    def _never_finishes(segments, *, max_gap, min_gap, max_depth, deadline):
+        import time
+
+        while deadline is None or time.monotonic() < deadline:
+            time.sleep(0.005)
+        raise bridge_mod.BridgeSearchTimeout("exceeded deadline")
+
+    monkeypatch.setattr(bridge_mod, "collapse_endpoint_clusters", _record)
+    monkeypatch.setattr(bridge_mod, "infer_bridges_backtrack", _never_finishes)
+
+    segs = _square_with_corner_gaps(g=0.2)
+    # Greedy must not short-circuit, or the later rungs are skipped by design.
+    infer_bridges_best(segs, max_gap=0.001, min_gap=0.0001, time_budget_sec=0.4)
+    assert "dbscan_collapse" in calls

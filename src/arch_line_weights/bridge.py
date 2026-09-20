@@ -674,13 +674,30 @@ def collapse_endpoint_clusters(
 # ---------------------------------------------------------------------------
 
 
-def _strategy_score(n_polys: int, confidence: float, expected: int) -> tuple[int, float]:
+# Fraction of ``time_budget_sec`` that the backtracking rung of
+# :func:`infer_bridges_best` may consume, leaving the remainder for the
+# DBSCAN rungs that follow it.
+_BACKTRACK_BUDGET_SHARE = 0.5
+
+
+def _strategy_score(n_polys: int, confidence: float, expected: int) -> tuple[int, int, float]:
     """Compare key for picking among strategies. Higher = better.
 
     Primary: polygon count up to ``expected`` (overshooting doesn't help and
-    can indicate spurious topology, so cap it). Secondary: raw confidence.
+    can indicate spurious topology, so cap it).
+
+    Secondary: the *uncapped* polygon count. ``expected`` is a crude
+    segment-count heuristic (one polygon per ~10 segments) with no notion of
+    how many disconnected sub-shapes the layer actually has, so it reads 1
+    for a layer like ``26_CLT_GAP_ROOF_CAP`` -- two roof slabs with a real
+    gap between them. Capping alone made a strategy that closed *one* slab
+    tie with one that closed *both*, and the tie then went to whichever had
+    the higher confidence. An unclosed sub-shape is an unfilled one, so
+    among strategies the cap has tied, prefer the one that closes more.
+
+    Tertiary: raw confidence, as before.
     """
-    return (min(n_polys, expected), confidence)
+    return (min(n_polys, expected), n_polys, confidence)
 
 
 def infer_bridges_best(
@@ -724,6 +741,16 @@ def infer_bridges_best(
 
     started = time.monotonic()
     deadline = started + time_budget_sec if time_budget_sec and time_budget_sec > 0 else None
+    # Backtracking is the only exponential rung here, and on a dense layer
+    # (e.g. 11_CU_CORR_SOLID_OPAQUE) it will happily spend the whole budget
+    # and still time out, leaving rungs 3 and 4 -- both of which are
+    # near-instant -- to be skipped as "budget exhausted". Cap it at a share
+    # of the budget so the cheap deterministic strategies always get a turn.
+    backtrack_deadline = (
+        started + time_budget_sec * _BACKTRACK_BUDGET_SHARE
+        if time_budget_sec and time_budget_sec > 0
+        else None
+    )
 
     def _expired() -> bool:
         return deadline is not None and time.monotonic() >= deadline
@@ -732,7 +759,7 @@ def infer_bridges_best(
         return f" layer={layer_name!r}" if layer_name else ""
 
     expected = _expected_polygon_count(len(segments))
-    results: list[tuple[tuple[int, float], list[LineString], float, str]] = []
+    results: list[tuple[tuple[int, int, float], list[LineString], float, str]] = []
 
     # 1. Greedy.
     try:
@@ -768,7 +795,7 @@ def infer_bridges_best(
                 max_gap=max_gap,
                 min_gap=min_gap,
                 max_depth=max_depth,
-                deadline=deadline,
+                deadline=backtrack_deadline,
             )
             n_b = _polygon_count(aug_b)
             results.append((_strategy_score(n_b, conf_b, expected), aug_b, conf_b, "backtrack"))
