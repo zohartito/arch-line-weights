@@ -827,13 +827,21 @@ def render_text(
     return "\n".join(out)
 
 
-# Tokens the share-safe renderer is allowed to emit beyond the rule patterns
-# and numbers. Asserted against by tests/test_doctor.py.
+# The rule-table literals a share report may carry over from a layer name.
+# Asserted against by tests/test_doctor.py.
 def known_vocabulary() -> set[str]:
-    """Every non-numeric token `render_text(share=True)` may legitimately emit.
+    """Every rule-table literal the matched-token column may legitimately show.
 
-    The privacy test tokenizes a share report and asserts each word is in
-    here, so a layer name leaking into the output fails the suite.
+    This backs one narrow check in tests/test_doctor.py: the matched-token
+    column is the only text in a share report that a layer name gets to
+    choose, and every value in it must be one of arch-lw's own patterns or
+    the literal `(no match)`.
+
+    It is deliberately NOT the whole-report privacy guarantee. That is the
+    differential pair, which renders two inputs differing only in identifying
+    text and asserts the share reports are byte-identical -- covering prose
+    nobody thought to list, for both the layer-name and the PDF-metadata
+    channel. Grep tests/test_doctor.py for `is_identical_for_two`.
     """
     vocab: set[str] = set()
     for rules in (RHINO_RULES, AUTOCAD_RULES):
@@ -846,9 +854,6 @@ def known_vocabulary() -> set[str]:
     vocab.update(_SCALE_SHIFTS)
     vocab.update(str(s) for s in Source)
     return {v.upper() for v in vocab}
-
-
-_WORD_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 
 # --------------------------------------------------------------------------- #

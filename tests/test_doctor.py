@@ -99,6 +99,31 @@ def test_share_report_is_identical_for_two_differently_named_drawings():
     assert full_a != full_b
 
 
+def test_share_report_is_identical_for_two_differently_produced_files():
+    """The same invariant for the second secret channel: PDF metadata.
+
+    A share report promises it carries neither layer names nor "the raw
+    producer / creator strings". Illustrator writes the saving user and the
+    full file path into `/Producer` on real exports, so that promise is load
+    bearing and was previously asserted by nothing. `detect_source` matches
+    the producer by substring, so both files below are still detected as
+    Rhino at the same confidence -- the reports may only differ if the
+    identifying tail reached the output.
+    """
+    plain = {"/Producer": "Rhino 8"}
+    identifying = {
+        "/Producer": "Rhino 8 / Adobe Illustrator 28.0",
+        "/Creator": "J.P. Mallory, Harcourt Trust -- /Users/jpm/Riverside Mill/14 Brackley Road.ai",
+    }
+    name = "model::Visible::Curves::TEC_TIMBER_STUD"
+
+    a = render_text(_report([name], pdf_metadata=plain), share=True, shape_mask_enabled=True)
+    b = render_text(_report([name], pdf_metadata=identifying), share=True, shape_mask_enabled=True)
+    assert a == b
+    for secret in ("Mallory", "Harcourt", "Riverside", "Brackley", "Users", "jpm", "Illustrator"):
+        assert secret not in b
+
+
 def test_share_report_omits_known_identifying_fragments():
     """Belt and braces alongside the differential test above."""
     text = render_text(_report([IDENTIFYING]), share=True, shape_mask_enabled=True)
