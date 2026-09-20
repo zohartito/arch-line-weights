@@ -434,7 +434,11 @@ def doctor(
                 click.echo("# nothing flagged, so nothing to export", err=True)
                 raise SystemExit(report.exit_code)
         else:
-            ids = [part.strip() for part in export_geometry.split(",") if part.strip()]
+            # dict.fromkeys, not set(): order is the user's and the summary
+            # line below prints it. export_layer_geometry dedupes internally,
+            # so without this `--export-geometry L04,L04` writes one layer and
+            # reports two.
+            ids = list(dict.fromkeys(part.strip() for part in export_geometry.split(",") if part.strip()))
         try:
             data = export_layer_geometry(paths_by_layer, report.layers, layer_ids=ids)
         except ValueError as exc:

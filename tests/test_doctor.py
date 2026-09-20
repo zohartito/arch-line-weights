@@ -594,6 +594,43 @@ def test_export_carries_no_layer_name():
         assert secret not in blob
 
 
+def test_export_is_identical_for_two_differently_named_layers():
+    """The export held to the same differential standard as the share report.
+
+    The blocklist above only catches secrets the test author thought of. This
+    is the stronger statement, and the one that matters more here: the export
+    is a file meant to leave the machine, and it carries non-geometry columns
+    (token, tier, notes) that a layer name feeds. Two layers whose names share
+    a shape but no letters, over identical geometry, must export byte-identical
+    JSON -- so any name-derived text in any of those columns fails this.
+
+    Geometry is deliberately the same on both sides. That is what isolates the
+    name as the only variable; the topology the export carries on purpose is
+    tested by `test_export_preserves_every_gap_exactly`.
+    """
+    import json
+
+    from arch_line_weights.doctor import export_layer_geometry
+
+    other = _rot13(IDENTIFYING)
+    assert other != IDENTIFYING
+    # Neither may match a rule, or the token column would differ legitimately.
+    assert matched_token(IDENTIFYING, Source.RHINO) is None
+    assert matched_token(other, Source.RHINO) is None
+
+    a = export_layer_geometry(
+        {IDENTIFYING: SQUARE},
+        _report([IDENTIFYING], paths_by_layer={IDENTIFYING: SQUARE}).layers,
+        layer_ids=["L01"],
+    )
+    b = export_layer_geometry(
+        {other: SQUARE},
+        _report([other], paths_by_layer={other: SQUARE}).layers,
+        layer_ids=["L01"],
+    )
+    assert json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+
+
 def test_export_includes_only_the_requested_layers():
     from arch_line_weights.doctor import export_layer_geometry
 
@@ -662,6 +699,32 @@ def test_cli_writes_the_geometry_export(tmp_path):
     raw = out.read_text()
     for secret in ("Riverside", "Harcourt", "Brackley"):
         assert secret not in raw
+
+
+def test_cli_export_summary_agrees_with_the_file_it_wrote(tmp_path):
+    """A repeated id must not make the summary line overstate what was written.
+
+    `export_layer_geometry` dedupes internally, so `L01,L01` was always one
+    layer in the JSON -- but the stderr line counted the raw request and said
+    two. The summary is the only thing a user reads before deciding whether to
+    send the file, so it has to describe the file.
+    """
+    import json
+    import sys
+
+    sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent))
+    from doctor_fixtures import SQUARE, write_ai
+
+    src = write_ai(tmp_path / "section.ai", [(IDENTIFYING, SQUARE)])
+    out = tmp_path / "geo.json"
+    result = CliRunner().invoke(
+        cli, ["doctor", str(src), "--export-geometry", "L01,L01", "--export-out", str(out)]
+    )
+    assert result.exit_code == 2, result.output
+
+    assert set(json.loads(out.read_text())["layers"]) == {"L01"}
+    assert "1 layer: L01" in result.output
+    assert "L01, L01" not in result.output
 
 
 def test_cli_export_needs_a_native_payload(tmp_path):
