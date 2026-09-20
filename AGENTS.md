@@ -6,12 +6,13 @@
 - Tests: `pytest` (testpaths = `tests`, `-v` by default). CI runs `pytest --tb=short --ignore=tests/test_hatch_v05.py`.
 - Integration tests (need Illustrator, skipped in CI): `pytest -m integration`.
 - Live LLM evals (metered Anthropic calls, self-skip by default): `ARCH_LW_LLM_FALLBACK=1 ANTHROPIC_API_KEY=sk-... pytest tests/eval_llm_topology.py -m eval -s`.
+- Pre-flight doctor (predicts failure modes before a run; writes nothing): `arch-lw doctor <file>` → `--share` (default, redacts layer names to `L01..Ln`; `--full` for real names), `--json`, `--geometry/--no-geometry` (pass 2 counts). Exit 0 clear / 1 may-hit / 2 will-hit.
 - Eval gate (deterministic quality diff vs `benchmarks/ci-baseline.json`): `python scripts/eval_gate.py` (`--update-baseline` to re-record).
 - Benchmark suite (writes `benchmarks.json`): `python scripts/benchmark.py`.
 - Visual judge (deterministic, no LLM/network): `python scripts/visual_judge.py --after <ai|pdf|png> [--report-json ...]` → JSON scores + `pass`/`review` on 5 axes (false_poche, band_continuity, hierarchy_spread, fixture_weight, tonal_recede); thresholds cite `benchmarks/visual-rubric.md`. `tonal_recede` and `fixture_weight` return `null` (never a guess) when the needed layer/stroke info is unavailable. Self-correcting loop: `python scripts/judge_loop.py <src> --overrides ov.json --run-dir runs/ --baked-after <baked.ai>`. Score the Illustrator-BAKED file — raw `apply-saas` payload edits are not in the live PDF stream (pre-bake reads as weight-flat). Opt-in vision judge (metered): `ARCH_LW_LLM_FALLBACK=1 ANTHROPIC_API_KEY=sk-... pytest tests/eval_visual_judge_llm.py -m eval -s`.
 
 ## Structure
-- `src/arch_line_weights/` — package; `cli.py` is the Click entry, `apply.py` (pikepdf PDF-stream rewrite), `apply_jsx.py` / `apply_saas.py` (layer-preserving Illustrator paths), `poche.py` / `poche_saas.py`, `tonal_recede.py` (opt-in `--tonal-recede` value ramp for beyond-cut geometry), `llm_topology.py` (opt-in rescue rung).
+- `src/arch_line_weights/` — package; `cli.py` is the Click entry, `apply.py` (pikepdf PDF-stream rewrite), `apply_jsx.py` / `apply_saas.py` (layer-preserving Illustrator paths), `poche.py` / `poche_saas.py`, `tonal_recede.py` (opt-in `--tonal-recede` value ramp for beyond-cut geometry), `doctor.py` (pre-flight failure-mode prediction + the share-safe redaction layer), `llm_topology.py` (opt-in rescue rung).
 - `tests/` — offline suite + `eval_llm_topology.py` (scored `pass@k` / `pass^k` / Cohen's kappa eval) + `fixtures/`.
 - `scripts/` — `benchmark.py`, `eval_gate.py`, `build_reference_index.py`, `demo_gallery.py`, `visual_judge.py` (deterministic 4-axis scorer), `judge_loop.py` (self-correcting iteration loop), `visual_judge_llm.py` (opt-in vision rung). `benchmarks/visual-rubric.md` is the committed judgment standard both judges read.
 - `skills/apply-arch-hierarchy/` + `.claude-plugin/plugin.json` — Claude Code plugin packaging that bundles the skill driving `arch-lw`.
@@ -22,6 +23,7 @@
 - `benchmarks.json` + `eval_gate.py` gate on exact-match metrics (`weights_applied`, `polygons_injected`, `layers_injected`, `layers_targeted`, `skipped`, `error`); output_bytes / seconds are info-only. A quality change must update the baseline in the same commit.
 - LLM topology inference (`llm_topology.py`, `[llm]` extra) is an opt-in rescue rung only — never the primary geometry path. `-m eval` tests make real, metered API calls; keep them opt-in.
 - Public proof is deliberately NO-GO: do not commit proof images or large real `.ai` samples. Only the tiny PDF smoke fixture + synthetic demo ship.
+- `doctor --share` output is paste-safe by invariant: every non-numeric token is a literal from arch-lw's own rule tables or the report template. `tests/test_doctor.py` enforces it differentially (two drawings whose layer names share a shape but no letters must render identically). Adding prose to `doctor.render_text` is fine; emitting anything derived from a layer name is not. Note `diagnose` prints real layer short names and is NOT paste-safe.
 - Line-length 110; ruff select E/F/I/B/UP/RUF/SIM; double-quote format. Requires Python ≥3.11.
 
 ## Agent rules (all harnesses)
