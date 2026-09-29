@@ -14,7 +14,7 @@
 ## Structure
 - `src/arch_line_weights/` — package; `cli.py` is the Click entry, `apply.py` (pikepdf PDF-stream rewrite), `apply_jsx.py` / `apply_saas.py` (layer-preserving Illustrator paths), `poche.py` / `poche_saas.py`, `tonal_recede.py` (opt-in `--tonal-recede` value ramp for beyond-cut geometry), `doctor.py` (pre-flight failure-mode prediction + the share-safe redaction layer), `llm_topology.py` (opt-in rescue rung).
 - `tests/` — offline suite + `eval_llm_topology.py` (scored `pass@k` / `pass^k` / Cohen's kappa eval) + `fixtures/`.
-- `scripts/` — `benchmark.py`, `eval_gate.py`, `build_reference_index.py`, `demo_gallery.py`, `visual_judge.py` (deterministic 4-axis scorer), `judge_loop.py` (self-correcting iteration loop), `visual_judge_llm.py` (opt-in vision rung). `benchmarks/visual-rubric.md` is the committed judgment standard both judges read.
+- `scripts/` — `benchmark.py`, `eval_gate.py`, `build_reference_index.py` (private book FTS index + per-book section tree from the PDF outline; `--tree BOOK`, `--read BOOK --pages '1-3,7'`), `demo_gallery.py`, `visual_judge.py` (deterministic 4-axis scorer), `judge_loop.py` (self-correcting iteration loop), `visual_judge_llm.py` (opt-in vision rung). `benchmarks/visual-rubric.md` is the committed judgment standard both judges read.
 - `skills/apply-arch-hierarchy/` + `.claude-plugin/plugin.json` — Claude Code plugin packaging that bundles the skill driving `arch-lw`.
 - `examples/` — reproducible synthetic demo (`generate_demo_section.py`); `docs/` — mkdocs site incl. `POSTMORTEM.md`.
 

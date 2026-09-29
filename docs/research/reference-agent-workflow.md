@@ -44,6 +44,19 @@ data/reference_books/reference_pages.sqlite
 
 That directory is intentionally ignored by git.
 
+Alongside the page text, each book gets a section tree built from its PDF
+outline (node id, title, page range, short lead). Navigate by structure first,
+then read exact pages instead of scanning search hits:
+
+```bash
+pyenv exec python scripts/build_reference_index.py --tree ching_architectural_graphics
+pyenv exec python scripts/build_reference_index.py \
+  --read ching_architectural_graphics --pages '41-44,97'
+```
+
+A book without an outline gets a single root node covering every indexed page.
+Page specs are validated against the indexed pages and capped at 50 pages.
+
 ## Agent Wave
 
 Run this as a set of bounded research passes, not as one huge undirected read.
