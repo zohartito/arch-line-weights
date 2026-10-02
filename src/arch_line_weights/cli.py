@@ -196,11 +196,19 @@ def _echo_numblock_status(input_format: dict) -> None:
 
     Surfaces the same signal the JSON exposes as ``has_native_numblock`` in a
     human-readable line so users know up front whether the headless
-    ``apply-saas`` path is available for this file.
+    ``apply-saas`` path is available for this file. Converted Make2D Save As
+    files often omit ``/NumBlock`` while still carrying ``/AIPrivateData``
+    streams; those are apply-saas-capable.
     """
     has_numblock = input_format.get("has_native_numblock")
+    saas = (input_format.get("command_support") or {}).get("apply-saas")
     if has_numblock is True:
         click.echo("# numblock: present (native Illustrator payload; apply-saas supported)", err=True)
+    elif saas is True:
+        click.echo(
+            "# numblock: absent (AIPrivateData streams present; apply-saas supported)",
+            err=True,
+        )
     elif has_numblock is False:
         click.echo(
             "# numblock: absent (no native Illustrator /NumBlock; apply-saas unavailable "

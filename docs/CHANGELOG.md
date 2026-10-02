@@ -114,6 +114,34 @@ versioning follows [Semantic Versioning](https://semver.org/).
   `tests/test_poche_foundation_under_column.py`. Closures that really are
   mostly invented (sparse fragments, a lone long span) still score below the
   threshold and stay diagnostic-only.
+- **`apply-saas` runs on converted Make2D files that lack `/NumBlock`.**
+  Illustrator Save As of a converted Rhino `.ai` keeps the zstd
+  `/AIPrivateData1..N` streams but often omits `/NumBlock`, so `apply-saas`,
+  `apply-saas --poche`, `cleanup` and `doctor`'s geometry pass refused a
+  readable payload. The block count is now inferred from consecutive
+  `/AIPrivateData` streams (still bounded by the native stream cap, and a gap
+  in the numbering is refused rather than read as a truncated payload); a file
+  with neither marker still fail-closes to `apply-jsx` then `poche`. The
+  rewritten file carries a `/NumBlock` even when the input did not.
+- **Visual judge counts strokes at the PDF default 1.0 pt.** Illustrator bakes
+  omit `1 w` for cut strokes, and the judge only counted strokes after an
+  explicit `w`, so `hierarchy_spread` lost the cut tier and `tonal_recede`
+  misread it. Both now start from the PDF initial line width, as `inspect`
+  already did, and follow `q`/`Q` save/restore so a thin group no longer leaks
+  its width onto the strokes drawn after it.
+- **Cut glazing, window frames, cladding and insulation no longer print as
+  black poché.** The default poché filters (`poche`'s dump JSX,
+  `polygonize_dump`, `apply-saas --poche` without `--architectural`) skipped
+  only `GLASS`/`IGU`, so cut copper or aluminium-composite panels, mineral
+  wool, `GLAZING` layers and window frames filled solid — all of which
+  `docs/research/poche-rulebook.md` keeps out of poché, and which
+  `--architectural` already skipped. The skip list is now derived from the
+  Rhino glazing/frames/cladding/insulation tiers (`POCHE_SKIP_TOKENS`) and
+  shared by every filter, including `scripts/poche/dump_cut_geometry.jsx`.
+  The cut tier still sets their line weight. `GLAZING`, `COPPER_PANEL`,
+  `ALUMINUM_COMPOSITE` and `MINERAL_WOOL` join the Rhino tiers, so the same
+  names seen beyond the cut get glazing/cladding/insulation weights instead of
+  the 0.25 pt default.
 
 ### Validation
 

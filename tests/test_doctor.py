@@ -740,6 +740,32 @@ def test_cli_export_needs_a_native_payload(tmp_path):
     assert "native payload" in result.output
 
 
+def test_cli_doctor_reads_aiprivate_payload_without_numblock(tmp_path):
+    """Converted Make2D Save As omits /NumBlock but keeps /AIPrivateData.
+
+    Pass 2 reads that payload, so the report must not call it absent.
+    """
+    import json
+    import sys
+
+    import pikepdf
+
+    sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent))
+    from doctor_fixtures import SQUARE, write_ai
+
+    src = write_ai(tmp_path / "section.ai", [(IDENTIFYING, SQUARE)])
+    with pikepdf.open(src, allow_overwriting_input=True) as pdf:
+        del pdf.pages[0].obj["/PieceInfo"]["/Illustrator"]["/Private"]["/NumBlock"]
+        pdf.save(str(src))
+
+    report = json.loads(CliRunner().invoke(cli, ["doctor", str(src), "--json"]).output)
+    assert "geometry" in report["passes"]
+    assert report["input"]["has_native_numblock"] is False
+
+    text = CliRunner().invoke(cli, ["doctor", str(src)]).output
+    assert "native payload   present" in text
+
+
 def test_cli_doctor_writes_nothing_without_the_export_flag(tmp_path):
     import sys
 

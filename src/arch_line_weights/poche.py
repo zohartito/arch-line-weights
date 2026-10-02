@@ -49,7 +49,7 @@ from shapely.ops import linemerge, polygonize, snap, unary_union
 from .bridge import infer_bridges, infer_bridges_best
 from .hatch import hatch_polygon, material_for_layer
 from .input_format import raise_if_unsupported
-from .layer_classify import CUT_MARKERS, is_cut_marker_name
+from .layer_classify import CUT_MARKERS, POCHE_SKIP_TOKENS, is_cut_marker_name, is_poche_skip_material
 from .safety import processing_disabled
 
 _log = logging.getLogger(__name__)
@@ -291,7 +291,7 @@ def _is_poche_cut_layer_name(layer_name: str) -> bool:
     upper = layer_name.upper()
     if not is_cut_marker_name(upper):
         return False
-    return "GLASS" not in upper and "IGU" not in upper
+    return not is_poche_skip_material(upper)
 
 
 def _uses_jsx_structural_helpers(layer_name: str) -> bool:
@@ -312,7 +312,7 @@ def _is_visible_structural_layer_name(layer_name: str) -> bool:
     upper = layer_name.upper()
     if "::VISIBLE::CURVES::" not in upper and "::VISIBLE::TANGENTS::" not in upper:
         return False
-    if "GLASS" in upper or "IGU" in upper:
+    if is_poche_skip_material(upper):
         return False
     # Only foundation/footing visible geometry may auto-fill: Make2D misfiles
     # real cut-plane footing mass onto Visible::Curves. Projected concrete or
@@ -1550,12 +1550,22 @@ DUMP_JSX_TEMPLATE = r"""#target illustrator
         return false;
     }
 
+    // Injected from layer_classify.POCHE_SKIP_TOKENS: cut glazing, frames,
+    // cladding and insulation are never dumped for a fill.
+    var POCHE_SKIP = __POCHE_SKIP__;
+
+    function isPocheSkip(n) {
+        for (var si = 0; si < POCHE_SKIP.length; si++) {
+            if (n.indexOf(POCHE_SKIP[si]) !== -1) return true;
+        }
+        return false;
+    }
+
     function shouldDump(name) {
         var n = String(name).toUpperCase();
         if (n.indexOf("__POCHE_CLOSE__") !== -1) return true;
         if (hasCutMarker(n)) {
-            if (n.indexOf("GLASS") !== -1 || n.indexOf("IGU") !== -1) return false;
-            return true;
+            return !isPocheSkip(n);
         }
         if (n.indexOf("::VISIBLE::CURVES::") === -1 && n.indexOf("::VISIBLE::TANGENTS::") === -1) return false;
         return (
@@ -1757,6 +1767,7 @@ def render_dump_jsx(target: str, out_json: str) -> str:
         DUMP_JSX_TEMPLATE.replace("__TARGET__", json.dumps(target, ensure_ascii=True))
         .replace("__OUT__", json.dumps(out_json, ensure_ascii=True))
         .replace("__CUT_MARKERS__", json.dumps(list(CUT_MARKERS), ensure_ascii=True))
+        .replace("__POCHE_SKIP__", json.dumps(list(POCHE_SKIP_TOKENS), ensure_ascii=True))
     )
 
 

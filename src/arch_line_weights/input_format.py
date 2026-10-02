@@ -208,10 +208,13 @@ def _pdf_details(path: Path, suffix: str) -> tuple[str, bool | None, bool | None
             private = illustrator.get("/Private") if isinstance(illustrator, pikepdf.Dictionary) else None
             has_pieceinfo = illustrator is not None
             has_numblock = isinstance(private, pikepdf.Dictionary) and "/NumBlock" in private
+            # Same test apply_saas._native_block_count uses to infer a block
+            # count when Illustrator omits /NumBlock.
+            has_aiprivate = isinstance(private, pikepdf.Dictionary) and "/AIPrivateData1" in private
     except Exception as exc:
         return "pdf", None, None, f"{type(exc).__name__}: {exc}"
 
-    if has_numblock:
+    if has_numblock or has_aiprivate:
         return "native_ai", has_pieceinfo, has_numblock, None
     if has_pieceinfo:
         return "pdf_compatible_ai_without_native_payload", has_pieceinfo, has_numblock, None
@@ -246,17 +249,19 @@ def _support_for(
             support["poche"] = False
         reasons = {command: None for command in KNOWN_COMMANDS}
         native_reason = (
-            "This .ai has no Illustrator native private payload (/NumBlock). "
-            "/NumBlock is the marker Illustrator writes into its native private "
-            "data (/PieceInfo /Illustrator /Private) recording how many blocks "
-            "its layer/appearance payload was split into; apply-saas rewrites "
-            "that native block layout headlessly and cannot run without it. It "
-            "is usually absent because the file was not saved by Illustrator "
-            "itself - for example a .ai exported from Rhino/Make2D or a PDF "
-            "renamed to .ai. apply-saas needs a native Illustrator .ai. Fix: "
-            "open the file in Illustrator and Save As Adobe Illustrator (.ai) "
-            "to embed the native payload, or skip the native path and rewrite "
-            "the PDF stream directly with arch-lw apply."
+            "This .ai has no Illustrator native private payload (no /NumBlock "
+            "and no /AIPrivateData streams). /NumBlock is the marker "
+            "Illustrator writes into its native private data (/PieceInfo "
+            "/Illustrator /Private) recording how many blocks its "
+            "layer/appearance payload was split into, and /AIPrivateData1..N "
+            "are those blocks; apply-saas reads the blocks and infers the count "
+            "when only /NumBlock is missing. Both are usually absent because the "
+            "file was not saved by Illustrator itself - for example a .ai "
+            "exported from Rhino/Make2D or a PDF renamed to .ai. apply-saas "
+            "needs a native Illustrator .ai. Fix: open the file in Illustrator "
+            "and Save As Adobe Illustrator (.ai) to embed the native payload, or "
+            "skip the native path and rewrite the PDF stream directly with "
+            "arch-lw apply."
         )
         if input_kind != "native_ai":
             reasons["apply-saas"] = native_reason

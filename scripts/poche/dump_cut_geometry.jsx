@@ -11,6 +11,31 @@
     // ClippingPlaneIntersections, remapped/hand-authored files use SECTION_CUT.
     var CUT_MARKERS = ["CLIPPINGPLANEINTERSECTIONS", "SECTION_CUT"];
 
+    // Keep in sync with layer_classify.POCHE_SKIP_TOKENS — cut glazing, window
+    // frames, cladding and insulation are never filled, so never dumped.
+    var POCHE_SKIP = [
+        "GLASS",
+        "IGU",
+        "WINDOW_IGU_GLASS",
+        "WINDOW_GLASS",
+        "GLAZING",
+        "WINDOW_FRAME",
+        "WINDOW_ALUM_FRAME",
+        "_CU_CORR_",
+        "_CU_FLAT_",
+        "_CU_PUNCH_",
+        "CLADDING",
+        "COPPER_PANEL",
+        "ALUMINUM_COMPOSITE",
+        "_INS_",
+        "_MW_",
+        "_RW_",
+        "_XPS_",
+        "_PIR_",
+        "INSULATION",
+        "MINERAL_WOOL"
+    ];
+
     function shouldDump(name) {
         var n = String(name).toUpperCase();
         var isCut = false;
@@ -18,7 +43,9 @@
             if (n.indexOf(CUT_MARKERS[ci]) !== -1) { isCut = true; break; }
         }
         if (!isCut) return false;
-        if (n.indexOf("GLASS") !== -1 || n.indexOf("IGU") !== -1) return false;
+        for (var si = 0; si < POCHE_SKIP.length; si++) {
+            if (n.indexOf(POCHE_SKIP[si]) !== -1) return false;
+        }
         return true;
     }
 

@@ -98,6 +98,26 @@ def test_sniff_native_ai_numblock_payload(tmp_path):
     assert diag.command_support["poche"] is True
 
 
+def test_sniff_aiprivate_without_numblock_is_native_ai(tmp_path):
+    """Illustrator Save As of converted Make2D often has /AIPrivateData1, no /NumBlock."""
+    import pikepdf
+
+    path = tmp_path / "saved-as-converted.ai"
+    pdf = pikepdf.new()
+    page = pdf.add_blank_page(page_size=(72, 72))
+    priv = pikepdf.Dictionary()
+    priv["/AIPrivateData1"] = pdf.make_stream(b"%AI24_ZStandard_Data")
+    page.obj["/PieceInfo"] = pikepdf.Dictionary({"/Illustrator": pikepdf.Dictionary({"/Private": priv})})
+    pdf.save(path)
+    pdf.close()
+
+    diag = sniff_input(path)
+    assert diag.input_kind == "native_ai"
+    assert diag.has_illustrator_pieceinfo is True
+    assert diag.has_native_numblock is False
+    assert diag.command_support["apply-saas"] is True
+
+
 def test_sniff_pdf_compatible_ai_without_pieceinfo(tmp_path):
     diag = sniff_input(_plain_pdf(tmp_path / "saved_as_ai.ai"))
 

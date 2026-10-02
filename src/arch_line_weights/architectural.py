@@ -62,7 +62,7 @@ _WINDOW_FRAME = (
 )
 
 _MEMBRANE = ("EPDM", "_MEM_", "_WP_", "MEMBRANE", "SEALANT", "FLASHING", "TPO")
-_INSULATION = ("_INS_", "_MW_", "_RW_", "_XPS_", "_PIR_", "INSULATION")
+_INSULATION = ("_INS_", "_MW_", "_RW_", "_XPS_", "_PIR_", "INSULATION", "MINERAL_WOOL")
 
 _CONNECTOR = (
     "TEC_STEEL_CONNECTOR",
@@ -97,6 +97,7 @@ _CLADDING = (
     "FACADE",
     "FACADE_PANEL",
     "COPPER_PANEL",
+    "ALUMINUM_COMPOSITE",
     "METAL_PANEL",
     "SPANDREL",
 )
