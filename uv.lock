@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -65,6 +65,7 @@ dependencies = [
 dev = [
     { name = "mypy" },
     { name = "pytest" },
+    { name = "pyyaml" },
     { name = "ruff" },
 ]
 docs = [
@@ -81,6 +82,7 @@ llm = [
 ]
 test = [
     { name = "pytest" },
+    { name = "pyyaml" },
 ]
 
 [package.metadata]
@@ -95,9 +97,11 @@ requires-dist = [
     { name = "numpy", specifier = ">=1.26" },
     { name = "pikepdf", specifier = ">=8.0" },
     { name = "pillow", specifier = ">=10.0" },
-    { name = "pymupdf", specifier = ">=1.24" },
+    { name = "pymupdf", specifier = ">=1.24.3" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8" },
+    { name = "pyyaml", marker = "extra == 'dev'", specifier = ">=6" },
+    { name = "pyyaml", marker = "extra == 'test'", specifier = ">=6" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.7" },
     { name = "ruff", marker = "extra == 'lint'", specifier = ">=0.7" },
     { name = "scipy", specifier = ">=1.11" },

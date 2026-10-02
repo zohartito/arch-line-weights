@@ -112,17 +112,14 @@ def test_inspect_blank_plain_pdf_reports_non_drawing_diagnostic(tmp_path):
 
 # Runs `inspect` in a fresh interpreter so the command performs the process's first PyMuPDF import,
 # whatever the test order. `import fitz` prints a deprecation notice to stdout on newer PyMuPDF
-# (silently on older ones), so the probe also fails if the legacy name is imported while `pymupdf`
-# exists. PyMuPDF < 1.24.3 has no `pymupdf` name, and there the silent `fitz` fallback is expected.
+# (silently on older ones), so the probe also fails if the legacy name is imported at all.
 _INSPECT_IN_FRESH_PROCESS = """
-import importlib.util
 import sys
 from arch_line_weights.cli import cli
 try:
     cli(["inspect", sys.argv[1], "--no-pretty"])
 finally:
-    if importlib.util.find_spec("pymupdf") is not None:
-        assert "fitz" not in sys.modules, "inspect imported the legacy `fitz` name"
+    assert "fitz" not in sys.modules, "inspect imported the legacy `fitz` name"
 """
 
 
