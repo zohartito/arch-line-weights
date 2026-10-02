@@ -67,3 +67,31 @@ def test_inspect_reports_numblock_present(tmp_path):
 
     assert "# numblock: present" in result.stderr
     assert "apply-saas supported" in result.stderr
+
+
+def _make_aiprivate_without_numblock(path: str) -> None:
+    """Converted Save As shape: /AIPrivateData1 present, /NumBlock omitted."""
+    pdf = pikepdf.new()
+    pdf.add_blank_page(page_size=(200, 200))
+    page = pdf.pages[0]
+    priv = pikepdf.Dictionary()
+    priv["/AIPrivateData1"] = pdf.make_stream(b"%AI24_ZStandard_Data")
+    page.obj["/PieceInfo"] = pikepdf.Dictionary({"/Illustrator": pikepdf.Dictionary({"/Private": priv})})
+    pdf.save(str(path))
+    pdf.close()
+
+
+def test_inspect_reports_aiprivate_without_numblock_saas_supported(tmp_path):
+    src = tmp_path / "saved-as-converted.ai"
+    _make_aiprivate_without_numblock(str(src))
+
+    result = CliRunner().invoke(cli, ["inspect", str(src)])
+    assert result.exit_code == 0, result.output
+
+    report = json.loads(result.stdout)
+    assert report["input_format"]["has_native_numblock"] is False
+    assert report["input_format"]["command_support"]["apply-saas"] is True
+    assert "# numblock: absent" in result.stderr
+    assert "AIPrivateData" in result.stderr
+    assert "apply-saas supported" in result.stderr
+    assert "apply-saas unavailable" not in result.stderr

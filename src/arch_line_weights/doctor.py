@@ -769,7 +769,10 @@ def render_text(
     out.append(f"  format           {_label(inp.get('input_format'))}")
     numblock = inp.get("has_native_numblock")
     if numblock is not None:
-        out.append(f"  native payload   {'present' if numblock else 'absent'}")
+        # Converted Make2D Save As often omits /NumBlock but keeps the
+        # /AIPrivateData streams, which input_format classifies as native_ai.
+        native = numblock or inp.get("input_format") == "native_ai"
+        out.append(f"  native payload   {'present' if native else 'absent'}")
     aspect = inp.get("aspect")
     out.append(f"  pages            {_label(inp.get('pages'))}" + (f" · aspect {aspect}" if aspect else ""))
     out.append(

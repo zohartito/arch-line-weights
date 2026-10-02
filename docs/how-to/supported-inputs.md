@@ -27,7 +27,7 @@ Illustrator, PDF-only/converted, or legacy PostScript-style data.
 | `inspect` | Supported for diagnostics | Supported when the file can be read as PDF-like data | Supported | Save As first if the parser cannot open it |
 | `apply` | Supported, but may flatten Illustrator layers | Supported, but may flatten Illustrator layers | Supported | Save As first |
 | `apply-jsx` | Supported when Illustrator can open the file; layer-preserving bridge | Preferred for converted `.ai`; layer-preserving bridge | Not the primary PDF path | Save As first, or use against an already-open Illustrator conversion when appropriate |
-| `apply-saas` | Preferred headless layer-preserving path | Not supported without native `/NumBlock` | Not supported | Save As first to create a modern native `.ai` |
+| `apply-saas` | Preferred headless layer-preserving path | Supported when `/AIPrivateData` streams exist even if `/NumBlock` is omitted; otherwise use `apply-jsx` | Not supported | Save As first; then `apply-saas` if `/AIPrivateData` is present, else `apply-jsx` |
 | `poche` | Supported on readable layer-aware output; usually use `apply-saas --poche` directly for native files | Supported after `apply-jsx` output when cut layers are present | Not the primary path | Save As first |
 
 ## Non-drawing or no-op PDFs
@@ -98,7 +98,7 @@ Common recommendations are:
 
 | Diagnostic situation | Recommended next step |
 |---|---|
-| Missing native `/NumBlock` on an `.ai` passed to `apply-saas` | Use `apply-jsx`, then `poche` if poché is needed |
+| Missing native `/NumBlock` **and** `/AIPrivateData` on an `.ai` passed to `apply-saas` | Use `apply-jsx`, then `poche` if poché is needed. Converted Make2D Save As often omits `/NumBlock` but still has `/AIPrivateData` — retry `apply-saas` in that case. |
 | Parser cannot open an older Rhino `.ai` | Open in Illustrator and Save As a modern `.ai` copy |
 | Plain PDF has no vector drawing marks | Export the actual vector drawing sheet instead of a reference/report PDF |
 | You need preserved Illustrator/Rhino layers | Use `apply-jsx` or `apply-saas`, not the fast `apply` path |

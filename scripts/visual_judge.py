@@ -387,6 +387,9 @@ def band_continuity_score(gray: np.ndarray, ppp: float, intentional_gaps: int = 
 # --------------------------------------------------------------------------- #
 
 
+PDF_DEFAULT_LINE_WIDTH = 1.0  # PDF initial graphics-state line width
+
+
 def _vector_width_histogram(path: Path) -> dict[float, int] | None:
     """Stroke-width (pt) -> count from a PDF/PDF-compatible .ai content stream."""
     if path.suffix.lower() not in {".ai", ".pdf"}:
@@ -402,7 +405,10 @@ def _vector_width_histogram(path: Path) -> dict[float, int] | None:
         return None
     try:
         for page in pdf.pages:
-            cur: float | None = None
+            # PDF spec: initial line width is 1.0. Illustrator-baked Make2D
+            # often omits `1 w` for cut strokes; dropping those collapsed
+            # hierarchy_spread to the next explicit tier (0.5 pt).
+            cur = PDF_DEFAULT_LINE_WIDTH
             try:
                 stream = pikepdf.parse_content_stream(page)
             except Exception:
@@ -412,7 +418,7 @@ def _vector_width_histogram(path: Path) -> dict[float, int] | None:
                 if op == "w" and operands:
                     with contextlib.suppress(TypeError, ValueError):
                         cur = round(float(operands[0]), 3)
-                elif op in {"S", "s", "B", "B*", "b", "b*"} and cur is not None:
+                elif op in {"S", "s", "B", "B*", "b", "b*"}:
                     counts[cur] = counts.get(cur, 0) + 1
     finally:
         pdf.close()
@@ -523,7 +529,8 @@ def _vector_stroke_tones(path: Path) -> list[tuple[float, float]] | None:
     """Return ``(width_pt, darkness)`` for every stroke in a PDF/.ai stream.
 
     ``darkness`` is 0 (white) … 1 (black) derived from the current stroke color
-    (defaulting to black, the PDF initial stroke color). Returns ``None`` for
+    (defaulting to black, the PDF initial stroke color); ``width_pt`` likewise
+    starts at the PDF initial line width until a ``w`` op sets it. Returns ``None`` for
     non-vector inputs or when the stream cannot be parsed — the "no layer /
     stroke information available" case, so :func:`tonal_recede_score` can return
     ``null`` rather than guess (mirroring ``fixture_weight``).
@@ -541,7 +548,7 @@ def _vector_stroke_tones(path: Path) -> list[tuple[float, float]] | None:
     tones: list[tuple[float, float]] = []
     try:
         for page in pdf.pages:
-            width: float | None = None
+            width = PDF_DEFAULT_LINE_WIDTH
             darkness = 1.0  # PDF initial stroke color is black
             try:
                 stream = pikepdf.parse_content_stream(page)
@@ -557,7 +564,7 @@ def _vector_stroke_tones(path: Path) -> list[tuple[float, float]] | None:
                 if d is not None:
                     darkness = max(0.0, min(1.0, d))
                     continue
-                if op in {"S", "s", "B", "B*", "b", "b*"} and width is not None:
+                if op in {"S", "s", "B", "B*", "b", "b*"}:
                     tones.append((width, darkness))
     finally:
         pdf.close()

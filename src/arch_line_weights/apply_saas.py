@@ -119,15 +119,16 @@ _NO_NATIVE_PAYLOAD_MSG = (
     "This .ai has no Illustrator native private payload (/NumBlock). "
     "/NumBlock is the marker Illustrator writes into its native private data "
     "(/PieceInfo /Illustrator /Private) recording how many blocks its "
-    "layer/appearance payload was split into; apply-saas rewrites that native "
-    "block layout headlessly and cannot run without it. It is usually absent "
+    "layer/appearance payload was split into; apply-saas also accepts "
+    "/AIPrivateData streams when /NumBlock is omitted. It is usually absent "
     "because the file was not saved by Illustrator itself - for example a .ai "
     "exported from Rhino/Make2D or a PDF renamed to .ai. apply-saas needs a "
     "native Illustrator .ai. Fix: open the file in Illustrator and Save As "
     "Adobe Illustrator (.ai) to embed the native payload, or skip the native "
     "path and rewrite the PDF stream directly with arch-lw apply. For "
-    "PDF-only/converted exports needing layer preservation, use: arch-lw "
-    "apply-jsx then arch-lw poche."
+    "PDF-only/converted exports with no /AIPrivateData streams, use: "
+    "arch-lw apply-jsx then arch-lw poche. Illustrator Save As does not "
+    "reliably write /NumBlock on converted Make2D files."
 )
 
 
@@ -135,14 +136,37 @@ class NoNativePayloadError(click.ClickException, ValueError):
     """Clean user-facing error for files without Illustrator native payload."""
 
 
+def _native_block_count(priv: pikepdf.Object) -> int:
+    """Return the native payload block count.
+
+    Illustrator-saved PDF-compatible ``.ai`` files (including Rhino Make2D after
+    Save As) often carry ``/AIPrivateData1..N`` zstd streams *without*
+    ``/NumBlock``. Prefer a positive ``/NumBlock``; otherwise count consecutive
+    ``/AIPrivateData`` streams.
+    """
+    try:
+        n = int(priv["/NumBlock"])
+        if n > 0:
+            return n
+    except (KeyError, TypeError, ValueError):
+        pass
+    # Stop one past the safety limit: the caller rejects anything above it, so
+    # a hostile dict with millions of keys need not be walked to the end.
+    n = 0
+    while n <= MAX_NATIVE_STREAMS and f"/AIPrivateData{n + 1}" in priv:
+        n += 1
+    return n
+
+
 def _require_native_private(pdf: pikepdf.Pdf) -> pikepdf.Object:
     """Return the ``/PieceInfo /Illustrator /Private`` dict or raise cleanly.
 
     PDF-only / "converted" exports lack the Illustrator native private payload,
-    so ``/PieceInfo``, ``/Illustrator``, ``/Private`` or ``/NumBlock`` may be
-    missing. Accessing them raises a raw ``KeyError`` that confuses users; we
-    translate that into a user-facing :class:`ValueError` (the error style this
-    module already uses) that points to the apply-jsx + poche workflow.
+    so ``/PieceInfo``, ``/Illustrator``, ``/Private``, ``/NumBlock`` and
+    ``/AIPrivateData`` streams may all be missing. Accessing them raises a raw
+    ``KeyError`` that confuses users; we translate that into a user-facing
+    :class:`ValueError` (the error style this module already uses) that points
+    to the apply-jsx + poche workflow.
     """
     page = pdf.pages[0]
     if "/PieceInfo" not in page.obj:
@@ -151,7 +175,7 @@ def _require_native_private(pdf: pikepdf.Pdf) -> pikepdf.Object:
         priv = page.obj["/PieceInfo"]["/Illustrator"]["/Private"]
     except KeyError as exc:
         raise NoNativePayloadError(_NO_NATIVE_PAYLOAD_MSG) from exc
-    if "/NumBlock" not in priv:
+    if _native_block_count(priv) < 1:
         raise NoNativePayloadError(_NO_NATIVE_PAYLOAD_MSG)
     return priv
 
@@ -165,7 +189,7 @@ def _read_payload(pdf: pikepdf.Pdf) -> bytes:
     """
     processing_disabled("native Illustrator payload decoding")
     priv = _require_native_private(pdf)
-    n = int(priv["/NumBlock"])
+    n = _native_block_count(priv)
     if not 0 < n <= MAX_NATIVE_STREAMS:
         raise ValueError("native payload stream count exceeds safe limit")
     blob_parts: list[bytes] = []
@@ -193,7 +217,7 @@ def _write_payload(pdf: pikepdf.Pdf, payload: bytes, *, level: int = 19) -> tupl
 
     page = pdf.pages[0]
     priv = page.obj["/PieceInfo"]["/Illustrator"]["/Private"]
-    old_n = int(priv["/NumBlock"])
+    old_n = _native_block_count(priv)
     new_chunks = [full[i : i + CHUNK] for i in range(0, len(full), CHUNK)]
     new_n = len(new_chunks)
 
@@ -558,7 +582,7 @@ def apply_to_file(
 
     with pikepdf.open(src, allow_overwriting_input=False) as pdf:
         priv = _require_native_private(pdf)
-        chunks_in = int(priv["/NumBlock"])
+        chunks_in = _native_block_count(priv)
         result.chunks_in = chunks_in
 
         with reporter.stage("read_payload", chunks=chunks_in):

@@ -59,6 +59,7 @@ from shapely.geometry import LineString, Polygon
 from .apply_saas import (
     CHUNK,
     PREFIX,
+    _native_block_count,
     _read_payload,
     _require_native_private,
     _write_payload,
@@ -721,7 +722,7 @@ def apply_saas_with_poche(
 
     with pikepdf.open(src, allow_overwriting_input=False) as pdf:
         priv = _require_native_private(pdf)
-        chunks_in = int(priv["/NumBlock"])
+        chunks_in = _native_block_count(priv)
         apply_result.chunks_in = chunks_in
 
         with reporter.stage("read_payload", chunks=chunks_in):

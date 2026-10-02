@@ -17,7 +17,7 @@ from click.testing import CliRunner
 
 from arch_line_weights.apply_saas import apply_to_file
 from arch_line_weights.cli import cli
-from arch_line_weights.poche_saas import apply_saas_with_poche
+from arch_line_weights.poche_saas import apply_saas_with_poche, write_synthetic_test_ai
 
 
 def _make_converted_ai(path: str) -> None:
@@ -136,6 +136,66 @@ def test_apply_saas_no_numblock_error_explains_cause_and_fix(tmp_path):
     # Concrete remediation: Save As .ai, or the PDF-stream apply path.
     assert "Save As Adobe Illustrator (.ai)" in message
     assert "arch-lw apply" in message
+
+
+def test_apply_saas_aiprivate_without_numblock_runs(tmp_path):
+    """Real converted Make2D Save As: zstd /AIPrivateData1 exists, /NumBlock does not."""
+    src = tmp_path / "saved-as-converted.ai"
+    dst = tmp_path / "out.ai"
+    write_synthetic_test_ai(str(src))
+    with pikepdf.open(src, allow_overwriting_input=True) as pdf:
+        priv = pdf.pages[0].obj["/PieceInfo"]["/Illustrator"]["/Private"]
+        del priv["/NumBlock"]
+        pdf.save(str(src))
+
+    result = apply_to_file(str(src), str(dst), {(0, 0, 0): 0.5})
+    assert dst.is_file()
+    assert result.widths_rewritten >= 1
+    with pikepdf.open(dst) as pdf:
+        priv = pdf.pages[0].obj["/PieceInfo"]["/Illustrator"]["/Private"]
+        assert "/AIPrivateData1" in priv
+
+
+def test_apply_saas_poche_aiprivate_without_numblock_runs(tmp_path):
+    """The poché writer takes the same inferred block count as apply-saas."""
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).parent))
+    from doctor_fixtures import SQUARE, write_ai
+
+    src = write_ai(
+        tmp_path / "saved-as-converted.ai", [("S::Visible::ClippingPlaneIntersections::SLAB", SQUARE)]
+    )
+    dst = tmp_path / "out.ai"
+    with pikepdf.open(src, allow_overwriting_input=True) as pdf:
+        del pdf.pages[0].obj["/PieceInfo"]["/Illustrator"]["/Private"]["/NumBlock"]
+        pdf.save(str(src))
+
+    apply_result, poche_result, _report = apply_saas_with_poche(str(src), str(dst), {(0, 0, 0): 0.5})
+    assert apply_result.chunks_in >= 1
+    assert poche_result.polygons_injected == 1
+    with pikepdf.open(dst) as pdf:
+        assert int(pdf.pages[0].obj["/PieceInfo"]["/Illustrator"]["/Private"]["/NumBlock"]) >= 1
+
+
+def test_inferred_block_count_still_respects_stream_limit(tmp_path, monkeypatch):
+    """Counting /AIPrivateData streams must not bypass the hardened stream cap."""
+    from arch_line_weights import apply_saas
+
+    monkeypatch.setattr(apply_saas, "MAX_NATIVE_STREAMS", 2)
+    pdf = pikepdf.new()
+    pdf.add_blank_page(page_size=(72, 72))
+    priv = pikepdf.Dictionary()
+    for index in range(1, 6):
+        priv[f"/AIPrivateData{index}"] = pdf.make_stream(b"%AI24_ZStandard_Data")
+    pdf.pages[0].obj["/PieceInfo"] = pikepdf.Dictionary(
+        {"/Illustrator": pikepdf.Dictionary({"/Private": priv})}
+    )
+
+    assert apply_saas._native_block_count(priv) == 3  # stops one past the cap
+    with pytest.raises(ValueError, match="safe limit"):
+        apply_saas._read_payload(pdf)
 
 
 def test_require_native_private_message_is_expanded(tmp_path):

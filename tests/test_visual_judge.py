@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pikepdf
 import pytest
 from PIL import Image
 
@@ -162,3 +163,37 @@ def test_merge_overrides_helper() -> None:
 def test_hierarchy_ratio_from_histogram(counts: dict, expect_pass: bool) -> None:
     ratio, _cut, _tex = vj._ratio_from_histogram(counts)
     assert (ratio >= vj.HIERARCHY_MIN_RATIO) == expect_pass
+
+
+def test_vector_histogram_counts_pdf_default_line_width(tmp_path: Path) -> None:
+    """Strokes with no `w` operator are PDF default 1.0 pt, not dropped.
+
+    Illustrator-baked Make2D omits `1 w` for cut strokes. The judge used to
+    ignore those paint ops, so hierarchy_spread never saw the 1.0 pt tier.
+    """
+    path = tmp_path / "default-cut.pdf"
+    lines = ["0 0 0 RG"]
+    for i in range(20):
+        lines.append(f"{10 + i} 10 m {10 + i} 40 l S")
+    lines.append("0.25 w")
+    for i in range(20):
+        lines.append(f"{10 + i} 50 m {10 + i} 80 l S")
+    pdf = pikepdf.new()
+    pdf.add_blank_page(page_size=(200, 200))
+    pdf.pages[0].Contents = pdf.make_stream("\n".join(lines).encode("ascii"))
+    pdf.save(str(path))
+    pdf.close()
+
+    counts = vj._vector_width_histogram(path)
+    assert counts is not None
+    assert counts.get(1.0) == 20
+    assert counts.get(0.25) == 20
+    ratio, cut, texture = vj._ratio_from_histogram(counts)
+    assert cut == 1.0
+    assert texture == 0.25
+    assert ratio == 4.0
+
+    # tonal_recede reads the same stream; its cut tier needs the default too.
+    tones = vj._vector_stroke_tones(path)
+    assert tones is not None
+    assert sum(1 for width, _ in tones if width == 1.0) == 20

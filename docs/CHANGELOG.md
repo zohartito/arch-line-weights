@@ -114,6 +114,18 @@ versioning follows [Semantic Versioning](https://semver.org/).
   `tests/test_poche_foundation_under_column.py`. Closures that really are
   mostly invented (sparse fragments, a lone long span) still score below the
   threshold and stay diagnostic-only.
+- **`apply-saas` runs on converted Make2D files that lack `/NumBlock`.**
+  Illustrator Save As of a converted Rhino `.ai` keeps the zstd
+  `/AIPrivateData1..N` streams but often omits `/NumBlock`, so `apply-saas`,
+  `apply-saas --poche`, `cleanup` and `doctor`'s geometry pass refused a
+  readable payload. The block count is now inferred from consecutive
+  `/AIPrivateData` streams (still bounded by the native stream cap); a file
+  with neither marker still fail-closes to `apply-jsx` then `poche`.
+- **Visual judge counts strokes at the PDF default 1.0 pt.** Illustrator bakes
+  omit `1 w` for cut strokes, and the judge only counted strokes after an
+  explicit `w`, so `hierarchy_spread` lost the cut tier and `tonal_recede`
+  misread it. Both now start from the PDF initial line width, as `inspect`
+  already did.
 
 ### Validation
 
