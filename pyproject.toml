@@ -28,7 +28,7 @@ classifiers = [
 ]
 dependencies = [
     "pikepdf>=8.0",
-    "pymupdf>=1.24",
+    "pymupdf>=1.24.3",  # first release with the `pymupdf` import name (`fitz` prints to stdout)
     "click>=8.1",
     "shapely>=2.0",
     "numpy>=1.26",

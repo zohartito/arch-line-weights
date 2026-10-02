@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 
 from click.testing import CliRunner
 
@@ -106,6 +108,35 @@ def test_inspect_blank_plain_pdf_reports_non_drawing_diagnostic(tmp_path):
     assert data["input_format"]["has_drawings"] is False
     assert data["input_format"]["is_no_op"] is True
     assert "non-drawing" in data["input_format"]["no_drawing_reason"]
+
+
+# Runs `inspect` in a fresh interpreter so the command performs the process's first PyMuPDF import,
+# whatever the test order. `import fitz` prints a deprecation notice to stdout on newer PyMuPDF
+# (silently on older ones), so the probe also fails if the legacy name is imported at all.
+_INSPECT_IN_FRESH_PROCESS = """
+import sys
+from arch_line_weights.cli import cli
+try:
+    cli(["inspect", sys.argv[1], "--no-pretty"])
+finally:
+    assert "fitz" not in sys.modules, "inspect imported the legacy `fitz` name"
+"""
+
+
+def test_inspect_stdout_stays_json_when_pymupdf_is_first_imported_by_the_command(tmp_path):
+    src = tmp_path / "reference.pdf"
+    _blank_pdf(src)
+
+    proc = subprocess.run(
+        [sys.executable, "-c", _INSPECT_IN_FRESH_PROCESS, str(src)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    data = json.loads(proc.stdout)
+    assert data["input_format"]["input_kind"] == "plain_pdf"
 
 
 def test_inspect_empty_layer_aware_ai_has_different_empty_export_message(tmp_path):
