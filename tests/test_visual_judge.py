@@ -197,3 +197,28 @@ def test_vector_histogram_counts_pdf_default_line_width(tmp_path: Path) -> None:
     tones = vj._vector_stroke_tones(path)
     assert tones is not None
     assert sum(1 for width, _ in tones if width == 1.0) == 20
+
+
+def test_vector_width_state_follows_q_and_Q(tmp_path: Path) -> None:
+    """`Q` restores the width (and stroke color) saved by the matching `q`.
+
+    Illustrator wraps groups in q/Q. Without the restore, a 0.25 pt group
+    leaked its width onto every default-width cut stroke drawn after it.
+    """
+    path = tmp_path / "nested.pdf"
+    content = "\n".join(
+        [
+            "q 0.25 w 0.5 G 10 10 m 10 40 l S Q",
+            "20 10 m 20 40 l S",
+            "q 0.5 w q 0.13 w 30 10 m 30 40 l S Q 40 10 m 40 40 l S Q",
+        ]
+    )
+    pdf = pikepdf.new()
+    pdf.add_blank_page(page_size=(200, 200))
+    pdf.pages[0].Contents = pdf.make_stream(content.encode("ascii"))
+    pdf.save(str(path))
+    pdf.close()
+
+    assert vj._vector_width_histogram(path) == {0.25: 1, 1.0: 1, 0.13: 1, 0.5: 1}
+    tones = vj._vector_stroke_tones(path)
+    assert tones == [(0.25, 0.5), (1.0, 1.0), (0.13, 1.0), (0.5, 1.0)]

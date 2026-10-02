@@ -716,7 +716,12 @@ def test_dump_jsx_filters_carry_the_poche_skip_list():
     manual = Path(__file__).parents[1] / "scripts" / "poche" / "dump_cut_geometry.jsx"
     match = re.search(r"var POCHE_SKIP = (\[.*?\]);", manual.read_text(), re.S)
     assert match is not None
-    assert json.loads(match.group(1)) == list(POCHE_SKIP_TOKENS)
+    assert json.loads(match.group(1)) == list(POCHE_SKIP_TOKENS), (
+        "scripts/poche/dump_cut_geometry.jsx is out of sync with layer_classify.POCHE_SKIP_TOKENS. "
+        'Regenerate the POCHE_SKIP array with: python -c "import json; '
+        "from arch_line_weights.layer_classify import POCHE_SKIP_TOKENS as t; "
+        'print(json.dumps(list(t), indent=4))"'
+    )
 
 
 def _square(x0: float) -> list[list[list[float]]]:

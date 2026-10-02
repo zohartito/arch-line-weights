@@ -249,19 +249,19 @@ def _support_for(
             support["poche"] = False
         reasons = {command: None for command in KNOWN_COMMANDS}
         native_reason = (
-            "This .ai has no Illustrator native private payload (/NumBlock). "
-            "/NumBlock is the marker Illustrator writes into its native private "
-            "data (/PieceInfo /Illustrator /Private) recording how many blocks "
-            "its layer/appearance payload was split into; apply-saas also "
-            "accepts /AIPrivateData streams when /NumBlock is omitted. It is "
-            "usually absent because the file was not saved by Illustrator "
-            "itself - for example a .ai exported from Rhino/Make2D or a PDF "
-            "renamed to .ai. apply-saas needs a native Illustrator .ai. Fix: "
-            "open the file in Illustrator and Save As Adobe Illustrator (.ai) "
-            "to embed the native payload, or skip the native path and rewrite "
-            "the PDF stream directly with arch-lw apply. For PDF-only/converted "
-            "exports with no /AIPrivateData streams, use: arch-lw apply-jsx "
-            "then arch-lw poche."
+            "This .ai has no Illustrator native private payload (no /NumBlock "
+            "and no /AIPrivateData streams). /NumBlock is the marker "
+            "Illustrator writes into its native private data (/PieceInfo "
+            "/Illustrator /Private) recording how many blocks its "
+            "layer/appearance payload was split into, and /AIPrivateData1..N "
+            "are those blocks; apply-saas reads the blocks and infers the count "
+            "when only /NumBlock is missing. Both are usually absent because the "
+            "file was not saved by Illustrator itself - for example a .ai "
+            "exported from Rhino/Make2D or a PDF renamed to .ai. apply-saas "
+            "needs a native Illustrator .ai. Fix: open the file in Illustrator "
+            "and Save As Adobe Illustrator (.ai) to embed the native payload, or "
+            "skip the native path and rewrite the PDF stream directly with "
+            "arch-lw apply."
         )
         if input_kind != "native_ai":
             reasons["apply-saas"] = native_reason

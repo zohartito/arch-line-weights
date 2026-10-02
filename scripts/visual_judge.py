@@ -391,7 +391,12 @@ PDF_DEFAULT_LINE_WIDTH = 1.0  # PDF initial graphics-state line width
 
 
 def _vector_width_histogram(path: Path) -> dict[float, int] | None:
-    """Stroke-width (pt) -> count from a PDF/PDF-compatible .ai content stream."""
+    """Stroke-width (pt) -> count from a PDF/PDF-compatible .ai content stream.
+
+    Widths follow the graphics state: they start at the PDF initial 1.0 pt and
+    ``q``/``Q`` save and restore them. They are user-space values; a ``cm``
+    scale is not applied.
+    """
     if path.suffix.lower() not in {".ai", ".pdf"}:
         return None
     try:
@@ -409,13 +414,19 @@ def _vector_width_histogram(path: Path) -> dict[float, int] | None:
             # often omits `1 w` for cut strokes; dropping those collapsed
             # hierarchy_spread to the next explicit tier (0.5 pt).
             cur = PDF_DEFAULT_LINE_WIDTH
+            saved: list[float] = []
             try:
                 stream = pikepdf.parse_content_stream(page)
             except Exception:
                 continue
             for operands, operator in stream:
                 op = bytes(operator).decode("ascii", "ignore")
-                if op == "w" and operands:
+                if op == "q":
+                    saved.append(cur)
+                elif op == "Q":
+                    if saved:
+                        cur = saved.pop()
+                elif op == "w" and operands:
                     with contextlib.suppress(TypeError, ValueError):
                         cur = round(float(operands[0]), 3)
                 elif op in {"S", "s", "B", "B*", "b", "b*"}:
@@ -530,7 +541,8 @@ def _vector_stroke_tones(path: Path) -> list[tuple[float, float]] | None:
 
     ``darkness`` is 0 (white) … 1 (black) derived from the current stroke color
     (defaulting to black, the PDF initial stroke color); ``width_pt`` likewise
-    starts at the PDF initial line width until a ``w`` op sets it. Returns ``None`` for
+    starts at the PDF initial line width until a ``w`` op sets it. Both follow
+    ``q``/``Q`` save and restore. Returns ``None`` for
     non-vector inputs or when the stream cannot be parsed — the "no layer /
     stroke information available" case, so :func:`tonal_recede_score` can return
     ``null`` rather than guess (mirroring ``fixture_weight``).
@@ -550,12 +562,20 @@ def _vector_stroke_tones(path: Path) -> list[tuple[float, float]] | None:
         for page in pdf.pages:
             width = PDF_DEFAULT_LINE_WIDTH
             darkness = 1.0  # PDF initial stroke color is black
+            saved: list[tuple[float, float]] = []
             try:
                 stream = pikepdf.parse_content_stream(page)
             except Exception:
                 continue
             for operands, operator in stream:
                 op = bytes(operator).decode("ascii", "ignore")
+                if op == "q":
+                    saved.append((width, darkness))
+                    continue
+                if op == "Q":
+                    if saved:
+                        width, darkness = saved.pop()
+                    continue
                 if op == "w" and operands:
                     with contextlib.suppress(TypeError, ValueError):
                         width = round(float(operands[0]), 3)

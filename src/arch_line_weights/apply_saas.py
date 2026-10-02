@@ -116,19 +116,19 @@ class ApplySaasResult:
 
 
 _NO_NATIVE_PAYLOAD_MSG = (
-    "This .ai has no Illustrator native private payload (/NumBlock). "
-    "/NumBlock is the marker Illustrator writes into its native private data "
-    "(/PieceInfo /Illustrator /Private) recording how many blocks its "
-    "layer/appearance payload was split into; apply-saas also accepts "
-    "/AIPrivateData streams when /NumBlock is omitted. It is usually absent "
+    "This .ai has no Illustrator native private payload (no /NumBlock and no "
+    "/AIPrivateData streams). /NumBlock is the marker Illustrator writes into "
+    "its native private data (/PieceInfo /Illustrator /Private) recording how "
+    "many blocks its layer/appearance payload was split into, and "
+    "/AIPrivateData1..N are those blocks; apply-saas reads the blocks and "
+    "infers the count when only /NumBlock is missing. Both are usually absent "
     "because the file was not saved by Illustrator itself - for example a .ai "
     "exported from Rhino/Make2D or a PDF renamed to .ai. apply-saas needs a "
     "native Illustrator .ai. Fix: open the file in Illustrator and Save As "
     "Adobe Illustrator (.ai) to embed the native payload, or skip the native "
     "path and rewrite the PDF stream directly with arch-lw apply. For "
-    "PDF-only/converted exports with no /AIPrivateData streams, use: "
-    "arch-lw apply-jsx then arch-lw poche. Illustrator Save As does not "
-    "reliably write /NumBlock on converted Make2D files."
+    "PDF-only/converted exports needing layer preservation, use: arch-lw "
+    "apply-jsx then arch-lw poche."
 )
 
 
@@ -142,7 +142,8 @@ def _native_block_count(priv: pikepdf.Object) -> int:
     Illustrator-saved PDF-compatible ``.ai`` files (including Rhino Make2D after
     Save As) often carry ``/AIPrivateData1..N`` zstd streams *without*
     ``/NumBlock``. Prefer a positive ``/NumBlock``; otherwise count consecutive
-    ``/AIPrivateData`` streams.
+    ``/AIPrivateData`` streams, and refuse a numbering gap rather than read a
+    truncated payload.
     """
     try:
         n = int(priv["/NumBlock"])
@@ -155,6 +156,14 @@ def _native_block_count(priv: pikepdf.Object) -> int:
     n = 0
     while n <= MAX_NATIVE_STREAMS and f"/AIPrivateData{n + 1}" in priv:
         n += 1
+    if n <= MAX_NATIVE_STREAMS:
+        for key in priv:
+            index = str(key).removeprefix("/AIPrivateData")
+            if index != str(key) and index.isdigit() and int(index) > n:
+                raise ValueError(
+                    f"native payload streams are not numbered /AIPrivateData1..N without gaps "
+                    f"(found {key} after /AIPrivateData{n}); refusing to read a partial payload"
+                )
     return n
 
 

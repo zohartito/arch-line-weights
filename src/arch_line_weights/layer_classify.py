@@ -165,6 +165,13 @@ DEFAULT = TierAssignment(0.25, "default", "no pattern match — assigned middle 
 # (docs/research/poche-rulebook.md). The cut tier still wins their line weight;
 # this only keeps them out of the fill. Bare GLASS / IGU predate the tier list
 # and still catch glass layers the WINDOW_* glazing tokens miss.
+#
+# Tokens match as plain substrings, the same way the JSX filter matches them,
+# so they can over-match: IGU sits inside CONFIGURATION / FIGURE, and _RW_ /
+# _MW_ are read as rock / mineral wool even where a drawing means retaining or
+# masonry wall. A cut layer caught that way keeps its cut weight but gets no
+# fill. Renaming the layer is the remedy; --architectural already applies the
+# same _RW_ / _MW_ reading.
 _POCHE_SKIP_TIERS = frozenset({"glazing", "frames", "cladding", "insulation"})
 POCHE_SKIP_TOKENS: tuple[str, ...] = (
     "GLASS",

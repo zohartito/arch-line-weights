@@ -119,13 +119,16 @@ versioning follows [Semantic Versioning](https://semver.org/).
   `/AIPrivateData1..N` streams but often omits `/NumBlock`, so `apply-saas`,
   `apply-saas --poche`, `cleanup` and `doctor`'s geometry pass refused a
   readable payload. The block count is now inferred from consecutive
-  `/AIPrivateData` streams (still bounded by the native stream cap); a file
-  with neither marker still fail-closes to `apply-jsx` then `poche`.
+  `/AIPrivateData` streams (still bounded by the native stream cap, and a gap
+  in the numbering is refused rather than read as a truncated payload); a file
+  with neither marker still fail-closes to `apply-jsx` then `poche`. The
+  rewritten file carries a `/NumBlock` even when the input did not.
 - **Visual judge counts strokes at the PDF default 1.0 pt.** Illustrator bakes
   omit `1 w` for cut strokes, and the judge only counted strokes after an
   explicit `w`, so `hierarchy_spread` lost the cut tier and `tonal_recede`
   misread it. Both now start from the PDF initial line width, as `inspect`
-  already did.
+  already did, and follow `q`/`Q` save/restore so a thin group no longer leaks
+  its width onto the strokes drawn after it.
 - **Cut glazing, window frames, cladding and insulation no longer print as
   black poché.** The default poché filters (`poche`'s dump JSX,
   `polygonize_dump`, `apply-saas --poche` without `--architectural`) skipped
