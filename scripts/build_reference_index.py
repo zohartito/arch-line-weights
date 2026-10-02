@@ -5,6 +5,11 @@ The source books and extracted text are intentionally kept out of git. This
 script reads ``references/manifest.yml`` and writes a SQLite FTS database under
 ``data/reference_books/`` so research agents can search page-level excerpts and
 return derived notes with page references.
+
+Next to the full-text index it stores a per-book section tree (node_id, title,
+page range, short lead) built deterministically from the PDF outline, so an
+agent can navigate a book with ``--tree`` and then read exact pages with
+``--read BOOK --pages '1-3,7'`` instead of scanning FTS hits.
 """
 
 from __future__ import annotations
@@ -22,6 +27,8 @@ import fitz
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MANIFEST = REPO_ROOT / "references" / "manifest.yml"
 DEFAULT_DB = REPO_ROOT / "data" / "reference_books" / "reference_pages.sqlite"
+LEAD_CHARS = 160
+MAX_PAGE_SPEC_PAGES = 50
 
 
 @dataclass(frozen=True)
@@ -111,6 +118,22 @@ def init_db(db_path: Path) -> sqlite3.Connection:
         USING fts5(book_id, title, author, topics, page_number UNINDEXED, text)
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS sections (
+            book_id TEXT NOT NULL,
+            node_id TEXT NOT NULL,
+            parent_id TEXT,
+            level INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            start_page INTEGER NOT NULL,
+            end_page INTEGER NOT NULL,
+            lead TEXT NOT NULL,
+            PRIMARY KEY (book_id, node_id),
+            FOREIGN KEY (book_id) REFERENCES books(id)
+        )
+        """
+    )
     return conn
 
 
@@ -120,6 +143,40 @@ def file_sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def build_section_tree(
+    toc: list[list[Any]], page_texts: list[str], fallback_title: str
+) -> list[tuple[str, str | None, int, str, int, int, str]]:
+    """Flatten a PDF outline into (node_id, parent_id, level, title, start, end, lead) rows.
+
+    A node ends the page before the next node at the same or a shallower level
+    starts, so every range nests inside its parent. Outline entries pointing
+    past the indexed pages are dropped; a book without an outline becomes one
+    root node spanning every indexed page.
+    """
+    page_total = len(page_texts)
+    entries = [
+        (int(level), str(title).strip(), int(page))
+        for level, title, page, *_ in toc
+        if 1 <= int(page) <= page_total and str(title).strip()
+    ]
+    if not entries and page_total:
+        entries = [(1, fallback_title, 1)]
+
+    rows: list[tuple[str, str | None, int, str, int, int, str]] = []
+    stack: list[tuple[int, str]] = []
+    for index, (level, title, start) in enumerate(entries):
+        node_id = f"{index + 1:04d}"
+        while stack and stack[-1][0] >= level:
+            stack.pop()
+        parent_id = stack[-1][1] if stack else None
+        stack.append((level, node_id))
+        next_start = next((s for lvl, _, s in entries[index + 1 :] if lvl <= level), page_total + 1)
+        end = max(start, next_start - 1)
+        lead = " ".join(page_texts[start - 1].split())[:LEAD_CHARS]
+        rows.append((node_id, parent_id, level, title, start, end, lead))
+    return rows
 
 
 def index_book(
@@ -134,7 +191,8 @@ def index_book(
 
     sha = file_sha256(book.path)
     existing = conn.execute("SELECT sha256 FROM books WHERE id = ?", (book.id,)).fetchone()
-    if existing and existing[0] == sha and not force:
+    has_tree = conn.execute("SELECT 1 FROM sections WHERE book_id = ? LIMIT 1", (book.id,)).fetchone()
+    if existing and existing[0] == sha and has_tree and not force:
         return 0, 0
 
     doc = fitz.open(book.path)
@@ -145,6 +203,7 @@ def index_book(
     with conn:
         conn.execute("DELETE FROM pages WHERE book_id = ?", (book.id,))
         conn.execute("DELETE FROM page_fts WHERE book_id = ?", (book.id,))
+        conn.execute("DELETE FROM sections WHERE book_id = ?", (book.id,))
         conn.execute(
             """
             INSERT OR REPLACE INTO books
@@ -162,9 +221,11 @@ def index_book(
                 topics,
             ),
         )
+        page_texts: list[str] = []
         for page_index in range(page_total):
             page_number = page_index + 1
             text = doc.load_page(page_index).get_text("text").strip()
+            page_texts.append(text)
             conn.execute(
                 """
                 INSERT INTO pages (book_id, page_number, text, char_count)
@@ -179,6 +240,14 @@ def index_book(
                 """,
                 (book.id, book.title, book.author, topics, page_number, text),
             )
+        conn.executemany(
+            """
+            INSERT INTO sections
+                (book_id, node_id, parent_id, level, title, start_page, end_page, lead)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [(book.id, *row) for row in build_section_tree(doc.get_toc(simple=True), page_texts, book.title)],
+        )
     doc.close()
     return page_total, page_count
 
@@ -224,6 +293,69 @@ def search(
     ).fetchall()
 
 
+def get_tree(conn: sqlite3.Connection, book_id: str) -> list[dict[str, Any]]:
+    """Return a book's section tree as nested dicts (children under ``nodes``)."""
+    nodes: dict[str, dict[str, Any]] = {}
+    roots: list[dict[str, Any]] = []
+    for node_id, parent_id, title, start, end, lead in conn.execute(
+        """
+        SELECT node_id, parent_id, title, start_page, end_page, lead
+        FROM sections WHERE book_id = ? ORDER BY node_id
+        """,
+        (book_id,),
+    ):
+        node = {"node_id": node_id, "title": title, "pages": f"{start}-{end}", "lead": lead, "nodes": []}
+        nodes[node_id] = node
+        (nodes[parent_id]["nodes"] if parent_id in nodes else roots).append(node)
+    return roots
+
+
+def parse_page_spec(spec: str, page_count: int) -> list[int]:
+    """Expand a page spec like ``'1-3,7'`` into sorted unique page numbers.
+
+    Raises ``ValueError`` on malformed tokens, reversed or out-of-range pages,
+    or a request wider than ``MAX_PAGE_SPEC_PAGES``.
+    """
+    pages: set[int] = set()
+    for token in spec.split(","):
+        start_text, _, end_text = token.strip().partition("-")
+        end_text = end_text or start_text
+        if not (start_text.isdigit() and end_text.isdigit()):
+            raise ValueError(f"invalid page token {token.strip()!r} in {spec!r}")
+        start, end = int(start_text), int(end_text)
+        if not 1 <= start <= end <= page_count:
+            raise ValueError(f"page range {start}-{end} outside 1-{page_count}")
+        pages.update(range(start, end + 1))
+        if len(pages) > MAX_PAGE_SPEC_PAGES:
+            raise ValueError(f"page spec {spec!r} exceeds {MAX_PAGE_SPEC_PAGES} pages")
+    return sorted(pages)
+
+
+def get_page_content(conn: sqlite3.Connection, book_id: str, spec: str) -> list[tuple[int, str]]:
+    """Return ``(page_number, text)`` for the indexed pages named by ``spec``."""
+    (page_count,) = conn.execute(
+        "SELECT COALESCE(MAX(page_number), 0) FROM pages WHERE book_id = ?", (book_id,)
+    ).fetchone()
+    if not page_count:
+        raise ValueError(f"book {book_id!r} is not indexed")
+    pages = parse_page_spec(spec, page_count)
+    placeholders = ", ".join("?" for _ in pages)
+    return conn.execute(
+        f"""
+        SELECT page_number, text FROM pages
+        WHERE book_id = ? AND page_number IN ({placeholders})
+        ORDER BY page_number
+        """,
+        (book_id, *pages),
+    ).fetchall()
+
+
+def _print_tree(nodes: list[dict[str, Any]], depth: int = 0) -> None:
+    for node in nodes:
+        print(f"{'  ' * depth}[{node['node_id']}] {node['title']} (pp. {node['pages']})")
+        _print_tree(node["nodes"], depth + 1)
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
@@ -238,7 +370,13 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--query-book", action="append", help="Restrict --query to one manifest book id. Repeatable."
     )
     parser.add_argument("--query-limit", type=int, default=8)
-    return parser.parse_args(argv)
+    parser.add_argument("--tree", metavar="BOOK_ID", help="Print one book's section tree.")
+    parser.add_argument("--read", metavar="BOOK_ID", help="Print page text for --pages from one book.")
+    parser.add_argument("--pages", help="Page spec for --read, e.g. '1-3,7'.")
+    args = parser.parse_args(argv)
+    if bool(args.read) != bool(args.pages):
+        parser.error("--read and --pages must be used together")
+    return args
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -279,6 +417,18 @@ def main(argv: list[str] | None = None) -> int:
         for row in search(conn, args.query, limit=args.query_limit, book_ids=query_books or None):
             print(f"{row['title']} p.{row['page_number']} ({row['book_id']})")
             print(f"  {row['snippet']}")
+    if args.tree:
+        print()
+        _print_tree(get_tree(conn, args.tree))
+    if args.read:
+        print()
+        try:
+            content = get_page_content(conn, args.read, args.pages)
+        except ValueError as exc:
+            raise SystemExit(str(exc)) from exc
+        for page_number, text in content:
+            print(f"--- {args.read} p.{page_number} ---")
+            print(text)
     conn.close()
     return 0
 
