@@ -96,7 +96,10 @@ RHINO_RULES: list[tuple[str | tuple[str, ...], TierAssignment]] = [
     # 1. Cut — section plane intersection (heaviest, regardless of material)
     (CUT_MARKERS, TierAssignment(1.0, "cut", "section plane intersection")),
     # 2. Glazing — special, lighter than profile
-    (("WINDOW_IGU_GLASS", "WINDOW_GLASS"), TierAssignment(0.25, "glazing", "transparent material")),
+    (
+        ("WINDOW_IGU_GLASS", "WINDOW_GLASS", "GLAZING"),
+        TierAssignment(0.25, "glazing", "transparent material"),
+    ),
     # 3. Reference / datum lines
     (
         ("FLOOR_DATUMS", "_DATUM", "_GRID", "_REF"),
@@ -137,7 +140,7 @@ RHINO_RULES: list[tuple[str | tuple[str, ...], TierAssignment]] = [
     ),
     # 10. Cladding panels — material surface
     (
-        ("_CU_CORR_", "_CU_FLAT_", "_CU_PUNCH_", "CLADDING"),
+        ("_CU_CORR_", "_CU_FLAT_", "_CU_PUNCH_", "CLADDING", "COPPER_PANEL", "ALUMINUM_COMPOSITE"),
         TierAssignment(0.18, "cladding", "cladding / surface panels"),
     ),
     # 11. Membranes / sealants — light material
@@ -147,7 +150,7 @@ RHINO_RULES: list[tuple[str | tuple[str, ...], TierAssignment]] = [
     ),
     # 12. Insulation
     (
-        ("_INS_", "_MW_", "_RW_", "_XPS_", "_PIR_", "INSULATION"),
+        ("_INS_", "_MW_", "_RW_", "_XPS_", "_PIR_", "INSULATION", "MINERAL_WOOL"),
         TierAssignment(0.13, "insulation", "insulation hatch"),
     ),
     # 13. Annotation
@@ -156,6 +159,29 @@ RHINO_RULES: list[tuple[str | tuple[str, ...], TierAssignment]] = [
 
 # Default for the Rhino source — preserves pre-Phase-E5 behavior.
 DEFAULT = TierAssignment(0.25, "default", "no pattern match — assigned middle weight")
+
+# Materials the section plane can cut that still never print as black poché:
+# glazing, window frames, cladding and insulation stay outline or hatch
+# (docs/research/poche-rulebook.md). The cut tier still wins their line weight;
+# this only keeps them out of the fill. Bare GLASS / IGU predate the tier list
+# and still catch glass layers the WINDOW_* glazing tokens miss.
+_POCHE_SKIP_TIERS = frozenset({"glazing", "frames", "cladding", "insulation"})
+POCHE_SKIP_TOKENS: tuple[str, ...] = (
+    "GLASS",
+    "IGU",
+    *(
+        token
+        for patterns, assignment in RHINO_RULES
+        if assignment.tier in _POCHE_SKIP_TIERS
+        for token in ((patterns,) if isinstance(patterns, str) else patterns)
+    ),
+)
+
+
+def is_poche_skip_material(layer_name: str) -> bool:
+    """True if `layer_name` names a material that is cut but never poché-filled."""
+    upper = layer_name.upper()
+    return any(token in upper for token in POCHE_SKIP_TOKENS)
 
 
 # --------------------------------------------------------------------------- #

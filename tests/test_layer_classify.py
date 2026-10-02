@@ -619,3 +619,145 @@ def test_dump_jsx_filter_carries_both_cut_markers():
     assert "__CUT_MARKERS__" not in jsx
     for marker in CUT_MARKERS:
         assert marker in jsx, marker
+
+
+# --------------------------------------------------------------------------- #
+# Cut but never poché: glazing, window frames, cladding, insulation
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize(
+    "layer,expected_weight,expected_tier",
+    [
+        ("model::Visible::Curves::04_COPPER_PANELS_EAST", 0.18, "cladding"),
+        ("model::Visible::Curves::ACM_ALUMINUM_COMPOSITE", 0.18, "cladding"),
+        ("model::Visible::Curves::07_GLAZING", 0.25, "glazing"),
+        ("model::Visible::Curves::01_MINERAL_WOOL_100", 0.13, "insulation"),
+    ],
+)
+def test_facade_material_names_reach_their_tiers(layer, expected_weight, expected_tier):
+    """Plain material names that missed the TEC_*/CU_* tokens fell to default 0.25."""
+    from arch_line_weights.architectural import classify_architectural_layer
+
+    a = classify_layer(layer)
+    assert (a.weight_pt, a.tier) == (expected_weight, expected_tier)
+    arch = classify_architectural_layer(layer)
+    assert arch.tier == expected_tier
+    assert arch.poche is False
+
+
+NEVER_POCHE_CUT_LAYERS = [
+    "model::Visible::ClippingPlaneIntersections::04_COPPER_PANELS_EAST",
+    "model::Visible::ClippingPlaneIntersections::ACM_ALUMINUM_COMPOSITE",
+    "model::Visible::ClippingPlaneIntersections::07_GLAZING",
+    "model::Visible::ClippingPlaneIntersections::01_MINERAL_WOOL_100",
+    "model::Visible::ClippingPlaneIntersections::C2_CU_CORR_RAINSCREEN",
+    "model::Visible::ClippingPlaneIntersections::WINDOW_FRAMES_NORTH",
+    "model::Visible::ClippingPlaneIntersections::WINDOW_ALUM_FRAME",
+    "model::Visible::ClippingPlaneIntersections::RIGID_INSULATION",
+    "model::Visible::SECTION_CUT::CLADDING",
+]
+
+
+@pytest.mark.parametrize("layer", NEVER_POCHE_CUT_LAYERS)
+def test_cut_non_mass_materials_keep_cut_weight_but_skip_poche(layer):
+    """The cut tier wins the line weight; the fill skips what the rulebook forbids."""
+    from arch_line_weights.poche_saas import _is_cut_layer
+
+    a = classify_layer(layer)
+    assert (a.tier, a.weight_pt) == ("cut", 1.0)
+    assert _is_poche_cut_layer_name(layer) is False
+    assert _is_cut_layer(layer) is False
+
+
+@pytest.mark.parametrize(
+    "layer",
+    [
+        "model::Visible::ClippingPlaneIntersections::TEC_FOUNDATION",
+        "model::Visible::ClippingPlaneIntersections::TEC_CONCRETE_BASE",
+        "model::Visible::ClippingPlaneIntersections::TEC_TIMBER_BEAMS",
+        "model::Visible::ClippingPlaneIntersections::TEC_CLT_SLABS",
+        "model::Visible::ClippingPlaneIntersections::02_CONCRETE_WALL",
+        "model::Visible::ClippingPlaneIntersections::05_FLOOR_SLAB",
+        "model::Visible::ClippingPlaneIntersections::08_SHS_150x150x6",
+    ],
+)
+def test_cut_structural_mass_still_poches(layer):
+    from arch_line_weights.poche_saas import _is_cut_layer
+
+    assert _is_poche_cut_layer_name(layer) is True
+    assert _is_cut_layer(layer) is True
+
+
+def test_poche_skip_is_derived_from_the_material_tiers():
+    """One list feeds every poché filter, built from the Rhino tiers it names."""
+    from arch_line_weights.layer_classify import POCHE_SKIP_TOKENS, RHINO_RULES
+
+    for patterns, assignment in RHINO_RULES:
+        if assignment.tier in {"glazing", "frames", "cladding", "insulation"}:
+            for token in (patterns,) if isinstance(patterns, str) else patterns:
+                assert token in POCHE_SKIP_TOKENS, token
+    assert {"GLASS", "IGU"} <= set(POCHE_SKIP_TOKENS)
+
+
+def test_dump_jsx_filters_carry_the_poche_skip_list():
+    """Both Illustrator dump filters skip exactly what the Python predicates skip."""
+    import json
+    import re
+    from pathlib import Path
+
+    from arch_line_weights.layer_classify import POCHE_SKIP_TOKENS
+    from arch_line_weights.poche import render_dump_jsx
+
+    jsx = render_dump_jsx("/tmp/drawing.ai", "/tmp/cut_geometry.json")
+    assert "__POCHE_SKIP__" not in jsx
+    assert f"var POCHE_SKIP = {json.dumps(list(POCHE_SKIP_TOKENS))};" in jsx
+
+    manual = Path(__file__).parents[1] / "scripts" / "poche" / "dump_cut_geometry.jsx"
+    match = re.search(r"var POCHE_SKIP = (\[.*?\]);", manual.read_text(), re.S)
+    assert match is not None
+    assert json.loads(match.group(1)) == list(POCHE_SKIP_TOKENS)
+
+
+def _square(x0: float) -> list[list[list[float]]]:
+    from itertools import pairwise
+
+    corners = [(x0, 0.0), (x0 + 100.0, 0.0), (x0 + 100.0, 100.0), (x0, 100.0), (x0, 0.0)]
+    return [[list(a), list(b)] for a, b in pairwise(corners)]
+
+
+def test_polygonize_dump_fills_the_slab_not_the_cut_insulation(tmp_path):
+    import json
+
+    from arch_line_weights.poche import polygonize_dump
+
+    slab = "model::Visible::ClippingPlaneIntersections::05_FLOOR_SLAB"
+    wool = "model::Visible::ClippingPlaneIntersections::01_MINERAL_WOOL_100"
+    dump = tmp_path / "cut_geometry.json"
+    dump.write_text(json.dumps({slab: _square(0.0), wool: _square(200.0)}))
+
+    report = polygonize_dump(str(dump))
+    assert set(report.polygons) == {slab}
+    assert all(fill.layer != wool for fill in report.fills)
+
+
+def test_apply_saas_poche_fills_the_slab_not_the_cut_glazing(tmp_path):
+    import sys
+    from pathlib import Path
+
+    from arch_line_weights.poche_saas import apply_saas_with_poche
+
+    sys.path.insert(0, str(Path(__file__).parent))
+    from doctor_fixtures import SQUARE, write_ai
+
+    src = write_ai(
+        tmp_path / "section.ai",
+        [
+            ("model::Visible::ClippingPlaneIntersections::05_FLOOR_SLAB", SQUARE),
+            ("model::Visible::ClippingPlaneIntersections::07_GLAZING", SQUARE),
+        ],
+    )
+    _apply, poche_result, _report = apply_saas_with_poche(str(src), str(tmp_path / "out.ai"), {})
+    assert poche_result.layers_targeted == 1
+    assert poche_result.layers_injected == 1
+    assert poche_result.polygons_injected == 1

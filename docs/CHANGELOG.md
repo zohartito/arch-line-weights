@@ -126,6 +126,19 @@ versioning follows [Semantic Versioning](https://semver.org/).
   explicit `w`, so `hierarchy_spread` lost the cut tier and `tonal_recede`
   misread it. Both now start from the PDF initial line width, as `inspect`
   already did.
+- **Cut glazing, window frames, cladding and insulation no longer print as
+  black poché.** The default poché filters (`poche`'s dump JSX,
+  `polygonize_dump`, `apply-saas --poche` without `--architectural`) skipped
+  only `GLASS`/`IGU`, so cut copper or aluminium-composite panels, mineral
+  wool, `GLAZING` layers and window frames filled solid — all of which
+  `docs/research/poche-rulebook.md` keeps out of poché, and which
+  `--architectural` already skipped. The skip list is now derived from the
+  Rhino glazing/frames/cladding/insulation tiers (`POCHE_SKIP_TOKENS`) and
+  shared by every filter, including `scripts/poche/dump_cut_geometry.jsx`.
+  The cut tier still sets their line weight. `GLAZING`, `COPPER_PANEL`,
+  `ALUMINUM_COMPOSITE` and `MINERAL_WOOL` join the Rhino tiers, so the same
+  names seen beyond the cut get glazing/cladding/insulation weights instead of
+  the 0.25 pt default.
 
 ### Validation
 

@@ -65,7 +65,7 @@ from .apply_saas import (
     _write_payload,
     rewrite_payload,
 )
-from .layer_classify import CUT_MARKERS, Source, is_cut_marker_name
+from .layer_classify import CUT_MARKERS, Source, is_cut_marker_name, is_poche_skip_material
 from .make2d_completion import (
     complete_structural_cut_polygons,
     structural_completion_paths_for_layers,
@@ -609,18 +609,19 @@ _CUT_LAYER_FILTER = re.compile(rb"(?i)" + b"|".join(re.escape(m.encode("ascii"))
 def _is_cut_layer(name: str, *, architectural: bool = False) -> bool:
     """Heuristic: a layer participates in poché iff its name carries a
     section-cut marker (``ClippingPlaneIntersections`` or ``SECTION_CUT``,
-    per `layer_classify.CUT_MARKERS`) and *isn't* a glass / IGU sub-layer.
+    per `layer_classify.CUT_MARKERS`) and *isn't* glazing, a window frame,
+    cladding or insulation (`layer_classify.is_poche_skip_material`).
 
     Matches the ``shouldDump`` filter in ``poche.py``'s JSX template.
     The ``_CUT_LAYER_FILTER`` regex above is the cheap pre-filter that
     `enumerate_layer_paths_from_payload` uses to skip non-cut layers
-    entirely; this Python predicate refines further by excluding glass/IGU.
+    entirely; this Python predicate refines further by excluding those materials.
     """
     n = name.upper()
     if not is_cut_marker_name(n):
         return False
     if not architectural:
-        return not ("GLASS" in n or "IGU" in n)
+        return not is_poche_skip_material(n)
 
     from .architectural import classify_architectural_layer
 
@@ -737,7 +738,7 @@ def apply_saas_with_poche(
         # Pre-filter at the byte level so we don't tokenize the ~40 non-cut
         # layers (annotations, dims, hidden curves, etc.) that we'd discard
         # immediately. The Python `_is_cut_layer` post-filter keeps the
-        # glass/IGU exclusion and lives outside the regex.
+        # non-mass material exclusion and lives outside the regex.
         with reporter.stage("enumerate_layers", cut_filter="ClippingPlaneIntersections"):
             structural_helper_paths_by_layer: dict[str, list[list[list[float]]]] = {}
             structural_completion_paths_by_layer: dict[str, list[list[list[float]]]] = {}
