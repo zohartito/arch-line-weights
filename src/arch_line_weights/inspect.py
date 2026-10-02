@@ -170,9 +170,15 @@ def _extract_layer_names_fitz(doc) -> list[str]:
 
 def _inspect_pdf(path: str) -> InspectionReport:
     """PyMuPDF backend — used for plain `.pdf` files."""
-    import fitz  # pymupdf, imported lazily
+    # Imported lazily. Never the `fitz` name when `pymupdf` exists: current PyMuPDF prints a
+    # deprecation notice to stdout on `import fitz`, which corrupts `arch-lw inspect` JSON.
+    # `pymupdf` only exists from 1.24.3, so 1.24.0-1.24.2 (inside our floor) still need `fitz`.
+    try:
+        import pymupdf
+    except ImportError:
+        import fitz as pymupdf
 
-    doc = fitz.open(path)
+    doc = pymupdf.open(path)
     page0 = doc[0]
     rep = InspectionReport(
         file=path,
@@ -566,7 +572,7 @@ def inspect_file(path: str) -> InspectionReport:
     Per-format dispatch:
 
     * ``.ai`` → pikepdf (works on huge files where PyMuPDF's
-      ``fitz.open()`` raises ``FileDataError``)
+      ``pymupdf.open()`` raises ``FileDataError``)
     * ``.pdf`` with ``/PieceInfo /Illustrator`` → pikepdf
     * Other ``.pdf`` → PyMuPDF
     * Both backends fail → raise ``RuntimeError`` pointing at the workaround
