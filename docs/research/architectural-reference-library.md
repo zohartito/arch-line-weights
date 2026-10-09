@@ -26,15 +26,15 @@ architectural-graphics standard distilled into rules that the code can execute.
 
 Initial priority books:
 
-```text
-Architectural Graphics (Francis D. K. Ching) (z-lib.org).pdf
-A Visual Dictionary of Architecture (Francis D. K. Ching) (z-lib.org).pdf
-Architecture Form, Space, and Order (Francis D. K. Ching) (z-lib.org).pdf
-Building Construction Illustrated (Francis D. K. Ching) (z-lib.org).pdf
-Building Structures Illustrated Patterns, Systems, and Design (Francis D. K. Ching) (z-lib.org).pdf
-Design Drawing (Francis D.K. Ching, Steven P. Juroszek) (z-lib.org).pdf
-Building Codes Illustrated A Guide to Understanding the 2018 International Building Code (Francis D. K. Ching, Steven R. Winkel) (z-lib.org).pdf
-```
+- Francis D. K. Ching, *Architectural Graphics*
+- Francis D. K. Ching, *A Visual Dictionary of Architecture*
+- Francis D. K. Ching, *Architecture: Form, Space, and Order*
+- Francis D. K. Ching, *Building Construction Illustrated*
+- Francis D. K. Ching, *Building Structures Illustrated: Patterns, Systems, and Design*
+- Francis D. K. Ching and Steven P. Juroszek, *Design Drawing*
+- Francis D. K. Ching and Steven R. Winkel, *Building Codes Illustrated: A Guide to Understanding the 2018 International Building Code*
+
+Only legitimately purchased or library copies may be indexed locally.
 
 ## Proposed Local Index
 
@@ -102,7 +102,7 @@ Not allowed:
 - commit the PDFs or EPUBs
 - publish large extracted text
 - reproduce diagrams or long passages
-- use z-lib filenames as distributable assets
+- publish local file names or paths of reference copies
 
 ## Product Impact
 
