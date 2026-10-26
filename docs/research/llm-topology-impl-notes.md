@@ -155,7 +155,7 @@ unexpected exception into "skip to the next rung". The unit tests
 | `arch-lw apply-saas --llm-fallback` | Sets the env var for the CLI run |
 | `arch-lw poche --llm-fallback` | Same, on the standalone poche command |
 | `ANTHROPIC_API_KEY=...` env var | Required when the gate is on |
-| `ARCH_LW_LLM_MODEL=claude-haiku-4-5` | Override default `claude-haiku-3-5` |
+| `ARCH_LW_LLM_MODEL=claude-haiku-4-5` | Override default `claude-haiku-5-5` |
 | `ARCH_LW_DEBUG=1` env var | Print per-call cost to stderr |
 
 The CLI flag is the recommended path; setting the env var directly

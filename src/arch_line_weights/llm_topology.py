@@ -33,9 +33,9 @@ Other knobs
   the function returns ``None`` and prints a one-line warning to stderr
   (in DEBUG mode); it never raises.
 * ``ARCH_LW_LLM_MODEL`` — model id override. Defaults to
-  ``"claude-haiku-3-5"`` per the cost-per-call sizing in the research
-  docs. Override e.g. to ``"claude-haiku-4-5"`` if the spike shows
-  3.5 underperforming.
+  ``"claude-haiku-5-5"``, the cheapest current Claude (Haiku 3.5 is
+  retired). Override e.g. to ``"claude-sonnet-5-5"`` if the spike shows
+  Haiku underperforming.
 * ``ARCH_LW_DEBUG`` — when ``"1"``, prints the actual cost of every
   call (input + output tokens × current price card) to stderr.
 
@@ -86,10 +86,10 @@ LLM_MODEL_ENV = "ARCH_LW_LLM_MODEL"
 ANTHROPIC_API_KEY_ENV = "ANTHROPIC_API_KEY"
 DEBUG_ENV = "ARCH_LW_DEBUG"
 
-# Default model — Claude Haiku 3.5 per the cost analysis in
-# docs/research/stubborn-layers-deep-dive.md §5 (~$0.003/stubborn layer).
-# Override via ARCH_LW_LLM_MODEL or the ``model`` argument.
-DEFAULT_MODEL = "claude-haiku-3-5"
+# Default model — Claude Haiku 5.5, the cheapest current Claude; the cost
+# analysis in docs/research/stubborn-layers-deep-dive.md §5 sized Haiku 3.5,
+# which is retired. Override via ARCH_LW_LLM_MODEL or the ``model`` argument.
+DEFAULT_MODEL = "claude-haiku-5-5"
 
 # Cap on how many endpoints we serialize. Beyond this, the prompt grows
 # linearly in tokens and the LLM is unlikely to produce useful output —
@@ -105,8 +105,10 @@ MAX_TOKENS_OUT = 600
 # Pricing (USD per million tokens). Used only by the DEBUG cost logger;
 # wrong-by-25% is fine — the goal is order-of-magnitude awareness of
 # whether the rung is costing $0.001/drawing or $0.10/drawing. Values
-# from docs/research/ai-augmented-mode.md §2 (2026-04-30 snapshot).
+# from docs/research/ai-augmented-mode.md §2 (2026-04-30 snapshot); Haiku 5.5
+# from anthropic.com/pricing (2026-10-21, prompts ≤ 100K tokens).
 _MODEL_PRICING: dict[str, tuple[float, float]] = {
+    "claude-haiku-5-5": (0.10, 0.50),
     "claude-haiku-3-5": (0.80, 4.00),
     "claude-haiku-4-5": (1.00, 5.00),
     "claude-sonnet-4-6": (3.00, 15.00),
