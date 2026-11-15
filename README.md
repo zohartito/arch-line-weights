@@ -384,3 +384,11 @@ surface/hatch weight, matching the project convention in
 ## License
 
 MIT.
+
+### Dependency licensing
+
+The project code is MIT-licensed, but it depends on PyMuPDF, which is licensed
+under AGPL-3.0 or a commercial licence from Artifex. See the
+[draft hosting and dependency review](docs/licensing/HOSTING.md) before planning a hosted service.
+The dormant webapp compute and console pipelines still import its inspection wrapper;
+the startup import check does not establish a webapp-wide PyMuPDF boundary.
