@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 import importlib.util
+import json
+import subprocess
+import sys
 from email.message import Message
+from functools import partial
 from importlib import metadata
 from pathlib import Path
 from types import SimpleNamespace
@@ -118,3 +122,69 @@ def test_installed_version_mismatch_is_reported(tmp_path):
     project.write_text('[project]\ndependencies=["demo>=2"]\n', encoding="utf-8")
     report = audit_module.audit(project, lookup=lambda name: distribution(License="MIT"))
     assert report["errors"] == ["demo: installed 1.0 does not satisfy >=2"]
+
+
+def test_committed_distribution_names_match_runtime_closure():
+    """Compare names only with a fresh CLI audit of project.dependencies and its
+    active transitive Requires-Dist in this environment, including dependency-requested
+    extras but excluding root optional extras, dev tools and webapp/spike-only installs.
+    Versions, license metadata, dates and platform fields are not compared.
+    """
+    result = subprocess.run(
+        [sys.executable, str(audit_module.ROOT / "scripts" / "license_audit.py"), "--format", "json"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=True,
+    )
+    fresh = json.loads(result.stdout)
+    committed = json.loads(
+        (audit_module.ROOT / "docs" / "licensing" / "dependency-licenses.json").read_text(encoding="utf-8")
+    )
+    assert {row["name"] for row in committed["packages"]} == {row["name"] for row in fresh["packages"]}
+
+
+@pytest.fixture
+def cli_project(tmp_path, monkeypatch):
+    project = tmp_path / "pyproject.toml"
+    project.write_text('[project]\ndependencies=["demo"]\n', encoding="utf-8")
+    monkeypatch.setattr(audit_module, "ROOT", tmp_path)
+    return project
+
+
+def test_markdown_escapes_pipe_in_field(cli_project):
+    report = audit_module.audit(cli_project, lookup=lambda name: distribution(License="MIT | BSD-3-Clause"))
+    rendered = audit_module.markdown(report)
+    assert "| MIT \\| BSD-3-Clause |" in rendered
+    assert "| MIT | BSD-3-Clause |" not in rendered
+
+
+def test_main_returns_one_for_unresolved_distribution(cli_project, monkeypatch, capsys):
+    def missing(name):
+        raise metadata.PackageNotFoundError(name)
+
+    monkeypatch.setattr(audit_module, "audit", partial(audit_module.audit, lookup=missing))
+    monkeypatch.setattr(sys, "argv", ["license_audit.py", "--format", "json"])
+    assert audit_module.main() == 1
+    assert json.loads(capsys.readouterr().out)["errors"] == ["demo: not installed"]
+
+
+def test_write_saves_both_formats(cli_project, monkeypatch, capsys):
+    monkeypatch.setattr(
+        audit_module, "audit", partial(audit_module.audit, lookup=lambda name: distribution(License="MIT"))
+    )
+    monkeypatch.setattr(sys, "argv", ["license_audit.py", "--write", "--format", "json"])
+    assert audit_module.main() == 0
+    output = cli_project.parent / "docs" / "licensing"
+    assert {path.name for path in output.iterdir()} == {"dependency-licenses.json", "dependency-licenses.md"}
+    report = json.loads((output / "dependency-licenses.json").read_text(encoding="utf-8"))
+    assert report == json.loads(capsys.readouterr().out)
+    assert [row["name"] for row in report["packages"]] == ["demo"]
+    assert (output / "dependency-licenses.md").read_text(encoding="utf-8") == audit_module.markdown(report)
+
+
+@pytest.mark.parametrize("text", ["MIT OR LGPL-3.0-only", "GNU Lesser General Public License (LGPL 3.0)"])
+def test_lgpl_three_is_not_displayed_as_agpl(text):
+    row = audit_module.license_evidence(distribution(License=text).metadata)
+    assert row["copyleft_families"] == ["LGPL"]
+    assert row["license"] == text

@@ -61,9 +61,7 @@ def compare(src: Path, out_dir: Path, dpi: int, runs: int) -> dict:
                 images[name].close()
             images[name] = image
     a, b = images["pymupdf"], images["pypdfium2"]
-    if a.size != b.size:
-        raise ValueError("Renderer dimensions differ; no rescaling or parity claim made.")
-    delta = np.abs(np.asarray(a, dtype=np.int16) - np.asarray(b, dtype=np.int16))
+    same_size = a.size == b.size
     report = {
         "fixture": src.name,
         "page": 1,
@@ -75,25 +73,36 @@ def compare(src: Path, out_dir: Path, dpi: int, runs: int) -> dict:
         "seconds": {
             name: {"median": statistics.median(values), "samples": values} for name, values in timings.items()
         },
-        "size_px": list(a.size),
-        "mean_absolute_channel_difference": float(delta.mean()),
-        "pixels_differing_over_12_percent": float(np.any(delta > 12, axis=2).mean() * 100),
+        "size_px": list(a.size) if same_size else None,
+        "renderer_sizes_px": {name: list(img.size) for name, img in images.items()},
+        "pixel_diff_skipped": None
+        if same_size
+        else "Renderer dimensions differ; no rescaling or parity claim made.",
+        "mean_absolute_channel_difference": None,
+        "pixels_differing_over_12_percent": None,
         "ink_pixels_below_240": {
             name: int(np.any(np.asarray(img) < 240, axis=2).sum()) for name, img in images.items()
         },
     }
     for name, img in images.items():
         img.save(out_dir / f"{name}.png")
-    diff = ImageChops.difference(a, b)
-    diff.save(out_dir / "difference.png")
-    comparison = Image.new("RGB", (a.width * 2, a.height + 28), "white")
+    diff_path = out_dir / "difference.png"
+    if same_size:
+        delta = np.abs(np.asarray(a, dtype=np.int16) - np.asarray(b, dtype=np.int16))
+        report["mean_absolute_channel_difference"] = float(delta.mean())
+        report["pixels_differing_over_12_percent"] = float(np.any(delta > 12, axis=2).mean() * 100)
+        with ImageChops.difference(a, b) as diff:
+            diff.save(diff_path)
+    else:
+        diff_path.unlink(missing_ok=True)  # Do not leave a prior run's diff beside a skipped result.
+    comparison = Image.new("RGB", (a.width + b.width, max(a.height, b.height) + 28), "white")
     draw = ImageDraw.Draw(comparison)
     for index, (name, img) in enumerate(images.items()):
         draw.text((index * a.width + 8, 8), name, fill="black")
         comparison.paste(img, (index * a.width, 28))
     comparison.save(out_dir / "comparison.png")
     report["blank_output"] = any(count == 0 for count in report["ink_pixels_below_240"].values())
-    for img in [*images.values(), diff, comparison]:
+    for img in [*images.values(), comparison]:
         img.close()
     return report
 

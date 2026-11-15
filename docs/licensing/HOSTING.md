@@ -6,7 +6,7 @@ Reviewed 2026-11-15. These are draft statements for review, not approved terms o
 
 ## Three draft lines
 
-1. PyMuPDF is used for preview rendering in `src/arch_line_weights/preview.py`, PDF inspection and fallback in `src/arch_line_weights/inspect.py`, and text/outline indexing in the standalone `scripts/build_reference_index.py`; the current webapp startup does not load it, and processing routes remain HTTP 410.
+1. PyMuPDF is used for preview rendering in `src/arch_line_weights/preview.py`, PDF inspection and fallback in `src/arch_line_weights/inspect.py`, and text/outline indexing in the standalone local tool `scripts/build_reference_index.py`. The dormant webapp pipelines import `inspect_file` in `webapp/backend/compute.py:27` and `webapp/backend/console.py:25` and can load PyMuPDF when called. Current startup does not load it, and processing routes remain HTTP 410; this is not a webapp-wide isolation boundary.
 2. pypdfium2 is a possible preview replacement based on a small synthetic spike; pikepdf already handles basic inspection but is not a complete replacement for PyMuPDF's interpreted PDF drawings or text extraction. No replacement has been made.
 3. For a future service where strangers upload files, review AGPL section 13's remote-user source offer and Artifex's stated requirement to disclose the whole combined application's source under AGPL, or obtain an Artifex commercial license; the exact covered service and Corresponding Source scope require review before hosting.
 
@@ -48,11 +48,17 @@ The spike adds no direct PyMuPDF import: it calls the existing `PyMuPDFRenderer`
 `preview.py`. Existing `scripts/demo_gallery.py` and `scripts/visual_judge.py` also reach that
 module; `scripts/benchmark.py` and `scripts/demo_gallery.py` call `inspect_file`.
 
-The webapp's dormant `backend/compute.py` and `backend/console.py` still reference
-`inspect_file`. The entry point currently imports the health router only. The new test
-checks direct AST imports throughout `src/` and `webapp/`, plus a fresh-process import of
-`webapp.backend.main`. It does not prove that arbitrary dynamic imports, future handlers,
-or dormant pipeline calls cannot load PyMuPDF. The project still installs PyMuPDF.
+The webapp's dormant pipelines import `inspect_file` at `webapp/backend/compute.py:27`
+(called at line 151) and `webapp/backend/console.py:25` (called at lines 322 and 800).
+These two import sites are explicit, commented exceptions in `tests/test_license_boundary.py`;
+they can load PyMuPDF through inspection. The entry point currently imports the health router only.
+The tests guard named imports and string-literal `importlib.import_module` / `__import__` calls
+throughout `src/`, `webapp/` and `scripts/`, reject new webapp imports of `inspect` or `preview`,
+and check a fresh-process import of `webapp.backend.main`. The only direct-import script
+exception is the standalone local indexer listed above. Computed module names, arbitrary
+callable rebinding and indirect calls through other modules are outside the static scan.
+Passing these tests does not establish isolation of dormant pipelines or future handlers.
+The project still installs PyMuPDF.
 
 ## Installed dependency findings
 
