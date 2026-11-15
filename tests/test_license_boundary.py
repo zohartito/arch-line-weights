@@ -22,7 +22,8 @@ ALLOWLIST = {
     # Standalone local text/outline indexer; documented in docs/licensing/HOSTING.md.
     "scripts/build_reference_index.py",
 }
-FORBIDDEN = {"pymupdf", "fitz", "pymupdfb"}
+# pymupdf4llm and pymupdf_layout are installed alongside PyMuPDF and import it.
+FORBIDDEN = {"pymupdf", "fitz", "pymupdfb", "pymupdf4llm", "pymupdf_layout"}
 WEBAPP_FORBIDDEN = {"arch_line_weights.inspect", "arch_line_weights.preview"}
 WEBAPP_ALLOWLIST = {
     # Dormant job pipeline: inspect_file calls at line 151 can load PyMuPDF.
@@ -35,7 +36,9 @@ WEBAPP_ALLOWLIST = {
 def named_imports(source: str, package: str = "") -> list[tuple[int, str]]:
     """Read imports at every depth, including literal calls and importlib aliases.
 
-    Computed module names and arbitrary callable rebinding are outside this scan.
+    This is a drift check for ordinary imports, not a barrier to deliberate evasion:
+    computed module names, arbitrary callable rebinding, a reassigned ``__package__``
+    and ``__import__`` calls that pass ``globals``/``level`` are outside this scan.
     """
     tree = ast.parse(source)
     importlib_names = {"importlib"}
@@ -147,6 +150,9 @@ def test_webapp_imports_stay_at_existing_call_sites():
     [
         ("import pymupdf as pdf", [1]),
         ("import os, fitz", [1]),
+        ("import pymupdf4llm", [1]),
+        ("from pymupdf_layout import activate", [1]),
+        ('importlib.import_module("pymupdf4llm.helpers")', [1]),
         ("from pymupdf.utils import getColor", [1]),
         ("def render():\n    from fitz import open", [2]),
         ('importlib.import_module("pymupdf")', [1]),
@@ -225,7 +231,7 @@ if missing:
     sys.exit(77)
 import webapp.backend.main
 loaded = sorted(name for name in sys.modules
-                if name.split('.')[0] in {'pymupdf', 'fitz', 'pymupdfb'})
+                if name.split('.')[0] in {'pymupdf', 'fitz', 'pymupdfb', 'pymupdf4llm', 'pymupdf_layout'})
 print(json.dumps({'loaded': loaded}))
 """
     env = {key: value for key, value in os.environ.items() if not key.startswith("ARCHLW_")}

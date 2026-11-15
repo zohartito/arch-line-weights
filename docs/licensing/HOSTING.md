@@ -48,15 +48,25 @@ The spike adds no direct PyMuPDF import: it calls the existing `PyMuPDFRenderer`
 `preview.py`. Existing `scripts/demo_gallery.py` and `scripts/visual_judge.py` also reach that
 module; `scripts/benchmark.py` and `scripts/demo_gallery.py` call `inspect_file`.
 
+Other modules reach PyMuPDF only through those wrappers. Inside the package, `classify.py:16`,
+`cli.py:28` and `cli.py:2314`, `doctor.py:47` and `role_signal.py:17` import from `inspect` or
+`preview`. In `tests/`, `test_reference_index.py:8` imports `fitz` directly to build a fixture, and
+eleven test modules import the wrappers (`test_apply_saas.py`, `test_apply_saas_poche.py`,
+`test_basic.py`, `test_demo_section.py`, `test_depth_grading.py`, `test_doctor.py`,
+`test_legacy_postscript_error.py`, `test_make2d_proof_harness.py`, `test_processing_tombstones.py`,
+`test_tonal_recede.py`, `test_v1_integration.py`). Tests are not part of an installed or hosted build.
+
 The webapp's dormant pipelines import `inspect_file` at `webapp/backend/compute.py:27`
 (called at line 151) and `webapp/backend/console.py:25` (called at lines 322 and 800).
 These two import sites are explicit, commented exceptions in `tests/test_license_boundary.py`;
 they can load PyMuPDF through inspection. The entry point currently imports the health router only.
 The tests guard named imports and string-literal `importlib.import_module` / `__import__` calls
-throughout `src/`, `webapp/` and `scripts/`, reject new webapp imports of `inspect` or `preview`,
+of `pymupdf`, `fitz`, `pymupdfb`, `pymupdf4llm` and `pymupdf_layout` throughout `src/`, `webapp/` and `scripts/`, reject new webapp imports of `inspect` or `preview`,
 and check a fresh-process import of `webapp.backend.main`. The only direct-import script
-exception is the standalone local indexer listed above. Computed module names, arbitrary
-callable rebinding and indirect calls through other modules are outside the static scan.
+exception is the standalone local indexer listed above. The scan is a drift check for
+ordinary imports, not a barrier to deliberate evasion: computed module names, arbitrary callable
+rebinding, a reassigned `__package__`, `__import__` calls that pass `globals`/`level`, and indirect
+calls through other modules are outside it.
 Passing these tests does not establish isolation of dormant pipelines or future handlers.
 The project still installs PyMuPDF.
 

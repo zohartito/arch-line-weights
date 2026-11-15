@@ -46,8 +46,9 @@ or poché fidelity. The script explicitly records `blank_output: true` for that 
 
 The separate generated control contains 0.08/0.25/0.5/1.0 pt strokes, black and gray rectangles,
 and a curve. Both outputs were visually inspected: all these marks were present and aligned;
-pixel differences remain around rasterized edges. The script fails if either control is blank
-or renderer dimensions differ, rather than rescaling to hide a mismatch.
+pixel differences remain around rasterized edges. The script exits non-zero if the
+generated control renders blank. If the two renderers return different dimensions it records the
+mismatch and skips the pixel comparison, rather than rescaling to hide it; that case still exits 0.
 
 Assessment: PDFium is a plausible preview candidate for this narrow synthetic case. The test
 does not cover text/fonts, image masks, transparency, crop/rotation, OCG visibility, complex
