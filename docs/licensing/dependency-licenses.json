@@ -1,0 +1,422 @@
+{
+  "generated_on": "2026-11-15",
+  "scope": "project.dependencies and active transitive Requires-Dist; no root optional extras",
+  "environment": {
+    "python_full_version": "3.11.7",
+    "sys_platform": "darwin",
+    "platform_machine": "arm64"
+  },
+  "roots": [
+    "click>=8.1",
+    "numpy>=1.26",
+    "pikepdf>=8.0",
+    "pillow>=10.0",
+    "pymupdf>=1.24.3",
+    "scipy>=1.11",
+    "shapely>=2.0",
+    "zstandard>=0.22"
+  ],
+  "packages": [
+    {
+      "name": "click",
+      "version": "8.5.1",
+      "license": "BSD-3-Clause",
+      "license_expression": "BSD-3-Clause",
+      "license_metadata": null,
+      "license_declarations": [],
+      "license_headings": [],
+      "license_classifiers": [],
+      "license_text_sha256": null,
+      "license_text_omitted": false,
+      "copyleft_families": [],
+      "review": null,
+      "required_by": [
+        "project"
+      ],
+      "requires": []
+    },
+    {
+      "name": "flatbuffers",
+      "version": "25.12.19",
+      "license": "Apache 2.0",
+      "license_expression": null,
+      "license_metadata": "Apache 2.0",
+      "license_declarations": [],
+      "license_headings": [],
+      "license_classifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_text_sha256": "cf989ea142f203f532233fa944ee1d8d5acfe6f6875e4d611f515ee108ba26df",
+      "license_text_omitted": false,
+      "copyleft_families": [],
+      "review": null,
+      "required_by": [
+        "onnxruntime"
+      ],
+      "requires": []
+    },
+    {
+      "name": "lxml",
+      "version": "6.1.3",
+      "license": "BSD-3-Clause",
+      "license_expression": null,
+      "license_metadata": "BSD-3-Clause",
+      "license_declarations": [],
+      "license_headings": [],
+      "license_classifiers": [],
+      "license_text_sha256": "118dbcd2d5c9f9b296a9ede9fcc469c5840f7b98ad2c88461055bf2ceda38037",
+      "license_text_omitted": false,
+      "copyleft_families": [],
+      "review": null,
+      "required_by": [
+        "pikepdf"
+      ],
+      "requires": []
+    },
+    {
+      "name": "networkx",
+      "version": "3.6.1",
+      "license": "BSD-3-Clause",
+      "license_expression": "BSD-3-Clause",
+      "license_metadata": null,
+      "license_declarations": [],
+      "license_headings": [],
+      "license_classifiers": [],
+      "license_text_sha256": null,
+      "license_text_omitted": false,
+      "copyleft_families": [],
+      "review": null,
+      "required_by": [
+        "pymupdf"
+      ],
+      "requires": []
+    },
+    {
+      "name": "numpy",
+      "version": "2.4.6",
+      "license": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
+      "license_expression": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
+      "license_metadata": null,
+      "license_declarations": [],
+      "license_headings": [],
+      "license_classifiers": [],
+      "license_text_sha256": null,
+      "license_text_omitted": false,
+      "copyleft_families": [],
+      "review": null,
+      "required_by": [
+        "onnxruntime",
+        "project",
+        "pymupdf",
+        "scipy",
+        "shapely"
+      ],
+      "requires": []
+    },
+    {
+      "name": "onnxruntime",
+      "version": "1.32.0",
+      "license": "MIT License",
+      "license_expression": null,
+      "license_metadata": "MIT License",
+      "license_declarations": [],
+      "license_headings": [],
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_text_sha256": "abb2896dc3c2a9402f901b88d5035cf0a83d5cf7c17e73642cdf562b0b9d3bc5",
+      "license_text_omitted": false,
+      "copyleft_families": [],
+      "review": null,
+      "required_by": [
+        "pymupdf"
+      ],
+      "requires": [
+        "flatbuffers",
+        "numpy>=1.21.6",
+        "packaging",
+        "protobuf>=4.25.8"
+      ]
+    },
+    {
+      "name": "packaging",
+      "version": "26.3",
+      "license": "Apache-2.0 OR BSD-2-Clause",
+      "license_expression": "Apache-2.0 OR BSD-2-Clause",
+      "license_metadata": null,
+      "license_declarations": [],
+      "license_headings": [],
+      "license_classifiers": [],
+      "license_text_sha256": null,
+      "license_text_omitted": false,
+      "copyleft_families": [],
+      "review": null,
+      "required_by": [
+        "onnxruntime",
+        "pikepdf"
+      ],
+      "requires": []
+    },
+    {
+      "name": "pikepdf",
+      "version": "10.18.1",
+      "license": "MPL-2.0",
+      "license_expression": "MPL-2.0",
+      "license_metadata": null,
+      "license_declarations": [],
+      "license_headings": [],
+      "license_classifiers": [],
+      "license_text_sha256": null,
+      "license_text_omitted": false,
+      "copyleft_families": [],
+      "review": null,
+      "required_by": [
+        "project"
+      ],
+      "requires": [
+        "lxml>=4.8",
+        "packaging",
+        "pillow>=10.0.1"
+      ]
+    },
+    {
+      "name": "pillow",
+      "version": "13.0.0",
+      "license": "MIT-CMU",
+      "license_expression": "MIT-CMU",
+      "license_metadata": null,
+      "license_declarations": [],
+      "license_headings": [],
+      "license_classifiers": [],
+      "license_text_sha256": null,
+      "license_text_omitted": false,
+      "copyleft_families": [],
+      "review": null,
+      "required_by": [
+        "pikepdf",
+        "project"
+      ],
+      "requires": []
+    },
+    {
+      "name": "protobuf",
+      "version": "7.36.2",
+      "license": "3-Clause BSD License",
+      "license_expression": null,
+      "license_metadata": "3-Clause BSD License",
+      "license_declarations": [],
+      "license_headings": [],
+      "license_classifiers": [],
+      "license_text_sha256": "15934bcfcb57d72b1b73d913180ce7f86d2773c32725efa41ddb6b14e143cb84",
+      "license_text_omitted": false,
+      "copyleft_families": [],
+      "review": null,
+      "required_by": [
+        "onnxruntime"
+      ],
+      "requires": []
+    },
+    {
+      "name": "psutil",
+      "version": "7.2.2",
+      "license": "BSD-3-Clause",
+      "license_expression": null,
+      "license_metadata": "BSD-3-Clause",
+      "license_declarations": [],
+      "license_headings": [],
+      "license_classifiers": [],
+      "license_text_sha256": "118dbcd2d5c9f9b296a9ede9fcc469c5840f7b98ad2c88461055bf2ceda38037",
+      "license_text_omitted": false,
+      "copyleft_families": [],
+      "review": null,
+      "required_by": [
+        "pymupdf"
+      ],
+      "requires": []
+    },
+    {
+      "name": "pymupdf",
+      "version": "2.1",
+      "license": "AGPL-3.0 family; Dual Licensed - GNU AFFERO GPL 3.0 or Artifex Commercial License",
+      "license_expression": null,
+      "license_metadata": "Dual Licensed - GNU AFFERO GPL 3.0 or Artifex Commercial License",
+      "license_declarations": [],
+      "license_headings": [],
+      "license_classifiers": [],
+      "license_text_sha256": "40e60697600535eabfb5ae05f72829d88cfe8d02dd4792f5a754f6f51dabe55b",
+      "license_text_omitted": false,
+      "copyleft_families": [
+        "AGPL"
+      ],
+      "review": null,
+      "required_by": [
+        "project",
+        "pymupdf-layout",
+        "pymupdf4llm"
+      ],
+      "requires": [
+        "networkx",
+        "numpy",
+        "onnxruntime",
+        "psutil",
+        "pymupdf-layout==2.1",
+        "pymupdf4llm==2.1",
+        "pyyaml",
+        "tabulate"
+      ]
+    },
+    {
+      "name": "pymupdf-layout",
+      "version": "2.1",
+      "license": "UNKNOWN",
+      "license_expression": null,
+      "license_metadata": null,
+      "license_declarations": [],
+      "license_headings": [],
+      "license_classifiers": [],
+      "license_text_sha256": null,
+      "license_text_omitted": false,
+      "copyleft_families": [],
+      "review": "missing license metadata",
+      "required_by": [
+        "pymupdf",
+        "pymupdf4llm"
+      ],
+      "requires": [
+        "pymupdf4llm==2.1",
+        "pymupdf==2.1"
+      ]
+    },
+    {
+      "name": "pymupdf4llm",
+      "version": "2.1",
+      "license": "UNKNOWN",
+      "license_expression": null,
+      "license_metadata": null,
+      "license_declarations": [],
+      "license_headings": [],
+      "license_classifiers": [],
+      "license_text_sha256": null,
+      "license_text_omitted": false,
+      "copyleft_families": [],
+      "review": "missing license metadata",
+      "required_by": [
+        "pymupdf",
+        "pymupdf-layout"
+      ],
+      "requires": [
+        "pymupdf-layout==2.1",
+        "pymupdf==2.1"
+      ]
+    },
+    {
+      "name": "pyyaml",
+      "version": "6.0.3",
+      "license": "MIT",
+      "license_expression": null,
+      "license_metadata": "MIT",
+      "license_declarations": [],
+      "license_headings": [],
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_text_sha256": "e5dcffe836b6ec8a58e492419b550e65fb8cbdc308503979e5dacb33ac7ea3b7",
+      "license_text_omitted": false,
+      "copyleft_families": [],
+      "review": null,
+      "required_by": [
+        "pymupdf"
+      ],
+      "requires": []
+    },
+    {
+      "name": "scipy",
+      "version": "1.17.1",
+      "license": "BSD-3-Clause; BSD-3-Clause-Open-MPI; GPL-3.0-or-later WITH GCC-exception-3.1; LGPL-2.1-or-later",
+      "license_expression": null,
+      "license_metadata": null,
+      "license_declarations": [
+        "BSD-3-Clause",
+        "BSD-3-Clause-Open-MPI",
+        "GPL-3.0-or-later WITH GCC-exception-3.1",
+        "LGPL-2.1-or-later"
+      ],
+      "license_headings": [
+        "GNU GENERAL PUBLIC LICENSE"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: BSD License"
+      ],
+      "license_text_sha256": "9e12a65948a0ae1eedfde749efcd24e12ccf2834fb3d46d8d33af37ceed259af",
+      "license_text_omitted": true,
+      "copyleft_families": [
+        "LGPL",
+        "GPL"
+      ],
+      "review": null,
+      "required_by": [
+        "project"
+      ],
+      "requires": [
+        "numpy<2.7,>=1.26.4"
+      ]
+    },
+    {
+      "name": "shapely",
+      "version": "2.2.0",
+      "license": "BSD-3-Clause",
+      "license_expression": "BSD-3-Clause",
+      "license_metadata": null,
+      "license_declarations": [],
+      "license_headings": [],
+      "license_classifiers": [],
+      "license_text_sha256": null,
+      "license_text_omitted": false,
+      "copyleft_families": [],
+      "review": null,
+      "required_by": [
+        "project"
+      ],
+      "requires": [
+        "numpy>=1.26"
+      ]
+    },
+    {
+      "name": "tabulate",
+      "version": "0.10.0",
+      "license": "MIT",
+      "license_expression": "MIT",
+      "license_metadata": null,
+      "license_declarations": [],
+      "license_headings": [],
+      "license_classifiers": [],
+      "license_text_sha256": null,
+      "license_text_omitted": false,
+      "copyleft_families": [],
+      "review": null,
+      "required_by": [
+        "pymupdf"
+      ],
+      "requires": []
+    },
+    {
+      "name": "zstandard",
+      "version": "0.25.0",
+      "license": "BSD-3-Clause",
+      "license_expression": "BSD-3-Clause",
+      "license_metadata": null,
+      "license_declarations": [],
+      "license_headings": [],
+      "license_classifiers": [],
+      "license_text_sha256": null,
+      "license_text_omitted": false,
+      "copyleft_families": [],
+      "review": null,
+      "required_by": [
+        "project"
+      ],
+      "requires": []
+    }
+  ],
+  "errors": []
+}
