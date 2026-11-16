@@ -39,7 +39,13 @@ from .poche_pdf import apply_poche_pdf
 from .presets import PRESETS, select_preset
 from .progress import DEFAULT_PROGRESS_FILE, make_reporter
 from .role_signal import no_role_signal, no_role_signal_message
-from .safety import ProcessingDisabledError, processing_disabled, terminal_safe
+from .safety import (
+    ProcessingDisabledError,
+    atomic_write_text,
+    ensure_distinct_paths,
+    processing_disabled,
+    terminal_safe,
+)
 from .tonal_recede import MODES as TONAL_RECEDE_MODES
 from .tonal_recede import describe_ramp as tonal_recede_describe_ramp
 from .tonal_recede import tonal_recede_resolver
@@ -1400,6 +1406,11 @@ def apply_saas_cmd(
     if output is None:
         output = Path(default_output_path_saas(src))
 
+    try:
+        ensure_distinct_paths(src, output, report_path)
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+
     # Resolve the --progress flag. Default ON when stderr is a TTY, OFF when
     # piped (so wrapped invocations don't pollute stdout/stderr captures).
     if progress is None:
@@ -1581,7 +1592,7 @@ def apply_saas_cmd(
             command=_command_summary("apply-saas", src),
         )
         report_path.parent.mkdir(parents=True, exist_ok=True)
-        report_path.write_text(json.dumps(run_report, indent=2, sort_keys=True) + "\n")
+        atomic_write_text(report_path, json.dumps(run_report, indent=2, sort_keys=True) + "\n")
         click.echo(f"report: wrote {report_path}", err=True)
 
     click.echo("", err=True)
@@ -1609,6 +1620,11 @@ def cleanup_cmd(src: Path, output: Path | None, report_path: Path | None):
         output = Path(default_output_path_cleanup(src))
 
     try:
+        ensure_distinct_paths(src, output, report_path)
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    try:
         result = cleanup_file(str(src), str(output))
     except Exception as exc:
         raise click.ClickException(str(exc)) from exc
@@ -1621,7 +1637,7 @@ def cleanup_cmd(src: Path, output: Path | None, report_path: Path | None):
     }
     if report_path is not None:
         report_path.parent.mkdir(parents=True, exist_ok=True)
-        report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+        atomic_write_text(report_path, json.dumps(report, indent=2, sort_keys=True) + "\n")
         click.echo(f"report: wrote {report_path}", err=True)
 
     summary = report["summary"]

@@ -36,7 +36,7 @@ import zstandard as zstd
 
 from .input_format import raise_if_unsupported
 from .progress import ProgressReporter
-from .safety import processing_disabled
+from .safety import atomic_output, ensure_distinct_paths, processing_disabled
 
 # AI24 native-payload framing constants. Every Rhino-export .ai we've inspected
 # uses these exact values; if they change in a future Illustrator release we'd
@@ -582,6 +582,7 @@ def apply_to_file(
     processing_disabled("native Illustrator payload rewrite")
     if os.path.abspath(src) == os.path.abspath(dst):
         raise ValueError("dst must differ from src to keep the original safe")
+    ensure_distinct_paths(src, dst)
     raise_if_unsupported(src, "apply-saas")
 
     if reporter is None:
@@ -614,7 +615,8 @@ def apply_to_file(
         with reporter.stage("write_payload", zstd_level=zstd_level):
             _, new_n = _write_payload(pdf, new_payload, level=zstd_level)
             result.chunks_out = new_n
-            pdf.save(dst)
+            with atomic_output(dst) as staged:
+                pdf.save(staged)
 
     result.output_size = os.path.getsize(dst)
     return result

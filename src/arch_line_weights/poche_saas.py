@@ -79,7 +79,7 @@ from .poche import (
     should_inject_fill,
 )
 from .progress import ProgressReporter
-from .safety import processing_disabled
+from .safety import atomic_output, ensure_distinct_paths, processing_disabled
 
 _log = logging.getLogger(__name__)
 _ARCHITECTURAL_COMPLETION_ENV = "ARCH_LW_ARCHITECTURAL_COMPLETION"
@@ -715,6 +715,7 @@ def apply_saas_with_poche(
     if os.path.abspath(src) == os.path.abspath(dst):
         raise ValueError("dst must differ from src to keep the original safe")
 
+    ensure_distinct_paths(src, dst)
     if reporter is None:
         reporter = ProgressReporter(enabled=False)
 
@@ -823,7 +824,8 @@ def apply_saas_with_poche(
         with reporter.stage("write_payload", zstd_level=zstd_level):
             _, new_n = _write_payload(pdf, new_payload, level=zstd_level)
             apply_result.chunks_out = new_n
-            pdf.save(dst)
+            with atomic_output(dst) as staged:
+                pdf.save(staged)
 
     apply_result.output_size = os.path.getsize(dst)
     return apply_result, poche_result, poche_report

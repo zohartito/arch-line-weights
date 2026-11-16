@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 import pikepdf
+import pytest
 from click.testing import CliRunner
 
 from arch_line_weights.apply_saas import _read_payload
@@ -192,3 +193,46 @@ def test_alw02_preserves_uncertain_path_tail():
     paths = b"0 0 m\runknown_operator\r300 0 L\rS\r"
     result = cleanup_payload(_audit_payload(paths))
     assert paths in result.payload
+
+
+@pytest.mark.parametrize("command", ["cleanup", "apply-saas"])
+@pytest.mark.parametrize("collision", ["report-source", "report-output", "output-source", "report-alias"])
+def test_alw01_rejects_colliding_artifacts_before_writes(tmp_path, command, collision):
+    src, dst, report = (tmp_path / name for name in ("source.ai", "out.ai", "report.json"))
+    _write_native_ai(src, _single_layer_payload())
+    original = src.read_bytes()
+    if collision == "report-source":
+        report = src
+    elif collision == "report-output":
+        report = dst
+    elif collision == "output-source":
+        dst = src
+    else:
+        report.symlink_to(src)
+    args = [command, str(src), "-o", str(dst), "--report", str(report)]
+    if command == "apply-saas":
+        args.append("--architectural")
+    result = CliRunner().invoke(cli, args)
+    assert result.exit_code != 0
+    assert src.read_bytes() == original
+    if dst != src:
+        assert not dst.exists()
+
+
+def test_alw01_failed_save_preserves_existing_output(tmp_path, monkeypatch):
+    from arch_line_weights.cleanup import cleanup_file
+
+    src, dst = tmp_path / "source.ai", tmp_path / "out.ai"
+    _write_native_ai(src, _single_layer_payload())
+    dst.write_bytes(b"previous output")
+
+    def broken_save(self, path, **kwargs):
+        from pathlib import Path
+
+        Path(path).write_bytes(b"partial")
+        raise OSError("synthetic save failure")
+
+    monkeypatch.setattr(pikepdf.Pdf, "save", broken_save)
+    with pytest.raises(OSError, match="synthetic"):
+        cleanup_file(src, dst)
+    assert dst.read_bytes() == b"previous output"

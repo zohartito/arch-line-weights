@@ -12,7 +12,7 @@ import pikepdf
 
 from .apply_saas import _read_payload, _write_payload
 from .geometry_roles import GeometryPath, infer_geometric_roles
-from .safety import processing_disabled
+from .safety import atomic_output, ensure_distinct_paths, processing_disabled
 
 _NUM = rb"[0-9.eE\-+]+"
 _LN_RE = re.compile(rb"\(([^)]+)\) Ln$")
@@ -237,12 +237,14 @@ def cleanup_file(
     if os.path.abspath(src_path) == os.path.abspath(dst_path):
         raise ValueError("dst must differ from src to keep the original safe")
 
+    ensure_distinct_paths(src, dst)
     input_size = os.path.getsize(src_path)
     with pikepdf.open(src_path, allow_overwriting_input=False) as pdf:
         payload = _read_payload(pdf)
         cleaned = cleanup_payload(payload, thresholds=thresholds)
         _write_payload(pdf, cleaned.payload, level=zstd_level)
-        pdf.save(dst_path)
+        with atomic_output(dst_path) as staged:
+            pdf.save(staged)
 
     return CleanupFileResult(
         output_size=os.path.getsize(dst_path),
