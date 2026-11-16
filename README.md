@@ -169,8 +169,9 @@ headless output still renders the original PDF stream.
 
 Input caveats for that path:
 
-- `apply-saas --poche` requires a native Illustrator `.ai` with `/NumBlock`.
-- PDF-only or `[Converted]` `.ai` files use `apply-jsx`, then `arch-lw poche`
+- `apply-saas --poche` requires native Illustrator `/AIPrivateData` streams.
+  `/NumBlock` is optional; its absence alone does not mean the payload is missing.
+- `.ai` files without native `/AIPrivateData` use `apply-jsx`, then `arch-lw poche`
   on the `HIERARCHY-jsx` output.
 - Legacy Rhino PostScript `.ai` exports may need Illustrator File > Save As /
   re-save before v1 can process them.
@@ -179,8 +180,8 @@ Supported input matrix:
 
 | Input kind | Recommended commands | Notes |
 |---|---|---|
-| Native Illustrator `.ai` with `/NumBlock` | `inspect`, `apply-saas`, `apply-saas --poche` | Best headless, layer-preserving path. |
-| PDF-only or `[Converted]` `.ai` | `inspect`, `apply-jsx`, then `poche` | Use the Illustrator bridge when layers must be preserved. |
+| Native Illustrator `.ai` with `/AIPrivateData` | `inspect`, `apply-saas`, `apply-saas --poche` | Best headless, layer-preserving path. |
+| `.ai` without native `/AIPrivateData` (including PDF-only exports) | `inspect`, `apply-jsx`, then `poche` | Use the Illustrator bridge when layers must be preserved. |
 | Plain `.pdf` | `inspect`, `apply` | Fast PDF-stream rewrite; no Illustrator layer editing claim. |
 | Reference/report/image-only `.pdf` | `inspect` diagnostic only | Not a line-weight output path; export a vector drawing sheet instead. |
 | Legacy Rhino PostScript `.ai` | Illustrator Save As first | Convert to modern/PDF-compatible `.ai`, then re-run `inspect`. |
