@@ -1,4 +1,5 @@
 """ALW-44: every GitHub Action is pinned to a full commit id, not a movable tag."""
+
 import re
 import unittest
 from pathlib import Path

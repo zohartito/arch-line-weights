@@ -3,6 +3,11 @@
 All notable changes to this project are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com).
 
+## [Unreleased]
+
+### Fixed
+- ALW-29: format the later audit tests with the locked Ruff version so the contributor formatting check passes.
+
 ## [0.6.0] — 2026-04-30
 
 ### Added
