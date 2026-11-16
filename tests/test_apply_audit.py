@@ -33,3 +33,22 @@ def test_alw03_device_rgb_sc_and_nested_state(tmp_path):
     write_pdf(src, b"/DeviceRGB CS 1 0 0 SC q 0 G q 0 0 1 RG " + stroke + b"Q " + stroke + b"Q " + stroke)
     apply_to_file(str(src), str(dst), {(255, 0, 0): 2.0, (0, 0, 255): 0.2})
     assert widths(dst) == [0.2, 0.25, 2.0]
+
+
+def test_alw04_rejects_form_xobjects_without_touching_output(tmp_path):
+    src, dst = tmp_path / "form.pdf", tmp_path / "out.pdf"
+    with pikepdf.new() as pdf:
+        page = pdf.add_blank_page(page_size=(200, 200))
+        form = pdf.make_stream(b"1 0 0 RG 0 0 m 50 0 l S 0 0 1 RG 0 10 m 50 10 l S")
+        form.Type = pikepdf.Name.XObject
+        form.Subtype = pikepdf.Name.Form
+        form.BBox = [0, 0, 200, 200]
+        page.Resources = pikepdf.Dictionary(XObject=pikepdf.Dictionary(Fm0=form))
+        page.Contents = pdf.make_stream(b"3 w /Fm0 Do")
+        pdf.save(src)
+    original = src.read_bytes()
+    dst.write_bytes(b"previous output")
+    with pytest.raises(ValueError, match="Form XObject"):
+        apply_to_file(str(src), str(dst), {(255, 0, 0): 2.0})
+    assert src.read_bytes() == original
+    assert dst.read_bytes() == b"previous output"

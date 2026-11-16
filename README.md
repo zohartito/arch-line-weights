@@ -184,7 +184,8 @@ Supported input matrix:
 Commands now preflight the input shape and return a diagnostic with the
 detected kind, supported command map, and recommended next step when the wrong
 file shape is used. If a PDF has no vector drawing marks or rewriteable strokes,
-`apply` stops before writing a no-op output.
+`apply` stops before writing a no-op output. Invoked Form XObjects are
+rejected before saving because this path rewrites page streams only.
 
 ### Clean up one-layer Make2D exports
 

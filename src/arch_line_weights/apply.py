@@ -84,6 +84,15 @@ def apply_to_file(
         instructions = list(pikepdf.parse_content_stream(page))
         if len(instructions) > MAX_PDF_INSTRUCTIONS_PER_PAGE:
             raise ValueError("PDF page instruction count exceeds safe limit")
+        xobjects = page.obj.get("/Resources", {}).get("/XObject", {})
+        for operands, operator in instructions:
+            if str(operator) == "Do" and operands:
+                xobject = xobjects.get(str(operands[0]))
+                if xobject is not None and str(xobject.get("/Subtype", "")) == "/Form":
+                    pdf.close()
+                    raise ValueError(
+                        "Form XObject drawing is unsupported by apply; export page-stream linework first"
+                    )
         property_layers = _page_property_layers(page)
         new_inst = _rewrite(
             instructions,
