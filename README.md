@@ -1,7 +1,7 @@
 # arch-line-weights
 
 [![CI](https://github.com/zohartito/arch-line-weights/actions/workflows/ci.yml/badge.svg)](https://github.com/zohartito/arch-line-weights/actions/workflows/ci.yml)
-[![Docs](https://img.shields.io/badge/docs-mkdocs--material-blue)](https://zohartito.github.io/arch-line-weights/)
+[![Docs](https://img.shields.io/badge/docs-mkdocs--material-blue)](https://github.com/zohartito/arch-line-weights/blob/main/docs/index.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
 

@@ -54,7 +54,7 @@ arch-lw = "arch_line_weights.cli:cli"
 [project.urls]
 Homepage      = "https://github.com/zohartito/arch-line-weights"
 Repository    = "https://github.com/zohartito/arch-line-weights"
-Documentation = "https://zohartito.github.io/arch-line-weights/"
+Documentation = "https://github.com/zohartito/arch-line-weights/blob/main/docs/index.md"
 Issues        = "https://github.com/zohartito/arch-line-weights/issues"
 Changelog     = "https://github.com/zohartito/arch-line-weights/blob/main/CHANGELOG.md"
 
