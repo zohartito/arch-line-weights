@@ -52,3 +52,24 @@ def test_alw04_rejects_form_xobjects_without_touching_output(tmp_path):
         apply_to_file(str(src), str(dst), {(255, 0, 0): 2.0})
     assert src.read_bytes() == original
     assert dst.read_bytes() == b"previous output"
+
+
+@pytest.mark.parametrize("value", ["-2", "nan", "inf", "0", "101"])
+@pytest.mark.parametrize("command", ["apply", "apply-saas"])
+def test_alw15_rejects_invalid_default_width_before_writing(tmp_path, command, value):
+    from click.testing import CliRunner
+    from test_cleanup import _single_layer_payload, _write_native_ai
+
+    from arch_line_weights.cli import cli
+
+    src, dst, mapping = tmp_path / "source.ai", tmp_path / "out.ai", tmp_path / "map.json"
+    _write_native_ai(src, _single_layer_payload())
+    with pikepdf.open(src, allow_overwriting_input=True) as pdf:
+        pdf.pages[0].Contents = pdf.make_stream(b"0 0 1 RG 0 0 m 50 0 l S")
+        pdf.save(src)
+    mapping.write_text('{"RGB(255,0,0)": 1}')
+    result = CliRunner().invoke(cli, [command, str(src), "--mapping", str(mapping),
+                                     "--default-width", value, "-o", str(dst)])
+    assert result.exit_code == 2
+    assert "finite" in result.output
+    assert not dst.exists()

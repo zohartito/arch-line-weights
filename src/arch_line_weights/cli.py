@@ -68,6 +68,14 @@ _BRIDGE_STRATEGY_CHOICES = ["greedy", "best"]
 _BRIDGE_STRATEGY_DEFAULT = "best"
 
 
+def _default_width(ctx, param, value):
+    try:
+        from_user_mapping({(0, 0, 0): value})
+    except ValueError as exc:
+        raise click.BadParameter(str(exc), ctx=ctx, param=param) from exc
+    return value
+
+
 def _disabled_processing_command(surface: str) -> None:
     """Refuse retired processors before Click validates or opens user input."""
     try:
@@ -537,6 +545,7 @@ def doctor(
 @click.option(
     "--default-width",
     type=float,
+    callback=_default_width,
     default=0.25,
     show_default=True,
     help="Width applied to colors not in the mapping.",
@@ -1183,6 +1192,7 @@ def bridge_rhino_ai_cmd(
 @click.option(
     "--default-width",
     type=float,
+    callback=_default_width,
     default=0.25,
     show_default=True,
     help="Width applied to colors not in the mapping.",
