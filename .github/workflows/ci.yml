@@ -65,6 +65,29 @@ jobs:
     - name: Run pytest
       run: uv run --locked --no-sync pytest -v --tb=short --ignore=tests/test_hatch_v05.py
 
+  frontend:
+    name: Frontend (Node 22)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: webapp/frontend
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: "22"
+    - name: Install from the lockfile (no install scripts)
+      run: npm ci --ignore-scripts
+    - name: Offline checks
+      run: |
+        npm test
+        npm run check
+        npm run build
+    - name: Audit including dev dependencies (ALW-25)
+      run: npm audit --include=dev --audit-level=moderate
+
   lint:
     name: Lint (ruff)
     runs-on: ubuntu-latest

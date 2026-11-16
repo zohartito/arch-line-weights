@@ -9,8 +9,8 @@
     type ConsoleStatus,
     type ConsoleSummary,
     type ConsoleWorkflow
-  } from '$lib/api';
-  import ReportBlock from '$lib/ReportBlock.svelte';
+  } from '#lib/api.ts';
+  import ReportBlock from '#lib/ReportBlock.svelte';
 
   const workflows: { value: ConsoleWorkflow; label: string }[] = [
     { value: 'section', label: 'Section' },

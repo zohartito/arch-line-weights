@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
-  import { page } from '$app/stores';
-  import { downloadUrl, getJob, type JobDetail } from '$lib/api';
+  import { page } from '$app/state';
+  import { downloadUrl, getJob, type JobDetail } from '#lib/api.ts';
 
   let detail: JobDetail | null = null;
   let pollHandle: ReturnType<typeof setTimeout> | null = null;
@@ -21,7 +21,7 @@
 
   async function tick() {
     try {
-      const jobId = $page.params.id;
+      const jobId = page.params.id;
       if (!jobId) throw new Error('missing job id');
       detail = await getJob(jobId);
       if (detail.status === 'done' || detail.status === 'failed') {

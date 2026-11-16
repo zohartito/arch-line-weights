@@ -9,7 +9,8 @@ import { pathToFileURL } from 'node:url';
 test('ALW-31: processing API typechecks and refuses calls without requests', async () => {
   const output = mkdtempSync(join(tmpdir(), 'arch-lw-api-test-'));
   execFileSync(process.execPath, [
-    resolve('node_modules/typescript/bin/tsc'), 'src/lib/api.ts',
+    // TypeScript 6 refuses command-line files next to tsconfig.json without --ignoreConfig.
+    resolve('node_modules/typescript/bin/tsc'), 'src/lib/api.ts', '--ignoreConfig',
     '--strict', '--noEmitOnError', '--skipLibCheck', '--target', 'es2022',
     '--module', 'esnext', '--outDir', output
   ]);
