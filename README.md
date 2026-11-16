@@ -66,9 +66,10 @@ Do not assume `arch-lw`, `uv`, or `uvx` are globally on `PATH` in a fresh
 studio shell; use `.venv/bin/arch-lw` from a source checkout or install with
 `pipx`.
 
-To wire up the Claude Code skill:
+With Claude Code installed, wire up the bundled skill from the repository root:
 
 ```
+mkdir -p ~/.claude/skills
 ln -s "$(pwd)/skills/apply-arch-hierarchy" ~/.claude/skills/apply-arch-hierarchy
 ```
 
