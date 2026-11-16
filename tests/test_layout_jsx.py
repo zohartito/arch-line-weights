@@ -444,3 +444,28 @@ def test_cli_layout_jsx_failure_is_nonzero_without_wrote_claim(tmp_path):
     assert result.exit_code != 0
     assert "target document not open" in result.output
     assert "layout: wrote" not in result.output
+
+
+def test_alw21_default_dry_run_identifies_removed_artifacts(tmp_path):
+    src = tmp_path / "synthetic.ai"
+    src.write_bytes(b"%PDF-1.6\n")
+    result = CliRunner().invoke(cli, ["layout-jsx", str(src), "--dry-run"])
+    assert result.exit_code == 0, result.output
+    assert "temporary artifacts removed" in result.stderr
+    assert "dry run wrote JSX" not in result.stderr
+    report = layout_via_jsx(str(src), dry_run=True)
+    data = json.loads(report["report"])
+    assert "--jsx-path" in data["summary"]["next_action"]
+    assert "--report-json" in data["summary"]["next_action"]
+
+
+def test_alwn4_layout_stdout_is_safe_parseable_json(tmp_path):
+    src = tmp_path / "synthetic-\x1b[31m.ai"
+    src.write_bytes(b"%PDF-1.6\n")
+    result = CliRunner().invoke(cli, ["layout-jsx", str(src), "--dry-run",
+                                     "--jsx-path", str(tmp_path / "layout.jsx"),
+                                     "--report-json", str(tmp_path / "report.json")])
+    assert result.exit_code == 0
+    data = json.loads(result.stdout)
+    assert data["summary"]["status"] == "dry_run"
+    assert "\x1b" not in result.stdout

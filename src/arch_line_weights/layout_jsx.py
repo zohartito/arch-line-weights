@@ -538,6 +538,11 @@ def _layout_via_jsx(
             artboard_height_pt=artboard_height,
             margin_pt=margin_pt,
         )
+        if work_dir is not None:
+            dry_report["summary"]["next_action"] = (
+                "Temporary artifacts are removed on return. For durable inspection, rerun with "
+                "--jsx-path layout.jsx --report-json layout-report.json."
+            )
         Path(report_abs).parent.mkdir(parents=True, exist_ok=True)
         Path(report_abs).write_text(json.dumps(dry_report, indent=2, sort_keys=True) + "\n")
         return {

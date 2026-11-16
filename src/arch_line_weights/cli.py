@@ -978,14 +978,20 @@ def layout_jsx_cmd(
         raise click.ClickException(str(exc)) from exc
 
     if dry_run:
-        click.echo(f"layout: dry run wrote JSX {result['jsx_path']}", err=True)
+        if jsx_path is not None:
+            click.echo(f"layout: dry run wrote JSX {terminal_safe(result['jsx_path'])}", err=True)
+        if jsx_path is None or report_json is None:
+            click.echo(
+                "layout: temporary artifacts removed; use --jsx-path and --report-json for durable inspection",
+                err=True,
+            )
     else:
         click.echo(f"layout: wrote {result['output']}", err=True)
-    click.echo(f"layout: report {result['report_json']}", err=True)
+    if report_json is not None:
+        click.echo(f"layout: report {terminal_safe(result['report_json'])}", err=True)
     if result.get("report"):
-        # The normalized report can carry Illustrator's active document name.
-        # Render it as terminal data, not terminal control input.
-        click.echo(terminal_safe(result["report"]))
+        # JSON escapes control characters inside data while preserving structural newlines.
+        click.echo(json.dumps(json.loads(result["report"]), indent=2, ensure_ascii=True))
 
 
 @cli.command(help="Run the Rhino Make2D -> Illustrator layout bridge.")

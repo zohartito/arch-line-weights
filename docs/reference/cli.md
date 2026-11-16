@@ -96,8 +96,8 @@ arch-lw layout-jsx SRC [OPTIONS]
 | `--fit {center,fit}` | `center` | Keep scale and center, or scale down to fit within the margin |
 | `--margin LENGTH` | `0.5in` | Margin used by `--fit` |
 | `--allow-enlarge` | off | Let `--fit` scale small artwork up |
-| `--report-json PATH` | `/tmp/arch_lw_layout_report.json` | Structured layout report |
-| `--jsx-path PATH` | `/tmp/arch_lw_layout.jsx` | Generated JSX path |
+| `--report-json PATH` | private temporary file (removed on return) | Structured layout report |
+| `--jsx-path PATH` | private temporary file (removed on return) | Generated JSX path |
 | `--timeout MINUTES` | `30` | Illustrator JSX timeout |
 | `--dry-run` | off | Render JSX/report without opening Illustrator or writing output artwork |
 
@@ -156,11 +156,10 @@ arch-lw apply-saas SRC [OPTIONS]
 | `--bridge-strategy {greedy,best}` | `best` | Bridge selector for the poché auto-bridge rung |
 | `--progress / --no-progress` | auto | Stage/layer progress feedback |
 | `--progress-file PATH` | private per-run temporary file | Optional durable tab-separated event log |
+| `--report PATH` | — | Durable JSON report with input kind, command path, and filled/skipped/failed/why layer status |
 
 An explicit `--progress-file` logs even when stderr is captured or piped;
 `--no-progress` explicitly disables both terminal feedback and file logging.
-
-| `--report PATH` | — | Durable JSON report with input kind, command path, and filled/skipped/failed/why layer status |
 
 When `--progress-file` is omitted, progress artifacts use a new mode-0700
 temporary directory for each run. Pass an explicit path only when a durable
