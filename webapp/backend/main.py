@@ -2,8 +2,8 @@
 
 Run locally:
 
-    cd webapp/backend
-    uvicorn main:app --reload
+    cd webapp
+    uvicorn backend.main:app --reload
 
 Production runs the same module with ``uvicorn`` behind a Fly.io proxy.
 The app stays purely sync at the request level (no async I/O against
@@ -45,7 +45,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 def create_app() -> FastAPI:
-    """Factory used by both ``uvicorn main:app`` and tests.
+    """Factory used by both ``uvicorn backend.main:app`` and tests.
 
     Tests can replace state in two ways:
        1. ``app.state.storage = LocalStorage(tmp_path)`` after construction
@@ -89,5 +89,5 @@ def create_app() -> FastAPI:
     return app
 
 
-# Module-level instance for ``uvicorn main:app``.
+# Module-level instance for ``uvicorn backend.main:app``.
 app = create_app()

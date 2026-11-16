@@ -130,9 +130,7 @@ pip install -e .. -e '.[dev]' # add pytest + httpx + ruff
 Run the dev server:
 
 ```bash
-cd webapp/backend
-uvicorn main:app --reload --port 8000
-# or from the webapp root:
+cd webapp
 uvicorn backend.main:app --reload --port 8000
 ```
 
