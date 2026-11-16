@@ -59,6 +59,7 @@ from shapely.geometry import LineString, Polygon
 from .apply_saas import (
     CHUNK,
     PREFIX,
+    _bounded_native_decompress,
     _native_block_count,
     _read_payload,
     _require_native_private,
@@ -860,7 +861,7 @@ def decompress_test_payload(framed: bytes) -> bytes:
     """Helper inverse to :func:`compress_test_payload`."""
     if not framed.startswith(PREFIX):
         raise ValueError(f"framed bytes must start with {PREFIX!r}")
-    return zstd.ZstdDecompressor().decompress(framed[len(PREFIX) :], max_output_size=1 << 30)
+    return _bounded_native_decompress(framed[len(PREFIX) :], 1 << 30)
 
 
 def write_synthetic_test_ai(path: str | Path, layer_name: str = "TEST_CUT") -> None:

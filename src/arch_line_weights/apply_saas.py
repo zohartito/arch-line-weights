@@ -24,8 +24,10 @@ the default weight, mirroring `apply.py`.
 
 from __future__ import annotations
 
+import io
 import os
 import re
+import zlib
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -189,12 +191,53 @@ def _require_native_private(pdf: pikepdf.Pdf) -> pikepdf.Object:
     return priv
 
 
+def _bounded_native_decompress(data: bytes, limit: int) -> bytes:
+    declared = zstd.frame_content_size(data)
+    if declared >= 0 and declared > limit:
+        raise ValueError("native payload decoded size exceeds safe limit")
+    decoder = zstd.ZstdDecompressor(max_window_size=max(1024, (limit + 1023) // 1024))
+    with decoder.stream_reader(io.BytesIO(data), read_across_frames=True) as reader:
+        output = reader.read(limit + 1)
+    if len(output) > limit:
+        raise ValueError("native payload decoded size exceeds safe limit")
+    return output
+
+
+def _bounded_private_stream(stream, limit: int) -> bytes:
+    """Decode only native-stream filters whose output can be bounded before allocation."""
+    if int(stream.get("/Length", 0)) > limit:
+        raise ValueError("native payload compressed size exceeds safe limit")
+    raw = stream.read_raw_bytes()
+    if len(raw) > limit:
+        raise ValueError("native payload compressed size exceeds safe limit")
+    filters = stream.get("/Filter")
+    if filters is None:
+        return raw
+    if isinstance(filters, pikepdf.Array):
+        filters = list(filters)
+    else:
+        filters = [filters]
+    params = stream.get("/DecodeParms")
+    if isinstance(params, pikepdf.Array):
+        params = params[0] if len(params) == 1 else params
+    if [str(f) for f in filters] != ["/FlateDecode"] or (
+        params is not None and (not isinstance(params, pikepdf.Dictionary) or int(params.get("/Predictor", 1)) != 1)
+    ):
+        raise ValueError("unsupported native payload PDF filter or predictor")
+    decoder = zlib.decompressobj()
+    output = decoder.decompress(raw, limit + 1)
+    if len(output) > limit:
+        raise ValueError("native payload compressed size exceeds safe limit")
+    if not decoder.eof:
+        raise ValueError("incomplete native payload PDF stream")
+    return output
+
+
 def _read_payload(pdf: pikepdf.Pdf) -> bytes:
     """Concatenate AIPrivateData streams, strip prefix, zstd-decompress.
 
-    Uses ``read_bytes()`` (filter-aware) rather than ``read_raw_bytes()`` so
-    we transparently handle both Illustrator-saved files (no filter) and
-    pikepdf-resaved files (which may pick up a FlateDecode filter).
+    Bound both outer PDF Flate decoding and inner Zstandard decoding before
+    accepting output. Unsupported outer filters fail closed.
     """
     processing_disabled("native Illustrator payload decoding")
     priv = _require_native_private(pdf)
@@ -204,7 +247,7 @@ def _read_payload(pdf: pikepdf.Pdf) -> bytes:
     blob_parts: list[bytes] = []
     compressed_bytes = 0
     for i in range(1, n + 1):
-        chunk = priv[f"/AIPrivateData{i}"].read_bytes()
+        chunk = _bounded_private_stream(priv[f"/AIPrivateData{i}"], MAX_NATIVE_COMPRESSED_BYTES - compressed_bytes)
         compressed_bytes += len(chunk)
         if compressed_bytes > MAX_NATIVE_COMPRESSED_BYTES:
             raise ValueError("native payload compressed size exceeds safe limit")
@@ -212,7 +255,7 @@ def _read_payload(pdf: pikepdf.Pdf) -> bytes:
     blob = b"".join(blob_parts)
     if not blob.startswith(PREFIX):
         raise ValueError(f"payload does not start with {PREFIX!r}; got {blob[:32]!r}")
-    return zstd.ZstdDecompressor().decompress(blob[len(PREFIX) :], max_output_size=MAX_NATIVE_DECODED_BYTES)
+    return _bounded_native_decompress(blob[len(PREFIX) :], MAX_NATIVE_DECODED_BYTES)
 
 
 def _write_payload(pdf: pikepdf.Pdf, payload: bytes, *, level: int = 19) -> tuple[int, int]:
