@@ -4,7 +4,7 @@ This tutorial takes you from a freshly-exported Rhino `.ai` file to a printable 
 
 ## What you need
 
-- macOS or Windows with Python 3.11+
+- macOS with Python 3.11+ (the Illustrator bridge uses AppleScript)
 - Adobe Illustrator 2024 or later (required for `apply-jsx` and `poche`)
 - A Rhino-exported `.ai` file with **layers preserved** (Make2D → Export Selected → Adobe Illustrator)
 - 5 minutes of patience while Illustrator opens
@@ -78,6 +78,23 @@ Output: `South Section POCHE.ai`.
 - `South Section HIERARCHY.ai` — line-weight hierarchy applied
 - `South Section POCHE.ai` — plus solid or material poché on cut layers
 - `preview.png` — visual diff for review
+
+## Windows: headless PDF workflow
+
+The Illustrator `apply-jsx` and `poche` bridge commands in this tutorial are
+macOS-only. On Windows, export a vector PDF and use PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python -m pip install -e ".[test]"
+.\.venv\Scripts\arch-lw inspect "South Section.pdf"
+.\.venv\Scripts\arch-lw apply "South Section.pdf" --auto --preset section -o "South Section HIERARCHY.pdf"
+.\.venv\Scripts\arch-lw preview "South Section.pdf" "South Section HIERARCHY.pdf" -o preview.png
+```
+
+This rewrites PDF strokes and does not preserve Illustrator editing layers.
+Preview uses PyMuPDF by default. For `--ghostscript`, add the directory containing
+`gswin64c.exe` (or `gswin32c.exe`) to PATH; the renderer detects it automatically.
 
 ## Where to go next
 
