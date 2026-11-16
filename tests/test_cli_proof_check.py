@@ -798,16 +798,18 @@ def _safe_visual_artifacts() -> dict:
     }
 
 
-@pytest.mark.parametrize("artifact", ["report.json", "after.png", "fixture-directory"])
+@pytest.mark.parametrize("artifact", ["report.json", "after.png", "fixture-directory", "sibling-directory"])
 def test_alw24_proof_rejects_preexisting_symlinks(tmp_path, artifact):
     fixture = "public_foundation_window_section_synthetic"
     root, outside = tmp_path / "proof", tmp_path / "outside"
-    outside.mkdir()
+    if artifact == "sibling-directory":
+        outside = root / "sibling"
+    outside.mkdir(parents=True)
     sentinel = outside / "sentinel.txt"
     sentinel.write_bytes(b"keep me")
     target = root / fixture
-    root.mkdir()
-    if artifact == "fixture-directory":
+    root.mkdir(exist_ok=True)
+    if artifact in {"fixture-directory", "sibling-directory"}:
         target.symlink_to(outside, target_is_directory=True)
     else:
         target.mkdir()

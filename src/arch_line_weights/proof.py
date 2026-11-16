@@ -158,6 +158,8 @@ def build_proof_packet_plan(
         raise ValueError("fixture_id must be one safe path component")
     command_list = _validate_string_list(commands, "commands")
     root = Path(output_dir).resolve()
+    if (root / fixture_id).is_symlink():
+        raise ValueError("proof fixture directory must not be a symlink")
     fixture_output_dir = (root / fixture_id).resolve()
     if fixture_output_dir.parent != root:
         raise ValueError("fixture_id escapes proof output root")
