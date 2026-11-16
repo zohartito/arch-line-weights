@@ -151,3 +151,44 @@ def test_cleanup_cli_writes_new_file_and_json_report(tmp_path):
     with pikepdf.open(dst) as pdf:
         rewritten_payload = _read_payload(pdf)
     assert b"\r0.5 w\r0 30 m\r140 30 L\rS\r" in rewritten_payload
+
+
+def _audit_payload(paths):
+    return b"%AI5_BeginLayer\r(AUDIT) Ln\r" + paths + b"LB\r"
+
+
+def test_alw02_preserves_distinct_cubics_and_closed_loop():
+    paths = (
+        b"0 0 m\r10 50 40 50 50 0 C\rS\r"
+        b"0 0 m\r10 -50 40 -50 50 0 C\rS\r"
+        b"100 100 m\r300 300 -100 300 100 100 C\rS\r"
+    )
+    result = cleanup_payload(_audit_payload(paths))
+    assert result.report.to_dict()["summary"]["deleted"] == 0
+    assert result.payload.count(b"\rS\r") == 3
+
+
+def test_alw02_duplicate_requires_identical_paint_and_geometry():
+    paths = (
+        b"0 0 m\r50 0 L\rS\r"
+        b"1 0 0 1 0 0 0 XA\r0 0 m\r50 0 L\rS\r"
+        b"0 0 m\r50.00001 0 L\rS\r"
+        b"0 0 m\r50 0 L\rs\r"
+    )
+    result = cleanup_payload(_audit_payload(paths))
+    assert result.report.to_dict()["summary"]["deleted"] == 0
+
+
+def test_alwn2_preserves_shorthand_curves_and_following_strokes():
+    for curve in (b"50 80 100 0 v", b"50 80 100 0 y"):
+        paths = b"0 0 m\r" + curve + b"\r300 0 L\rS\r0 10 m\r100 10 L\rS\r"
+        result = cleanup_payload(_audit_payload(paths))
+        assert result.report.to_dict()["summary"]["deleted"] == 0
+        assert result.payload.count(b"\rS\r") == 2
+        assert b"300 0 L" in result.payload
+
+
+def test_alw02_preserves_uncertain_path_tail():
+    paths = b"0 0 m\runknown_operator\r300 0 L\rS\r"
+    result = cleanup_payload(_audit_payload(paths))
+    assert paths in result.payload

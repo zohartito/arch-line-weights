@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import os
 import re
 from dataclasses import dataclass, field
@@ -15,7 +16,7 @@ from .safety import processing_disabled
 
 _NUM = rb"[0-9.eE\-+]+"
 _LN_RE = re.compile(rb"\(([^)]+)\) Ln$")
-_PATH_OPS = {b"m", b"L", b"l", b"C", b"c"}
+_PATH_OPS = {b"m", b"L", b"l", b"C", b"c", b"v", b"y"}
 _STROKE_OPS = {b"S", b"s", b"B", b"B*", b"b", b"b*"}
 
 
@@ -112,13 +113,14 @@ def cleanup_payload(
     lines = payload.split(b"\r")
     out: list[bytes] = []
     reports_by_layer: dict[str, CleanupLayerReport] = {}
-    seen_paths_by_layer: dict[str, set[tuple[tuple[float, float], ...]]] = {}
+    seen_paths_by_layer: dict[str, set[tuple[bytes, ...]]] = {}
     geometry_paths_by_layer: dict[str, list[GeometryPath]] = {}
 
     in_layer = False
     current_layer: str | None = None
     current_path: list[bytes] = []
     current_points: list[tuple[float, float]] = []
+    current_uncertain = False
 
     def layer_report() -> CleanupLayerReport:
         nonlocal current_layer
@@ -127,7 +129,7 @@ def cleanup_payload(
             reports_by_layer[name] = CleanupLayerReport(name=name)
         return reports_by_layer[name]
 
-    def layer_seen_paths() -> set[tuple[tuple[float, float], ...]]:
+    def layer_seen_paths() -> set[tuple[bytes, ...]]:
         name = current_layer or "<unknown>"
         return seen_paths_by_layer.setdefault(name, set())
 
@@ -136,13 +138,14 @@ def cleanup_payload(
         return geometry_paths_by_layer.setdefault(name, [])
 
     def flush_current_path() -> None:
-        nonlocal current_path, current_points
+        nonlocal current_path, current_points, current_uncertain
         if current_path:
             out.extend(current_path)
             if in_layer:
                 layer_report().uncertain += 1
         current_path = []
         current_points = []
+        current_uncertain = False
 
     for line in lines:
         if line == b"%AI5_BeginLayer":
@@ -170,14 +173,22 @@ def cleanup_payload(
         if in_layer:
             parsed = _parse_path_point(line)
             if parsed is not None:
-                op, point = parsed
-                if op == b"m" and current_path:
-                    flush_current_path()
-                current_path.append(line)
-                current_points.append(point)
-                continue
+                op, coords = parsed
+                if current_path or op == b"m":
+                    if op == b"m" and current_path:
+                        current_uncertain = True  # compound paths are kept verbatim
+                    current_path.append(line)
+                    if op in {b"C", b"c", b"v", b"y"}:
+                        current_points.extend(_curve_points(current_points[-1], op, coords))
+                    else:
+                        current_points.append(coords[0])
+                    continue
 
             if line in _STROKE_OPS and current_path:
+                if current_uncertain:
+                    current_path.append(line)
+                    flush_current_path()
+                    continue
                 _emit_classified_path(
                     out,
                     report=layer_report(),
@@ -193,6 +204,10 @@ def cleanup_payload(
                 continue
 
         flush_current_path()
+        # Any intervening state/operator may change paint, transform or clipping.
+        # Only deduplicate paths within an uninterrupted, identical paint state.
+        if in_layer:
+            layer_seen_paths().clear()
         out.append(line)
 
     rewritten = b"\r".join(out)
@@ -236,24 +251,40 @@ def cleanup_file(
     )
 
 
-def _parse_path_point(line: bytes) -> tuple[bytes, tuple[float, float]] | None:
+def _parse_path_point(line: bytes) -> tuple[bytes, list[tuple[float, float]]] | None:
     parts = line.split()
-    if not parts:
+    if not parts or parts[-1] not in _PATH_OPS:
         return None
     op = parts[-1]
-    if op not in _PATH_OPS:
+    count = 6 if op in {b"C", b"c"} else 4 if op in {b"v", b"y"} else 2
+    if len(parts) != count + 1:
         return None
-    if op in {b"m", b"L", b"l"} and len(parts) >= 3:
-        try:
-            return op, (float(parts[-3]), float(parts[-2]))
-        except ValueError:
-            return None
-    if op in {b"C", b"c"} and len(parts) >= 7:
-        try:
-            return op, (float(parts[-3]), float(parts[-2]))
-        except ValueError:
-            return None
-    return None
+    try:
+        values = [float(value) for value in parts[:-1]]
+    except ValueError:
+        return None
+    if not all(math.isfinite(value) for value in values):
+        return None
+    return op, list(zip(values[::2], values[1::2], strict=True))
+
+
+def _curve_points(start, op, coords):
+    """Sample a cubic for length classification, retaining original ops for identity."""
+    if op == b"v":
+        coords = [start, *coords]
+    elif op == b"y":
+        coords = [*coords, coords[-1]]
+    c1, c2, end = coords
+    return [
+        tuple(
+            (1 - t) ** 3 * start[axis]
+            + 3 * (1 - t) ** 2 * t * c1[axis]
+            + 3 * (1 - t) * t**2 * c2[axis]
+            + t**3 * end[axis]
+            for axis in (0, 1)
+        )
+        for t in (i / 32 for i in range(1, 33))
+    ]
 
 
 def _path_length(points: list[tuple[float, float]]) -> float:
@@ -273,12 +304,6 @@ def _format_weight(weight: float) -> bytes:
     return f"{weight:g}".encode("ascii")
 
 
-def _canonical_path(points: list[tuple[float, float]]) -> tuple[tuple[float, float], ...]:
-    rounded = tuple((round(x, 4), round(y, 4)) for x, y in points)
-    reversed_path = tuple(reversed(rounded))
-    return min(rounded, reversed_path)
-
-
 def _emit_classified_path(
     out: list[bytes],
     *,
@@ -287,13 +312,13 @@ def _emit_classified_path(
     points: list[tuple[float, float]],
     stroke_op: bytes,
     thresholds: CleanupThresholds,
-    seen_paths: set[tuple[tuple[float, float], ...]],
+    seen_paths: set[tuple[bytes, ...]],
     geometry_paths: list[GeometryPath],
 ) -> None:
     length = _path_length(points)
     report.stroked_paths += 1
     geometry_paths.append(GeometryPath(f"{report.name}:{report.stroked_paths}", list(points)))
-    canonical = _canonical_path(points)
+    canonical = (*path_lines, stroke_op)
 
     if canonical in seen_paths:
         report.deleted += 1
@@ -302,6 +327,12 @@ def _emit_classified_path(
     seen_paths.add(canonical)
 
     if length <= thresholds.debris_max_pt:
+        if any(line.split()[-1] in {b"C", b"c", b"v", b"y"} for line in path_lines):
+            # Sampled length is a lower bound: uncertain tiny curves survive.
+            report.uncertain += 1
+            out.extend(path_lines)
+            out.append(stroke_op)
+            return
         report.deleted += 1
         return
     if length < thresholds.detail_max_pt:
