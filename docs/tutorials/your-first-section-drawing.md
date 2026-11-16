@@ -32,7 +32,7 @@ You'll see something like every stroke at `0.25 pt`. That's the problem we're ab
 Use the layer-aware JSX path so your Rhino layers are preserved in Illustrator:
 
 ```bash
-.venv/bin/arch-lw apply-jsx "South Section.ai"
+.venv/bin/arch-lw apply-jsx "South Section.ai" -o "South Section HIERARCHY.ai"
 ```
 
 This opens Illustrator, runs a JSX that classifies each layer by its semantic name (e.g. `ClippingPlaneIntersections::TEC_CONCRETE` → cut tier → 1.0 pt), and saves `South Section HIERARCHY.ai` next to the input.
@@ -54,7 +54,7 @@ headless AI-native path:
 ## 4. Add solid black poché on the cut
 
 ```bash
-.venv/bin/arch-lw poche "South Section HIERARCHY.ai" --style solid
+.venv/bin/arch-lw poche "South Section HIERARCHY.ai" --style solid -o "South Section POCHE.ai"
 ```
 
 Output: `South Section POCHE.ai`.
@@ -62,7 +62,7 @@ Output: `South Section POCHE.ai`.
 ## 5. Or: poché with material hatches
 
 ```bash
-.venv/bin/arch-lw poche "South Section HIERARCHY.ai" --style material --scale 0.02
+.venv/bin/arch-lw poche "South Section HIERARCHY.ai" --style material --scale 0.02 -o "South Section POCHE.ai"
 ```
 
 `0.02 = 1:50`.

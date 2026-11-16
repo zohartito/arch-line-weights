@@ -61,7 +61,7 @@ Converted-section example (synthetic public-safe filenames):
 
 ```bash
 .venv/bin/arch-lw apply-jsx sample-section.ai --preset section --source rhino
-.venv/bin/arch-lw poche sample-section HIERARCHY-jsx.ai --source rhino --style solid
+.venv/bin/arch-lw poche "sample-section HIERARCHY-jsx.ai" --source rhino --style solid
 ```
 
 ### Known input-format caveats
