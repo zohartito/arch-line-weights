@@ -29,8 +29,8 @@ inside Illustrator only to have ExtendScript hang for hours — this is for you.
 
 ```
 $ arch-lw apply examples/sample-linework.pdf --auto --preset section
-# 12 colors mapped using auto:section
-applied 8,420 strokes across 12 color changes
+# 3 colors mapped using auto:section
+applied 3 strokes across 3 color changes
 wrote examples/sample-linework HIERARCHY.pdf
 ```
 
