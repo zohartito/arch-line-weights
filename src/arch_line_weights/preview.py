@@ -274,9 +274,9 @@ def _recolor_pdf_by_tier(
                 tier = _nearest_tier(current_w, tiers)
                 r, g, b = rgb_for_tier[tier]
                 rgb_ops = [
-                    pikepdf.Object.parse(f"{r / 255:.4f}"),
-                    pikepdf.Object.parse(f"{g / 255:.4f}"),
-                    pikepdf.Object.parse(f"{b / 255:.4f}"),
+                    round(r / 255, 4),
+                    round(g / 255, 4),
+                    round(b / 255, 4),
                 ]
                 new_instructions.append((rgb_ops, pikepdf.Operator("RG")))
             else:
