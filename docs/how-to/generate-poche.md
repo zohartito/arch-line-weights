@@ -44,7 +44,11 @@ arch-lw poche drawing.ai --overrides overrides.json
 }
 ```
 
-Available strategies: `linemerge` (default), `snap`, `concave_hull`, `bbox`, `skip`.
+Available overrides: `linemerge` (bare polygonization only), `snap` (snap
+tolerances only), `concave_hull`, `bbox`, `skip`. Omit `strategy` to use the
+full automatic ladder. Forced `linemerge`/`snap` return `failed` when no
+polygon is recovered; they never fall through to bridging or hulls. Unknown
+strategy names are rejected.
 
 ## Read the report
 
