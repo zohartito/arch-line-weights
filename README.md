@@ -206,11 +206,14 @@ internal lines disappear; those remain review items in the report/workflow.
 
 `apply-jsx` uses a **semantic layer-name classifier**: anything in a
 `Visible::ClippingPlaneIntersections::*` OCG is the section cut (1.0 pt);
-`TEC_TIMBER_*`, `TEC_CLT_*`, `TEC_FOUNDATION` etc. are structure (0.5 pt);
-`SHS_*` are secondary steel (0.35 pt); `WINDOW_GLASS` is glazing (0.25 pt);
-cladding (`CU_*`) is material (0.18 pt); EPDM and `FLOOR_DATUMS` are
+names containing `TEC_TIMBER`, `TEC_CLT_SLABS`, `TEC_ROOF_CLT` or
+`TEC_FOUNDATION` are structure (0.5 pt); `_SHS_` (including the leading
+underscore, e.g. `TEC_SHS_COLUMN`) is secondary steel (0.35 pt);
+`WINDOW_GLASS` is glazing (0.25 pt); `_CU_CORR_`, `_CU_FLAT_` and
+`_CU_PUNCH_` are cladding (0.18 pt); EPDM and `FLOOR_DATUMS` are
 reference (0.13 pt). See `docs/POSTMORTEM.md` for why this is better than
-color-based classification for Rhino files.
+color-based classification for Rhino files. Bare `TEC_CLT_PANEL`, `SHS_COLUMN`
+and `CU_PANEL` do not match these rules and receive the 0.25 pt default.
 
 `apply` (pikepdf mode) buckets colors into the preset's tier ladder by
 luminance. Good fallback for non-Rhino files where layer names don't
