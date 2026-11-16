@@ -222,3 +222,71 @@ def test_vector_width_state_follows_q_and_Q(tmp_path: Path) -> None:
     assert vj._vector_width_histogram(path) == {0.25: 1, 1.0: 1, 0.13: 1, 0.5: 1}
     tones = vj._vector_stroke_tones(path)
     assert tones == [(0.25, 0.5), (1.0, 1.0), (0.13, 1.0), (0.5, 1.0)]
+
+
+@pytest.mark.parametrize("failure", ["pipeline", "stale-baked", "bake", "missing-output"])
+def test_alw08_never_scores_failed_or_stale_iteration(tmp_path, monkeypatch, failure):
+    from types import SimpleNamespace
+    from unittest.mock import Mock
+
+    baked = tmp_path / "old-baked.pdf"
+    baked.write_bytes(b"old")
+
+    def pipeline(*args, **kwargs):
+        if failure != "missing-output":
+            kwargs["out"].write_bytes(b"new")
+        return {"returncode": 1 if failure == "pipeline" else 0}
+
+    judge = Mock(return_value={"verdict": "pass", "scores": {}, "why": [], "suggested_overrides": {}})
+    monkeypatch.setattr(judge_loop, "_run_pipeline", pipeline)
+    monkeypatch.setattr(judge_loop.vj, "judge", judge)
+    monkeypatch.setattr(judge_loop.subprocess, "run", lambda *a, **k: SimpleNamespace(returncode=1))
+    result = judge_loop.run_loop(
+        tmp_path / "source.pdf", overrides_path=tmp_path / "ov.json", run_dir=tmp_path / "runs",
+        baked_after=baked if failure in {"pipeline", "stale-baked"} else None,
+        bake_cmd="fake {src} {out}" if failure == "bake" else None,
+    )
+    assert result["final_verdict"] == "error"
+    judge.assert_not_called()
+
+
+def test_alwn1_default_pipeline_accepts_report_option(tmp_path):
+    import shlex
+
+    from click.testing import CliRunner
+    from test_cleanup import _single_layer_payload, _write_native_ai
+
+    from arch_line_weights.cli import cli
+
+    src = tmp_path / "source.ai"
+    out, report, overrides = (tmp_path / name for name in ("out.ai", "report.json", "ov.json"))
+    _write_native_ai(src, _single_layer_payload())
+    overrides.write_text("{}")
+    args = shlex.split(judge_loop.DEFAULT_PIPELINE.format(src=src, out=out, report=report, overrides=overrides))
+    result = CliRunner().invoke(cli, args[1:])
+    assert result.exit_code == 0, result.output
+    assert out.exists() and report.exists()
+
+
+def test_alw08_regenerated_iterations_record_artifact_identity(tmp_path, monkeypatch):
+    import hashlib
+    import json
+
+    calls = []
+
+    def pipeline(*args, **kwargs):
+        calls.append(kwargs["out"])
+        kwargs["out"].write_bytes(f"iteration {len(calls)}".encode())
+        return {"returncode": 0}
+
+    def judge(after, **kwargs):
+        return {"verdict": "pass" if len(calls) == 2 else "review", "scores": {}, "why": [],
+                "suggested_overrides": {"L1": {"strategy": "skip"}}}
+
+    monkeypatch.setattr(judge_loop, "_run_pipeline", pipeline)
+    monkeypatch.setattr(judge_loop.vj, "judge", judge)
+    result = judge_loop.run_loop(tmp_path / "source.pdf", overrides_path=tmp_path / "ov.json", run_dir=tmp_path)
+    assert result["final_verdict"] == "pass"
+    assert result["iterations_run"] == 2
+    log = json.loads((tmp_path / "iter-2.json").read_text())
+    assert log["artifact_identity"]["sha256"] == hashlib.sha256(b"iteration 2").hexdigest()
