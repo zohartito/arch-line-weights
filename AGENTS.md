@@ -12,7 +12,13 @@
 - Live LLM evals (metered Anthropic calls, self-skip by default): `ARCH_LW_LLM_FALLBACK=1 ANTHROPIC_API_KEY=sk-... pytest tests/eval_llm_topology.py -m eval -s`.
 - Pre-flight doctor (predicts failure modes before a run; writes nothing): `arch-lw doctor <file>` → `--share` (default, redacts layer names to `L01..Ln`; `--full` for real names), `--json`, `--geometry/--no-geometry` (pass 2 counts). Exit 0 clear / 1 may-hit / 2 will-hit. `--export-geometry L04,L11|flagged [--export-out f.json]` writes redacted anchor geometry (per-layer translate to origin, never scaled, so gaps survive) for checkpointing a stubborn layer into a fixture without the drawing leaving the machine.
 - Eval gate (deterministic quality diff vs `benchmarks/ci-baseline.json`): `python scripts/eval_gate.py` (`--update-baseline` to re-record).
-- Benchmark suite (writes `benchmarks.json`): `python scripts/benchmark.py`.
+- Headless synthetic benchmark: run from a scratch directory because the script always writes `./benchmarks.json`, even with `--json`. From the repo root (with the venv active):
+  ```bash
+  repo_root="$PWD"
+  mkdir -p /tmp/arch-lw-benchmark
+  (cd /tmp/arch-lw-benchmark && python "$repo_root/scripts/benchmark.py" --input "$repo_root/tests/fixtures/eval/synthetic-cut.ai" --runs 1 --no-jsx --md benchmark.md --json benchmarks.json)
+  ```
+  `--no-jsx` prevents desktop probes; outputs stay in the scratch working directory.
 - Visual judge (deterministic, no LLM/network): `python scripts/visual_judge.py --after <ai|pdf|png> [--report-json ...]` → JSON scores + `pass`/`review` on 5 axes (false_poche, band_continuity, hierarchy_spread, fixture_weight, tonal_recede); thresholds cite `benchmarks/visual-rubric.md`. `tonal_recede` and `fixture_weight` return `null` (never a guess) when the needed layer/stroke info is unavailable. Self-correcting loop: `python scripts/judge_loop.py <src> --overrides ov.json --run-dir runs/ [--bake-cmd '<bake-tool> {src} {out}']`. The loop aborts on failed stages or stale artifacts; existing baked files can be scored directly with `visual_judge.py --after`. Score the Illustrator-BAKED file — raw `apply-saas` payload edits are not in the live PDF stream (pre-bake reads as weight-flat). Opt-in vision judge (metered): `ARCH_LW_LLM_FALLBACK=1 ANTHROPIC_API_KEY=sk-... pytest tests/eval_visual_judge_llm.py -m eval -s`.
 
 ## Structure
