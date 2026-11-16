@@ -15,8 +15,9 @@ def native_pdf(framed, *, flate=False):
     stream = pdf.make_stream(framed)
     if flate:
         stream.write(zlib.compress(framed), filter=pikepdf.Name.FlateDecode)
-    page.obj["/PieceInfo"] = pikepdf.Dictionary(Illustrator=pikepdf.Dictionary(
-        Private=pikepdf.Dictionary(NumBlock=1, AIPrivateData1=stream)))
+    page.obj["/PieceInfo"] = pikepdf.Dictionary(
+        Illustrator=pikepdf.Dictionary(Private=pikepdf.Dictionary(NumBlock=1, AIPrivateData1=stream))
+    )
     return pdf
 
 

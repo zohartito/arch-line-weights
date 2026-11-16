@@ -462,9 +462,18 @@ def test_alw21_default_dry_run_identifies_removed_artifacts(tmp_path):
 def test_alwn4_layout_stdout_is_safe_parseable_json(tmp_path):
     src = tmp_path / "synthetic-\x1b[31m.ai"
     src.write_bytes(b"%PDF-1.6\n")
-    result = CliRunner().invoke(cli, ["layout-jsx", str(src), "--dry-run",
-                                     "--jsx-path", str(tmp_path / "layout.jsx"),
-                                     "--report-json", str(tmp_path / "report.json")])
+    result = CliRunner().invoke(
+        cli,
+        [
+            "layout-jsx",
+            str(src),
+            "--dry-run",
+            "--jsx-path",
+            str(tmp_path / "layout.jsx"),
+            "--report-json",
+            str(tmp_path / "report.json"),
+        ],
+    )
     assert result.exit_code == 0
     data = json.loads(result.stdout)
     assert data["summary"]["status"] == "dry_run"

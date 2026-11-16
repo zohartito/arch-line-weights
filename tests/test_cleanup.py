@@ -171,10 +171,7 @@ def test_alw02_preserves_distinct_cubics_and_closed_loop():
 
 def test_alw02_duplicate_requires_identical_paint_and_geometry():
     paths = (
-        b"0 0 m\r50 0 L\rS\r"
-        b"1 0 0 1 0 0 0 XA\r0 0 m\r50 0 L\rS\r"
-        b"0 0 m\r50.00001 0 L\rS\r"
-        b"0 0 m\r50 0 L\rs\r"
+        b"0 0 m\r50 0 L\rS\r1 0 0 1 0 0 0 XA\r0 0 m\r50 0 L\rS\r0 0 m\r50.00001 0 L\rS\r0 0 m\r50 0 L\rs\r"
     )
     result = cleanup_payload(_audit_payload(paths))
     assert result.report.to_dict()["summary"]["deleted"] == 0
@@ -241,8 +238,9 @@ def test_alw01_failed_save_preserves_existing_output(tmp_path, monkeypatch):
 def test_alw17_explicit_progress_file_survives_captured_stderr(tmp_path):
     src, dst, progress = (tmp_path / name for name in ("source.ai", "out.ai", "progress.tsv"))
     _write_native_ai(src, _single_layer_payload())
-    result = CliRunner().invoke(cli, ["apply-saas", str(src), "--architectural", "-o", str(dst),
-                                     "--progress-file", str(progress)])
+    result = CliRunner().invoke(
+        cli, ["apply-saas", str(src), "--architectural", "-o", str(dst), "--progress-file", str(progress)]
+    )
     assert result.exit_code == 0, result.output
     assert progress.exists()
     text = progress.read_text()

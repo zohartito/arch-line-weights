@@ -18,7 +18,9 @@ def widths(path):
         return [float(args[0]) for args, op in pikepdf.parse_content_stream(pdf.pages[0]) if str(op) == "w"]
 
 
-@pytest.mark.parametrize("transition", [b"0.5 G", b"0 0 0 1 K", b"/DeviceGray CS 0.5 SC", b"/Pattern CS /P1 SCN"])
+@pytest.mark.parametrize(
+    "transition", [b"0.5 G", b"0 0 0 1 K", b"/DeviceGray CS 0.5 SC", b"/Pattern CS /P1 SCN"]
+)
 def test_alw03_restores_rgb_and_resets_on_color_space_change(tmp_path, transition):
     src, dst = tmp_path / "state.pdf", tmp_path / "out.pdf"
     stroke = b"0 0 m 50 0 l S "
@@ -68,8 +70,9 @@ def test_alw15_rejects_invalid_default_width_before_writing(tmp_path, command, v
         pdf.pages[0].Contents = pdf.make_stream(b"0 0 1 RG 0 0 m 50 0 l S")
         pdf.save(src)
     mapping.write_text('{"RGB(255,0,0)": 1}')
-    result = CliRunner().invoke(cli, [command, str(src), "--mapping", str(mapping),
-                                     "--default-width", value, "-o", str(dst)])
+    result = CliRunner().invoke(
+        cli, [command, str(src), "--mapping", str(mapping), "--default-width", value, "-o", str(dst)]
+    )
     assert result.exit_code == 2
     assert "finite" in result.output
     assert not dst.exists()

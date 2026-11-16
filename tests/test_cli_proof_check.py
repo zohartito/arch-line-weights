@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from click.testing import CliRunner
 from PIL import Image
 
@@ -813,8 +812,18 @@ def test_alw24_proof_rejects_preexisting_symlinks(tmp_path, artifact):
     else:
         target.mkdir()
         (target / artifact).symlink_to(sentinel)
-    result = CliRunner().invoke(cli, ["proof-check", "tests/fixtures/make2d/manifest.yml",
-        "--output-dir", str(root), "--fixture", fixture, "--materialize-synthetic"])
+    result = CliRunner().invoke(
+        cli,
+        [
+            "proof-check",
+            "tests/fixtures/make2d/manifest.yml",
+            "--output-dir",
+            str(root),
+            "--fixture",
+            fixture,
+            "--materialize-synthetic",
+        ],
+    )
     assert result.exit_code != 0
     assert sentinel.read_bytes() == b"keep me"
     assert list(outside.iterdir()) == [sentinel]

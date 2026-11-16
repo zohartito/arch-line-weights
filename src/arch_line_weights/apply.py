@@ -61,8 +61,7 @@ def apply_to_file(
     layer_weight_resolver: Callable[[str], float | None] | None = None,
     layer_color_resolver: Callable[[str], tuple[int, int, int] | None] | None = None,
     layer_solid_line_resolver: Callable[[str], bool] | None = None,
-    layer_tone_resolver: Callable[[tuple[int, int, int], float], tuple[int, int, int] | None]
-    | None = None,
+    layer_tone_resolver: Callable[[tuple[int, int, int], float], tuple[int, int, int] | None] | None = None,
 ) -> ApplyResult:
     """Apply per-color stroke widths to `src`, save to `dst`.
 
@@ -246,8 +245,7 @@ def _rewrite(
     layer_weight_resolver: Callable[[str], float | None] | None = None,
     layer_color_resolver: Callable[[str], tuple[int, int, int] | None] | None = None,
     layer_solid_line_resolver: Callable[[str], bool] | None = None,
-    layer_tone_resolver: Callable[[tuple[int, int, int], float], tuple[int, int, int] | None]
-    | None = None,
+    layer_tone_resolver: Callable[[tuple[int, int, int], float], tuple[int, int, int] | None] | None = None,
 ) -> list:
     out: list = []
     current_rgb: tuple[int, int, int] | None = None

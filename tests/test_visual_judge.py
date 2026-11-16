@@ -242,7 +242,9 @@ def test_alw08_never_scores_failed_or_stale_iteration(tmp_path, monkeypatch, fai
     monkeypatch.setattr(judge_loop.vj, "judge", judge)
     monkeypatch.setattr(judge_loop.subprocess, "run", lambda *a, **k: SimpleNamespace(returncode=1))
     result = judge_loop.run_loop(
-        tmp_path / "source.pdf", overrides_path=tmp_path / "ov.json", run_dir=tmp_path / "runs",
+        tmp_path / "source.pdf",
+        overrides_path=tmp_path / "ov.json",
+        run_dir=tmp_path / "runs",
         baked_after=baked if failure in {"pipeline", "stale-baked"} else None,
         bake_cmd="fake {src} {out}" if failure == "bake" else None,
     )
@@ -262,7 +264,9 @@ def test_alwn1_default_pipeline_accepts_report_option(tmp_path):
     out, report, overrides = (tmp_path / name for name in ("out.ai", "report.json", "ov.json"))
     _write_native_ai(src, _single_layer_payload())
     overrides.write_text("{}")
-    args = shlex.split(judge_loop.DEFAULT_PIPELINE.format(src=src, out=out, report=report, overrides=overrides))
+    args = shlex.split(
+        judge_loop.DEFAULT_PIPELINE.format(src=src, out=out, report=report, overrides=overrides)
+    )
     result = CliRunner().invoke(cli, args[1:])
     assert result.exit_code == 0, result.output
     assert out.exists() and report.exists()
@@ -280,12 +284,18 @@ def test_alw08_regenerated_iterations_record_artifact_identity(tmp_path, monkeyp
         return {"returncode": 0}
 
     def judge(after, **kwargs):
-        return {"verdict": "pass" if len(calls) == 2 else "review", "scores": {}, "why": [],
-                "suggested_overrides": {"L1": {"strategy": "skip"}}}
+        return {
+            "verdict": "pass" if len(calls) == 2 else "review",
+            "scores": {},
+            "why": [],
+            "suggested_overrides": {"L1": {"strategy": "skip"}},
+        }
 
     monkeypatch.setattr(judge_loop, "_run_pipeline", pipeline)
     monkeypatch.setattr(judge_loop.vj, "judge", judge)
-    result = judge_loop.run_loop(tmp_path / "source.pdf", overrides_path=tmp_path / "ov.json", run_dir=tmp_path)
+    result = judge_loop.run_loop(
+        tmp_path / "source.pdf", overrides_path=tmp_path / "ov.json", run_dir=tmp_path
+    )
     assert result["final_verdict"] == "pass"
     assert result["iterations_run"] == 2
     log = json.loads((tmp_path / "iter-2.json").read_text())

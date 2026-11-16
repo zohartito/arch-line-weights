@@ -19,5 +19,5 @@ def test_alw20_forced_strategy_does_not_fall_through(strategy):
 
 
 def test_alw20_rejects_unknown_strategy():
-    with pytest.raises(ValueError, match="unsupported.*strategy"):
+    with pytest.raises(ValueError, match=r"unsupported.*strategy"):
         polygonize_layer("TEC_WALL", OPEN, override={"strategy": "no_such_strategy"})

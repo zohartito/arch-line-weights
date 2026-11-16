@@ -1204,8 +1204,12 @@ def polygonize_layer(
                 return [], FillResult(layer_name, "failed", 0.0, 0, n_segments, tol)
             confidence = 1.0 if tol == 0 else (0.95 if tol <= 0.5 else (0.85 if tol <= 1.0 else 0.7))
             return polys, FillResult(
-                layer_name, "linemerge_bare" if tol == 0 else "linemerge_snap",
-                confidence, len(polys), n_segments, tol,
+                layer_name,
+                "linemerge_bare" if tol == 0 else "linemerge_snap",
+                confidence,
+                len(polys),
+                n_segments,
+                tol,
             )
         if strat == "bbox":
             bb = _bbox(lines)

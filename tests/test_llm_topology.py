@@ -428,7 +428,9 @@ def test_infer_network_error_returns_none(monkeypatch):
     fake_client = MagicMock()
     fake_client.messages.create.side_effect = ConnectionError("boom")
 
-    plan = infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client, external_consent=True)
+    plan = infer_closing_plan(
+        "layer", _square_anchors(), _square_lines(), client=fake_client, external_consent=True
+    )
     assert plan is None
 
 
@@ -440,7 +442,9 @@ def test_infer_invalid_response_returns_none(monkeypatch):
     # confidence > 1.0 — fails validation
     fake_client.messages.create.return_value = _stub_response([[0, 1]], confidence=1.5)
 
-    plan = infer_closing_plan("layer", _square_anchors(), _square_lines(), client=fake_client, external_consent=True)
+    plan = infer_closing_plan(
+        "layer", _square_anchors(), _square_lines(), client=fake_client, external_consent=True
+    )
     assert plan is None
 
 
@@ -453,7 +457,11 @@ def test_infer_truncates_large_anchor_lists(monkeypatch):
     fake_client.messages.create.return_value = _stub_response([[0, 1]])
 
     huge = [(float(i), 0.0) for i in range(500)]
-    infer_closing_plan("layer", huge, [], client=fake_client,
+    infer_closing_plan(
+        "layer",
+        huge,
+        [],
+        client=fake_client,
         external_consent=True,
     )
 

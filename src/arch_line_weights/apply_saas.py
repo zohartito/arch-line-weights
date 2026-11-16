@@ -213,15 +213,13 @@ def _bounded_private_stream(stream, limit: int) -> bytes:
     filters = stream.get("/Filter")
     if filters is None:
         return raw
-    if isinstance(filters, pikepdf.Array):
-        filters = list(filters)
-    else:
-        filters = [filters]
+    filters = list(filters) if isinstance(filters, pikepdf.Array) else [filters]
     params = stream.get("/DecodeParms")
     if isinstance(params, pikepdf.Array):
         params = params[0] if len(params) == 1 else params
     if [str(f) for f in filters] != ["/FlateDecode"] or (
-        params is not None and (not isinstance(params, pikepdf.Dictionary) or int(params.get("/Predictor", 1)) != 1)
+        params is not None
+        and (not isinstance(params, pikepdf.Dictionary) or int(params.get("/Predictor", 1)) != 1)
     ):
         raise ValueError("unsupported native payload PDF filter or predictor")
     decoder = zlib.decompressobj()
@@ -247,7 +245,9 @@ def _read_payload(pdf: pikepdf.Pdf) -> bytes:
     blob_parts: list[bytes] = []
     compressed_bytes = 0
     for i in range(1, n + 1):
-        chunk = _bounded_private_stream(priv[f"/AIPrivateData{i}"], MAX_NATIVE_COMPRESSED_BYTES - compressed_bytes)
+        chunk = _bounded_private_stream(
+            priv[f"/AIPrivateData{i}"], MAX_NATIVE_COMPRESSED_BYTES - compressed_bytes
+        )
         compressed_bytes += len(chunk)
         if compressed_bytes > MAX_NATIVE_COMPRESSED_BYTES:
             raise ValueError("native payload compressed size exceeds safe limit")
@@ -392,8 +392,7 @@ def rewrite_payload(
     layer_weight_resolver: Callable[[str], float | None] | None = None,
     layer_color_resolver: Callable[[str], tuple[int, int, int] | None] | None = None,
     layer_solid_line_resolver: Callable[[str], bool] | None = None,
-    layer_tone_resolver: Callable[[tuple[int, int, int], float], tuple[int, int, int] | None]
-    | None = None,
+    layer_tone_resolver: Callable[[tuple[int, int, int], float], tuple[int, int, int] | None] | None = None,
 ) -> bytes:
     """Track recent XA color and rewrite every following `<w> w` op per-color.
 
@@ -610,8 +609,7 @@ def apply_to_file(
     layer_weight_resolver: Callable[[str], float | None] | None = None,
     layer_color_resolver: Callable[[str], tuple[int, int, int] | None] | None = None,
     layer_solid_line_resolver: Callable[[str], bool] | None = None,
-    layer_tone_resolver: Callable[[tuple[int, int, int], float], tuple[int, int, int] | None]
-    | None = None,
+    layer_tone_resolver: Callable[[tuple[int, int, int], float], tuple[int, int, int] | None] | None = None,
 ) -> ApplySaasResult:
     """Apply per-color stroke widths to the AI native payload of `src`.
 
