@@ -42,29 +42,28 @@ are not public proof clearance.
 
 ## Install
 
-Current source install:
+Locked source install (Python 3.11+ and `uv` 0.13.8):
 
-```
+```bash
 git clone https://github.com/zohartito/arch-line-weights
 cd arch-line-weights
-python -m venv .venv
-.venv/bin/python -m pip install -e ".[test]"
-.venv/bin/arch-lw --help
+uv sync --locked --extra test
+uv run --locked --no-sync arch-lw --help
 ```
 
-The `[test]` extra pulls in PyYAML, which the test/proof suite needs; without
-it the 15 proof tests fail with "PyYAML is required".
+`uv sync --locked` rejects stale dependency metadata and verifies downloaded
+registry artifacts against the hashes in the committed `uv.lock`. The `test`
+extra includes PyYAML for the proof tests. Local project code is built from
+this checkout; the lock covers registry dependencies, not publication clearance.
+Use `--extra dev` for contributor tooling. For the optional webapp, use
+`uv sync --locked --all-packages --extra dev` from the repository root; both
+Python packages share this lock.
 
-Optional global install if `pipx` is available:
-
-```
-pipx install git+https://github.com/zohartito/arch-line-weights
-```
-
-This installs the `arch-lw` CLI.
-Do not assume `arch-lw`, `uv`, or `uvx` are globally on `PATH` in a fresh
-studio shell; use `.venv/bin/arch-lw` from a source checkout or install with
-`pipx`.
+Use `uv run --locked --no-sync arch-lw ...`, or the generated
+`.venv/bin/arch-lw` (`.venv\Scripts\arch-lw` on Windows). Plain `pip install -e`
+and `pipx install git+...` resolve dependencies independently and are not the
+reviewed locked installation path. Dependency changes require regenerating and
+reviewing `uv.lock`; normal installs must keep `--locked`.
 
 With Claude Code installed, wire up the bundled skill from the repository root:
 

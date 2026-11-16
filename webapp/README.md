@@ -54,14 +54,14 @@ Install once, then use the one-command launcher:
 
 ```bash
 cd webapp
-pip install -e .. -e '.[dev]'
+uv sync --locked --all-packages --extra dev
 cd frontend
 npm install
 ```
 
 ```bash
 cd webapp
-arch-lw-web-console
+uv run --locked --no-sync arch-lw-web-console
 ```
 
 The launcher starts FastAPI and SvelteKit together, chooses open local ports,
@@ -123,19 +123,19 @@ keeping private review inputs local.
 ## Run the backend directly
 
 The webapp depends on the parent `arch-line-weights` package. Install both local
-packages at once:
+packages from the shared root `uv.lock` (uv 0.13.8 verifies registry hashes
+and `--locked` rejects stale metadata):
 
 ```bash
 cd webapp
-pip install -e .. -e .        # parent engine + webapp
-pip install -e .. -e '.[dev]' # add pytest + httpx + ruff
+uv sync --locked --all-packages --extra dev # parent engine, webapp and tests
 ```
 
 Run the dev server:
 
 ```bash
 cd webapp
-uvicorn backend.main:app --reload --port 8000
+uv run --locked --no-sync uvicorn backend.main:app --reload --port 8000
 ```
 
 Health check:
@@ -163,7 +163,7 @@ OpenAPI docs:
 
 ```bash
 cd webapp
-pytest tests/ -q
+uv run --locked --no-sync pytest tests/ -q
 ```
 
 The tests use an isolated `tmp_path` storage per run and a synthetic `.ai` fixture (built via `arch_line_weights.poche_saas.write_synthetic_test_ai`). No real Rhino exports are needed.
@@ -187,7 +187,7 @@ both local servers:
 
 ```bash
 cd webapp
-arch-lw-web-console
+uv run --locked --no-sync arch-lw-web-console
 ```
 
 Useful flags:

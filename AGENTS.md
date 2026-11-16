@@ -1,11 +1,11 @@
 # arch-line-weights — apply architectural line-weight hierarchy + poché to Rhino-exported .ai/.pdf drawings via the `arch-lw` CLI.
 
 ## Run & test
-- Install (source): `python -m venv .venv && .venv/bin/python -m pip install -e ".[test]"` — the `[test]` extra pulls PyYAML, without which the proof tests fail. Use `.[dev]` for ruff + mypy + pytest.
+- Locked install (uv 0.13.8): `uv sync --locked --extra test`; use `--extra dev` for ruff/mypy and `--all-packages` to include the webapp. Root and webapp share `uv.lock`; registry downloads are hash-verified and stale metadata fails. CI uses this path.
 - CLI entry point: `.venv/bin/arch-lw --help` (`arch_line_weights.cli:cli`).
 - Tests: `pytest` (testpaths = `tests`; defaults exclude integration collection and live evals). CI runs `pytest --tb=short --ignore=tests/test_hatch_v05.py`.
 - License audit: `.venv/bin/python scripts/license_audit.py --format md --write` walks installed runtime requirements and writes JSON + Markdown under `docs/licensing/`. Tests compare committed distribution names with a fresh runtime closure, excluding root optional extras. Flags are metadata screening, not legal conclusions; review unknowns and bundled notices separately.
-- License boundary: `pytest tests/test_license_boundary.py -q` checks named/literal imports in `src/`, `webapp/` and `scripts/`, blocks new webapp `inspect`/`preview` imports with two explicit dormant exceptions, and checks fresh-process startup. Install `-e './webapp[test]'` in the same venv to exercise startup; otherwise missing startup dependencies produce an explicit skip.
+- License boundary: `pytest tests/test_license_boundary.py -q` checks named/literal imports in `src/`, `webapp/` and `scripts/`, blocks new webapp `inspect`/`preview` imports with two explicit dormant exceptions, and checks fresh-process startup. Run `uv sync --locked --all-packages --extra test` in the same workspace to exercise startup; otherwise missing startup dependencies produce an explicit skip.
 - Renderer spike only: install `pypdfium2` in the local venv, then run `.venv/bin/python scripts/spike_pdfium_preview.py`. Compares the synthetic fixture and a generated visible control; artifacts stay under ignored `.venv/pdfium-spike/`. No runtime dependency or renderer switch.
 - Illustrator bridge commands (`apply-jsx`, `layout-jsx`, `poche`) require macOS/AppleScript; Windows supports headless PDF/native processing and preview (`gswin64c`/`gswin32c` detection).
 - Frontend offline validation (from `webapp/frontend` after dependency install): `npm test`, `npm run check`, `npm run build`. The API regression compiles TypeScript and verifies tombstones make no requests.

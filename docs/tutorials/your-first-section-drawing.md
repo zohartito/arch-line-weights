@@ -4,7 +4,7 @@ This tutorial takes you from a freshly-exported Rhino `.ai` file to a printable 
 
 ## What you need
 
-- macOS with Python 3.11+ (the Illustrator bridge uses AppleScript)
+- macOS with Python 3.11+ and uv 0.13.8 (the Illustrator bridge uses AppleScript)
 - Adobe Illustrator 2024 or later (required for `apply-jsx` and `poche`)
 - A Rhino-exported `.ai` file with **layers preserved** (Make2D → Export Selected → Adobe Illustrator)
 - 5 minutes of patience while Illustrator opens
@@ -14,8 +14,7 @@ This tutorial takes you from a freshly-exported Rhino `.ai` file to a printable 
 ```bash
 git clone https://github.com/zohartito/arch-line-weights
 cd arch-line-weights
-python -m venv .venv
-.venv/bin/python -m pip install -e .
+uv sync --locked --extra test
 .venv/bin/arch-lw --version
 ```
 
@@ -85,8 +84,7 @@ The Illustrator `apply-jsx` and `poche` bridge commands in this tutorial are
 macOS-only. On Windows, export a vector PDF and use PowerShell:
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\python -m pip install -e ".[test]"
+uv sync --locked --extra test
 .\.venv\Scripts\arch-lw inspect "South Section.pdf"
 .\.venv\Scripts\arch-lw apply "South Section.pdf" --auto --preset section -o "South Section HIERARCHY.pdf"
 .\.venv\Scripts\arch-lw preview "South Section.pdf" "South Section HIERARCHY.pdf" -o preview.png

@@ -8,7 +8,7 @@ what we're looking for, and how to ship a PR.
 ```bash
 git clone https://github.com/zohartito/arch-line-weights
 cd arch-line-weights
-pip install -e ".[dev]"
+uv sync --locked --extra dev
 pytest
 ```
 

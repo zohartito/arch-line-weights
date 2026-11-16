@@ -115,3 +115,6 @@ markers = [
     "integration: tests that require external apps (Illustrator) — skipped in CI by default. Opt in via `pytest -o addopts=-v -m integration tests/integration`.",
     "eval: live, metered LLM evals (real Anthropic calls) — self-skip unless ARCH_LW_LLM_FALLBACK=1 + ANTHROPIC_API_KEY are set. Run via `pytest -m eval -s`.",
 ]
+
+[tool.uv.workspace]
+members = ["webapp"]
