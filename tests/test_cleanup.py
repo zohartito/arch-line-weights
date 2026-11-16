@@ -236,3 +236,16 @@ def test_alw01_failed_save_preserves_existing_output(tmp_path, monkeypatch):
     with pytest.raises(OSError, match="synthetic"):
         cleanup_file(src, dst)
     assert dst.read_bytes() == b"previous output"
+
+
+def test_alw17_explicit_progress_file_survives_captured_stderr(tmp_path):
+    src, dst, progress = (tmp_path / name for name in ("source.ai", "out.ai", "progress.tsv"))
+    _write_native_ai(src, _single_layer_payload())
+    result = CliRunner().invoke(cli, ["apply-saas", str(src), "--architectural", "-o", str(dst),
+                                     "--progress-file", str(progress)])
+    assert result.exit_code == 0, result.output
+    assert progress.exists()
+    text = progress.read_text()
+    assert "read_payload" in text and "write_payload" in text
+    assert "START" in text and "DONE" in text
+    assert "START" not in result.stderr

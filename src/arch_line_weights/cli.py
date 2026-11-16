@@ -37,7 +37,7 @@ from .linetypes import aia_status_from_name, apply_status, linetype_for_layer
 from .poche import apply_poche
 from .poche_pdf import apply_poche_pdf
 from .presets import PRESETS, select_preset
-from .progress import DEFAULT_PROGRESS_FILE, make_reporter
+from .progress import DEFAULT_PROGRESS_FILE, ProgressReporter, make_reporter
 from .role_signal import no_role_signal, no_role_signal_message
 from .safety import (
     ProcessingDisabledError,
@@ -1278,7 +1278,8 @@ def bridge_rhino_ai_cmd(
     type=click.Path(dir_okay=False, path_type=Path),
     default=None,
     help="Override the progress-event log path (default: a private per-run temporary file). "
-    "One tab-separated event per line. Ignored when --no-progress is set.",
+    "One tab-separated event per line, including when stderr is piped. "
+    "Ignored only when --no-progress is explicitly set.",
 )
 @click.option(
     "--report",
@@ -1417,7 +1418,7 @@ def apply_saas_cmd(
         output = Path(default_output_path_saas(src))
 
     try:
-        ensure_distinct_paths(src, output, report_path)
+        ensure_distinct_paths(src, output, report_path, progress_file if progress is not False else None)
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
 
@@ -1428,11 +1429,14 @@ def apply_saas_cmd(
     else:
         progress_enabled = bool(progress)
     progress_file_path = str(progress_file) if progress_file else DEFAULT_PROGRESS_FILE
-    reporter = make_reporter(
-        enabled=progress_enabled,
-        file_path=progress_file_path if progress_enabled else None,
-        stderr=sys.stderr if progress_enabled else None,
-    )
+    if progress_file is not None and progress is None and not progress_enabled:
+        reporter = ProgressReporter(file_path=str(progress_file), tty=None, enabled=True)
+    else:
+        reporter = make_reporter(
+            enabled=progress_enabled,
+            file_path=progress_file_path if progress_enabled else None,
+            stderr=sys.stderr if progress_enabled else None,
+        )
 
     if poche:
         from .poche_saas import apply_saas_with_poche

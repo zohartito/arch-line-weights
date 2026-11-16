@@ -156,6 +156,10 @@ arch-lw apply-saas SRC [OPTIONS]
 | `--bridge-strategy {greedy,best}` | `best` | Bridge selector for the poché auto-bridge rung |
 | `--progress / --no-progress` | auto | Stage/layer progress feedback |
 | `--progress-file PATH` | private per-run temporary file | Optional durable tab-separated event log |
+
+An explicit `--progress-file` logs even when stderr is captured or piped;
+`--no-progress` explicitly disables both terminal feedback and file logging.
+
 | `--report PATH` | — | Durable JSON report with input kind, command path, and filled/skipped/failed/why layer status |
 
 When `--progress-file` is omitted, progress artifacts use a new mode-0700
