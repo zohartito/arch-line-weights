@@ -161,7 +161,11 @@ Day-1 layer-preserving dogfood path:
 
 Use basic `apply` for fast stroke-weight output. Use `apply-saas
 --architectural --poche` when Cursor 1 needs layer-preserving hierarchy plus
-conservative black poché for Illustrator/Acrobat inspection.
+conservative black poché in Illustrator's native payload. Open the resulting
+`HIERARCHY-saas.ai` in Illustrator and **File > Save As** a PDF-compatible `.ai`
+(or export a PDF) to bake those changes into the visible PDF stream. Only then
+review that saved/exported file in Acrobat or with `arch-lw preview`; the raw
+headless output still renders the original PDF stream.
 
 Input caveats for that path:
 
