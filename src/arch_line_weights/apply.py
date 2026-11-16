@@ -2,7 +2,7 @@
 
 Strategy:
   * Parse the page's content stream into (operands, operator) instructions
-  * Track the current stroke RGB (set by `RG`)
+  * Track stroke color space and RGB across `q`/`Q` graphics-state saves
   * Before every stroke operator (S, s, B, B*, b, b*) inject `<width> w`
   * For .ai files, strip /PieceInfo so Illustrator re-parses from the modified
     PDF stream instead of its now-stale private cache
@@ -242,6 +242,8 @@ def _rewrite(
 ) -> list:
     out: list = []
     current_rgb: tuple[int, int, int] | None = None
+    color_space = "/DeviceGray"
+    color_stack: list[tuple[str, tuple[int, int, int] | None]] = []
     layer_stack: list[str | None] = []
     property_layers = property_layers or {}
     # Only touch the dash state when at least one real dash pattern is requested;
@@ -299,11 +301,25 @@ def _rewrite(
 
         active_layer = _current_layer(layer_stack)
 
-        if op_str == "RG" and len(operands) >= 3:
-            try:
-                r, g, b = (float(o) for o in operands[:3])
-                current_rgb = (round(r * 255), round(g * 255), round(b * 255))
+        if op_str == "q":
+            color_stack.append((color_space, current_rgb))
+            out.append((operands, op))
+        elif op_str == "Q":
+            color_space, current_rgb = color_stack.pop() if color_stack else ("/DeviceGray", None)
+            out.append((operands, op))
+        elif op_str in {"G", "K", "CS"}:
+            color_space = {"G": "/DeviceGray", "K": "/DeviceCMYK"}.get(op_str, str(operands[0]))
+            current_rgb = (0, 0, 0) if color_space == "/DeviceRGB" else None
+            out.append((operands, op))
+        elif op_str == "RG" or op_str in {"SC", "SCN"}:
+            if op_str == "RG":
+                color_space = "/DeviceRGB"
                 result.rg_seen += 1
+            current_rgb = None
+            try:
+                if color_space == "/DeviceRGB" and len(operands) == 3:
+                    r, g, b = (float(o) for o in operands)
+                    current_rgb = (round(r * 255), round(g * 255), round(b * 255))
             except Exception:
                 current_rgb = None
             out.append((operands, op))

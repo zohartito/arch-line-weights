@@ -295,8 +295,8 @@ the private block, ignoring the PDF stream when it can.
 
 1. **Rewrites the PDF content stream:** for every stroke operator (`S`, `s`,
    `B`, `B*`, `b`, `b*`) it injects `<width> w` ahead, where `<width>` comes
-   from the per-color mapping. Tracks the most recent `RG` (set stroke RGB)
-   to know which color the stroke is.
+   from the per-color mapping. Tracks RGB stroke colors and `q`/`Q` restoration; Gray, CMYK and
+   unsupported color spaces receive the default width.
 2. **Strips `/PieceInfo`:** so Illustrator has no choice but to re-parse the
    modified PDF stream. Illustrator rebuilds its private cache on first save.
 
