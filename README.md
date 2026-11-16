@@ -326,13 +326,14 @@ work in pikepdf is a single linear pass.
 
 Default screen-review weights:
 
-| Preset | Cut / Heaviest | Profile | Edges | Material | Texture | Special |
-|---|---:|---:|---:|---:|---:|---:|
-| `studio` | 1.0 | 0.5 | 0.3 | 0.18 | 0.08 | 0.25 |
-| `section` | 1.0 | 0.5 | 0.3 | 0.18 | 0.08 | 0.25 |
-| `plan` | 0.71 | 0.5 | 0.35 | 0.25 | 0.18 | 0.35 |
-| `elevation` | 1.0 | 0.71 | 0.5 | 0.25 | 0.18 | 0.35 |
-| `detail` | 1.5 | 1.0 | 0.5 | 0.35 | 0.25 | 0.42 |
+<!-- Generated from select_preset(name) with default screen settings. -->
+| Preset | Screen-review tiers (`name`: pt) |
+|---|---|
+| `studio` | `cut`: 1, `profile`: 0.5, `edges`: 0.3, `material`: 0.18, `texture`: 0.08, `special`: 0.25 |
+| `section` | `cut`: 1, `profile`: 0.5, `edges`: 0.3, `hidden`: 0.18, `material`: 0.13, `texture`: 0.08, `special`: 0.25 |
+| `plan` | `walls_cut`: 0.71, `casework`: 0.5, `furniture`: 0.35, `pattern`: 0.25, `site`: 0.25, `texture`: 0.18, `special`: 0.35 |
+| `elevation` | `silhouette`: 1, `profile`: 0.71, `openings`: 0.5, `joints`: 0.35, `material`: 0.25, `texture`: 0.18, `special`: 0.35 |
+| `detail` | `cut_primary`: 1.5, `cut_secondary`: 1, `profile`: 0.71, `edges`: 0.5, `hidden`: 0.35, `material`: 0.35, `texture`: 0.25, `annotation`: 0.25, `special`: 0.42 |
 
 The "Special" tier is for glazing / water / sky — anything not architectural
 that you want held back at a mid weight regardless of darkness.
