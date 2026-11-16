@@ -2,7 +2,9 @@
 
 Only SHA-256 fingerprints are stored, so neither this test nor its failure output discloses the names.
 """
+
 import hashlib
+import itertools
 import re
 import subprocess
 import unittest
@@ -26,7 +28,7 @@ class PrivateIdentifierTests(unittest.TestCase):
             if not path.is_file():
                 continue
             tokens = re.findall(rb"[a-z0-9]+", path.read_bytes().lower())
-            pairs = (first + b"-" + second for first, second in zip(tokens, tokens[1:]))
+            pairs = (first + b"-" + second for first, second in itertools.pairwise(tokens))
             if any(_fingerprint(token) == ACCOUNT_FP for token in tokens) or any(
                 _fingerprint(pair) == MACHINE_FP for pair in pairs
             ):
