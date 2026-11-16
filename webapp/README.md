@@ -9,11 +9,12 @@
 > (HTTP 410) before request parsing or filesystem work. Do not deploy this as
 > a processing service until it has a reviewed authenticated architecture.
 
-A working FastAPI backend + SvelteKit frontend that wraps the existing arch-line-weights pipeline behind a REST API.
+A FastAPI health endpoint and SvelteKit UI shell. Processing and proof export
+are disabled; the historical workflow below is archived design documentation.
 
-The current first screen is the **local designer console prototype**. It is a
-quiet workstation tool for selecting a Rhino / Illustrator / PDF export,
-running staged checks, reading a report, and exporting a local proof packet.
+The first screen is the **local designer console prototype**. Its former staged
+processing and proof-packet export controls cannot complete while the routes
+return HTTP 410.
 It is not posting clearance and not desktop packaging.
 
 This is a **local skeleton**, not a deployment. It runs against the filesystem, has no auth, no payments, no queue. The shape is meant to be the final shape — production swaps `storage.py` for Tigris/R2 and `compute.run_job` for a Redis+RQ task without changing any other module.
@@ -73,7 +74,10 @@ override it). If Vite shifts to `5174`, `5175`, or another nearby local dev
 port because `5173` is occupied, use the printed URL; the backend allows the
 local Vite fallback ports by default.
 
-### What it can do
+### Archived processing design (unavailable)
+
+The following describes the former UI/API contract, not working features.
+Every `/api/jobs` and `/api/console` route returns HTTP 410 before parsing.
 
 - Choose or drag a `.ai` / `.pdf` export.
 - Choose workflow type: Section, Plan, Detail, or Synthetic proof / demo.
@@ -196,10 +200,19 @@ Useful flags:
 | `--storage-root /path/to/local-output` | Put local run files under a chosen folder |
 | `--reload` | Start FastAPI with `uvicorn --reload` |
 
-The command keeps raw local reports in local storage. It is a prototype launch
-helper, not desktop packaging.
+The command launches the UI shell and health endpoint. Processing routes do
+not create local reports. It is a prototype launcher, not desktop packaging.
 
-## REST API
+## Current REST API
+
+`GET /api/health` remains available (HTTP 200). Every `/api/jobs` and
+`/api/console` route returns HTTP 410, including guardrails and downloads.
+
+### Archived processing API (unavailable)
+
+The fields, responses and curl example below describe the retired contract.
+They cannot run processing or export proof; requests return 410 rather than
+validating these fields.
 
 Designer console:
 
@@ -258,7 +271,10 @@ curl -X POST http://localhost:8000/api/jobs \
   -F "source=auto"
 ```
 
-## What this is not (yet)
+## Archived deployment assumptions
+
+These were prototype assumptions, not a current deployment plan. Processing
+remains disabled pending an owner-reviewed architecture.
 
 - No magic-link auth — anonymous access only
 - No Stripe / billing — every job is free

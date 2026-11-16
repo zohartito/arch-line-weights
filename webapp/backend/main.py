@@ -5,10 +5,8 @@ Run locally:
     cd webapp
     uvicorn backend.main:app --reload
 
-Production runs the same module with ``uvicorn`` behind a Fly.io proxy.
-The app stays purely sync at the request level (no async I/O against
-external services yet); all CPU-heavy work is dispatched via
-``run_in_threadpool`` inside the routes.
+Only health and the UI shell remain available. Processing routes return
+HTTP 410 before parsing or filesystem work; this is not a processing deployment.
 """
 
 from __future__ import annotations

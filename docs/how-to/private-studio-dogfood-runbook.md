@@ -76,7 +76,11 @@ arch-lw proof-check tests/fixtures/make2d/manifest.yml \
 renders, private path leaks, and count mismatches. A passing synthetic fixture does
 **not** close #30.
 
-### 6. Designer console (optional local UI)
+### 6. Archived designer-console workflow (disabled)
+
+The launcher opens a UI shell only. `/api/jobs` and `/api/console` return
+HTTP 410 before request parsing; staged processing and proof ZIP export below
+are historical and unavailable. Use the local CLI steps above for current review.
 
 ```bash
 cd webapp
@@ -94,7 +98,7 @@ as **NO-GO** templates.
 |--------|----------|---------|
 | Raw `report.json`, local logs | Your local proof directory | **Never** |
 | `proof-check --write` JSON | Local only | **Never** |
-| Console proof zip | Downloaded locally | **Never** |
+| Console proof zip (archived; export disabled) | Previously downloaded locally | **Never** |
 | Public-safe summaries in issues | Path-free text only | OK with gates stated |
 
 ## What counts as W5/W7 acceptance
