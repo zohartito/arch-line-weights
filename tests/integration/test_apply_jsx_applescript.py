@@ -10,7 +10,7 @@ Skipped automatically when:
   - Adobe Illustrator isn't installed / running
 
 Run manually after any change to AppleScript-emitting code:
-  pytest -m integration tests/integration/
+  pytest -o addopts=-v -m integration tests/integration/
 
 The tests are intentionally narrow: they verify the helper runs without
 raising and returns either real values or (None, None). They do not

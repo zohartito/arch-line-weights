@@ -110,8 +110,8 @@ strict = false  # gradual typing for now
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-v"
+addopts = '-v --ignore=tests/integration -m "not integration and not eval"'
 markers = [
-    "integration: tests that require external apps (Illustrator) — skipped in CI by default. Run locally via `pytest -m integration`.",
+    "integration: tests that require external apps (Illustrator) — skipped in CI by default. Opt in via `pytest -o addopts=-v -m integration tests/integration`.",
     "eval: live, metered LLM evals (real Anthropic calls) — self-skip unless ARCH_LW_LLM_FALLBACK=1 + ANTHROPIC_API_KEY are set. Run via `pytest -m eval -s`.",
 ]
