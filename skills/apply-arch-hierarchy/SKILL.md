@@ -55,8 +55,10 @@ the new widths. Original file is never modified — output is `<src> HIERARCHY.<
    geometry. Some layers may need `--overrides poche-overrides.json` for
    foundations / concrete bases that don't auto-close.
 
-5. **Always run apply commands with `--dry-run` first** if the file has many
-   unique colors — the dry run prints the planned mapping.
+5. **Run `apply` and `apply-saas` with `--dry-run` first** if the file has many
+   unique colors; these commands print the planned mapping. `apply-jsx` does
+   not support `--dry-run`: inspect the file and review `explain-layer` output
+   before invoking its Illustrator operation.
 
 ## Rules of engagement
 
