@@ -54,20 +54,20 @@ published to PyPI and then yanked, so install from source or GitHub as above.
 | Input file | Use | Notes |
 |---|---|---|
 | **PDF-only export** (`.pdf`, or PDF with no Illustrator native data) | `inspect`, then `apply` | Fastest. Stroke-weight rewrite only; `apply` can flatten Illustrator layers. |
-| **Native Illustrator `.ai`** (has the AI private payload `/NumBlock`) | `apply-saas` (optionally `--poche`) | Headless, layer-preserving. This is the path the 98 MB axon stress-test ran on. |
-| **Converted / section `.ai`** (`[Converted]`, PDF-only lineage, **no** `/NumBlock`) | `apply-jsx`, then `arch-lw poche` | The Illustrator-bridge path for local review. It is not public proof clearance. |
+| **Native Illustrator `.ai`** (has `/AIPrivateData`; `/NumBlock` is optional) | `apply-saas` (optionally `--poche`) | Headless, layer-preserving. This is the path the 98 MB axon stress-test ran on. |
+| **Converted / section `.ai`** (PDF-only lineage, **no** `/AIPrivateData`) | `apply-jsx`, then `arch-lw poche` | The Illustrator-bridge path for local review. It is not public proof clearance. |
 
 Converted-section example (synthetic public-safe filenames):
 
 ```bash
 .venv/bin/arch-lw apply-jsx sample-section.ai --preset section --source rhino
-.venv/bin/arch-lw poche sample-section HIERARCHY-jsx.ai --source rhino --style solid
+.venv/bin/arch-lw poche "sample-section HIERARCHY-jsx.ai" --source rhino --style solid
 ```
 
 ### Known input-format caveats
 
-- **`apply-saas --poche` needs a native `/NumBlock`.** On a PDF-only or
-  `[Converted]` `.ai` there is no `/NumBlock`, so `apply-saas` cannot edit it —
+- **`apply-saas --poche` needs native `/AIPrivateData` streams.**
+  `/NumBlock` is optional. Without the private streams, `apply-saas` cannot edit it —
   use the `apply-jsx` → `arch-lw poche` bridge for those files instead.
 - **Legacy Rhino PostScript `.ai` must be re-saved first.** Some older Rhino
   exports fail to open in both pikepdf and PyMuPDF ("unable to find trailer

@@ -3,6 +3,12 @@
 All notable changes to this project are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com).
 
+## [Unreleased]
+
+### Fixed
+- ALW-29: format the later audit tests with the locked Ruff version so the contributor formatting check passes.
+- ALW-44: build docs with read-only permissions and publish the built artifact, including `.nojekyll`, to `gh-pages` in a separate job that does not check out or run repository code.
+
 ## [0.6.0] — 2026-04-30
 
 ### Added

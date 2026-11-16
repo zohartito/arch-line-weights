@@ -114,6 +114,7 @@ in steady-state the native-payload pipeline is much faster (~80–90 s).
   table cell is correct; nothing to inject. Don't read it as a
   failure.
 * **Macro is 4× the input size of the reference but only ~3× the
-  apply-saas time** (81 s vs 28 s). Throughput: ~120 MB/s for the
-  reference, ~80 MB/s for the macro — modestly sub-linear, suggests
-  pikepdf parsing dominates rather than the bridge-best traversal.
+  apply-saas time** (81 s vs 28 s). Throughput (input bytes / elapsed seconds / 1,000,000):
+  **0.88 MB/s** for the reference (24,468,895 / 27.95), **1.20 MB/s**
+  for the macro (98,056,614 / 81.45). These are dated private-input
+  observations, not a current throughput guarantee or a measured stage breakdown.

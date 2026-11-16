@@ -1176,6 +1176,9 @@ def polygonize_layer(
     """
     processing_disabled("poche geometry processing")
     strategy = _resolve_bridge_strategy(bridge_strategy)
+    forced = (override or {}).get("strategy", "")
+    if forced not in {"", "skip", "bbox", "concave_hull", "linemerge", "snap"}:
+        raise ValueError(f"unsupported polygonization strategy: {forced!r}")
     lines = _lines_from_anchors(paths)
     if closing_lines:
         lines = lines + closing_lines
@@ -1193,6 +1196,21 @@ def polygonize_layer(
         strat = override.get("strategy", "")
         if strat == "skip":
             return [], FillResult(layer_name, "skipped", 0.0, 0, n_segments)
+        if strat in {"linemerge", "snap"}:
+            tolerances = (0.0,) if strat == "linemerge" else TOLERANCE_SWEEP[1:]
+            candidates = [(_polys_at_tolerance(lines, tol), tol) for tol in tolerances]
+            polys, tol = max(candidates, key=lambda candidate: len(candidate[0]))
+            if not polys:
+                return [], FillResult(layer_name, "failed", 0.0, 0, n_segments, tol)
+            confidence = 1.0 if tol == 0 else (0.95 if tol <= 0.5 else (0.85 if tol <= 1.0 else 0.7))
+            return polys, FillResult(
+                layer_name,
+                "linemerge_bare" if tol == 0 else "linemerge_snap",
+                confidence,
+                len(polys),
+                n_segments,
+                tol,
+            )
         if strat == "bbox":
             bb = _bbox(lines)
             if bb is not None:

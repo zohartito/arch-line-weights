@@ -22,7 +22,7 @@
 - [ ] PyPI publish: README intentionally says PyPI is not published yet. Decide whether v1 launch requires a real `pip install arch-line-weights` path.
 - [ ] Real sample fixture: large real `.ai` drawings remain excluded from git. Decide whether to add a small anonymized `.ai`, use Git LFS/private release assets, or keep only the tiny PDF smoke fixture.
 - [ ] Bluebeam QA: Bluebeam is Windows-only/unverified for this Mac dogfood. Decide whether it is in scope for public v1 or deferred.
-- [ ] PC mirror verification: `ssh desktop-zt` did not resolve from this Mac session, so the Windows/Synology copy still needs an external check when that hostname is reachable.
+- [ ] PC mirror verification: `ssh windows-pc` did not resolve from this Mac session, so the Windows/Synology copy still needs an external check when that hostname is reachable.
 - [ ] Frontend/SaaS hardening: webapp remains local-only and experimental for this push.
 
 ## Current Recommended Dogfood Command

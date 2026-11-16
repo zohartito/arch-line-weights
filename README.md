@@ -1,7 +1,7 @@
 # arch-line-weights
 
 [![CI](https://github.com/zohartito/arch-line-weights/actions/workflows/ci.yml/badge.svg)](https://github.com/zohartito/arch-line-weights/actions/workflows/ci.yml)
-[![Docs](https://img.shields.io/badge/docs-mkdocs--material-blue)](https://zohartito.github.io/arch-line-weights/)
+[![Docs](https://img.shields.io/badge/docs-mkdocs--material-blue)](https://github.com/zohartito/arch-line-weights/blob/main/docs/index.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
 
@@ -29,8 +29,8 @@ inside Illustrator only to have ExtendScript hang for hours — this is for you.
 
 ```
 $ arch-lw apply examples/sample-linework.pdf --auto --preset section
-# 12 colors mapped using auto:section
-applied 8,420 strokes across 12 color changes
+# 3 colors mapped using auto:section
+applied 3 strokes across 3 color changes
 wrote examples/sample-linework HIERARCHY.pdf
 ```
 
@@ -42,33 +42,33 @@ are not public proof clearance.
 
 ## Install
 
-Current source install:
+Locked source install (Python 3.11+ and `uv` 0.13.8):
 
-```
+```bash
 git clone https://github.com/zohartito/arch-line-weights
 cd arch-line-weights
-python -m venv .venv
-.venv/bin/python -m pip install -e ".[test]"
-.venv/bin/arch-lw --help
+uv sync --locked --extra test
+uv run --locked --no-sync arch-lw --help
 ```
 
-The `[test]` extra pulls in PyYAML, which the test/proof suite needs; without
-it the 15 proof tests fail with "PyYAML is required".
+`uv sync --locked` rejects stale dependency metadata and verifies downloaded
+registry artifacts against the hashes in the committed `uv.lock`. The `test`
+extra includes PyYAML for the proof tests. Local project code is built from
+this checkout; the lock covers registry dependencies, not publication clearance.
+Use `--extra dev` for contributor tooling. For the optional webapp, use
+`uv sync --locked --all-packages --extra dev` from the repository root; both
+Python packages share this lock.
 
-Optional global install if `pipx` is available:
+Use `uv run --locked --no-sync arch-lw ...`, or the generated
+`.venv/bin/arch-lw` (`.venv\Scripts\arch-lw` on Windows). Plain `pip install -e`
+and `pipx install git+...` resolve dependencies independently and are not the
+reviewed locked installation path. Dependency changes require regenerating and
+reviewing `uv.lock`; normal installs must keep `--locked`.
+
+With Claude Code installed, wire up the bundled skill from the repository root:
 
 ```
-pipx install git+https://github.com/zohartito/arch-line-weights
-```
-
-This installs the `arch-lw` CLI.
-Do not assume `arch-lw`, `uv`, or `uvx` are globally on `PATH` in a fresh
-studio shell; use `.venv/bin/arch-lw` from a source checkout or install with
-`pipx`.
-
-To wire up the Claude Code skill:
-
-```
+mkdir -p ~/.claude/skills
 ln -s "$(pwd)/skills/apply-arch-hierarchy" ~/.claude/skills/apply-arch-hierarchy
 ```
 
@@ -161,12 +161,17 @@ Day-1 layer-preserving dogfood path:
 
 Use basic `apply` for fast stroke-weight output. Use `apply-saas
 --architectural --poche` when Cursor 1 needs layer-preserving hierarchy plus
-conservative black poché for Illustrator/Acrobat inspection.
+conservative black poché in Illustrator's native payload. Open the resulting
+`HIERARCHY-saas.ai` in Illustrator and **File > Save As** a PDF-compatible `.ai`
+(or export a PDF) to bake those changes into the visible PDF stream. Only then
+review that saved/exported file in Acrobat or with `arch-lw preview`; the raw
+headless output still renders the original PDF stream.
 
 Input caveats for that path:
 
-- `apply-saas --poche` requires a native Illustrator `.ai` with `/NumBlock`.
-- PDF-only or `[Converted]` `.ai` files use `apply-jsx`, then `arch-lw poche`
+- `apply-saas --poche` requires native Illustrator `/AIPrivateData` streams.
+  `/NumBlock` is optional; its absence alone does not mean the payload is missing.
+- `.ai` files without native `/AIPrivateData` use `apply-jsx`, then `arch-lw poche`
   on the `HIERARCHY-jsx` output.
 - Legacy Rhino PostScript `.ai` exports may need Illustrator File > Save As /
   re-save before v1 can process them.
@@ -175,8 +180,8 @@ Supported input matrix:
 
 | Input kind | Recommended commands | Notes |
 |---|---|---|
-| Native Illustrator `.ai` with `/NumBlock` | `inspect`, `apply-saas`, `apply-saas --poche` | Best headless, layer-preserving path. |
-| PDF-only or `[Converted]` `.ai` | `inspect`, `apply-jsx`, then `poche` | Use the Illustrator bridge when layers must be preserved. |
+| Native Illustrator `.ai` with `/AIPrivateData` | `inspect`, `apply-saas`, `apply-saas --poche` | Best headless, layer-preserving path. |
+| `.ai` without native `/AIPrivateData` (including PDF-only exports) | `inspect`, `apply-jsx`, then `poche` | Use the Illustrator bridge when layers must be preserved. |
 | Plain `.pdf` | `inspect`, `apply` | Fast PDF-stream rewrite; no Illustrator layer editing claim. |
 | Reference/report/image-only `.pdf` | `inspect` diagnostic only | Not a line-weight output path; export a vector drawing sheet instead. |
 | Legacy Rhino PostScript `.ai` | Illustrator Save As first | Convert to modern/PDF-compatible `.ai`, then re-run `inspect`. |
@@ -184,7 +189,8 @@ Supported input matrix:
 Commands now preflight the input shape and return a diagnostic with the
 detected kind, supported command map, and recommended next step when the wrong
 file shape is used. If a PDF has no vector drawing marks or rewriteable strokes,
-`apply` stops before writing a no-op output.
+`apply` stops before writing a no-op output. Invoked Form XObjects are
+rejected before saving because this path rewrites page streams only.
 
 ### Clean up one-layer Make2D exports
 
@@ -205,11 +211,14 @@ internal lines disappear; those remain review items in the report/workflow.
 
 `apply-jsx` uses a **semantic layer-name classifier**: anything in a
 `Visible::ClippingPlaneIntersections::*` OCG is the section cut (1.0 pt);
-`TEC_TIMBER_*`, `TEC_CLT_*`, `TEC_FOUNDATION` etc. are structure (0.5 pt);
-`SHS_*` are secondary steel (0.35 pt); `WINDOW_GLASS` is glazing (0.25 pt);
-cladding (`CU_*`) is material (0.18 pt); EPDM and `FLOOR_DATUMS` are
+names containing `TEC_TIMBER`, `TEC_CLT_SLABS`, `TEC_ROOF_CLT` or
+`TEC_FOUNDATION` are structure (0.5 pt); `_SHS_` (including the leading
+underscore, e.g. `TEC_SHS_COLUMN`) is secondary steel (0.35 pt);
+`WINDOW_GLASS` is glazing (0.25 pt); `_CU_CORR_`, `_CU_FLAT_` and
+`_CU_PUNCH_` are cladding (0.18 pt); EPDM and `FLOOR_DATUMS` are
 reference (0.13 pt). See `docs/POSTMORTEM.md` for why this is better than
-color-based classification for Rhino files.
+color-based classification for Rhino files. Bare `TEC_CLT_PANEL`, `SHS_COLUMN`
+and `CU_PANEL` do not match these rules and receive the 0.25 pt default.
 
 `apply` (pikepdf mode) buckets colors into the preset's tier ladder by
 luminance. Good fallback for non-Rhino files where layer names don't
@@ -295,8 +304,8 @@ the private block, ignoring the PDF stream when it can.
 
 1. **Rewrites the PDF content stream:** for every stroke operator (`S`, `s`,
    `B`, `B*`, `b`, `b*`) it injects `<width> w` ahead, where `<width>` comes
-   from the per-color mapping. Tracks the most recent `RG` (set stroke RGB)
-   to know which color the stroke is.
+   from the per-color mapping. Tracks RGB stroke colors and `q`/`Q` restoration; Gray, CMYK and
+   unsupported color spaces receive the default width.
 2. **Strips `/PieceInfo`:** so Illustrator has no choice but to re-parse the
    modified PDF stream. Illustrator rebuilds its private cache on first save.
 
@@ -318,13 +327,14 @@ work in pikepdf is a single linear pass.
 
 Default screen-review weights:
 
-| Preset | Cut / Heaviest | Profile | Edges | Material | Texture | Special |
-|---|---:|---:|---:|---:|---:|---:|
-| `studio` | 1.0 | 0.5 | 0.3 | 0.18 | 0.08 | 0.25 |
-| `section` | 1.0 | 0.5 | 0.3 | 0.18 | 0.08 | 0.25 |
-| `plan` | 0.71 | 0.5 | 0.35 | 0.25 | 0.18 | 0.35 |
-| `elevation` | 1.0 | 0.71 | 0.5 | 0.25 | 0.18 | 0.35 |
-| `detail` | 1.5 | 1.0 | 0.5 | 0.35 | 0.25 | 0.42 |
+<!-- Generated from select_preset(name) with default screen settings. -->
+| Preset | Screen-review tiers (`name`: pt) |
+|---|---|
+| `studio` | `cut`: 1, `profile`: 0.5, `edges`: 0.3, `material`: 0.18, `texture`: 0.08, `special`: 0.25 |
+| `section` | `cut`: 1, `profile`: 0.5, `edges`: 0.3, `hidden`: 0.18, `material`: 0.13, `texture`: 0.08, `special`: 0.25 |
+| `plan` | `walls_cut`: 0.71, `casework`: 0.5, `furniture`: 0.35, `pattern`: 0.25, `site`: 0.25, `texture`: 0.18, `special`: 0.35 |
+| `elevation` | `silhouette`: 1, `profile`: 0.71, `openings`: 0.5, `joints`: 0.35, `material`: 0.25, `texture`: 0.18, `special`: 0.35 |
+| `detail` | `cut_primary`: 1.5, `cut_secondary`: 1, `profile`: 0.71, `edges`: 0.5, `hidden`: 0.35, `material`: 0.35, `texture`: 0.25, `annotation`: 0.25, `special`: 0.42 |
 
 The "Special" tier is for glazing / water / sky — anything not architectural
 that you want held back at a mid weight regardless of darkness.

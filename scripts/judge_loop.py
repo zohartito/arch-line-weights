@@ -4,7 +4,7 @@
 One command turns "apply → look → tweak overrides → re-apply" into a loop:
 
   1. run the pipeline (default ``arch-lw apply-saas <src> --architectural --poche
-     --poche-overrides <overrides> --report-json <report> -o <out>``),
+     --poche-overrides <overrides> --report <report> -o <out>``),
   2. render the result and score it with ``scripts/visual_judge.py``,
   3. if the verdict is ``review``, merge the judge's ``suggested_overrides`` into
      the overrides JSON and go again — up to ``--iterations`` times.
@@ -20,25 +20,25 @@ hierarchy — on the real hero, pre-bake ``section-v4 POCHE.ai`` scores 1.41:1
 (weight-flatness) while the Illustrator-baked ``section-v4-BAKED.ai`` scores
 5.56:1. Therefore:
 
-  * Pass ``--baked-after <file>`` with an Illustrator-baked render/file whenever
-    you can — that is what the judge should see, and the loop scores it directly.
-  * Without ``--baked-after`` the loop scores the raw pipeline output and prints a
-    loud caveat; treat a low hierarchy_spread there as "un-baked", not "flat".
+  * Use ``--bake-cmd`` to regenerate a baked result for each iteration.
+  * ``--baked-after`` selects that command's output path (or an artifact your
+    custom pipeline regenerates). An unchanged pre-existing file is rejected.
+  * Without a bake the loop scores raw output with a visibility caveat.
 
-An automated Illustrator bake step is intentionally OFF by default (it needs a
-GUI Illustrator + osascript and is not headless-safe); wire it in via
-``--bake-cmd`` if you have it, otherwise supply ``--baked-after``.
+The optional bake command is user-supplied and may require macOS Illustrator.
+For a one-off review of an existing baked file, use ``visual_judge.py --after``.
 
 Usage::
 
     python scripts/judge_loop.py "section-raw.ai" \
-        --overrides overrides.json --baked-after "section-v4-BAKED.ai" \
+        --overrides overrides.json \
         --run-dir runs/ --iterations 3
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import shlex
 import subprocess
@@ -54,7 +54,7 @@ import visual_judge as vj  # noqa: E402
 
 DEFAULT_PIPELINE = (
     'arch-lw apply-saas "{src}" --architectural --poche '
-    '--poche-overrides "{overrides}" --report-json "{report}" -o "{out}"'
+    '--poche-overrides "{overrides}" --report "{report}" -o "{out}"'
 )
 
 
@@ -85,6 +85,21 @@ def _run_pipeline(template: str, *, src: Path, overrides: Path, out: Path, repor
     }
 
 
+def _artifact_identity(path: Path) -> dict[str, Any] | None:
+    if not path.is_file():
+        return None
+    stat = path.stat()
+    with path.open("rb") as stream:
+        digest = hashlib.file_digest(stream, "sha256").hexdigest()
+    return {
+        "sha256": digest,
+        "mtime_ns": stat.st_mtime_ns,
+        "ctime_ns": stat.st_ctime_ns,
+        "inode": stat.st_ino,
+        "size": stat.st_size,
+    }
+
+
 def run_loop(
     src: str | Path,
     *,
@@ -112,20 +127,47 @@ def run_loop(
         report_path = run_dir / f"iter-{it}-report.json"
         overrides_path.write_text(json.dumps(overrides, indent=2) + "\n")
 
-        pipe = _run_pipeline(pipeline, src=src, overrides=overrides_path, out=out_path, report=report_path)
-
-        # Optional headless bake (off by default; needs GUI Illustrator).
-        after = Path(baked_after) if baked_after else out_path
+        after = (
+            Path(baked_after)
+            if baked_after
+            else (run_dir / f"iter-{it}-baked{src.suffix}" if bake_cmd else out_path)
+        )
+        prior_out = _artifact_identity(out_path)
+        prior_after = _artifact_identity(after)
+        prior_report = _artifact_identity(report_path)
+        pipe: dict[str, Any] = {}
         bake_info: dict[str, Any] | None = None
-        if bake_cmd and not baked_after:
-            baked_path = run_dir / f"iter-{it}-baked{src.suffix}"
-            bcmd = bake_cmd.format(src=out_path, out=baked_path)
-            bproc = subprocess.run(shlex.split(bcmd), capture_output=True, text=True)
-            bake_info = {"cmd": bcmd, "returncode": bproc.returncode}
-            if baked_path.exists():
-                after = baked_path
+        try:
+            pipe = _run_pipeline(
+                pipeline, src=src, overrides=overrides_path, out=out_path, report=report_path
+            )
+            if pipe["returncode"] != 0:
+                raise RuntimeError("pipeline failed")
+            if _artifact_identity(out_path) in (None, prior_out):
+                raise RuntimeError("pipeline did not regenerate its output")
+            if bake_cmd:
+                bcmd = bake_cmd.format(src=out_path, out=after)
+                bproc = subprocess.run(shlex.split(bcmd), capture_output=True, text=True)
+                bake_info = {"cmd": bcmd, "returncode": bproc.returncode}
+                if bproc.returncode != 0:
+                    raise RuntimeError("bake failed")
+            identity = _artifact_identity(after)
+            if identity in (None, prior_after):
+                raise RuntimeError("scored artifact was not regenerated for this iteration")
+        except Exception as exc:
+            entry = {
+                "iteration": it,
+                "pipeline": pipe,
+                "bake": bake_info,
+                "processing_error": str(exc),
+                "after": str(after),
+            }
+            (run_dir / f"iter-{it}.json").write_text(json.dumps(entry, indent=2) + "\n")
+            history.append(entry)
+            verdict = "error"
+            break
 
-        report_arg = report_path if report_path.exists() else None
+        report_arg = report_path if _artifact_identity(report_path) not in (None, prior_report) else None
         try:
             result = vj.judge(after, before=src, report_json=report_arg, dpi=dpi)
         except Exception as exc:  # rendering / judging failed — record and stop
@@ -139,7 +181,7 @@ def run_loop(
         if not baked_after and not bake_cmd:
             stream_visible_warning = (
                 "Scored the raw pipeline output — apply-saas payload edits are not in the "
-                "live PDF stream until Illustrator re-bakes. Pass --baked-after for a true score."
+                "live PDF stream until Illustrator re-bakes. Use --bake-cmd to regenerate a baked result for a true score."
             )
 
         entry = {
@@ -147,6 +189,7 @@ def run_loop(
             "pipeline": pipe,
             "bake": bake_info,
             "after_scored": str(after),
+            "artifact_identity": identity,
             "overrides_used": overrides,
             "verdict": result["verdict"],
             "scores": result["scores"],
@@ -185,7 +228,11 @@ def main(argv: list[str] | None = None) -> int:
         "--overrides", required=True, help="Poché overrides JSON (created if absent, updated in place)"
     )
     p.add_argument("--run-dir", required=True, help="Directory for per-iteration run logs and outputs")
-    p.add_argument("--baked-after", default=None, help="Illustrator-baked result to score (recommended)")
+    p.add_argument(
+        "--baked-after",
+        default=None,
+        help="Baked output path; must be regenerated by the pipeline or --bake-cmd",
+    )
     p.add_argument(
         "--pipeline",
         default=DEFAULT_PIPELINE,
