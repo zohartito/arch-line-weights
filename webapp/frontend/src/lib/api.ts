@@ -191,4 +191,3 @@ export function downloadUrl(detail: JobDetail): string | null {
   if (!detail.download_url) return null;
   return apiUrl(detail.download_url);
 }
-
