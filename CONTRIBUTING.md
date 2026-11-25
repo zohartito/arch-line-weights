@@ -8,7 +8,7 @@ what we're looking for, and how to ship a PR.
 ```bash
 git clone https://github.com/zohartito/arch-line-weights
 cd arch-line-weights
-pip install -e ".[dev]"
+uv sync --locked --extra dev
 pytest
 ```
 
@@ -53,7 +53,9 @@ buckets:
 4. Update `CHANGELOG.md` under `## [Unreleased]`
 5. PR with a description that explains the *why*, not just the *what*
 
-CI runs on every PR (Linux + macOS × Python 3.11/12/13). Both must pass.
+PR CI deliberately runs the test gate on Ubuntu with Python 3.12, plus lint.
+The Ubuntu/macOS × Python 3.11/3.12/3.13 compatibility matrix runs only on
+manual `workflow_dispatch` with `full_matrix=true`. Required PR gates must pass.
 
 ## Decision-making
 

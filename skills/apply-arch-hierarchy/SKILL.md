@@ -55,8 +55,10 @@ the new widths. Original file is never modified — output is `<src> HIERARCHY.<
    geometry. Some layers may need `--overrides poche-overrides.json` for
    foundations / concrete bases that don't auto-close.
 
-5. **Always run apply commands with `--dry-run` first** if the file has many
-   unique colors — the dry run prints the planned mapping.
+5. **Run `apply` and `apply-saas` with `--dry-run` first** if the file has many
+   unique colors; these commands print the planned mapping. `apply-jsx` does
+   not support `--dry-run`: inspect the file and review `explain-layer` output
+   before invoking its Illustrator operation.
 
 ## Rules of engagement
 
@@ -71,9 +73,11 @@ the new widths. Original file is never modified — output is `<src> HIERARCHY.<
 
 ## Common drawing presets (pt)
 
-| Preset    | Cut  | Profile | Edges | Material | Texture | Special |
-|-----------|------|---------|-------|----------|---------|---------|
-| section   | 1.0  | 0.5     | 0.3   | 0.18     | 0.08    | 0.25    |
-| plan      | 1.0  | 0.5     | 0.3   | 0.18     | 0.08    | 0.25    |
-| elevation | 1.0  | 0.5     | 0.3   | 0.18     | 0.08    | 0.25    |
-| detail    | 1.5  | 0.7     | 0.4   | 0.25     | 0.13    | 0.3     |
+<!-- Generated from select_preset(name) with default screen settings. -->
+| Preset | Screen-review tiers (`name`: pt) |
+|---|---|
+| `studio` | `cut`: 1, `profile`: 0.5, `edges`: 0.3, `material`: 0.18, `texture`: 0.08, `special`: 0.25 |
+| `section` | `cut`: 1, `profile`: 0.5, `edges`: 0.3, `hidden`: 0.18, `material`: 0.13, `texture`: 0.08, `special`: 0.25 |
+| `plan` | `walls_cut`: 0.71, `casework`: 0.5, `furniture`: 0.35, `pattern`: 0.25, `site`: 0.25, `texture`: 0.18, `special`: 0.35 |
+| `elevation` | `silhouette`: 1, `profile`: 0.71, `openings`: 0.5, `joints`: 0.35, `material`: 0.25, `texture`: 0.18, `special`: 0.35 |
+| `detail` | `cut_primary`: 1.5, `cut_secondary`: 1, `profile`: 0.71, `edges`: 0.5, `hidden`: 0.35, `material`: 0.35, `texture`: 0.25, `annotation`: 0.25, `special`: 0.42 |

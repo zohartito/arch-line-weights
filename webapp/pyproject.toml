@@ -50,5 +50,5 @@ line-length = 110
 target-version = "py311"
 
 [tool.uv.sources]
-# When working in this repo without internet, point at the parent package on disk.
-arch-line-weights = { path = "..", editable = true }
+# Resolve the parent engine through the shared, hash-verified workspace lock.
+arch-line-weights = { workspace = true }

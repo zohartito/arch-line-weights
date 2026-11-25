@@ -13,7 +13,7 @@ from typing import Any
 import numpy as np
 from PIL import Image
 
-from .safety import processing_disabled
+from .safety import atomic_output, atomic_write_text, processing_disabled
 
 try:
     import yaml
@@ -158,6 +158,8 @@ def build_proof_packet_plan(
         raise ValueError("fixture_id must be one safe path component")
     command_list = _validate_string_list(commands, "commands")
     root = Path(output_dir).resolve()
+    if (root / fixture_id).is_symlink():
+        raise ValueError("proof fixture directory must not be a symlink")
     fixture_output_dir = (root / fixture_id).resolve()
     if fixture_output_dir.parent != root:
         raise ValueError("fixture_id escapes proof output root")
@@ -374,14 +376,14 @@ def materialize_synthetic_proof_packet(plan: ProofPacketPlan, fixture: ProofFixt
         "visual_artifacts": visual_artifacts,
     }
 
-    plan.report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    plan.cut_geometry_path.write_text(
+    atomic_write_text(plan.report_path, json.dumps(report, indent=2, sort_keys=True) + "\n")
+    atomic_write_text(
+        plan.cut_geometry_path,
         json.dumps(_synthetic_cut_geometry(fixture.expected_report.counts), indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
     )
-    plan.layer_audit_path.write_text(
+    atomic_write_text(
+        plan.layer_audit_path,
         json.dumps(_synthetic_layer_audit(report["layers"]), indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
     )
     _write_synthetic_visual_artifacts(plan, fixture, visual_artifacts)
 
@@ -663,8 +665,11 @@ def _write_synthetic_visual_artifacts(
 
     for relative_name, image in images.items():
         path = plan.output_dir / relative_name
+        if any(parent.is_symlink() for parent in (path, *path.parents)):
+            raise ValueError("proof output must not contain symlinks")
         path.parent.mkdir(parents=True, exist_ok=True)
-        image.save(path)
+        with atomic_output(path) as staged:
+            image.save(staged, format="PNG")
 
 
 def _synthetic_image_size(review_regions: Sequence[ReviewRegion]) -> tuple[int, int]:

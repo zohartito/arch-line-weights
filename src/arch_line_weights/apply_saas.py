@@ -24,8 +24,10 @@ the default weight, mirroring `apply.py`.
 
 from __future__ import annotations
 
+import io
 import os
 import re
+import zlib
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -36,7 +38,7 @@ import zstandard as zstd
 
 from .input_format import raise_if_unsupported
 from .progress import ProgressReporter
-from .safety import processing_disabled
+from .safety import atomic_output, ensure_distinct_paths, processing_disabled
 
 # AI24 native-payload framing constants. Every Rhino-export .ai we've inspected
 # uses these exact values; if they change in a future Illustrator release we'd
@@ -189,12 +191,51 @@ def _require_native_private(pdf: pikepdf.Pdf) -> pikepdf.Object:
     return priv
 
 
+def _bounded_native_decompress(data: bytes, limit: int) -> bytes:
+    declared = zstd.frame_content_size(data)
+    if declared >= 0 and declared > limit:
+        raise ValueError("native payload decoded size exceeds safe limit")
+    decoder = zstd.ZstdDecompressor(max_window_size=max(1024, (limit + 1023) // 1024))
+    with decoder.stream_reader(io.BytesIO(data), read_across_frames=True) as reader:
+        output = reader.read(limit + 1)
+    if len(output) > limit:
+        raise ValueError("native payload decoded size exceeds safe limit")
+    return output
+
+
+def _bounded_private_stream(stream, limit: int) -> bytes:
+    """Decode only native-stream filters whose output can be bounded before allocation."""
+    if int(stream.get("/Length", 0)) > limit:
+        raise ValueError("native payload compressed size exceeds safe limit")
+    raw = stream.read_raw_bytes()
+    if len(raw) > limit:
+        raise ValueError("native payload compressed size exceeds safe limit")
+    filters = stream.get("/Filter")
+    if filters is None:
+        return raw
+    filters = list(filters) if isinstance(filters, pikepdf.Array) else [filters]
+    params = stream.get("/DecodeParms")
+    if isinstance(params, pikepdf.Array):
+        params = params[0] if len(params) == 1 else params
+    if [str(f) for f in filters] != ["/FlateDecode"] or (
+        params is not None
+        and (not isinstance(params, pikepdf.Dictionary) or int(params.get("/Predictor", 1)) != 1)
+    ):
+        raise ValueError("unsupported native payload PDF filter or predictor")
+    decoder = zlib.decompressobj()
+    output = decoder.decompress(raw, limit + 1)
+    if len(output) > limit:
+        raise ValueError("native payload compressed size exceeds safe limit")
+    if not decoder.eof:
+        raise ValueError("incomplete native payload PDF stream")
+    return output
+
+
 def _read_payload(pdf: pikepdf.Pdf) -> bytes:
     """Concatenate AIPrivateData streams, strip prefix, zstd-decompress.
 
-    Uses ``read_bytes()`` (filter-aware) rather than ``read_raw_bytes()`` so
-    we transparently handle both Illustrator-saved files (no filter) and
-    pikepdf-resaved files (which may pick up a FlateDecode filter).
+    Bound both outer PDF Flate decoding and inner Zstandard decoding before
+    accepting output. Unsupported outer filters fail closed.
     """
     processing_disabled("native Illustrator payload decoding")
     priv = _require_native_private(pdf)
@@ -204,7 +245,9 @@ def _read_payload(pdf: pikepdf.Pdf) -> bytes:
     blob_parts: list[bytes] = []
     compressed_bytes = 0
     for i in range(1, n + 1):
-        chunk = priv[f"/AIPrivateData{i}"].read_bytes()
+        chunk = _bounded_private_stream(
+            priv[f"/AIPrivateData{i}"], MAX_NATIVE_COMPRESSED_BYTES - compressed_bytes
+        )
         compressed_bytes += len(chunk)
         if compressed_bytes > MAX_NATIVE_COMPRESSED_BYTES:
             raise ValueError("native payload compressed size exceeds safe limit")
@@ -212,7 +255,7 @@ def _read_payload(pdf: pikepdf.Pdf) -> bytes:
     blob = b"".join(blob_parts)
     if not blob.startswith(PREFIX):
         raise ValueError(f"payload does not start with {PREFIX!r}; got {blob[:32]!r}")
-    return zstd.ZstdDecompressor().decompress(blob[len(PREFIX) :], max_output_size=MAX_NATIVE_DECODED_BYTES)
+    return _bounded_native_decompress(blob[len(PREFIX) :], MAX_NATIVE_DECODED_BYTES)
 
 
 def _write_payload(pdf: pikepdf.Pdf, payload: bytes, *, level: int = 19) -> tuple[int, int]:
@@ -349,8 +392,7 @@ def rewrite_payload(
     layer_weight_resolver: Callable[[str], float | None] | None = None,
     layer_color_resolver: Callable[[str], tuple[int, int, int] | None] | None = None,
     layer_solid_line_resolver: Callable[[str], bool] | None = None,
-    layer_tone_resolver: Callable[[tuple[int, int, int], float], tuple[int, int, int] | None]
-    | None = None,
+    layer_tone_resolver: Callable[[tuple[int, int, int], float], tuple[int, int, int] | None] | None = None,
 ) -> bytes:
     """Track recent XA color and rewrite every following `<w> w` op per-color.
 
@@ -567,8 +609,7 @@ def apply_to_file(
     layer_weight_resolver: Callable[[str], float | None] | None = None,
     layer_color_resolver: Callable[[str], tuple[int, int, int] | None] | None = None,
     layer_solid_line_resolver: Callable[[str], bool] | None = None,
-    layer_tone_resolver: Callable[[tuple[int, int, int], float], tuple[int, int, int] | None]
-    | None = None,
+    layer_tone_resolver: Callable[[tuple[int, int, int], float], tuple[int, int, int] | None] | None = None,
 ) -> ApplySaasResult:
     """Apply per-color stroke widths to the AI native payload of `src`.
 
@@ -582,6 +623,7 @@ def apply_to_file(
     processing_disabled("native Illustrator payload rewrite")
     if os.path.abspath(src) == os.path.abspath(dst):
         raise ValueError("dst must differ from src to keep the original safe")
+    ensure_distinct_paths(src, dst)
     raise_if_unsupported(src, "apply-saas")
 
     if reporter is None:
@@ -614,7 +656,8 @@ def apply_to_file(
         with reporter.stage("write_payload", zstd_level=zstd_level):
             _, new_n = _write_payload(pdf, new_payload, level=zstd_level)
             result.chunks_out = new_n
-            pdf.save(dst)
+            with atomic_output(dst) as staged:
+                pdf.save(staged)
 
     result.output_size = os.path.getsize(dst)
     return result

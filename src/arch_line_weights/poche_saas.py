@@ -59,6 +59,7 @@ from shapely.geometry import LineString, Polygon
 from .apply_saas import (
     CHUNK,
     PREFIX,
+    _bounded_native_decompress,
     _native_block_count,
     _read_payload,
     _require_native_private,
@@ -79,7 +80,7 @@ from .poche import (
     should_inject_fill,
 )
 from .progress import ProgressReporter
-from .safety import processing_disabled
+from .safety import atomic_output, ensure_distinct_paths, processing_disabled
 
 _log = logging.getLogger(__name__)
 _ARCHITECTURAL_COMPLETION_ENV = "ARCH_LW_ARCHITECTURAL_COMPLETION"
@@ -683,8 +684,7 @@ def apply_saas_with_poche(
     layer_weight_resolver: Callable[[str], float | None] | None = None,
     layer_color_resolver: Callable[[str], tuple[int, int, int] | None] | None = None,
     layer_solid_line_resolver: Callable[[str], bool] | None = None,
-    layer_tone_resolver: Callable[[tuple[int, int, int], float], tuple[int, int, int] | None]
-    | None = None,
+    layer_tone_resolver: Callable[[tuple[int, int, int], float], tuple[int, int, int] | None] | None = None,
     poche_overlay: bool | None = None,
     architectural: bool = False,
     preset: str = "section",
@@ -715,6 +715,7 @@ def apply_saas_with_poche(
     if os.path.abspath(src) == os.path.abspath(dst):
         raise ValueError("dst must differ from src to keep the original safe")
 
+    ensure_distinct_paths(src, dst)
     if reporter is None:
         reporter = ProgressReporter(enabled=False)
 
@@ -823,7 +824,8 @@ def apply_saas_with_poche(
         with reporter.stage("write_payload", zstd_level=zstd_level):
             _, new_n = _write_payload(pdf, new_payload, level=zstd_level)
             apply_result.chunks_out = new_n
-            pdf.save(dst)
+            with atomic_output(dst) as staged:
+                pdf.save(staged)
 
     apply_result.output_size = os.path.getsize(dst)
     return apply_result, poche_result, poche_report
@@ -858,7 +860,7 @@ def decompress_test_payload(framed: bytes) -> bytes:
     """Helper inverse to :func:`compress_test_payload`."""
     if not framed.startswith(PREFIX):
         raise ValueError(f"framed bytes must start with {PREFIX!r}")
-    return zstd.ZstdDecompressor().decompress(framed[len(PREFIX) :], max_output_size=1 << 30)
+    return _bounded_native_decompress(framed[len(PREFIX) :], 1 << 30)
 
 
 def write_synthetic_test_ai(path: str | Path, layer_name: str = "TEST_CUT") -> None:

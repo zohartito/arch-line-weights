@@ -54,10 +54,7 @@ def _write_ocg_pdf(path: Path, content: bytes, properties: dict[str, str]) -> No
 def _closed_square_content(mc: str, x0: float, y0: float, size: float = 40.0) -> bytes:
     x1, y1 = x0 + size, y0 + size
     return (
-        f"/OC /{mc} BDC\n"
-        f"0 0 0 RG\n"
-        f"{x0:g} {y0:g} m {x1:g} {y0:g} l {x1:g} {y1:g} l {x0:g} {y1:g} l h S\n"
-        f"EMC\n"
+        f"/OC /{mc} BDC\n0 0 0 RG\n{x0:g} {y0:g} m {x1:g} {y0:g} l {x1:g} {y1:g} l {x0:g} {y1:g} l h S\nEMC\n"
     ).encode()
 
 
@@ -76,7 +73,10 @@ def _open_gap_square_content(mc: str, x0: float, y0: float, size: float = 40.0, 
 
 def _ops(path: Path):
     with pikepdf.open(path) as pdf:
-        return [(list(operands), str(operator)) for operands, operator in pikepdf.parse_content_stream(pdf.pages[0])]
+        return [
+            (list(operands), str(operator))
+            for operands, operator in pikepdf.parse_content_stream(pdf.pages[0])
+        ]
 
 
 def _fill_count(path: Path) -> int:
@@ -147,7 +147,9 @@ def test_apply_poche_pdf_injects_fill_operator(tmp_path: Path) -> None:
     src = tmp_path / "section.pdf"
     dst = tmp_path / "section-out.pdf"
     _write_ocg_pdf(src, _closed_square_content("MC0", 20, 20), {"MC0": CUT_LAYER})
-    result = apply_poche_pdf(str(src), str(dst), style="solid", use_alpha_shape=False, bridge_strategy="greedy")
+    result = apply_poche_pdf(
+        str(src), str(dst), style="solid", use_alpha_shape=False, bridge_strategy="greedy"
+    )
     assert result.fills_injected >= 1
     assert _fill_count(dst) >= 1
     assert result.report_json["schema_version"] == 2
@@ -244,7 +246,9 @@ def test_steel_cut_layer_gets_solid_fill(tmp_path: Path) -> None:
     src = tmp_path / "steel.pdf"
     dst = tmp_path / "steel-out.pdf"
     _write_ocg_pdf(src, _closed_square_content("MC0", 5, 5, size=12), {"MC0": STEEL_LAYER})
-    result = apply_poche_pdf(str(src), str(dst), style="solid", use_alpha_shape=False, bridge_strategy="greedy")
+    result = apply_poche_pdf(
+        str(src), str(dst), style="solid", use_alpha_shape=False, bridge_strategy="greedy"
+    )
     assert result.fills_injected >= 1
     layer = result.report_json["layers"][0]
     assert layer["action"] == "injected"

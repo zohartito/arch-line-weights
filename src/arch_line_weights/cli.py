@@ -37,9 +37,15 @@ from .linetypes import aia_status_from_name, apply_status, linetype_for_layer
 from .poche import apply_poche
 from .poche_pdf import apply_poche_pdf
 from .presets import PRESETS, select_preset
-from .progress import DEFAULT_PROGRESS_FILE, make_reporter
+from .progress import DEFAULT_PROGRESS_FILE, ProgressReporter, make_reporter
 from .role_signal import no_role_signal, no_role_signal_message
-from .safety import ProcessingDisabledError, processing_disabled, terminal_safe
+from .safety import (
+    ProcessingDisabledError,
+    atomic_write_text,
+    ensure_distinct_paths,
+    processing_disabled,
+    terminal_safe,
+)
 from .tonal_recede import MODES as TONAL_RECEDE_MODES
 from .tonal_recede import describe_ramp as tonal_recede_describe_ramp
 from .tonal_recede import tonal_recede_resolver
@@ -60,6 +66,14 @@ _SOURCE_CHOICES = [Source.AUTO.value, Source.RHINO.value, Source.AUTOCAD.value]
 # nearest-neighbour bridger) for backwards compatibility.
 _BRIDGE_STRATEGY_CHOICES = ["greedy", "best"]
 _BRIDGE_STRATEGY_DEFAULT = "best"
+
+
+def _default_width(ctx, param, value):
+    try:
+        from_user_mapping({(0, 0, 0): value})
+    except ValueError as exc:
+        raise click.BadParameter(str(exc), ctx=ctx, param=param) from exc
+    return value
 
 
 def _disabled_processing_command(surface: str) -> None:
@@ -531,6 +545,7 @@ def doctor(
 @click.option(
     "--default-width",
     type=float,
+    callback=_default_width,
     default=0.25,
     show_default=True,
     help="Width applied to colors not in the mapping.",
@@ -963,14 +978,20 @@ def layout_jsx_cmd(
         raise click.ClickException(str(exc)) from exc
 
     if dry_run:
-        click.echo(f"layout: dry run wrote JSX {result['jsx_path']}", err=True)
+        if jsx_path is not None:
+            click.echo(f"layout: dry run wrote JSX {terminal_safe(result['jsx_path'])}", err=True)
+        if jsx_path is None or report_json is None:
+            click.echo(
+                "layout: temporary artifacts removed; use --jsx-path and --report-json for durable inspection",
+                err=True,
+            )
     else:
         click.echo(f"layout: wrote {result['output']}", err=True)
-    click.echo(f"layout: report {result['report_json']}", err=True)
+    if report_json is not None:
+        click.echo(f"layout: report {terminal_safe(result['report_json'])}", err=True)
     if result.get("report"):
-        # The normalized report can carry Illustrator's active document name.
-        # Render it as terminal data, not terminal control input.
-        click.echo(terminal_safe(result["report"]))
+        # JSON escapes control characters inside data while preserving structural newlines.
+        click.echo(json.dumps(json.loads(result["report"]), indent=2, ensure_ascii=True))
 
 
 @cli.command(help="Run the Rhino Make2D -> Illustrator layout bridge.")
@@ -1177,6 +1198,7 @@ def bridge_rhino_ai_cmd(
 @click.option(
     "--default-width",
     type=float,
+    callback=_default_width,
     default=0.25,
     show_default=True,
     help="Width applied to colors not in the mapping.",
@@ -1262,7 +1284,8 @@ def bridge_rhino_ai_cmd(
     type=click.Path(dir_okay=False, path_type=Path),
     default=None,
     help="Override the progress-event log path (default: a private per-run temporary file). "
-    "One tab-separated event per line. Ignored when --no-progress is set.",
+    "One tab-separated event per line, including when stderr is piped. "
+    "Ignored only when --no-progress is explicitly set.",
 )
 @click.option(
     "--report",
@@ -1400,6 +1423,11 @@ def apply_saas_cmd(
     if output is None:
         output = Path(default_output_path_saas(src))
 
+    try:
+        ensure_distinct_paths(src, output, report_path, progress_file if progress is not False else None)
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+
     # Resolve the --progress flag. Default ON when stderr is a TTY, OFF when
     # piped (so wrapped invocations don't pollute stdout/stderr captures).
     if progress is None:
@@ -1407,11 +1435,14 @@ def apply_saas_cmd(
     else:
         progress_enabled = bool(progress)
     progress_file_path = str(progress_file) if progress_file else DEFAULT_PROGRESS_FILE
-    reporter = make_reporter(
-        enabled=progress_enabled,
-        file_path=progress_file_path if progress_enabled else None,
-        stderr=sys.stderr if progress_enabled else None,
-    )
+    if progress_file is not None and progress is None and not progress_enabled:
+        reporter = ProgressReporter(file_path=str(progress_file), tty=None, enabled=True)
+    else:
+        reporter = make_reporter(
+            enabled=progress_enabled,
+            file_path=progress_file_path if progress_enabled else None,
+            stderr=sys.stderr if progress_enabled else None,
+        )
 
     if poche:
         from .poche_saas import apply_saas_with_poche
@@ -1581,7 +1612,7 @@ def apply_saas_cmd(
             command=_command_summary("apply-saas", src),
         )
         report_path.parent.mkdir(parents=True, exist_ok=True)
-        report_path.write_text(json.dumps(run_report, indent=2, sort_keys=True) + "\n")
+        atomic_write_text(report_path, json.dumps(run_report, indent=2, sort_keys=True) + "\n")
         click.echo(f"report: wrote {report_path}", err=True)
 
     click.echo("", err=True)
@@ -1609,6 +1640,11 @@ def cleanup_cmd(src: Path, output: Path | None, report_path: Path | None):
         output = Path(default_output_path_cleanup(src))
 
     try:
+        ensure_distinct_paths(src, output, report_path)
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    try:
         result = cleanup_file(str(src), str(output))
     except Exception as exc:
         raise click.ClickException(str(exc)) from exc
@@ -1621,7 +1657,7 @@ def cleanup_cmd(src: Path, output: Path | None, report_path: Path | None):
     }
     if report_path is not None:
         report_path.parent.mkdir(parents=True, exist_ok=True)
-        report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+        atomic_write_text(report_path, json.dumps(report, indent=2, sort_keys=True) + "\n")
         click.echo(f"report: wrote {report_path}", err=True)
 
     summary = report["summary"]

@@ -247,9 +247,7 @@ def test_apply_via_jsx_rejects_missing_output_after_report(tmp_path):
     dst = tmp_path / "section HIERARCHY-jsx.ai"
 
     def fake_run_jsx(jsx_path, timeout):
-        Path(jsx_path).resolve().parent.joinpath("report.txt").write_text(
-            "DONE\nsaved as: synthetic\n"
-        )
+        Path(jsx_path).resolve().parent.joinpath("report.txt").write_text("DONE\nsaved as: synthetic\n")
 
     with (
         patch("arch_line_weights.apply_jsx.query_active_doc", return_value=(None, None)),

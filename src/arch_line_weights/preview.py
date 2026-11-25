@@ -105,14 +105,19 @@ class PyMuPDFRenderer:
 class GhostscriptRenderer:
     """Fallback for sub-0.25pt hairline accuracy via -dNOMINLINEWIDTH."""
 
-    binary: str = "gs"
+    binary: str | None = None
     supersample: int = SUPERSAMPLE
 
     def __post_init__(self) -> None:
-        if shutil.which(self.binary) is None:
+        explicit_binary = self.binary
+        if self.binary is None:
+            self.binary = next(
+                (path for name in ("gs", "gswin64c", "gswin32c") if (path := shutil.which(name))), None
+            )
+        if self.binary is None or (explicit_binary is not None and shutil.which(self.binary) is None):
             raise RuntimeError(
                 f"Ghostscript binary {self.binary!r} not found on PATH. "
-                "Install via `brew install ghostscript`."
+                "Install Ghostscript and add gs (Unix) or gswin64c.exe (Windows) to PATH."
             )
 
     def render_page(self, src: str | Path, page_index: int, dpi: int) -> Image.Image:
@@ -274,9 +279,9 @@ def _recolor_pdf_by_tier(
                 tier = _nearest_tier(current_w, tiers)
                 r, g, b = rgb_for_tier[tier]
                 rgb_ops = [
-                    pikepdf.Object.parse(f"{r / 255:.4f}"),
-                    pikepdf.Object.parse(f"{g / 255:.4f}"),
-                    pikepdf.Object.parse(f"{b / 255:.4f}"),
+                    round(r / 255, 4),
+                    round(g / 255, 4),
+                    round(b / 255, 4),
                 ]
                 new_instructions.append((rgb_ops, pikepdf.Operator("RG")))
             else:

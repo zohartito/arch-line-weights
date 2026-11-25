@@ -102,3 +102,35 @@ def terminal_safe(value: object) -> str:
         else:
             safe.append(char)
     return "".join(safe)
+
+
+def ensure_distinct_paths(*paths: str | os.PathLike | None) -> None:
+    """Reject aliases before any input/output/report artifact is written."""
+    present = [Path(path) for path in paths if path is not None]
+    for index, path in enumerate(present):
+        for other in present[:index]:
+            if path.resolve() == other.resolve() or (
+                path.exists() and other.exists() and path.samefile(other)
+            ):
+                raise ValueError("input, output and report paths must differ to keep the original safe")
+
+
+@contextmanager
+def atomic_output(path: str | os.PathLike) -> Iterator[Path]:
+    """Stage a file exclusively beside its target; preserve the target on failure."""
+    target = Path(path)
+    if target.is_symlink():
+        raise ValueError("output must not be a symlink")
+    fd, name = tempfile.mkstemp(prefix=".arch-lw-", suffix=target.suffix, dir=target.parent)
+    os.close(fd)
+    staged = Path(name)
+    try:
+        yield staged
+        os.replace(staged, target)
+    finally:
+        staged.unlink(missing_ok=True)
+
+
+def atomic_write_text(path: Path, text: str) -> None:
+    with atomic_output(path) as staged:
+        staged.write_text(text, encoding="utf-8")

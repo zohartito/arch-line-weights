@@ -2,13 +2,11 @@
 
 Run locally:
 
-    cd webapp/backend
-    uvicorn main:app --reload
+    cd webapp
+    uvicorn backend.main:app --reload
 
-Production runs the same module with ``uvicorn`` behind a Fly.io proxy.
-The app stays purely sync at the request level (no async I/O against
-external services yet); all CPU-heavy work is dispatched via
-``run_in_threadpool`` inside the routes.
+Only health and the UI shell remain available. Processing routes return
+HTTP 410 before parsing or filesystem work; this is not a processing deployment.
 """
 
 from __future__ import annotations
@@ -45,7 +43,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 def create_app() -> FastAPI:
-    """Factory used by both ``uvicorn main:app`` and tests.
+    """Factory used by both ``uvicorn backend.main:app`` and tests.
 
     Tests can replace state in two ways:
        1. ``app.state.storage = LocalStorage(tmp_path)`` after construction
@@ -89,5 +87,5 @@ def create_app() -> FastAPI:
     return app
 
 
-# Module-level instance for ``uvicorn main:app``.
+# Module-level instance for ``uvicorn backend.main:app``.
 app = create_app()

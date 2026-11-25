@@ -330,9 +330,7 @@ def apply_poche_pdf(
         use_alpha_shape=use_alpha_shape,
         bridge_strategy=bridge_strategy,
     )
-    inject_ops, fills_injected, hatch_segments = _build_injection_ops(
-        report, style=style, scale=scale
-    )
+    inject_ops, fills_injected, hatch_segments = _build_injection_ops(report, style=style, scale=scale)
 
     # Append fill block once on the first page (section drawings are single-page).
     if inject_ops and pdf.pages:
